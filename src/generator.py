@@ -4,8 +4,6 @@
 import pandas as pd
 import numpy as np
 
-import random_generators
-
 class Circus(object):
     """
 
@@ -126,6 +124,32 @@ class Actor(object):
         return self._table
 
 
+class CustomerActor(Actor):
+    def __init__(self,size,id_start=0):
+        """
+
+        :param size:
+        :param id_start:
+        :return:
+        """
+        Actor.__init__(self,size,id_start)
+
+    def make_calls(self,network,chooser,new_time_generator):
+        """
+
+        :param network:
+        :param chooser:
+        :param new_time_generator:
+        :return:
+        """
+        act_now = self.who_acts_now()
+        out = pd.DataFrame(columns=["A","B"])
+        if len(act_now.index) > 0:
+            out = network.select_one_unweighted("A",act_now["ID"].values)
+            self._table.loc[act_now.index,"clock"] = new_time_generator.generate(len(act_now.index))
+        self.update_clock()
+        return out
+
 
 class Item(object):
     """
@@ -160,11 +184,12 @@ class Relationship(object):
     """
 
     """
-    def __init__(self,r1,r2,weight=False):
+    def __init__(self,r1,r2,chooser,weight=False):
         """
 
         :param r1: string, name for first element
         :param r2: string, name for second element
+        :param chooser:
         :param weight: bool, if True there will be a weight for each relationship
         :return:
         """
@@ -173,6 +198,7 @@ class Relationship(object):
         if weight:
             cols["weight"] = pd.Series(dtype=float)
         self._table = pd.DataFrame(cols)
+        self.__chooser = chooser
 
 
     def add_relation(self,r1,A,r2,B,W=None):
@@ -186,8 +212,19 @@ class Relationship(object):
         :return:
         """
         df = pd.DataFrame({r1:A,r2:B})
-        print df
+
         if W is not None:
             df["weight"] = W
 
         self._table = self._table.append(df,ignore_index=True)
+
+
+    def select_one_unweighted(self, key_column, keys):
+        """
+
+        :param key_column:
+        :param keys:
+        :return:
+        """
+        small_tab = self._table[self._table[key_column].isin(keys)]
+        return small_tab.groupby(key_column).aggregate(self.__chooser.generate).reset_index()

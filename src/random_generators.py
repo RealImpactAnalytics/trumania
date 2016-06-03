@@ -1,6 +1,23 @@
-from numpy.random import RandomState
 import numpy as np
-from functools import partial
+from numpy.random import RandomState
+
+
+class Chooser(object):
+    def __init__(self,seed):
+        """
+
+        :param seed:
+        :return:
+        """
+        self.__state = RandomState(seed)
+
+    def generate(self,a):
+        """
+
+        :param a:
+        :return:
+        """
+        return self.__state.choice(a)
 
 
 class GenericGenerator(object):
