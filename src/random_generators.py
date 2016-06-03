@@ -29,6 +29,7 @@ class GenericGenerator(object):
                                  "replace":parameters.get("replace",True),
                                  "p": parameters.get("p",None)}
 
+
     def generate(self,size=None):
         """
 
@@ -38,6 +39,7 @@ class GenericGenerator(object):
         if size is not None:
             params["size"] = size
         return self.__gen(**params)
+
 
     def get_name(self):
         """

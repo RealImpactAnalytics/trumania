@@ -54,7 +54,6 @@ class Circus(object):
         self.__relationships[(r1,r2)] = rel
 
 
-
 class Actor(object):
     """
 
@@ -79,12 +78,14 @@ class Actor(object):
         """
         self._table[name] = generator.generate(len(self._table.index))
 
+
     def who_acts_now(self):
         """
 
         :return:
         """
-        return (self._table["clock"]==0).index
+        return self._table[self._table["clock"]==0]
+
 
     def update_clock(self,decrease=1):
         """
@@ -103,6 +104,22 @@ class Actor(object):
         :return:
         """
         self._table[name] = generator.generate(len(self._table.index))
+
+
+    def make_actions(self,new_time_generator):
+        """
+
+        :param new_time_generator:
+        :return:
+        """
+        act_now = self.who_acts_now()
+        out = pd.DataFrame(columns=["ID","action"])
+        if len(act_now.index) > 0:
+            out["ID"] = act_now["ID"]
+            out["action"] = "ping"
+            self._table.loc[act_now.index,"clock"] = new_time_generator.generate(len(act_now.index))
+        self.update_clock()
+        return out
 
 
     def __repr__(self):
@@ -134,6 +151,7 @@ class Item(object):
         """
         self._table[name] = generator.generate(len(self._table.index))
 
+
     def __repr__(self):
         return self._table
 
@@ -145,21 +163,31 @@ class Relationship(object):
     def __init__(self,r1,r2,weight=False):
         """
 
-        :param r1:string
-        :param r2:string
+        :param r1: string, name for first element
+        :param r2: string, name for second element
+        :param weight: bool, if True there will be a weight for each relationship
         :return:
         """
-        cols = [r1,r2]
+        cols = {r1:pd.Series(dtype=int),
+                r2:pd.Series(dtype=int)}
         if weight:
-            cols.append("weight")
-        self._table = pd.DataFrame(columns=cols)
+            cols["weight"] = pd.Series(dtype=float)
+        self._table = pd.DataFrame(cols)
 
 
     def add_relation(self,r1,A,r2,B,W=None):
         """
 
+        :param r1:
         :param A:
+        :param r2:
         :param B:
         :param W:
         :return:
         """
+        df = pd.DataFrame({r1:A,r2:B})
+        print df
+        if W is not None:
+            df["weight"] = W
+
+        self._table = self._table.append(df,ignore_index=True)
