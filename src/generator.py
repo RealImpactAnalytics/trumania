@@ -145,8 +145,9 @@ class CustomerActor(Actor):
         act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["A","B"])
         if len(act_now.index) > 0:
-            out = network.select_one_unweighted("A",act_now["ID"].values)
+            out = network.select_one("A",act_now["ID"].values)
             self._table.loc[act_now.index,"clock"] = new_time_generator.generate(len(act_now.index))
+            # TODO next generate time with different generators depending on customers
         self.update_clock()
         return out
 
@@ -184,47 +185,89 @@ class Relationship(object):
     """
 
     """
-    def __init__(self,r1,r2,chooser,weight=False):
+    def __init__(self,r1,r2,chooser):
         """
 
         :param r1: string, name for first element
         :param r2: string, name for second element
         :param chooser:
-        :param weight: bool, if True there will be a weight for each relationship
         :return:
         """
         cols = {r1:pd.Series(dtype=int),
                 r2:pd.Series(dtype=int)}
-        if weight:
-            cols["weight"] = pd.Series(dtype=float)
         self._table = pd.DataFrame(cols)
         self.__chooser = chooser
 
 
-    def add_relation(self,r1,A,r2,B,W=None):
+    def add_relation(self,r1,A,r2,B):
         """
 
         :param r1:
         :param A:
         :param r2:
         :param B:
-        :param W:
         :return:
         """
         df = pd.DataFrame({r1:A,r2:B})
 
-        if W is not None:
-            df["weight"] = W
-
         self._table = self._table.append(df,ignore_index=True)
 
 
-    def select_one_unweighted(self, key_column, keys):
+    def select_one(self, key_column, keys):
         """
 
         :param key_column:
         :param keys:
         :return:
         """
+        small_tab = self._table[self._table[key_column].isin(keys)]
+        return small_tab.groupby(key_column).aggregate(self.__chooser.generate).reset_index()
+
+
+class WeightedRelationship(object):
+    """
+
+    """
+    def __init__(self,r1,r2,chooser):
+        """
+
+        :param r1: string, name for first element
+        :param r2: string, name for second element
+        :param chooser:
+        :return:
+        """
+        cols = {r1:pd.Series(dtype=int),
+                r2:pd.Series(dtype=int),
+                "weight":pd.Series(dtype=float)}
+        self.__r1 = r1
+        self.__r2 = r2
+        self._table = pd.DataFrame(cols)
+        self.__chooser = chooser
+
+
+    def add_relation(self,r1,A,r2,B,W):
+        """
+
+        :param r1:
+        :param A:
+        :param r2:
+        :param B:
+        :param W: weight column.
+        :return:
+        """
+        df = pd.DataFrame({r1:A,r2:B,"weight":W})
+        self._table = self._table.append(df,ignore_index=True)
+
+    def select_one(self, key_column, keys):
+        """
+
+        :param key_column:
+        :param keys:
+        :return:
+        """
+        if key_column == self.__r1:
+            self.__chooser.update_choose_col(self.__r2)
+        elif key_column == self.__r2:
+            self.__chooser.update_choose_col(self.__r1)
         small_tab = self._table[self._table[key_column].isin(keys)]
         return small_tab.groupby(key_column).aggregate(self.__chooser.generate).reset_index()

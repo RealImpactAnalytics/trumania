@@ -3,7 +3,7 @@ from numpy.random import RandomState
 
 
 class Chooser(object):
-    def __init__(self,seed):
+    def __init__(self, seed):
         """
 
         :param seed:
@@ -11,7 +11,7 @@ class Chooser(object):
         """
         self.__state = RandomState(seed)
 
-    def generate(self,a):
+    def generate(self, a):
         """
 
         :param a:
@@ -20,10 +20,50 @@ class Chooser(object):
         return self.__state.choice(a)
 
 
+class WeightedChooserAggregator(object):
+    def __init__(self, col_to_choose, col_for_weight, seed):
+        """
+
+        :param col_to_choose:
+        :param col_for_weight:
+        :param seed:
+        :return:
+        """
+        self.__state = RandomState(seed)
+        self.__col_to_choose = col_to_choose
+        self.__col_for_weight = col_for_weight
+
+    def update_choose_col(self, col):
+        """
+
+        :param col:
+        :return:
+        """
+        self.__col_to_choose = col
+
+    def update_weight_col(self, col):
+        """
+
+        :param col:
+        :return:
+        """
+        self.__col_for_weight = col
+
+    def generate(self, group):
+        """
+
+        :param group:
+        :return:
+        """
+        w = group[self.__col_for_weight] / sum(group[self.__col_for_weight])
+        return self.__state.choice(group[self.__col_to_choose], p=w)
+
+
 class GenericGenerator(object):
     """
 
     """
+
     def __init__(self, name, gen_type, parameters, seed=None):
         """Initialise a random number generator
 
@@ -39,24 +79,33 @@ class GenericGenerator(object):
         self.__state = RandomState(seed)
 
         if gen_type == "choice":
-            pars = ["a","replace","p"]
             self.__gen = self.__state.choice
-            self.__parameters = {"a": parameters.get("a",10),
-                                 "size":parameters.get("size",1),
-                                 "replace":parameters.get("replace",True),
-                                 "p": parameters.get("p",None)}
+            self.__parameters = {"a": parameters.get("a", 10),
+                                 "size": parameters.get("size", 1),
+                                 "replace": parameters.get("replace", True),
+                                 "p": parameters.get("p", None)}
 
+        if gen_type == "pareto":
 
-    def generate(self,size=None):
+            def rescale(a, size=None, m=1.):
+                return (self.__state.pareto(a, size) + 1) * m
+
+            self.__gen = rescale
+            self.__parameters = {"a": parameters.get("a", 10),
+                                 "size": parameters.get("size", 1),
+                                 "m": parameters.get("m", 1.)}
+
+    def generate(self, size=None):
         """
 
+        :param size:
+        :return:
         :return:
         """
         params = self.__parameters
         if size is not None:
             params["size"] = size
         return self.__gen(**params)
-
 
     def get_name(self):
         """
@@ -70,7 +119,8 @@ class MSISDNGenerator(object):
     """
 
     """
-    def __init__(self,name,countrycode,prefix_list,length,seed=None):
+
+    def __init__(self, name, countrycode, prefix_list, length, seed=None):
         """
 
         :param name: string
@@ -83,16 +133,15 @@ class MSISDNGenerator(object):
         self.__name = name
         self.__state = RandomState(seed)
 
-        maxnumber = 10**length-1
-        self.__available = np.empty([maxnumber*len(prefix_list),2],dtype=int)
+        maxnumber = 10 ** length - 1
+        self.__available = np.empty([maxnumber * len(prefix_list), 2], dtype=int)
         for i in range(len(prefix_list)):
-            self.__available[i*maxnumber:(i+1)*maxnumber,0] = np.arange(0,maxnumber,dtype=int)
-            self.__available[i*maxnumber:(i+1)*maxnumber,1] = i
+            self.__available[i * maxnumber:(i + 1) * maxnumber, 0] = np.arange(0, maxnumber, dtype=int)
+            self.__available[i * maxnumber:(i + 1) * maxnumber, 1] = i
 
         self.__cc = countrycode
         self.__pref = prefix_list
         self.__length = length
-
 
     def get_name(self):
         """
@@ -101,18 +150,18 @@ class MSISDNGenerator(object):
         """
         return self.__name
 
-
-    def generate(self,size):
+    def generate(self, size):
         """returns a list of size randomly generated msisdns.
         Those msisdns cannot be generated again from this generator
 
         :param size: int
         :return: numpy array
         """
-        generated_entries = self.__state.choice(np.arange(0,self.__available.shape[0],dtype=int),size,False)
-        msisdns = np.array([self.__cc + self.__pref[self.__available[i,1]] + str(self.__available[i,0]).zfill(self.__length)
-                   for i in generated_entries])
+        generated_entries = self.__state.choice(np.arange(0, self.__available.shape[0], dtype=int), size, False)
+        msisdns = np.array(
+            [self.__cc + self.__pref[self.__available[i, 1]] + str(self.__available[i, 0]).zfill(self.__length)
+             for i in generated_entries])
 
-        self.__available = np.delete(self.__available,generated_entries,axis=0)
+        self.__available = np.delete(self.__available, generated_entries, axis=0)
 
         return msisdns
