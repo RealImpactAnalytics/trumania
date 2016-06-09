@@ -113,7 +113,7 @@ class HWRMobilityRelationship(WeightedRelationship):
     """
 
     """
-
+    #TODO: create a clock instance. Something.
     def __init__(self,r1,r2,chooser,time_f):
         """
 
