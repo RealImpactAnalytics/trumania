@@ -171,11 +171,22 @@ class HWRMobilityRelationship(WeightedRelationship):
         self._random_table = self._random_table.append(df, ignore_index=True)
 
     def choose(self, clock, key_column, keys):
+        """
+
+        :param clock:
+        :param key_column:
+        :param keys:
+        :return:
+        """
+        # TODO: make a function of the clock that returns what's needed
         w_home,w_work,w_random = self.__time_f(clock)
+
         small_home = self._home_table[self._home_table[self.__r1].isin(keys)].copy()
         small_home["weight"] = small_home["weight"]*w_home
+
         small_work = self._work_table[self._work_table[self.__r1].isin(keys)].copy()
         small_work["weight"] = small_work["weight"]*w_work
+
         small_random = self._random_table[self._random_table[self.__r1].isin(keys)].copy()
         small_random["weight"] = small_random["weight"]*w_random
 

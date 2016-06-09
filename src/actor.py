@@ -15,17 +15,23 @@ class Actor(object):
         :return:
         """
         IDs = np.arange(id_start, id_start + size)
-        self._table = pd.DataFrame({"ID": IDs, "clock": 0})
+        self._table = pd.DataFrame({"ID": IDs, "clock": 0, "activity":1.})
         self._transient_attributes = {}
 
-    def add_attribute(self, name, generator):
+    def add_attribute(self, name, generator,weights=None,weight_field=None):
         """Adds a column named "name" to the inner table of the actor, randomly generated from the generator.
 
         :param name: string, will be used as name for the column in the table
         :param generator: class from the random_generator series. needs to have a generate function that works
+        :param weights: Pandas Series
         :return: none
         """
-        self._table[name] = generator.generate(len(self._table.index))
+        if weights is not None:
+            self._table[name] = generator.generate(weights)
+        elif weight_field is not None:
+            self._table[name] = generator.generate(self._table[weight_field])
+        else:
+            self._table[name] = generator.generate(len(self._table.index))
 
     def who_acts_now(self):
         """
@@ -42,14 +48,20 @@ class Actor(object):
         """
         self._table["clock"] -= 1
 
-    def update_attribute(self, name, generator):
+    def update_attribute(self, name, generator,weights=None,weight_field=None):
         """
 
         :param name:
         :param generator:
+        :param weights:
         :return:
         """
-        self._table[name] = generator.generate(len(self._table.index))
+        if weights is not None:
+            self._table[name] = generator.generate(weights)
+        elif weight_field is not None:
+            self._table[name] = generator.generate(self._table[weight_field])
+        else:
+            self._table[name] = generator.generate(len(self._table.index))
 
     def make_actions(self, new_time_generator):
         """
@@ -62,7 +74,7 @@ class Actor(object):
         if len(act_now.index) > 0:
             out["ID"] = act_now["ID"]
             out["action"] = "ping"
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(len(act_now.index))
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])
         self.update_clock()
         return out
 
@@ -95,7 +107,7 @@ class CallerActor(Actor):
         out = pd.DataFrame(columns=["A", "B"])
         if len(act_now.index) > 0:
             out = network.select_one("A", act_now["ID"].values)
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(len(act_now.index))
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])
             # TODO next generate time with different generators depending on customers
         self.update_clock()
         return out
