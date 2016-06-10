@@ -95,6 +95,11 @@ class GenericGenerator(object):
                                  "size": parameters.get("size", 1),
                                  "m": parameters.get("m", 1.)}
 
+        if gen_type == "exponential":
+            self.__gen = self.__state.exponential
+            self.__parameters = {"scale":parameters.get("scale",1.),
+                                 "size": parameters.get("size",1)}
+
     def generate(self, size=None):
         """
 

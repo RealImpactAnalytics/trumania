@@ -51,8 +51,69 @@ class Clock(object):
     def get_week_index(self):
         return (self.__current.weekday()*24*3600 + self.__current.hour*3600 + self.__current.minute*60+self.__current.second)/self.__step
 
+    def get_day_index(self):
+        return (self.__current.hour*3600 + self.__current.minute*60+self.__current.second)/self.__step
+
 
 class TimeProfiler(object):
+    """
+
+    """
+
+    def __init__(self, step, profile, seed=None):
+        """
+        This should not be used, only child classes
+
+        :type step: int
+        :param step: number of steps between each item of the profile, needs to be a common divisor of the width of
+        the bins
+        :type profile: Pandas Series, index is a timedelta object (minimum 1 sec and last is defined by the type of profile)
+        values are floats
+        :param profile: Weight of each period. The index indicate the right bound of the bin (left bound is 0 for the
+        first bin and the previous index for all others)
+        :type seed: int
+        :param seed: seed for random number generator, default None
+        :return:
+        """
+        self._step = step
+        self._state = RandomState(seed)
+
+        totalweight = profile.sum()
+        rightbounds = profile.index.values
+
+        leftbounds = np.append(np.array([np.timedelta64(-1,"s")]),profile.index.values[:-1])
+        widths = rightbounds-leftbounds
+        n_subbins = widths/np.timedelta64(step,"s")
+
+        norm_prof = list(itertools.chain(*[n_subbins[i]*[profile.iloc[i]/float(n_subbins[i]*totalweight),] for i in range(len(n_subbins))]))
+
+        self._profile = pd.DataFrame({"weight":norm_prof,"next_prob":np.nan,"timeframe":np.arange(len(norm_prof))})
+
+    def get_profile(self):
+        return self._profile
+
+    def increment(self):
+        """
+
+        :return: None
+        """
+        old_end_prob = self._profile["next_prob"].iloc[len(self._profile.index)-1]
+        self._profile["next_prob"] -= self._profile["next_prob"].iloc[0]
+        self._profile = pd.concat([self._profile.iloc[1:len(self._profile.index)],self._profile.iloc[0:1]],ignore_index=True)
+        self._profile.loc[self._profile.index[-1],"next_prob"] = old_end_prob
+
+    def generate(self,weights):
+        """
+
+        :type weights: Pandas Series
+        :param weights: contains an array of floats
+        :return: Pandas Series
+        """
+        p = self._state.rand(len(weights.index))/weights.values
+        return pd.Series(self._profile["next_prob"].searchsorted(p),index=weights.index)
+
+
+class WeekProfiler(TimeProfiler):
     """
 
     """
@@ -71,24 +132,9 @@ class TimeProfiler(object):
         :param seed: seed for random number generator, default None
         :return:
         """
-        self.__step = step
-        self.__state = RandomState(seed)
+        assert profile.index.values[-1] == np.timedelta64(604799,"s")
 
-        totalweight = profile.sum()
-        rightbounds = profile.index.values
-
-        assert rightbounds[-1] == np.timedelta64(604799,"s")
-
-        leftbounds = np.append(np.array([np.timedelta64(-1,"s")]),profile.index.values[:-1])
-        widths = rightbounds-leftbounds
-        n_subbins = widths/np.timedelta64(step,"s")
-
-        norm_prof = list(itertools.chain(*[n_subbins[i]*[profile.iloc[i]/float(n_subbins[i]*totalweight),] for i in range(len(n_subbins))]))
-
-        self.__profile = pd.DataFrame({"weight":norm_prof,"next_prob":np.nan,"timeframe":np.arange(len(norm_prof))})
-
-    def get_profile(self):
-        return self.__profile
+        TimeProfiler.__init__(self,step,profile,seed)
 
     def initialise(self,clock):
         """
@@ -97,25 +143,39 @@ class TimeProfiler(object):
         :return: None
         """
         start = clock.get_week_index()
-        self.__profile = pd.concat([self.__profile.iloc[start:len(self.__profile.index)],self.__profile.iloc[0:start]],ignore_index=True)
-        self.__profile["next_prob"] = self.__profile["weight"].cumsum()
+        self._profile = pd.concat([self._profile.iloc[start:len(self._profile.index)],self._profile.iloc[0:start]],ignore_index=True)
+        self._profile["next_prob"] = self._profile["weight"].cumsum()
 
-    def increment(self):
+
+class DayProfiler(TimeProfiler):
+    """
+
+    """
+
+    def __init__(self,step,profile,seed=None):
         """
 
+        :type step: int
+        :param step: number of steps between each item of the profile, needs to be a common divisor of the width of
+        the bins
+        :type profile: Pandas Series, index is a timedelta object (minimum 1 sec and last has to be 23h 59 min 59 secs)
+        values are floats
+        :param profile: Weight of each period. The index indicate the right bound of the bin (left bound is 0 for the
+        first bin and the previous index for all others)
+        :type seed: int
+        :param seed: seed for random number generator, default None
+        :return:
+        """
+        assert profile.index.values[-1] == np.timedelta64(86399,"s")
+
+        TimeProfiler.__init__(self,step,profile,seed)
+
+    def initialise(self,clock):
+        """
+
+        :param clock: a Clock object
         :return: None
         """
-        old_end_prob = self.__profile["next_prob"].iloc[len(self.__profile.index)-1]
-        self.__profile["next_prob"] -= self.__profile["next_prob"].iloc[0]
-        self.__profile = pd.concat([self.__profile.iloc[1:len(self.__profile.index)],self.__profile.iloc[0:1]],ignore_index=True)
-        self.__profile.loc[self.__profile.index[-1],"next_prob"] = old_end_prob
-
-    def generate(self,weights):
-        """
-
-        :type weights: Pandas Series
-        :param weights: contains an array of floats
-        :return: Pandas Series
-        """
-        p = self.__state.rand(len(weights.index))/weights.values
-        return pd.Series(self.__profile["next_prob"].searchsorted(p),index=weights.index)
+        start = clock.get_day_index()
+        self._profile = pd.concat([self._profile.iloc[start:len(self._profile.index)],self._profile.iloc[0:start]],ignore_index=True)
+        self._profile["next_prob"] = self._profile["weight"].cumsum()

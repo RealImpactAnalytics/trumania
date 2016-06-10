@@ -7,7 +7,7 @@ class Circus(object):
 
     """
 
-    def __init__(self,clock):
+    def __init__(self, clock):
         """
 
         :type clock: Clock object
@@ -56,7 +56,7 @@ class Circus(object):
             raise Exception("Already having relationship between %s and %s" % (r1, r2))
         self.__relationships[(r1, r2)] = rel
 
-    def add_generator(self,name,gen):
+    def add_generator(self, name, gen):
         """
 
         :param name:
@@ -66,8 +66,7 @@ class Circus(object):
         if self.__generators.has_key(name):
             raise Exception("Already having generator named %s" % name)
 
-        self.__generators[name]=gen
-
+        self.__generators[name] = gen
 
     def add_action(self, actor, func, param, add_info):
         """
@@ -84,14 +83,13 @@ class Circus(object):
         """
         self.__actions.append((actor, func, param, add_info))
 
-    def add_increment(self,to_increment):
+    def add_increment(self, to_increment):
         """
 
         :param to_increment:
         :return:
         """
         self.__incrementors.append(to_increment)
-
 
     def one_round(self):
         """
@@ -101,7 +99,7 @@ class Circus(object):
         """
         out_tables = []
         for a in self.__actions:
-            out = getattr(self.__actors[a[0]],a[1])(**a[2])
+            out = getattr(self.__actors[a[0]], a[1])(**a[2])
             for j in a[3]:
                 if j == "timestamp":
                     if a[3][j]:
@@ -110,10 +108,7 @@ class Circus(object):
                     for j_info in a[3][j]:
                         # entry is then field in out, actor or item name, actor or item field, new name
                         out_field, obj_to_join, obj_field, new_name = j_info
-                        lj = pd.DataFrame(index=out[out_field])
-                        rj = pd.DataFrame(obj_to_join._table[obj_field],index=obj_to_join._table["ID"])
-                        res = lj.join(rj)
-                        out[new_name] = res[obj_field].values
+                        out[new_name] = obj_to_join.get_join(obj_field, out[out_field])
 
             out_tables.append(out)
 
