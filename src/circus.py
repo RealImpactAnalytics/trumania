@@ -7,14 +7,20 @@ class Circus(object):
 
     """
 
-    def __init__(self):
+    def __init__(self,clock):
         """
 
+        :type clock: Clock object
+        :param clock:
         :return:
         """
         self.__actors = {}
         self.__items = {}
         self.__relationships = {}
+        self.__generators = {}
+        self.__clock = clock
+        self.__actions = []
+        self.__incrementors = []
 
     def add_actor(self, name, actor):
         """
@@ -49,3 +55,63 @@ class Circus(object):
         if self.__relationships.has_key((r1, r2)):
             raise Exception("Already having relationship between %s and %s" % (r1, r2))
         self.__relationships[(r1, r2)] = rel
+
+    def add_generator(self,name,gen):
+        """
+
+        :param name:
+        :param gen:
+        :return:
+        """
+        if self.__generators.has_key(name):
+            raise Exception("Already having generator named %s" % name)
+
+        self.__generators[name]=gen
+
+
+    def add_action(self,actor,func,param):
+        """
+
+        :type actor: string
+        :param actor: name of an actor object
+        :type func: function that applies to actor
+        :param func: function to apply to actor
+        :type param: dictionary
+        :param param: keyworded arguments of func
+        :return:
+        """
+        self.__actions.append((actor,func,param))
+
+    def add_increment(self,to_increment):
+        """
+
+        :param to_increment:
+        :return:
+        """
+        self.__incrementors.append(to_increment)
+
+
+    def one_round(self):
+        """
+        Performs one round of actions
+
+        :return:
+        """
+        out_tables = []
+        for a in self.__actions:
+            out = getattr(self.__actors[a[0]],a[1])(**a[2])
+            out["datetime"] = self.__clock.get_timestamp(len(out.index))
+            out_tables.append(out)
+
+        for i in self.__incrementors:
+            i.increment()
+        self.__clock.increment()
+
+        return out_tables
+
+    def get_contents(self):
+        return (self.__clock,
+                self.__actors,
+                self.__items,
+                self.__relationships,
+                self.__generators)

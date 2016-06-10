@@ -63,7 +63,7 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def make_actions(self, new_time_generator):
+    def make_actions(self, new_time_generator, relationship=None):
         """
 
         :param new_time_generator:
@@ -74,7 +74,7 @@ class Actor(object):
         if len(act_now.index) > 0:
             out["ID"] = act_now["ID"]
             out["action"] = "ping"
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
         return out
 
@@ -95,20 +95,18 @@ class CallerActor(Actor):
         """
         Actor.__init__(self, size, id_start)
 
-    def make_actions(self, network, chooser, new_time_generator):
+    def make_calls(self, new_time_generator, relationship):
         """
 
-        :param network:
-        :param chooser:
+        :param relationship:
         :param new_time_generator:
         :return:
         """
         act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["A", "B"])
         if len(act_now.index) > 0:
-            out = network.select_one("A", act_now["ID"].values)
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])
-            # TODO next generate time with different generators depending on customers
+            out = relationship.select_one("A", act_now["ID"].values)
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
         return out
 
