@@ -105,7 +105,10 @@ class CallerActor(Actor):
         act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["A", "B"])
         if len(act_now.index) > 0:
-            out = relationship.select_one("A", act_now["ID"].values)
+            calls = relationship.select_one("A", act_now["ID"].values)
+            if len(calls.index) > 0:
+                out=calls[["A","B"]]
+
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
         return out

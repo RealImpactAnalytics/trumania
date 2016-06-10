@@ -69,7 +69,7 @@ class Circus(object):
         self.__generators[name]=gen
 
 
-    def add_action(self,actor,func,param):
+    def add_action(self, actor, func, param, add_info):
         """
 
         :type actor: string
@@ -78,9 +78,11 @@ class Circus(object):
         :param func: function to apply to actor
         :type param: dictionary
         :param param: keyworded arguments of func
+        :type add_info: dict
+        :param add_info:
         :return:
         """
-        self.__actions.append((actor,func,param))
+        self.__actions.append((actor, func, param, add_info))
 
     def add_increment(self,to_increment):
         """
@@ -100,7 +102,19 @@ class Circus(object):
         out_tables = []
         for a in self.__actions:
             out = getattr(self.__actors[a[0]],a[1])(**a[2])
-            out["datetime"] = self.__clock.get_timestamp(len(out.index))
+            for j in a[3]:
+                if j == "timestamp":
+                    if a[3][j]:
+                        out["datetime"] = self.__clock.get_timestamp(len(out.index))
+                if j == "join":
+                    for j_info in a[3][j]:
+                        # entry is then field in out, actor or item name, actor or item field, new name
+                        out_field, obj_to_join, obj_field, new_name = j_info
+                        lj = pd.DataFrame(index=out[out_field])
+                        rj = pd.DataFrame(obj_to_join._table[obj_field],index=obj_to_join._table["ID"])
+                        res = lj.join(rj)
+                        out[new_name] = res[obj_field].values
+
             out_tables.append(out)
 
         for i in self.__incrementors:
