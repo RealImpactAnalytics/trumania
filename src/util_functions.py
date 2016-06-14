@@ -19,12 +19,9 @@ def create_ER_social_network(customer_ids,p,seed):
     :return: all edges in the graph
     """
 
-    ERG = pd.DataFrame.from_records(nx.fast_gnp_random_graph(len(customer_ids), p, seed).edges(),
-                                             columns=["A", "B"])
-
-    custs = dict([(i,customer_ids[i]) for i in range(len(customer_ids))])
-    ERG.replace({"A":custs,"B":custs},inplace=True)
-    return ERG
+    return pd.DataFrame.from_records([(customer_ids[e[0]],customer_ids[e[1]])
+                                     for e in nx.fast_gnp_random_graph(len(customer_ids), p, seed).edges()],
+                                    columns=["A", "B"])
 
 
 def make_random_bipartite_data(group1, group2, p, seed):

@@ -25,7 +25,7 @@ def main():
     print "Parameters"
 
     seed = 123456
-    n_customers = 100
+    n_customers = 10000
     n_iterations = 10
     n_cells = 100
     average_degree = 20
@@ -147,12 +147,12 @@ def main():
     all_cdrs = []
     all_mov = []
     for i in range(n_iterations):
-        print "iteration %s on %s" % (i,n_iterations)
+        print "iteration %s on %s" % (i,n_iterations),
         all_data = flying.one_round()
         # print len(these_cdrs.index), "CDRs generated"
         all_cdrs.append(all_data[0])
         all_mov.append(all_data[1])
-        print '\r'
+        print '\r',
     tf = time.clock()
 
     #all_times = [tp,tc,tg,tig,tcal,tatt,tsna,tsnaatt,tmo, tmoatt,tci,tr,tf]
