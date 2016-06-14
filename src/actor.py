@@ -7,16 +7,19 @@ class Actor(object):
 
     """
 
-    def __init__(self, size, id_start=0):
+    def __init__(self, size, id_start=0, prefix="",max_length=10):
         """
 
         :param size:
         :param id_start:
         :return:
         """
-        IDs = np.arange(id_start, id_start + size)
-        self._table = pd.DataFrame({"ID": IDs, "clock": 0, "activity":1.})
+        ids = [prefix + str(x).zfill(max_length) for x in np.arange(id_start, id_start + size)]
+        self._table = pd.DataFrame({"clock": 0, "activity":1.},index=ids)
         self._transient_attributes = {}
+
+    def get_ids(self):
+        return self._table.index.values
 
     def add_attribute(self, name, generator,weights=None,weight_field=None):
         """Adds a column named "name" to the inner table of the actor, randomly generated from the generator.
@@ -43,10 +46,10 @@ class Actor(object):
         :param activity:
         :return: None
         """
-        transient_attribute = TransientAttribute(self._table["ID"].values)
-        transient_attribute.update(self._table["ID"].values, generator.generate(len(self._table.index)))
+        transient_attribute = TransientAttribute(self._table.index.values)
+        transient_attribute.update(self._table.index.values, generator.generate(len(self._table.index)))
         if activity is not None:
-            transient_attribute.set_activity(self._table["ID"].values, activity)
+            transient_attribute.set_activity(self._table.index.values, activity)
         transient_attribute.init_clock(time_generator)
         self._transient_attributes[name] = transient_attribute
 
@@ -87,9 +90,9 @@ class Actor(object):
         :return:
         """
         act_now = self.who_acts_now()
-        out = pd.DataFrame(columns=["ID", "action"])
+        out = pd.DataFrame(columns=["action"])
         if len(act_now.index) > 0:
-            out["ID"] = act_now["ID"]
+            out.index = act_now.index
             out["action"] = "ping"
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
@@ -124,7 +127,7 @@ class Actor(object):
             raise Exception("No field or attribute named %s" % field)
 
         left = pd.DataFrame(index=ids)
-        right = pd.DataFrame(table_to_join[field_name],index=table_to_join["ID"])
+        right = pd.DataFrame(table_to_join[field_name],index=table_to_join.index)
         res = left.join(right)
         return res[field_name].values
 
@@ -154,8 +157,11 @@ class CallerActor(Actor):
         """
         act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["A", "B"])
+        print "in make calls"
+        print act_now
         if len(act_now.index) > 0:
-            calls = relationship.select_one("A", act_now["ID"].values)
+            calls = relationship.select_one("A", act_now.index.values)
+            print calls
             if len(calls.index) > 0:
                 out = calls[["A","B"]]
 
@@ -174,7 +180,7 @@ class TransientAttribute(object):
         :param ids:
         :return:
         """
-        self._table = pd.DataFrame({"ID": ids, "value": "", "clock": 0, "activity":1.})
+        self._table = pd.DataFrame({ "value": "", "clock": 0, "activity":1.},index=ids)
 
     def update(self, ids_to_update, values):
         """
@@ -183,7 +189,7 @@ class TransientAttribute(object):
         :param ids_to_update:
         :return:
         """
-        self._table.loc[self._table["ID"].isin(ids_to_update).index, "value"] = values
+        self._table.loc[ids_to_update, "value"] = values
 
     def set_activity(self, ids, activity):
         """
@@ -192,7 +198,7 @@ class TransientAttribute(object):
         :param activity:
         :return:
         """
-        self._table.loc[self._table["ID"].isin(ids).index, "activity"] = activity
+        self._table.loc[ids, "activity"] = activity
 
     def init_clock(self,new_time_generator):
         """
@@ -219,9 +225,9 @@ class TransientAttribute(object):
         :return:
         """
         act_now = self.who_acts_now()
-        out = pd.DataFrame(columns=["ID", "new"])
+        out = pd.DataFrame(columns=["new"])
         if len(act_now.index) > 0:
-            out = relationship.select_one(id1,act_now["ID"].values).rename(columns={id1:"ID",id2:"new"})
+            out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"new"})
             if len(out.index) > 0:
                 self._table.loc[act_now.index, "value"] = out["new"].values
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1

@@ -3,13 +3,12 @@
 """
 from datetime import datetime
 import pandas as pd
-import networkx as nx
-from networkx.algorithms import bipartite
 from random_generators import *
 from clock import *
 from actor import *
 from relationship import *
 from circus import *
+from util_functions import *
 
 import time
 
@@ -26,7 +25,7 @@ def main():
     print "Parameters"
 
     seed = 123456
-    n_customers = 10000
+    n_customers = 100
     n_iterations = 10
     n_cells = 100
     average_degree = 20
@@ -90,8 +89,7 @@ def main():
     print "Added atributes"
     tsna = time.clock()
     print "Creating social network"
-    social_network = pd.DataFrame.from_records(nx.fast_gnp_random_graph(n_customers, float(average_degree)/float(n_customers), seed).edges(),
-                                             columns=["A", "B"])
+    social_network = create_ER_social_network(customers.get_ids(), float(average_degree)/float(n_customers), seed)
     tsnaatt = time.clock()
     print "Done"
     network = WeightedRelationship("A", "B", networkchooser)
@@ -102,9 +100,9 @@ def main():
     print "Done SNA"
     tmo = time.clock()
     print "Mobility"
-    mobility_df = pd.DataFrame.from_records(
-        [(e[0], cells[e[1]]) for e in make_random_bipartite_data(n_customers, n_cells, 0.4, seed)],
+    mobility_df = pd.DataFrame.from_records(make_random_bipartite_data(customers.get_ids(), cells, 0.4, seed),
         columns=["A", "CELL"])
+    print mobility_df
     print "Network created"
     tmoatt = time.clock()
     mobility = WeightedRelationship("A", "CELL", mobilitychooser)
@@ -174,30 +172,6 @@ def main():
                  "one run (average)": (tf-tr)/float(n_iterations)}
 
     return (flying, pd.concat(all_cdrs, ignore_index=True),pd.concat(all_mov,ignore_index=True),all_times)
-
-
-def make_random_bipartite_data(n1, n2, p, seed):
-    mobility_network = bipartite.random_graph(n1, n2, 0.4, seed)
-    i1 = 0
-    i2 = 0
-    node_index = {}
-    node_type = {}
-    for n, d in mobility_network.nodes(data=True):
-        if d["bipartite"] == 0:
-            node_index[n] = i1
-            i1 += 1
-        else:
-            node_index[n] = i2
-            i2 += 1
-        node_type[n] = d["bipartite"]
-    edges_for_out = []
-    for e in mobility_network.edges():
-        if node_type[e[0]] == 0:
-            edges_for_out.append((node_index[e[0]], node_index[e[1]]))
-        else:
-
-            edges_for_out.append((node_index[e[1]], node_index[e[2]]))
-    return edges_for_out
 
 
 if __name__ == "__main__":
