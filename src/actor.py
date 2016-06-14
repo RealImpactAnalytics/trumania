@@ -156,14 +156,12 @@ class CallerActor(Actor):
         :return:
         """
         act_now = self.who_acts_now()
-        out = pd.DataFrame(columns=["A", "B"])
-        print "in make calls"
-        print act_now
+        out = pd.DataFrame(columns=["B"])
         if len(act_now.index) > 0:
             calls = relationship.select_one("A", act_now.index.values)
-            print calls
             if len(calls.index) > 0:
-                out = calls[["A","B"]]
+                out = calls[["B"]]
+                out.reset_index(inplace=True)
 
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
@@ -232,6 +230,7 @@ class TransientAttribute(object):
                 self._table.loc[act_now.index, "value"] = out["new"].values
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
+        out.reset_index(inplace=True)
         return out
 
     def update_clock(self, decrease=1):

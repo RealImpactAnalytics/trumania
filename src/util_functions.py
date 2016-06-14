@@ -23,7 +23,7 @@ def create_ER_social_network(customer_ids,p,seed):
                                              columns=["A", "B"])
 
     custs = dict([(i,customer_ids[i]) for i in range(len(customer_ids))])
-    ERG.replace({"A":custs,"B":custs})
+    ERG.replace({"A":custs,"B":custs},inplace=True)
     return ERG
 
 

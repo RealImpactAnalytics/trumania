@@ -47,12 +47,8 @@ class Relationship(object):
         :param keys:
         :return:
         """
-        print "in select one"
-        print keys
 
         small_tab = self._table[self._table[key_column].isin(keys)]
-        print small_tab
-        print small_tab.groupby(key_column).aggregate(self.__chooser.generate)
         return small_tab.groupby(key_column).aggregate(self.__chooser.generate)
 
 
@@ -101,8 +97,9 @@ class WeightedRelationship(object):
             self.__chooser.update_choose_col(self.__r2)
         elif key_column == self.__r2:
             self.__chooser.update_choose_col(self.__r1)
+
         small_tab = self._table[self._table[key_column].isin(keys)]
-        return small_tab.groupby(key_column).aggregate(self.__chooser.generate)
+        return small_tab.groupby(key_column).aggregate(self.__chooser.generate).drop("weight",axis=1)
 
 
 class SimpleMobilityRelationship(WeightedRelationship):

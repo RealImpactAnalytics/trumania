@@ -102,7 +102,6 @@ def main():
     print "Mobility"
     mobility_df = pd.DataFrame.from_records(make_random_bipartite_data(customers.get_ids(), cells, 0.4, seed),
         columns=["A", "CELL"])
-    print mobility_df
     print "Network created"
     tmoatt = time.clock()
     mobility = WeightedRelationship("A", "CELL", mobilitychooser)
