@@ -157,7 +157,7 @@ class CallerActor(Actor):
         if len(act_now.index) > 0:
             calls = relationship.select_one("A", act_now["ID"].values)
             if len(calls.index) > 0:
-                out=calls[["A","B"]]
+                out = calls[["A","B"]]
 
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()

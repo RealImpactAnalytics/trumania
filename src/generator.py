@@ -27,7 +27,10 @@ def main():
 
     seed = 123456
     n_customers = 10000
+    n_iterations = 10
     n_cells = 100
+    average_degree = 20
+
     prof = pd.Series([5., 5., 5., 5., 5., 3., 3.],
                      index=[timedelta(days=x, hours=23, minutes=59, seconds=59) for x in range(7)])
     time_step = 3600
@@ -87,7 +90,7 @@ def main():
     print "Added atributes"
     tsna = time.clock()
     print "Creating social network"
-    social_network = pd.DataFrame.from_records(nx.fast_gnp_random_graph(n_customers, 0.4, seed).edges(),
+    social_network = pd.DataFrame.from_records(nx.fast_gnp_random_graph(n_customers, float(average_degree)/float(n_customers), seed).edges(),
                                              columns=["A", "B"])
     tsnaatt = time.clock()
     print "Done"
@@ -146,8 +149,8 @@ def main():
     print "Start run"
     all_cdrs = []
     all_mov = []
-    for i in range(100):
-        print "iteration %s on %s" % (i,100)
+    for i in range(n_iterations):
+        print "iteration %s on %s" % (i,n_iterations)
         all_data = flying.one_round()
         # print len(these_cdrs.index), "CDRs generated"
         all_cdrs.append(all_data[0])
@@ -155,7 +158,20 @@ def main():
         print '\r'
     tf = time.clock()
 
-    all_times = [tp,tc,tg,tig,tcal,tsna,tsnaatt,tmo, tmoatt,tci,tr,tf]
+    #all_times = [tp,tc,tg,tig,tcal,tatt,tsna,tsnaatt,tmo, tmoatt,tci,tr,tf]
+    all_times = {"parameters":tc-tp,
+                 "clocks":tg-tc,
+                 "generators":tig-tg,
+                 "init generators": tcal-tig,
+                 "callers creation (full)":tmo-tcal,
+                 "caller creation (solo)":tatt-tcal,
+                 "caller attribute creation": tsna-tatt,
+                 "caller SNA graph creation":tsnaatt-tsna,
+                 "mobility graph creation": tmoatt-tmo,
+                 "mobility attribute creation": tci - tmoatt,
+                 "circus creation": tr-tci,
+                 "runs (all)": tf-tr,
+                 "one run (average)": (tf-tr)/float(n_iterations)}
 
     return (flying, pd.concat(all_cdrs, ignore_index=True),pd.concat(all_mov,ignore_index=True),all_times)
 
