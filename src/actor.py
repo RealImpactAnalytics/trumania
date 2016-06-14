@@ -34,15 +34,20 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def add_transient_attribute(self,name,generator):
+    def add_transient_attribute(self, name, generator, time_generator, activity=None):
         """
 
         :param name:
         :param generator:
-        :return:
+        :param time_generator:
+        :param activity:
+        :return: None
         """
         transient_attribute = TransientAttribute(self._table["ID"].values)
-        transient_attribute.update(self._table["ID"].values,generator.generate(len(self._table.index)))
+        transient_attribute.update(self._table["ID"].values, generator.generate(len(self._table.index)))
+        if activity is not None:
+            transient_attribute.set_activity(self._table["ID"].values, activity)
+        transient_attribute.init_clock(time_generator)
         self._transient_attributes[name] = transient_attribute
 
     def who_acts_now(self):
@@ -169,7 +174,7 @@ class TransientAttribute(object):
         :param ids:
         :return:
         """
-        self._table = pd.DataFrame({"ID": ids, "value": np.NaN, "clock": 0})
+        self._table = pd.DataFrame({"ID": ids, "value": "", "clock": 0, "activity":1.})
 
     def update(self, ids_to_update, values):
         """
@@ -178,7 +183,24 @@ class TransientAttribute(object):
         :param ids_to_update:
         :return:
         """
-        self._table[self._table["ID"].isin(ids_to_update)]["value"] = values
+        self._table.loc[self._table["ID"].isin(ids_to_update).index, "value"] = values
+
+    def set_activity(self, ids, activity):
+        """
+
+        :param ids:
+        :param activity:
+        :return:
+        """
+        self._table.loc[self._table["ID"].isin(ids).index, "activity"] = activity
+
+    def init_clock(self,new_time_generator):
+        """
+
+        :param new_time_generator:
+        :return:
+        """
+        self._table["clock"] = new_time_generator.generate(self._table["activity"])
 
     def who_acts_now(self):
         """
@@ -201,6 +223,15 @@ class TransientAttribute(object):
         if len(act_now.index) > 0:
             out = relationship.select_one(id1,act_now["ID"].values).rename(columns={id1:"ID",id2:"new"})
             if len(out.index) > 0:
-                self._table[self._table["ID"].isin(out["ID"].values)]["value"] = out["new"].values
-            self._table[self._table["ID"].isin(out["ID"].values)]["clock"] = new_time_generator.generate(len(act_now.index))
+                self._table.loc[act_now.index, "value"] = out["new"].values
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
+        self.update_clock()
         return out
+
+    def update_clock(self, decrease=1):
+        """
+
+        :param decrease:
+        :return:
+        """
+        self._table["clock"] -= 1

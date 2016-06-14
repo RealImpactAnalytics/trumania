@@ -109,6 +109,8 @@ class TimeProfiler(object):
         :param weights: contains an array of floats
         :return: Pandas Series
         """
+        if sum(np.isnan(self._profile["next_prob"])) > 0:
+            raise Exception("Time profiler is not initialised!")
         p = self._state.rand(len(weights.index))/weights.values
         return pd.Series(self._profile["next_prob"].searchsorted(p),index=weights.index)
 
