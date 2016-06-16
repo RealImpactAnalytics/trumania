@@ -6,7 +6,8 @@ import pandas as pd
 import networkx as nx
 from networkx.algorithms import bipartite
 
-def create_ER_social_network(customer_ids,p,seed):
+
+def create_er_social_network(customer_ids, p, seed):
     """
 
     :type customer_ids: list

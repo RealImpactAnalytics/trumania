@@ -89,7 +89,7 @@ def main():
     print "Added atributes"
     tsna = time.clock()
     print "Creating social network"
-    social_network = create_ER_social_network(customers.get_ids(), float(average_degree)/float(n_customers), seed)
+    social_network = create_er_social_network(customers.get_ids(), float(average_degree) / float(n_customers), seed)
     tsnaatt = time.clock()
     print "Done"
     network = WeightedRelationship("A", "B", networkchooser)
@@ -155,7 +155,6 @@ def main():
         print '\r',
     tf = time.clock()
 
-    #all_times = [tp,tc,tg,tig,tcal,tatt,tsna,tsnaatt,tmo, tmoatt,tci,tr,tf]
     all_times = {"parameters":tc-tp,
                  "clocks":tg-tc,
                  "generators":tig-tg,
@@ -170,7 +169,7 @@ def main():
                  "runs (all)": tf-tr,
                  "one run (average)": (tf-tr)/float(n_iterations)}
 
-    return (flying, pd.concat(all_cdrs, ignore_index=True),pd.concat(all_mov,ignore_index=True),all_times)
+    return flying, pd.concat(all_cdrs, ignore_index=True),pd.concat(all_mov,ignore_index=True),all_times
 
 
 if __name__ == "__main__":

@@ -240,3 +240,77 @@ class TransientAttribute(object):
         :return:
         """
         self._table["clock"] -= 1
+
+
+class TransientStockAttribute(object):
+    """
+
+    """
+    def __init__(self, ids):
+        """
+
+        :param ids:
+        :return:
+        """
+        self._table = pd.DataFrame({ "value": 0, "clock": 0, "activity":1.},index=ids)
+
+    def update(self, ids_to_update, values):
+        """
+
+        :param values:
+        :param ids_to_update:
+        :return:
+        """
+        self._table.loc[ids_to_update, "value"] = values
+
+    def set_activity(self, ids, activity):
+        """
+
+        :param ids:
+        :param activity:
+        :return:
+        """
+        self._table.loc[ids, "activity"] = activity
+
+    def init_clock(self,new_time_generator):
+        """
+
+        :param new_time_generator:
+        :return:
+        """
+        self._table["clock"] = new_time_generator.generate(self._table["activity"])
+
+    def who_acts_now(self):
+        """
+
+        :return:
+        """
+        return self._table[self._table["clock"] == 0]
+
+    def make_actions(self, new_time_generator, relationship, id1, id2):
+        """
+
+        :param new_time_generator:
+        :param relationship:
+        :param id1:
+        :param id2:
+        :return:
+        """
+        act_now = self.who_acts_now()
+        out = pd.DataFrame(columns=["new"])
+        if len(act_now.index) > 0:
+            out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"new"})
+            if len(out.index) > 0:
+                self._table.loc[act_now.index, "value"] = out["new"].values
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
+        self.update_clock()
+        out.reset_index(inplace=True)
+        return out
+
+    def update_clock(self, decrease=1):
+        """
+
+        :param decrease:
+        :return:
+        """
+        self._table["clock"] -= 1
