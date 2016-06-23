@@ -14,8 +14,8 @@ class Item(object):
         :param id_start:
         :return:
         """
-        IDs = np.arange(id_start, id_start + size)
-        self._table = pd.DataFrame({"ID": IDs})
+        ids = np.arange(id_start, id_start + size)
+        self._table = pd.DataFrame(index = ids)
 
     def add_attribute(self, name, generator):
         """Adds a column named "name" to the inner table of the item, randomly generated from the generator.
@@ -25,6 +25,9 @@ class Item(object):
         :return: none
         """
         self._table[name] = generator.generate(len(self._table.index))
+
+    def check_condition(self,ids,f,param):
+        raise Exception("Not yet supported")
 
     def __repr__(self):
         return self._table
