@@ -97,7 +97,6 @@ class Actor(object):
         """
         act_now = self.who_acts_now()
 
-        data = action.get_field_data(act_now.index.values)
         if len(act_now.index) > 0:
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
@@ -165,6 +164,9 @@ class Actor(object):
         if condition == "==":
             return table[field] == threshold
         raise Exception("Unknown condition : %s" % condition)
+
+    def set_clock(self,ids,values):
+        self._table.loc[ids, "clock"] = values
 
     def __repr__(self):
         return self._table
