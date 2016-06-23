@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 
-class Action(object):
-    def __init__(self,name,actor):
+class ActorAction(object):
+    def __init__(self,name,actor,time_generator):
         self.name = name
         self.main_actor = actor
+        self.time_generator = time_generator
         self.secondary_actors = {}
         self.relationships = {}
         self.items = {}
@@ -82,4 +83,18 @@ class Action(object):
         passed = self.check_conditions(fields)
         fields["PASS_CONDITIONS"] = 0
         fields.loc[passed,"PASS_CONDITIONS"] = 1
+
+        self.main_actor.set_clock(act_now.index, self.time_generator.generate(act_now["activity"])+1)
+        self.main_actor.update_clock()
+
         return fields
+
+class AttributeAction(object):
+    def __init__(self,name,actor,field,parameters):
+        self.name = name
+        self.actor = actor
+        self.field = field
+        self.parameters = parameters
+
+    def execute(self):
+        return self.actor.make_attribute_action(self.field,self.parameters)
