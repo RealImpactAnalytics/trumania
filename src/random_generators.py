@@ -120,6 +120,66 @@ class GenericGenerator(object):
         return self.__name
 
 
+class TriggerGenerator(object):
+    """A trigger generator takes some parameters and returns a vector of 1's and 0's, depending if the trigger
+    has been released or not
+
+    """
+
+    def __init__(self, name, gen_type, parameters, seed=None):
+        """Initialise a trigger generator
+
+        :param name: string, the name (is this useful?)
+        :param gen_type: string:
+            - "choice"
+        :param parameters: dict, see descriptions below
+        :param seed: int, seed of the generator
+        :return: create a random number generator of type "gen_type", with its parameters and seeded.
+        """
+        self.__name = name
+
+        self.__state = RandomState(seed)
+        self.__gen = self.__state.rand
+
+        if gen_type == "logistic":
+            def logistic(x, a, b):
+                """returns the value of the logistic function 1/(1+e^-(ax+b))
+                """
+                the_exp = np.minimum(-(a*x+b),10.)
+                return 1./(1.+np.exp(the_exp))
+
+            self.__function = logistic
+            self.__parameters = {"a":-0.01,
+                                 "b":10.}
+
+    def generate(self, x, parameters = None):
+        """
+
+        :type x: Pandas Series
+        :param x:
+        :type parameters: dict
+        :param parameters: keys correspond to parameter values required by the function, values are either floats or
+        Pandas Series of the same length as x
+        :return:
+        """
+        params = self.__parameters
+        params["x"] = x
+        if parameters is not None:
+            params.update(parameters)
+
+        probs = self.__gen(len(x.index))
+
+        return probs < self.__function(**params)
+
+    def get_name(self):
+        """
+
+        :return: string, the name of the generator
+        """
+        return self.__name
+
+
+
 class MSISDNGenerator(object):
     """
 
