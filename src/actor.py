@@ -37,16 +37,22 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def add_transient_attribute(self, name, generator, time_generator, activity=None):
+    def add_transient_attribute(self, name, att_type, generator, time_generator, activity=None):
         """
 
         :param name:
+        :param att_type:
         :param generator:
         :param time_generator:
         :param activity:
         :return: None
         """
-        transient_attribute = TransientAttribute(self._table.index.values)
+        if att_type == "choice":
+            transient_attribute = ChoiceAttribute(self._table.index.values)
+        elif att_type == "stock":
+            transient_attribute = StockAttribute(self._table.index.values)
+        else:
+            raise Exception("unknown type: %s" % att_type)
         transient_attribute.update(self._table.index.values, generator.generate(len(self._table.index)))
         if activity is not None:
             transient_attribute.set_activity(self._table.index.values, activity)
@@ -83,17 +89,16 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def make_actions(self, new_time_generator):
+    def make_actions(self, new_time_generator, action):
         """
 
         :param new_time_generator:
         :return:
         """
         act_now = self.who_acts_now()
-        out = pd.DataFrame(columns=["action"])
+
+        data = action.get_field_data(act_now.index.values)
         if len(act_now.index) > 0:
-            out.index = act_now.index
-            out["action"] = "ping"
             self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
         self.update_clock()
         return out
@@ -130,6 +135,36 @@ class Actor(object):
         right = pd.DataFrame(table_to_join[field_name],index=table_to_join.index)
         res = left.join(right)
         return res[field_name].values
+
+    def check_attributes(self,ids,field,condition,threshold):
+        """
+
+        :param ids:
+        :param field:
+        :param condition:
+        :param threshold:
+        :return:
+        """
+        if field in self._table.columns.values:
+            table = self._table.loc[ids]
+            field_name = field
+        elif field in self._transient_attributes.keys():
+            table = self._transient_attributes[field]._table.loc[ids]
+            field_name = "value"
+        else:
+            raise Exception("No field or attribute named %s" % field)
+
+        if condition == ">":
+            return table[field] > threshold
+        if condition ==  ">=":
+            return table[field] >= threshold
+        if condition == "<":
+            return table[field] < threshold
+        if condition == "<=":
+            return table[field] <= threshold
+        if condition == "==":
+            return table[field] == threshold
+        raise Exception("Unknown condition : %s" % condition)
 
     def __repr__(self):
         return self._table
@@ -213,79 +248,19 @@ class TransientAttribute(object):
         """
         return self._table[self._table["clock"] == 0]
 
-    def make_actions(self, new_time_generator, relationship, id1, id2):
-        """
-
-        :param new_time_generator:
-        :param relationship:
-        :param id1:
-        :param id2:
-        :return:
-        """
-        act_now = self.who_acts_now()
-        out = pd.DataFrame(columns=["new"])
-        if len(act_now.index) > 0:
-            out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"new"})
-            if len(out.index) > 0:
-                self._table.loc[act_now.index, "value"] = out["new"].values
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
-        self.update_clock()
-        out.reset_index(inplace=True)
-        return out
-
     def update_clock(self, decrease=1):
         """
 
         :param decrease:
         :return:
         """
-        self._table["clock"] -= 1
+        self._table["clock"] -= decrease
 
 
-class TransientStockAttribute(object):
+class ChoiceAttribute(TransientAttribute):
     """
 
     """
-    def __init__(self, ids):
-        """
-
-        :param ids:
-        :return:
-        """
-        self._table = pd.DataFrame({ "value": 0, "clock": 0, "activity":1.},index=ids)
-
-    def update(self, ids_to_update, values):
-        """
-
-        :param values:
-        :param ids_to_update:
-        :return:
-        """
-        self._table.loc[ids_to_update, "value"] = values
-
-    def set_activity(self, ids, activity):
-        """
-
-        :param ids:
-        :param activity:
-        :return:
-        """
-        self._table.loc[ids, "activity"] = activity
-
-    def init_clock(self,new_time_generator):
-        """
-
-        :param new_time_generator:
-        :return:
-        """
-        self._table["clock"] = new_time_generator.generate(self._table["activity"])
-
-    def who_acts_now(self):
-        """
-
-        :return:
-        """
-        return self._table[self._table["clock"] == 0]
 
     def make_actions(self, new_time_generator, relationship, id1, id2):
         """
@@ -307,10 +282,60 @@ class TransientStockAttribute(object):
         out.reset_index(inplace=True)
         return out
 
-    def update_clock(self, decrease=1):
+
+class StockAttribute(TransientAttribute):
+    """
+
+    """
+
+    def __init__(self, ids, trigger_generator):
         """
 
-        :param decrease:
+        :param ids:
+        :param trigger_generator: Random Generator that returns 1 or 0 depending on 1 value (stock, and parameters)
+        Usually  a check vs a logistic regression
         :return:
         """
-        self._table["clock"] -= 1
+        TransientAttribute.__init__(self, ids)
+        self._table["value"] = pd.Series(0, index=self._table.index, dtype=int)
+        self._trigger = trigger_generator
+
+    def decrease_stock(self, values, new_time_generator):
+        """
+
+        :param ids:
+        :param values: Pandas Series
+        :param new_time_generator:
+        :return:
+        """
+        self._table.loc[values.index,"value"] -= values.values
+
+        triggers = self._trigger.generate(self._table.loc[values.index,"value"])
+        small_table = self._table.loc[values.index]
+        act_now = small_table[triggers]
+        if len(act_now.index)>0:
+            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(pd.Series(1,act_now.index))+1
+        self.update_clock()
+
+    def make_actions(self):
+        """
+
+        :param new_time_generator:
+        :param relationship:
+        :param id1:
+        :param id2:
+        :return:
+        """
+        act_now = self.who_acts_now()
+        out = pd.DataFrame(columns=["new"])
+        # TODO: make topup or something else (depends on what's the output)
+        #if len(act_now.index) > 0:
+        #    out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"new"})
+        #    if len(out.index) > 0:
+        #        self._table.loc[act_now.index, "value"] = out["new"].values
+        #    self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
+        #self.update_clock()
+        #out.reset_index(inplace=True)
+        return out
+
+# TODO LabeledStockAttribute, where it is linked to a relationship table actor-itemID
