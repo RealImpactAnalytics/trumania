@@ -88,15 +88,11 @@ class Circus(object):
 
         self.__generators[name] = gen
 
-    def add_action(self, actor, func, param, add_info):
+    def add_action(self, action, add_info):
         """Add an action to perform
 
-        :type actor: string
-        :param actor: name of an actor object
-        :type func: function that applies to actor
-        :param func: function to apply to actor
-        :type param: dictionary
-        :param param: keyworded arguments of func
+        :type action: Action
+        :param action: the action to execute
         :type add_info: dict
         :param add_info: dictionary of additional fields to complete for the action logs
         Currently, the dictionary can have 2 entries:
@@ -107,7 +103,7 @@ class Circus(object):
                                         "field name in output table")]
         :return:
         """
-        self.__actions.append((actor, func, param, add_info))
+        self.__actions.append((action, add_info))
 
     def add_increment(self, to_increment):
         """Add an object to be incremented at each step (such as a TimeProfiler)
@@ -125,13 +121,14 @@ class Circus(object):
         """
         out_tables = []
         for a in self.__actions:
-            out = getattr(self.__actors[a[0]], a[1])(**a[2])
-            for j in a[3]:
+            #out = getattr(self.__actors[a[0]], a[1])(**a[2])
+            out = a[0].execute()
+            for j in a[1]:
                 if j == "timestamp":
-                    if a[3][j]:
+                    if a[1][j]:
                         out["datetime"] = self.__clock.get_timestamp(len(out.index))
                 if j == "join":
-                    for j_info in a[3][j]:
+                    for j_info in a[1][j]:
                         # entry is then field in out, actor or item name, actor or item field, new name
                         out_field, obj_to_join, obj_field, new_name = j_info
                         out[new_name] = obj_to_join.get_join(obj_field, out[out_field])
