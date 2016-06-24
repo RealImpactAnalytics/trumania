@@ -10,6 +10,7 @@ from relationship import *
 from circus import *
 from util_functions import *
 from action import *
+from product import *
 
 import time
 
@@ -201,7 +202,11 @@ def main():
 
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
 
+    products = ["VOICE","SMS"]
+
     print "Done"
+
+
     ######################################
     # Define clocks
     ######################################
@@ -209,6 +214,8 @@ def main():
     print "Clock"
     the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
     print "Done"
+
+
     ######################################
     # Define generators
     ######################################
@@ -226,7 +233,14 @@ def main():
     mobilityweightgenerator = GenericGenerator("mobility-weight", "exponential", {"scale": 1.})
 
     init_mobility_generator = GenericGenerator("init-mobility", "choice", {"a": cells})
+
+    SMS_price_generator = GenericGenerator("SMS-price","constant",{"a":10.})
+    voice_duration_generator = GenericGenerator("voice-duration","exponential",{},seed)
+    voice_price_generator = ValueGenerator("voice-price",1)
+    productchooser = WeightedChooserAggregator("PRODUCT", "weight", seed)
     print "Done"
+
+
     ######################################
     # Initialise generators
     ######################################
@@ -235,6 +249,8 @@ def main():
     timegen.initialise(the_clock)
     mobilitytimegen.initialise(the_clock)
     print "Done"
+
+
     ######################################
     # Define Actors, Relationships, ...
     ######################################
@@ -271,6 +287,14 @@ def main():
 
     customers.add_transient_attribute("CELL", "choice", init_mobility_generator, mobilitytimegen)
     print "Done all customers"
+
+    voice = VoiceProduct(voice_duration_generator,voice_price_generator)
+    sms = SMSProduct(SMS_price_generator)
+
+    product_df = assign_random_proportions("A","PRODUCT",customers.get_ids(),products,seed)
+    product_rel = ProductRelationship("A","PRODUCT",productchooser,{"VOICE":voice,"SMS":sms})
+    product_rel.add_relation("A",product_df["A"],"PRODUCT",product_df["PRODUCT"],product_df["weight"])
+
     ######################################
     # Create circus
     ######################################
@@ -284,7 +308,9 @@ def main():
 
     calls = ActorAction("calls",customers,timegen)
     calls.add_relationship("network",network)
+    calls.add_relationship("product",product_rel)
     calls.add_field("B","network",{"key":"A"})
+    calls.add_field("PRODUCT","product",{"key":"A"})
 
     mobility = AttributeAction("mobility",customers,"CELL",{"new_time_generator": mobilitytimegen,
                                                        "relationship": mobility,
@@ -299,24 +325,11 @@ def main():
 
     flying.add_action(mobility,{"timestamp":True})
 
-    #flying.add_action("customers",
-    #                  "make_calls",
-    #                  {"new_time_generator": timegen, "relationship": network},
-    #                  {"timestamp": True,
-    #                   "join": [("A", customers, "MSISDN", "A_NUMBER"),
-    #                            ("B", customers, "MSISDN", "B_NUMBER"),
-    #                            ("A", customers, "CELL", "CELL_A"),
-    #                            ("B", customers, "CELL", "CELL_B"),]})
-    #flying.add_action("customers",
-    #                  "make_attribute_action",
-    #                  {"attr_name": "CELL", "params": {"new_time_generator": mobilitytimegen,
-    #                                                   "relationship": mobility,
-    #                                                   "id1": "A",
-    #                                                   "id2": "CELL"}},
-    #                  {"timestamp": True})
 
     flying.add_increment(timegen)
     print "Done"
+
+
     ######################################
     # Run
     ######################################

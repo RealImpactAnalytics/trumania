@@ -2,6 +2,7 @@
 
 """
 
+from numpy.random import RandomState
 import pandas as pd
 import networkx as nx
 from networkx.algorithms import bipartite
@@ -59,3 +60,13 @@ def make_random_bipartite_data(group1, group2, p, seed):
         else:
             edges_for_out.append((group2[node_index[e[1]]], group1[node_index[e[0]]]))
     return edges_for_out
+
+def assign_random_proportions(name1,name2,group1,group2,seed):
+
+    state = RandomState(seed)
+    assignments = state.rand(len(group1),len(group2))
+    assignments = assignments/assignments.sum(axis=1,keepdims=True)
+    data = pd.DataFrame(assignments,index=group1,columns=group2).stack().reset_index(level=[0,1])
+    data.rename(columns={"level_0":name1,"level_1":name2,0:"weight"},inplace=True)
+    return data
+

@@ -78,6 +78,10 @@ class GenericGenerator(object):
 
         self.__state = RandomState(seed)
 
+        if gen_type == "constant":
+            self.__gen = self.__state.choice
+            self.__parameters = {"a": [parameters.get("a",1.),]}
+
         if gen_type == "choice":
             self.__gen = self.__state.choice
             self.__parameters = {"a": parameters.get("a", 10),
@@ -230,3 +234,28 @@ class MSISDNGenerator(object):
         self.__available = np.delete(self.__available, generated_entries, axis=0)
 
         return msisdns
+
+
+class ValueGenerator(object):
+    """
+
+    """
+    def __init__(self, name, price_per_second):
+        """
+
+        :type name: str
+        :param name: name of the generator (for eventual reference)
+        :type price_per_second: int
+        :param price_per_second: the price of a call, per second, in units
+        :return:
+        """
+        self.__name = name
+        self.__price = price_per_second
+
+    def generate(self,duration):
+        """
+
+        :param duration: pd.Series
+        :return:
+        """
+        return duration*self.__price

@@ -48,7 +48,7 @@ class ActorAction(object):
         :return: all fields produced by the activity
         """
         f_data = []
-
+        #TODO there's something weird here: if only 1 field is returned, we would maybe like to have f to be the name of the field
         for f in self.base_fields:
             rel_name = self.base_fields[f][0]
             rel_parameters = self.base_fields[f][1]

@@ -91,7 +91,7 @@ class WeightedRelationship(object):
 
         :param key_column:
         :param keys:
-        :return:
+        :return: Pandas Series, index are the ones from keys
         """
         if key_column == self.__r1:
             self.__chooser.update_choose_col(self.__r2)
@@ -101,6 +101,33 @@ class WeightedRelationship(object):
         small_tab = self._table[self._table[key_column].isin(keys)]
         return small_tab.groupby(key_column).aggregate(self.__chooser.generate).drop("weight",axis=1)
 
+
+class ProductRelationship(WeightedRelationship):
+    """
+
+    """
+
+    def __init__(self, r1, r2, chooser, products):
+        """
+
+        :param r1:
+        :param r2:
+        :param chooser:
+        :param products:
+        :return:
+        """
+        WeightedRelationship.__init__(self, r1, r2, chooser)
+        self._products = products
+
+    def select_one(self, key_column, keys):
+        choices = WeightedRelationship.select_one(self,key_column,keys)
+        data_for_out = choices.copy()
+        for p in choices.iloc[:,0].unique():
+            this_p_index = choices[choices==p].index
+            p_data = self._products[p].generate(len(this_p_index))
+            for pdf in p_data.columns.values:
+                data_for_out.loc[this_p_index,pdf] = p_data.loc[:,pdf].values
+        return data_for_out
 
 class SimpleMobilityRelationship(WeightedRelationship):
     """
@@ -115,7 +142,6 @@ class HWRMobilityRelationship(WeightedRelationship):
     """
 
     """
-    #TODO: create a clock instance. Something.
     def __init__(self,r1,r2,chooser,time_f):
         """
 
