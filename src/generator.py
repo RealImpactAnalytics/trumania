@@ -187,7 +187,7 @@ def main():
     print "Parameters"
 
     seed = 123456
-    n_customers = 10000
+    n_customers = 100
     n_iterations = 10
     n_cells = 100
     average_degree = 20

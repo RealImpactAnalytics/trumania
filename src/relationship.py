@@ -122,7 +122,8 @@ class ProductRelationship(WeightedRelationship):
     def select_one(self, key_column, keys):
         choices = WeightedRelationship.select_one(self,key_column,keys)
         data_for_out = choices.copy()
-        for p in choices.iloc[:,0].unique():
+        choices = choices.iloc[:,0]
+        for p in choices.unique():
             this_p_index = choices[choices==p].index
             p_data = self._products[p].generate(len(this_p_index))
             for pdf in p_data.columns.values:
