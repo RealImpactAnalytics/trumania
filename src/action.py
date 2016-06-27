@@ -24,6 +24,9 @@ class ActorAction(object):
     def add_item(self,name,item):
         self.items[name] = item
 
+    def add_impact(self,name,attribute,function,parameters):
+        self.impacts[name] = (attribute,function,parameters)
+
     def add_field(self,name,relationship,params=None):
         """
 
@@ -59,7 +62,7 @@ class ActorAction(object):
 
         return all_fields
 
-    def check_conditions(self,data):
+    def check_conditions(self, data):
         valid_ids = data.index
 
         for c in self.value_conditions.keys():
@@ -77,12 +80,20 @@ class ActorAction(object):
 
         return valid_ids
 
+    def make_impacts(self, data):
+        for k in self.impacts.keys():
+            if self.impacts[k][1] == "decrease_stock":
+                params = {"values":pd.Series(data[self.impacts[k][2]].values,index=data["A"].values)}
+                self.main_actor.apply_to_attribute(self.impacts[k][0],self.impacts[k][1],params)
+
     def execute(self):
         act_now = self.main_actor.who_acts_now()
         fields = self.get_field_data(act_now.index.values)
         passed = self.check_conditions(fields)
         fields["PASS_CONDITIONS"] = 0
         fields.loc[passed,"PASS_CONDITIONS"] = 1
+
+        self.make_impacts(fields)
 
         self.main_actor.set_clock(act_now.index, self.time_generator.generate(act_now["activity"])+1)
         self.main_actor.update_clock()

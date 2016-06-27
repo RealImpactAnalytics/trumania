@@ -123,15 +123,16 @@ class Circus(object):
         for a in self.__actions:
             #out = getattr(self.__actors[a[0]], a[1])(**a[2])
             out = a[0].execute()
-            for j in a[1]:
-                if j == "timestamp":
-                    if a[1][j]:
-                        out["datetime"] = self.__clock.get_timestamp(len(out.index))
-                if j == "join":
-                    for j_info in a[1][j]:
-                        # entry is then field in out, actor or item name, actor or item field, new name
-                        out_field, obj_to_join, obj_field, new_name = j_info
-                        out[new_name] = obj_to_join.get_join(obj_field, out[out_field])
+            if len(out.index)>0:
+                for j in a[1]:
+                    if j == "timestamp":
+                        if a[1][j]:
+                            out["datetime"] = self.__clock.get_timestamp(len(out.index))
+                    if j == "join":
+                        for j_info in a[1][j]:
+                            # entry is then field in out, actor or item name, actor or item field, new name
+                            out_field, obj_to_join, obj_field, new_name = j_info
+                            out[new_name] = obj_to_join.get_join(obj_field, out[out_field])
 
             out_tables.append(out)
 

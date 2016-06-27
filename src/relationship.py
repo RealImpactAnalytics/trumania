@@ -130,6 +130,30 @@ class ProductRelationship(WeightedRelationship):
                 data_for_out.loc[this_p_index,pdf] = p_data.loc[:,pdf].values
         return data_for_out
 
+
+class AgentRelationship(WeightedRelationship):
+    """
+
+    """
+    def __init__(self,r1,r2,chooser,agents=None):
+        """
+
+        :param r1:
+        :param r2:
+        :param chooser:
+        :param agents:
+        :return:
+        """
+        WeightedRelationship.__init__(self,r1,r2,chooser)
+        self._agents = agents
+
+    def select_one(self, key_column, keys):
+        choices = WeightedRelationship.select_one(self,key_column,keys)
+        choices["value"] = 100
+
+        return choices
+
+
 class SimpleMobilityRelationship(WeightedRelationship):
     """
 

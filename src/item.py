@@ -32,3 +32,26 @@ class Item(object):
     def __repr__(self):
         return self._table
 
+
+class CellItem(Item):
+    def __init__(self, size, id_start, status_gen):
+        """
+
+        :param size:
+        :param id_start:
+        :param status_gen:
+        :return:
+        """
+        Item.__init__(self,size,id_start)
+        self.add_attribute("STATUS", status_gen)
+
+    def is_on(self,ids):
+        """
+
+        :param ids:
+        :return:
+        """
+        return self._table.loc[ids,"STATUS"] == 1
+
+    def update_status(self):
+        pass

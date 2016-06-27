@@ -37,7 +37,7 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def add_transient_attribute(self, name, att_type, generator, time_generator, activity=None):
+    def add_transient_attribute(self, name, att_type, generator, time_generator=None, activity=None,params=None):
         """
 
         :param name:
@@ -50,13 +50,18 @@ class Actor(object):
         if att_type == "choice":
             transient_attribute = ChoiceAttribute(self._table.index.values)
         elif att_type == "stock":
-            transient_attribute = StockAttribute(self._table.index.values)
+            transient_attribute = StockAttribute(self._table.index.values,params["trigger_generator"])
         else:
             raise Exception("unknown type: %s" % att_type)
+
         transient_attribute.update(self._table.index.values, generator.generate(len(self._table.index)))
+
         if activity is not None:
             transient_attribute.set_activity(self._table.index.values, activity)
-        transient_attribute.init_clock(time_generator)
+
+        if time_generator is not None:
+            transient_attribute.init_clock(time_generator)
+
         self._transient_attributes[name] = transient_attribute
 
     def who_acts_now(self):
@@ -111,6 +116,12 @@ class Actor(object):
         """
         if self._transient_attributes.has_key(attr_name):
             return self._transient_attributes[attr_name].make_actions(**params)
+        else:
+            raise Exception("No transient attribute named %s" % attr_name)
+
+    def apply_to_attribute(self,attr_name,function,params):
+        if self._transient_attributes.has_key(attr_name):
+            getattr(self._transient_attributes[attr_name], function)(**params)
         else:
             raise Exception("No transient attribute named %s" % attr_name)
 
@@ -302,10 +313,17 @@ class StockAttribute(TransientAttribute):
         self._table["value"] = pd.Series(0, index=self._table.index, dtype=int)
         self._trigger = trigger_generator
 
-    def decrease_stock(self, values, new_time_generator):
+    def init_clock(self,new_time_generator):
         """
 
-        :param ids:
+        :param new_time_generator:
+        :return:
+        """
+        self._table["clock"] = new_time_generator.generate(len(self._table.index))
+
+    def decrease_stock(self, values):
+        """
+
         :param values: Pandas Series
         :param new_time_generator:
         :return:
@@ -316,28 +334,26 @@ class StockAttribute(TransientAttribute):
         small_table = self._table.loc[values.index]
         act_now = small_table[triggers]
         if len(act_now.index)>0:
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(pd.Series(1,act_now.index))+1
-        self.update_clock()
+            self._table.loc[act_now.index, "clock"] = 1
 
-    def make_actions(self):
+    def make_actions(self,relationship,id1,id2,id3):
         """
 
-        :param new_time_generator:
-        :param relationship:
-        :param id1:
-        :param id2:
+        :param relationship: AgentRelationship
+        :param id1: id of customer
+        :param id2: id of Agent
+        :param id3: id of Value
         :return:
         """
         act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["new"])
-        # TODO: make topup or something else (depends on what's the output)
-        #if len(act_now.index) > 0:
-        #    out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"new"})
-        #    if len(out.index) > 0:
-        #        self._table.loc[act_now.index, "value"] = out["new"].values
-        #    self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
-        #self.update_clock()
-        #out.reset_index(inplace=True)
+        if len(act_now.index) > 0:
+            out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"AGENT",id3:"VALUE"})
+            if len(out.index) > 0:
+                self._table.loc[out.index,"value"] += out["VALUE"]
+
+        out.reset_index(inplace=True)
+        self.update_clock()
         return out
 
 # TODO LabeledStockAttribute, where it is linked to a relationship table actor-itemID
