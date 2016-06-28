@@ -80,11 +80,11 @@ def main():
     init_mobility_generator = GenericGenerator("init-mobility", "choice", {"a": cells})
 
     SMS_price_generator = GenericGenerator("SMS-price","constant",{"a":10.})
-    voice_duration_generator = GenericGenerator("voice-duration","exponential",{},seed)
+    voice_duration_generator = GenericGenerator("voice-duration","choice",{"a":range(20,240)},seed)
     voice_price_generator = ValueGenerator("voice-price",1)
     productchooser = WeightedChooserAggregator("PRODUCT", "weight", seed)
 
-    recharge_init = GenericGenerator("recharge init","constant",{"a":5})
+    recharge_init = GenericGenerator("recharge init","constant",{"a":1000.})
     recharge_trigger = TriggerGenerator("Topup","logistic",{},seed)
     recharge_time_init = GenericGenerator("recharge_init","constant",{"a":-1})
     print "Done"

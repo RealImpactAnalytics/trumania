@@ -149,7 +149,7 @@ class AgentRelationship(WeightedRelationship):
 
     def select_one(self, key_column, keys):
         choices = WeightedRelationship.select_one(self,key_column,keys)
-        choices["value"] = 100
+        choices["value"] = 1000
 
         return choices
 

@@ -172,8 +172,10 @@ class TriggerGenerator(object):
             params.update(parameters)
 
         probs = self.__gen(len(x.index))
+        trigger = self.__function(**params)
+        triggered = probs < trigger
 
-        return probs < self.__function(**params)
+        return triggered
 
     def get_name(self):
         """

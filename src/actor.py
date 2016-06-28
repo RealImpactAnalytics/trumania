@@ -334,7 +334,7 @@ class StockAttribute(TransientAttribute):
         small_table = self._table.loc[values.index]
         act_now = small_table[triggers]
         if len(act_now.index)>0:
-            self._table.loc[act_now.index, "clock"] = 1
+            self._table.loc[act_now.index, "clock"] = 0
 
     def make_actions(self,relationship,id1,id2,id3):
         """
