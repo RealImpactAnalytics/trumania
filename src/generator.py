@@ -170,7 +170,7 @@ def main():
     calls.add_relationship("product",product_rel)
     calls.add_field("B","network",{"key":"A"})
     calls.add_field("PRODUCT","product",{"key":"A"})
-    calls.add_impact("value decrease","MAIN_ACCT","decrease_stock","VALUE")
+    calls.add_impact("value decrease","MAIN_ACCT","decrease_stock",{"value":"VALUE","key":"A"})
 
     topup = AttributeAction("topup",customers,"MAIN_ACCT",{"relationship":agent_rel,"id1":"A","id2":"AGENT","id3":"value"})
 

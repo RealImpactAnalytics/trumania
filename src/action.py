@@ -25,6 +25,14 @@ class ActorAction(object):
         self.items[name] = item
 
     def add_impact(self,name,attribute,function,parameters):
+        """
+
+        :param name:
+        :param attribute:
+        :param function:
+        :param parameters:
+        :return:
+        """
         self.impacts[name] = (attribute,function,parameters)
 
     def add_field(self,name,relationship,params=None):
@@ -83,7 +91,7 @@ class ActorAction(object):
     def make_impacts(self, data):
         for k in self.impacts.keys():
             if self.impacts[k][1] == "decrease_stock":
-                params = {"values":pd.Series(data[self.impacts[k][2]].values,index=data["A"].values)}
+                params = {"values":pd.Series(data[self.impacts[k][2]["value"]].values,index=data[self.impacts[k][2]["key"]].values)}
                 self.main_actor.apply_to_attribute(self.impacts[k][0],self.impacts[k][1],params)
 
     def execute(self):
