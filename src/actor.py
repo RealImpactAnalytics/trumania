@@ -183,39 +183,6 @@ class Actor(object):
         return self._table
 
 
-class CallerActor(Actor):
-    """
-    A CallerActor is an actor that makes calls
-    """
-    def __init__(self, size, id_start=0):
-        """
-
-        :param size:
-        :param id_start:
-        :return:
-        """
-        Actor.__init__(self, size, id_start)
-
-    def make_calls(self, new_time_generator, relationship):
-        """
-
-        :param relationship:
-        :param new_time_generator:
-        :return:
-        """
-        act_now = self.who_acts_now()
-        out = pd.DataFrame(columns=["B"])
-        if len(act_now.index) > 0:
-            calls = relationship.select_one("A", act_now.index.values)
-            if len(calls.index) > 0:
-                out = calls[["B"]]
-                out.reset_index(inplace=True)
-
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
-        self.update_clock()
-        return out
-
-
 class TransientAttribute(object):
     """
 

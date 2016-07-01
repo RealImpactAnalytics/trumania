@@ -27,7 +27,7 @@ def main():
     print "Parameters"
 
     seed = 123456
-    n_customers = 100
+    n_customers = 1000
     n_iterations = 10
     n_cells = 100
     n_agents = 100
@@ -105,7 +105,7 @@ def main():
     ######################################
     tcal = time.clock()
     print "Create callers"
-    customers = CallerActor(n_customers)
+    customers = Actor(n_customers)
     print "Done"
     tatt = time.clock()
     customers.add_attribute("MSISDN", msisdn_gen)
