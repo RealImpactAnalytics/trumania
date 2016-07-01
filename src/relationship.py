@@ -67,6 +67,10 @@ class Relationship(object):
         del self._table.loc[lines.index]
         return choices
 
+    def remove(self,key_column,keys,value_colum,values):
+        lines = self._table[self._table[key_column].isin(keys) & self._table[value_colum].isin(values)]
+        del self._table.loc[lines.index]
+
 
 class WeightedRelationship(object):
     """

@@ -147,15 +147,15 @@ class LabeledStockAttribute(TransientAttribute):
     """Transient Attribute where users own some stock of labeled items
 
     """
-    def  __init__(self, ids,chooser):
+    def  __init__(self, ids,relationship):
         """
 
         :param ids:
-        :param chooser:
+        :param relationship: Relationship object. Needs to have an "AGENT" and an "ITEM" field. No weights.
         :return:
         """
         TransientAttribute.__init__(self,ids)
-        self.__stock = Relationship("AGENT","ITEM",chooser)
+        self.__stock = relationship
 
         self.update(ids,0)
 
@@ -169,11 +169,22 @@ class LabeledStockAttribute(TransientAttribute):
         self._table.loc[items.index,"value"] -= 1
         return items
 
-    def add_item(self,ids,values):
+    def add_item(self,ids,items):
         """
 
         :param ids:
         :param values:
         :return:
         """
-        self.__stock.add_relation("AGENT",ids,"ITEM",values)
+        self.__stock.add_relation("AGENT",ids,"ITEM",items)
+        cpt = ids.value_counts()
+        self._table.loc[cpt.index,"value"] += cpt.values
+
+    def remove_item(self,ids,items):
+        """
+
+        :param ids:
+        :param items:
+        :return:
+        """
+        self.__stock.remove("AGENT",ids,"ITEM",items)

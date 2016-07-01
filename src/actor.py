@@ -93,19 +93,6 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def make_actions(self, new_time_generator, action):
-        """
-
-        :param new_time_generator:
-        :return:
-        """
-        act_now = self.who_acts_now()
-
-        if len(act_now.index) > 0:
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
-        self.update_clock()
-        return out
-
     def make_attribute_action(self,attr_name,params):
         """
 
