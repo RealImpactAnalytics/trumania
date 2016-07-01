@@ -51,6 +51,22 @@ class Relationship(object):
         small_tab = self._table[self._table[key_column].isin(keys)]
         return small_tab.groupby(key_column).aggregate(self.__chooser.generate)
 
+    def pop_one(self,key_column,keys):
+        """
+        Same as select_one, but the chosen rows are deleted
+        :param key_columnn:
+        :param keys:
+        :return:
+        """
+        choices = self.select_one(key_column,keys)
+        non_key = self._table.columns.values[0]
+        if non_key == key_column:
+            non_key = self._table.columns.values[1]
+
+        lines = self._table[self._table[key_column].isin(choices.index.values) & self._table[non_key].isin(choices[non_key].values)]
+        del self._table.loc[lines.index]
+        return choices
+
 
 class WeightedRelationship(object):
     """
