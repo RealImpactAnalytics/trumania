@@ -17,7 +17,7 @@ import time
 # SIMs: has ID
 # AgentA buys stock to AgentB
 
-def snd_gen():
+def generate():
     """
 
     :rtype: tuple

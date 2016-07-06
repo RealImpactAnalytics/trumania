@@ -12,7 +12,7 @@ from src.product import *
 import time
 
 
-def cdr_gen():
+def generate():
     """
 
     :rtype: tuple
@@ -106,8 +106,8 @@ def cdr_gen():
     print "Done"
     tatt = time.clock()
     customers.add_attribute("MSISDN", msisdn_gen)
-    customers.update_attribute("activity", activity_gen)
-    customers.update_attribute("clock", timegen, weight_field="activity")
+    #customers.update_attribute("activity", activity_gen)
+    #customers.update_attribute("clock", timegen, weight_field="activity")
 
     print "Added atributes"
     tsna = time.clock()
@@ -162,7 +162,7 @@ def cdr_gen():
     flying.add_generator("time", timegen)
     flying.add_generator("networkchooser", networkchooser)
 
-    calls = ActorAction("calls",customers,timegen)
+    calls = ActorAction("calls",customers,timegen,activity_gen)
     calls.add_relationship("network",network)
     calls.add_relationship("product",product_rel)
     calls.add_field("B","network",{"key":"A"})

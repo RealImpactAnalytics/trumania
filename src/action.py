@@ -3,9 +3,14 @@ import pandas as pd
 
 
 class ActorAction(object):
-    def __init__(self, name, actor, time_generator):
+    def __init__(self, name, actor, time_generator, activity_generator):
         self.name = name
         self.main_actor = actor
+
+        self.clock = pd.DataFrame({"clock":0,"activity":1.},index=actor.get_ids())
+        self.clock["activity"] = activity_generator.generate(len(self.clock.index))
+        self.clock["clock"] = time_generator.generate(self.clock["activity"])
+
         self.time_generator = time_generator
         self.secondary_actors = {}
         self.relationships = {}
@@ -16,6 +21,24 @@ class ActorAction(object):
         self.feature_conditions = {}
         self.triggers = {}
         self.impacts = {}
+
+    def who_acts_now(self):
+        """
+
+        :return:
+        """
+        return self.clock[self.clock["clock"] == 0].index
+
+    def update_clock(self, decrease=1):
+        """
+
+        :param decrease:
+        :return:
+        """
+        self.clock["clock"] -= 1
+
+    def set_clock(self,ids,values):
+        self.clock.loc[ids, "clock"] = values
 
     def add_secondary_actor(self, name, actor):
         self.secondary_actors[name] = actor
@@ -133,8 +156,8 @@ class ActorAction(object):
                 self.main_actor.apply_to_attribute(self.impacts[k][0], "add_item", params_for_add)
 
     def execute(self):
-        act_now = self.main_actor.who_acts_now()
-        fields = self.get_field_data(act_now.index.values)
+        act_now = self.who_acts_now()
+        fields = self.get_field_data(act_now.values)
 
         if len(fields.index) > 0:
             passed = self.check_conditions(fields)
@@ -144,8 +167,8 @@ class ActorAction(object):
             if count_passed > 0:
                 self.make_impacts(fields)
 
-        self.main_actor.set_clock(act_now.index, self.time_generator.generate(act_now["activity"]) + 1)
-        self.main_actor.update_clock()
+        self.set_clock(act_now, self.time_generator.generate(self.clock.loc[act_now,"activity"]) + 1)
+        self.update_clock()
 
         return fields
 

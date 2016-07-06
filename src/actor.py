@@ -14,7 +14,8 @@ class Actor(object):
         :return:
         """
         ids = [prefix + str(x).zfill(max_length) for x in np.arange(id_start, id_start + size)]
-        self._table = pd.DataFrame({"clock": 0, "activity":1.},index=ids)
+        #self._table = pd.DataFrame({"clock": 0, "activity":1.},index=ids)
+        self._table = pd.DataFrame(index=ids)
         self._transient_attributes = {}
 
     def get_ids(self):
@@ -66,21 +67,6 @@ class Actor(object):
             transient_attribute.init_clock(time_generator)
 
         self._transient_attributes[name] = transient_attribute
-
-    def who_acts_now(self):
-        """
-
-        :return:
-        """
-        return self._table[self._table["clock"] == 0]
-
-    def update_clock(self, decrease=1):
-        """
-
-        :param decrease:
-        :return:
-        """
-        self._table["clock"] -= 1
 
     def update_attribute(self, name, generator,weights=None,weight_field=None):
         """
