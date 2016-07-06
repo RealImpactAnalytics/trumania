@@ -135,11 +135,14 @@ class ActorAction(object):
     def execute(self):
         act_now = self.main_actor.who_acts_now()
         fields = self.get_field_data(act_now.index.values)
-        passed = self.check_conditions(fields)
-        fields["PASS_CONDITIONS"] = 0
-        fields.loc[passed, "PASS_CONDITIONS"] = 1
 
-        self.make_impacts(fields)
+        if len(fields.index) > 0:
+            passed = self.check_conditions(fields)
+            fields["PASS_CONDITIONS"] = 0
+            fields.loc[passed, "PASS_CONDITIONS"] = 1
+            count_passed = len(passed)
+            if count_passed > 0:
+                self.make_impacts(fields)
 
         self.main_actor.set_clock(act_now.index, self.time_generator.generate(act_now["activity"]) + 1)
         self.main_actor.update_clock()

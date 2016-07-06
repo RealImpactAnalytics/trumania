@@ -30,14 +30,14 @@ def snd_gen():
 
     seed = 123456
     n_agents_a = 1000
-    n_iterations = 10
+    n_iterations = 600
     n_agents_b = 100
     average_degree = 20
     n_sims = 500000
 
     prof = pd.Series([5., 5., 5., 5., 5., 3., 3.],
                      index=[timedelta(days=x, hours=23, minutes=59, seconds=59) for x in range(7)])
-    time_step = 3600
+    time_step = 60
 
     agents_a = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents_a)]
     agents_b = ["DEALER_%s" % (str(i).zfill(3)) for i in range(n_agents_b)]

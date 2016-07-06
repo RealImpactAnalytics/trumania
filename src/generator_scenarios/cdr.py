@@ -25,14 +25,14 @@ def cdr_gen():
 
     seed = 123456
     n_customers = 1000
-    n_iterations = 10
+    n_iterations = 600
     n_cells = 100
     n_agents = 100
     average_degree = 20
 
     prof = pd.Series([5., 5., 5., 5., 5., 3., 3.],
                      index=[timedelta(days=x, hours=23, minutes=59, seconds=59) for x in range(7)])
-    time_step = 3600
+    time_step = 60
 
     mov_prof = pd.Series(
         [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1.],
