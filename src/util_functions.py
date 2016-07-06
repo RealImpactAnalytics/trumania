@@ -61,6 +61,7 @@ def make_random_bipartite_data(group1, group2, p, seed):
             edges_for_out.append((group2[node_index[e[1]]], group1[node_index[e[0]]]))
     return edges_for_out
 
+
 def assign_random_proportions(name1,name2,group1,group2,seed):
 
     state = RandomState(seed)
@@ -69,4 +70,14 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
     data = pd.DataFrame(assignments,index=group1,columns=group2).stack().reset_index(level=[0,1])
     data.rename(columns={"level_0":name1,"level_1":name2,0:"weight"},inplace=True)
     return data
+
+
+def make_random_assign(name1,name2,group1,group2,seed):
+    """Assign randomly each member from group1 to a member of group2
+
+    """
+    state = RandomState(seed)
+    choices = state.choice(group2,size=len(group1))
+
+    return pd.DataFrame({name2:choices,name1:group1})
 

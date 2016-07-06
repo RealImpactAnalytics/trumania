@@ -36,7 +36,7 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def add_transient_attribute(self, name, att_type, generator, time_generator=None, activity=None,params=None):
+    def add_transient_attribute(self, name, att_type, generator=None, time_generator=None, activity=None, params=None):
         """
 
         :param name:
@@ -44,16 +44,20 @@ class Actor(object):
         :param generator:
         :param time_generator:
         :param activity:
+        :param params:
         :return: None
         """
         if att_type == "choice":
             transient_attribute = ChoiceAttribute(self._table.index.values)
         elif att_type == "stock":
             transient_attribute = StockAttribute(self._table.index.values,params["trigger_generator"])
+        elif att_type == "labeled_stock":
+            transient_attribute = LabeledStockAttribute(self._table.index.values,params["relationship"])
         else:
             raise Exception("unknown type: %s" % att_type)
 
-        transient_attribute.update(self._table.index.values, generator.generate(len(self._table.index)))
+        if generator is not None:
+            transient_attribute.update(self._table.index.values, generator.generate(len(self._table.index)))
 
         if activity is not None:
             transient_attribute.set_activity(self._table.index.values, activity)

@@ -3,8 +3,8 @@
 """
 
 def main():
-    from generator_scenarios.cdr import cdr_gen
-    return cdr_gen()
+    from generator_scenarios.snd import snd_gen
+    return snd_gen()
 
 if __name__ == "__main__":
     main()

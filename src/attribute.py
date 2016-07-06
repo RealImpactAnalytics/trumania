@@ -177,7 +177,7 @@ class LabeledStockAttribute(TransientAttribute):
         :return:
         """
         self.__stock.add_relation("AGENT",ids,"ITEM",items)
-        cpt = ids.value_counts()
+        cpt = pd.Series(ids).value_counts()
         self._table.loc[cpt.index,"value"] += cpt.values
 
     def remove_item(self,ids,items):
@@ -188,3 +188,6 @@ class LabeledStockAttribute(TransientAttribute):
         :return:
         """
         self.__stock.remove("AGENT",ids,"ITEM",items)
+
+    def stock(self):
+        return self.__stock

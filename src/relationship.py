@@ -64,12 +64,12 @@ class Relationship(object):
             non_key = self._table.columns.values[1]
 
         lines = self._table[self._table[key_column].isin(choices.index.values) & self._table[non_key].isin(choices[non_key].values)]
-        del self._table.loc[lines.index]
+        self._table.drop(lines.index,inplace=True)
         return choices
 
     def remove(self,key_column,keys,value_colum,values):
         lines = self._table[self._table[key_column].isin(keys) & self._table[value_colum].isin(values)]
-        del self._table.loc[lines.index]
+        self._table.drop(lines.index, inplace=True)
 
 
 class WeightedRelationship(object):

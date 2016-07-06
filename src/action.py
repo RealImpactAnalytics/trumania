@@ -78,14 +78,18 @@ class ActorAction(object):
             rel_parameters = self.base_fields[f][1]
             f_data.append(self.relationships[rel_name].select_one(rel_parameters["key"], ids))
 
+        all_fields = pd.concat(f_data, axis=1, join='inner').reset_index()
+
         for f in self.secondary_fields:
             rel_name = self.secondary_fields[f][0]
             rel_parameters = self.secondary_fields[f][1]
-            f_data.append(
-                self.relationships[rel_name].select_one(rel_parameters["key"], f_data[rel_parameters["key"]].values))
+            out = self.relationships[rel_name].select_one(rel_parameters["key_rel"],
+                                                          all_fields[rel_parameters["key_table"]].values)
+            all_fields = pd.merge(all_fields, out.rename(columns={rel_parameters["out_rel"]: f}),
+                                  left_on=rel_parameters["key_table"],
+                                  right_index=True)
 
-        all_fields = pd.concat(f_data, axis=1, join='inner')
-        all_fields.reset_index(inplace=True)
+        print ""
 
         return all_fields
 
@@ -122,10 +126,10 @@ class ActorAction(object):
                 params_for_remove = {"items": data[self.impacts[k][2]["item"]].values,
                                      "ids": data[self.impacts[k][2]["seller_key"]].values}
                 params_for_add = {"items": data[self.impacts[k][2]["item"]].values,
-                                  "ids": data[self.impacts[k][2]["sellee_key"]].values}
-                self.secondary_actors[data[self.impacts[k][2]["seller_table"]]].apply_to_attribute(self.impacts[k][0],
-                                                                                                   "remove_item",
-                                                                                                   params_for_remove)
+                                  "ids": data[self.impacts[k][2]["buyer_key"]].values}
+                self.secondary_actors[self.impacts[k][2]["seller_table"]].apply_to_attribute(self.impacts[k][0],
+                                                                                             "remove_item",
+                                                                                             params_for_remove)
                 self.main_actor.apply_to_attribute(self.impacts[k][0], "add_item", params_for_add)
 
     def execute(self):
