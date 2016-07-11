@@ -7,7 +7,7 @@ class ActorAction(object):
         self.name = name
         self.main_actor = actor
 
-        self.clock = pd.DataFrame({"clock":0,"activity":1.},index=actor.get_ids())
+        self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
         self.clock["activity"] = activity_generator.generate(len(self.clock.index))
         self.clock["clock"] = time_generator.generate(self.clock["activity"])
 
@@ -37,7 +37,7 @@ class ActorAction(object):
         """
         self.clock["clock"] -= 1
 
-    def set_clock(self,ids,values):
+    def set_clock(self, ids, values):
         self.clock.loc[ids, "clock"] = values
 
     def add_secondary_actor(self, name, actor):
@@ -144,15 +144,20 @@ class ActorAction(object):
             if self.impacts[k][1] == "decrease_stock":
                 params = {"values": pd.Series(data[self.impacts[k][2]["value"]].values,
                                               index=data[self.impacts[k][2]["key"]].values)}
-                self.main_actor.apply_to_attribute(self.impacts[k][0], self.impacts[k][1], params)
+                ids_for_clock = self.main_actor.apply_to_attribute(self.impacts[k][0], self.impacts[k][1], params)
+                self.impacts[k][2]["recharge_action"].assign_clock_value(pd.Series(data=0,index=ids_for_clock))
+
             if self.impacts[k][1] == "transfer_item":
                 params_for_remove = {"items": data[self.impacts[k][2]["item"]].values,
                                      "ids": data[self.impacts[k][2]["seller_key"]].values}
+
                 params_for_add = {"items": data[self.impacts[k][2]["item"]].values,
                                   "ids": data[self.impacts[k][2]["buyer_key"]].values}
+
                 self.secondary_actors[self.impacts[k][2]["seller_table"]].apply_to_attribute(self.impacts[k][0],
                                                                                              "remove_item",
                                                                                              params_for_remove)
+
                 self.main_actor.apply_to_attribute(self.impacts[k][0], "add_item", params_for_add)
 
     def execute(self):
@@ -167,18 +172,47 @@ class ActorAction(object):
             if count_passed > 0:
                 self.make_impacts(fields)
 
-        self.set_clock(act_now, self.time_generator.generate(self.clock.loc[act_now,"activity"]) + 1)
+        self.set_clock(act_now, self.time_generator.generate(self.clock.loc[act_now, "activity"]) + 1)
         self.update_clock()
 
         return fields
 
 
 class AttributeAction(object):
-    def __init__(self, name, actor, field, parameters):
+    def __init__(self, name, actor, field, activity_generator, time_generator, parameters):
         self.name = name
         self.actor = actor
         self.field = field
         self.parameters = parameters
+        self.time_generator = time_generator
+
+        self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
+        self.clock["activity"] = activity_generator.generate(len(self.clock.index))
+        self.clock["clock"] = self.time_generator.generate(self.clock["activity"])
+
+    def who_acts_now(self):
+        """
+
+        :return:
+        """
+        return self.clock[self.clock["clock"] == 0].index
+
+    def update_clock(self, decrease=1):
+        """
+
+        :param decrease:
+        :return:
+        """
+        self.clock["clock"] -= 1
+
+    def assign_clock_value(self,values):
+        self.clock["clock"] = values
 
     def execute(self):
-        return self.actor.make_attribute_action(self.field, self.parameters)
+        ids, out = self.actor.make_attribute_action(self.field, self.who_acts_now(), self.parameters)
+
+        if len(ids) > 0:
+            self.clock.loc[ids, "clock"] = self.time_generator.generate(self.clock.loc[ids, "activity"])
+        self.update_clock()
+
+        return out

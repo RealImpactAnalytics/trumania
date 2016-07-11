@@ -83,7 +83,7 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(len(self._table.index))
 
-    def make_attribute_action(self,attr_name,params):
+    def make_attribute_action(self,attr_name,ids,params):
         """
 
         :param attr_name:
@@ -91,13 +91,14 @@ class Actor(object):
         :return:
         """
         if self._transient_attributes.has_key(attr_name):
+            params["ids"] = ids
             return self._transient_attributes[attr_name].make_actions(**params)
         else:
             raise Exception("No transient attribute named %s" % attr_name)
 
     def apply_to_attribute(self,attr_name,function,params):
         if self._transient_attributes.has_key(attr_name):
-            getattr(self._transient_attributes[attr_name], function)(**params)
+            return getattr(self._transient_attributes[attr_name], function)(**params)
         else:
             raise Exception("No transient attribute named %s" % attr_name)
 

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from relationship import Relationship
 
+
 class TransientAttribute(object):
     """
 
@@ -61,7 +62,7 @@ class ChoiceAttribute(TransientAttribute):
 
     """
 
-    def make_actions(self, new_time_generator, relationship, id1, id2):
+    def make_actions(self, ids, new_time_generator, relationship, id1, id2):
         """
 
         :param new_time_generator:
@@ -70,16 +71,16 @@ class ChoiceAttribute(TransientAttribute):
         :param id2:
         :return:
         """
-        act_now = self.who_acts_now()
+        #act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["new"])
-        if len(act_now.index) > 0:
-            out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"new"})
+        if len(ids) > 0:
+            out = relationship.select_one(id1,ids.values).rename(columns={id2:"new"})
             if len(out.index) > 0:
-                self._table.loc[act_now.index, "value"] = out["new"].values
-            self._table.loc[act_now.index, "clock"] = new_time_generator.generate(act_now["activity"])+1
-        self.update_clock()
+                self._table.loc[out.index, "value"] = out["new"].values
+            #self._table.loc[ids, "clock"] = new_time_generator.generate(act_now["activity"])+1
+        #self.update_clock()
         out.reset_index(inplace=True)
-        return out
+        return ids, out
 
 
 class StockAttribute(TransientAttribute):
@@ -119,10 +120,11 @@ class StockAttribute(TransientAttribute):
         triggers = self._trigger.generate(self._table.loc[values.index,"value"])
         small_table = self._table.loc[values.index]
         act_now = small_table[triggers]
-        if len(act_now.index)>0:
-            self._table.loc[act_now.index, "clock"] = 0
+        #if len(act_now.index)>0:
+        #    self._table.loc[act_now.index, "clock"] = 0
+        return act_now.index
 
-    def make_actions(self,relationship,id1,id2,id3):
+    def make_actions(self,ids,relationship,id1,id2,id3):
         """
 
         :param relationship: AgentRelationship
@@ -131,23 +133,23 @@ class StockAttribute(TransientAttribute):
         :param id3: id of Value
         :return:
         """
-        act_now = self.who_acts_now()
+        #act_now = self.who_acts_now()
         out = pd.DataFrame(columns=["new"])
-        if len(act_now.index) > 0:
-            out = relationship.select_one(id1,act_now.index.values).rename(columns={id2:"AGENT",id3:"VALUE"})
+        if len(ids) > 0:
+            out = relationship.select_one(id1,ids.values).rename(columns={id2:"AGENT",id3:"VALUE"})
             if len(out.index) > 0:
                 self._table.loc[out.index,"value"] += out["VALUE"]
 
         out.reset_index(inplace=True)
-        self.update_clock()
-        return out
+        #self.update_clock()
+        return [], out
 
 
 class LabeledStockAttribute(TransientAttribute):
     """Transient Attribute where users own some stock of labeled items
 
     """
-    def  __init__(self, ids,relationship):
+    def __init__(self, ids,relationship):
         """
 
         :param ids:
