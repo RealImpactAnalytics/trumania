@@ -19,10 +19,10 @@ class VoiceProduct(Product):
         self._duration = duration_generator
         self._value = value_generator
 
-    def generate(self,s):
+    def generate(self,size):
         gen = dict([("TYPE","VOICE")])
-        gen["DURATION"] = self._duration.generate(s)
-        gen["VALUE"] = self._value.generate(gen["DURATION"])
+        gen["DURATION"] = self._duration.generate(size)
+        gen["VALUE"] = self._value.generate(weights=gen["DURATION"])
         return pd.DataFrame(gen)
 
 
@@ -36,7 +36,7 @@ class SMSProduct(Product):
         Product.__init__(self)
         self._value = value_generator
 
-    def generate(self,s):
+    def generate(self,size):
         gen = dict([("TYPE","SMS"),("DURATION",np.nan)])
-        gen["VALUE"] = self._value.generate(s)
+        gen["VALUE"] = self._value.generate(size=size)
         return pd.DataFrame(gen)

@@ -8,8 +8,8 @@ class ActorAction(object):
         self.main_actor = actor
 
         self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
-        self.clock["activity"] = activity_generator.generate(len(self.clock.index))
-        self.clock["clock"] = time_generator.generate(self.clock["activity"])
+        self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
+        self.clock["clock"] = time_generator.generate(weights=self.clock["activity"])
 
         self.time_generator = time_generator
         self.secondary_actors = {}
@@ -58,6 +58,10 @@ class ActorAction(object):
         :param parameters:
         :return:
         """
+        if function == "decrease_stock":
+            if not parameters.has_key("recharge_action"):
+                raise Exception("no recharge action linked to stock decrease")
+
         self.impacts[name] = (attribute, function, parameters)
 
     def add_field(self, name, relationship, params=None):
@@ -172,7 +176,7 @@ class ActorAction(object):
             if count_passed > 0:
                 self.make_impacts(fields)
 
-        self.set_clock(act_now, self.time_generator.generate(self.clock.loc[act_now, "activity"]) + 1)
+        self.set_clock(act_now, self.time_generator.generate(weights=self.clock.loc[act_now, "activity"]) + 1)
         self.update_clock()
 
         return fields
@@ -187,8 +191,8 @@ class AttributeAction(object):
         self.time_generator = time_generator
 
         self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
-        self.clock["activity"] = activity_generator.generate(len(self.clock.index))
-        self.clock["clock"] = self.time_generator.generate(self.clock["activity"])
+        self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
+        self.clock["clock"] = self.time_generator.generate(weights=self.clock["activity"])
 
     def who_acts_now(self):
         """
@@ -206,13 +210,16 @@ class AttributeAction(object):
         self.clock["clock"] -= 1
 
     def assign_clock_value(self,values):
-        self.clock["clock"] = values
+        self.clock.loc[values.index,"clock"] = values.values
 
     def execute(self):
-        ids, out = self.actor.make_attribute_action(self.field, self.who_acts_now(), self.parameters)
+        ids, out, values = self.actor.make_attribute_action(self.field, self.who_acts_now(), self.parameters)
 
         if len(ids) > 0:
-            self.clock.loc[ids, "clock"] = self.time_generator.generate(self.clock.loc[ids, "activity"])
+            if values is None:
+                self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=self.clock.loc[ids, "activity"])+1
+            else:
+                self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=values)+1
         self.update_clock()
 
         return out

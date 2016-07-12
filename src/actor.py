@@ -31,13 +31,13 @@ class Actor(object):
         :return: none
         """
         if weights is not None:
-            self._table[name] = generator.generate(weights)
+            self._table[name] = generator.generate(weights=weights)
         elif weight_field is not None:
-            self._table[name] = generator.generate(self._table[weight_field])
+            self._table[name] = generator.generate(size=self._table[weight_field])
         else:
-            self._table[name] = generator.generate(len(self._table.index))
+            self._table[name] = generator.generate(size=len(self._table.index))
 
-    def add_transient_attribute(self, name, att_type, generator=None, time_generator=None, activity=None, params=None):
+    def add_transient_attribute(self, name, att_type, generator=None, params=None):
         """
 
         :param name:
@@ -58,13 +58,7 @@ class Actor(object):
             raise Exception("unknown type: %s" % att_type)
 
         if generator is not None:
-            transient_attribute.update(self._table.index.values, generator.generate(len(self._table.index)))
-
-        if activity is not None:
-            transient_attribute.set_activity(self._table.index.values, activity)
-
-        if time_generator is not None:
-            transient_attribute.init_clock(time_generator)
+            transient_attribute.update(self._table.index.values, generator.generate(size=len(self._table.index)))
 
         self._transient_attributes[name] = transient_attribute
 
@@ -77,11 +71,11 @@ class Actor(object):
         :return:
         """
         if weights is not None:
-            self._table[name] = generator.generate(weights)
+            self._table[name] = generator.generate(weights=weights)
         elif weight_field is not None:
-            self._table[name] = generator.generate(self._table[weight_field])
+            self._table[name] = generator.generate(size=self._table[weight_field])
         else:
-            self._table[name] = generator.generate(len(self._table.index))
+            self._table[name] = generator.generate(size=len(self._table.index))
 
     def make_attribute_action(self,attr_name,ids,params):
         """

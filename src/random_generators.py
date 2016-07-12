@@ -2,7 +2,7 @@ import numpy as np
 from numpy.random import RandomState
 
 
-class Chooser(object):
+class ChooserAggregator(object):
     def __init__(self, seed):
         """
 
@@ -104,7 +104,7 @@ class GenericGenerator(object):
             self.__parameters = {"scale":parameters.get("scale",1.),
                                  "size": parameters.get("size",1)}
 
-    def generate(self, size=None):
+    def generate(self, size=None, weights=None, pars=None):
         """
 
         :param size:
@@ -156,22 +156,24 @@ class TriggerGenerator(object):
             self.__parameters = {"a":-0.01,
                                  "b":10.}
 
-    def generate(self, x, parameters = None):
+    def generate(self, size=None, weights=None, pars = None):
         """
 
-        :type x: Pandas Series
-        :param x:
-        :type parameters: dict
-        :param parameters: keys correspond to parameter values required by the function, values are either floats or
+        :type size: int
+        :param size: number of values to generate
+        :type values: Pandas Series
+        :param values:
+        :type pars: dict
+        :param pars: keys correspond to parameter values required by the function, values are either floats or
         Pandas Series of the same length as x
         :return:
         """
         params = self.__parameters
-        params["x"] = x
-        if parameters is not None:
-            params.update(parameters)
+        params["x"] = weights
+        if pars is not None:
+            params.update(pars)
 
-        probs = self.__gen(len(x.index))
+        probs = self.__gen(len(weights.index))
         trigger = self.__function(**params)
         triggered = probs < trigger
 
@@ -221,7 +223,7 @@ class MSISDNGenerator(object):
         """
         return self.__name
 
-    def generate(self, size):
+    def generate(self, size=1, weights=None, pars=None):
         """returns a list of size randomly generated msisdns.
         Those msisdns cannot be generated again from this generator
 
@@ -254,10 +256,10 @@ class ValueGenerator(object):
         self.__name = name
         self.__price = price_per_second
 
-    def generate(self,duration):
+    def generate(self,size=None,weights=None,pars=None):
         """
 
         :param duration: pd.Series
         :return:
         """
-        return duration*self.__price
+        return weights*self.__price

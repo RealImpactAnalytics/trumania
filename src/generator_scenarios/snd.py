@@ -66,8 +66,8 @@ def generate():
     agentchooser = WeightedChooserAggregator("AGENT", "weight", seed)
     agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
 
-    sim_agent_chooser = Chooser(seed)
-    sim_dealer_chooser = Chooser(seed)
+    sim_agent_chooser = ChooserAggregator(seed)
+    sim_dealer_chooser = ChooserAggregator(seed)
 
     print "Done"
 

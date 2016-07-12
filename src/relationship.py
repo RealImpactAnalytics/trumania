@@ -145,7 +145,7 @@ class ProductRelationship(WeightedRelationship):
         choices = choices.iloc[:,0]
         for p in choices.unique():
             this_p_index = choices[choices==p].index
-            p_data = self._products[p].generate(len(this_p_index))
+            p_data = self._products[p].generate(size=len(this_p_index))
             for pdf in p_data.columns.values:
                 data_for_out.loc[this_p_index,pdf] = p_data.loc[:,pdf].values
         return data_for_out

@@ -225,3 +225,50 @@ class DayProfiler(TimeProfiler):
         self._profile = pd.concat([self._profile.iloc[start:len(self._profile.index)], self._profile.iloc[0:start]],
                                   ignore_index=True)
         self._profile["next_prob"] = self._profile["weight"].cumsum()
+
+
+class ConstantProfiler(object):
+    """ConstantProfiler is a TimeProfiler that always returns the same value. It's a bit stupid but handy.
+
+    """
+
+    def __init__(self, return_value):
+        """
+
+        :type return_value: int
+        :param step: value to return
+        :return:
+        """
+        self._val = return_value
+
+    def initialise(self, clock):
+        """Doesn't do anything since it's a constant profiler.
+
+        :param clock: a Clock object
+        :return: None
+        """
+        pass
+
+    def get_profile(self):
+        """Returns the profile, for debugging mostly
+
+        :rtype: NoneType
+        :return: None
+        """
+        return None
+
+    def increment(self):
+        """Doesn't do anything since it's a constant profiler.
+
+        :return: None
+        """
+        pass
+
+    def generate(self, weights):
+        """Generate constant values of the same size as weights. To have the same signature as other profilers.
+
+        :type weights: Pandas Series
+        :param weights: contains an array of floats
+        :return: Pandas Series
+        """
+        return pd.Series(self._val, index=weights.index)
