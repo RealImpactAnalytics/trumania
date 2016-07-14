@@ -2,6 +2,7 @@
 
 """
 
+
 from numpy.random import RandomState
 import pandas as pd
 import networkx as nx

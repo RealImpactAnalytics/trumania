@@ -3,7 +3,9 @@
 """
 
 def main():
-    from generator_scenarios.cdr import generate
+    from cdr import generate
+    # from snd import generate
+
     return generate()
 
 if __name__ == "__main__":

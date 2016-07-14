@@ -94,46 +94,51 @@ class ActorAction(object):
 
     def get_field_data(self, ids):
         """
+        Constructs values for all fields produced by this action, selecting
+        randomly from the "other" side of each declared relationship.
 
-        :param ids:
-        :return: all fields produced by the activity
+        :param ids: the actor ids being "actioned"
+        :return: a dataframe with all fields produced by the action
         """
+
         f_data = []
         # TODO there's something weird here: if only 1 field is returned, we would maybe like to have f to be the name of the field
-        for f in self.base_fields:
-            rel_name = self.base_fields[f][0]
-            rel_parameters = self.base_fields[f][1]
-            f_data.append(self.relationships[rel_name].select_one(rel_parameters["key"], ids))
+        for f_name, (rel_name, rel_parameters) in self.base_fields.items():
+            f_data.append(self.relationships[rel_name].select_one(
+                rel_parameters["key"], ids))
 
         all_fields = pd.concat(f_data, axis=1, join='inner').reset_index()
 
-        for f in self.secondary_fields:
-            rel_name = self.secondary_fields[f][0]
-            rel_parameters = self.secondary_fields[f][1]
+        for f_name, (rel_name, rel_parameters) in self.secondary_fields.items():
             out = self.relationships[rel_name].select_one(rel_parameters["key_rel"],
                                                           all_fields[rel_parameters["key_table"]].values)
-            all_fields = pd.merge(all_fields, out.rename(columns={rel_parameters["out_rel"]: f}),
+            all_fields = pd.merge(all_fields, out.rename(columns={rel_parameters["out_rel"]: f_name}),
                                   left_on=rel_parameters["key_table"],
                                   right_index=True)
 
-        print ""
-
         return all_fields
 
-    def check_conditions(self, data):
-        valid_ids = data.index
+    def check_post_conditions(self, fields_values):
+        """
+        runs all post-condition checks related to this action on those action
+        results.
 
-        for c in self.value_conditions.keys():
-            actorf, attrf, func, fparam = self.value_conditions[c]
-            current_actors = data.loc[valid_ids, actorf].values
-            validated = self.main_actor.check_attributes(current_actors, attrf, func, fparam)
+        :param fields_values:
+        :return: the index of actor ids for which post-conditions are not
+        violated
+        """
+
+        valid_ids = fields_values.index
+
+        for actorf, attrf, func, param in self.value_conditions.values():
+            current_actors = fields_values.loc[valid_ids, actorf].values
+            validated = self.main_actor.check_attributes(current_actors, attrf, func, param)
             valid_ids = valid_ids[validated]
 
-        for c in self.feature_conditions.keys():
-            actorf, attrf, item, func, fparam = self.feature_conditions[c]
-            current_actors = data.loc[valid_ids, actorf].values
+        for actorf, attrf, item, func, param in self.feature_conditions.values():
+            current_actors = fields_values.loc[valid_ids, actorf].values
             attr_val = self.main_actor.get_join(current_actors, attrf)
-            validated = self.items[item].check_condition(attr_val, func, fparam)
+            validated = self.items[item].check_condition(attr_val, func, param)
             valid_ids = valid_ids[validated]
 
         return valid_ids
@@ -166,20 +171,20 @@ class ActorAction(object):
 
     def execute(self):
         act_now = self.who_acts_now()
-        fields = self.get_field_data(act_now.values)
+        field_values = self.get_field_data(act_now.values)
 
-        if len(fields.index) > 0:
-            passed = self.check_conditions(fields)
-            fields["PASS_CONDITIONS"] = 0
-            fields.loc[passed, "PASS_CONDITIONS"] = 1
+        if len(field_values.index) > 0:
+            passed = self.check_post_conditions(field_values)
+            field_values["PASS_CONDITIONS"] = 0
+            field_values.loc[passed, "PASS_CONDITIONS"] = 1
             count_passed = len(passed)
             if count_passed > 0:
-                self.make_impacts(fields)
+                self.make_impacts(field_values)
 
         self.set_clock(act_now, self.time_generator.generate(weights=self.clock.loc[act_now, "activity"]) + 1)
         self.update_clock()
 
-        return fields
+        return field_values
 
 
 class AttributeAction(object):
