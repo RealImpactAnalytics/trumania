@@ -1,3 +1,5 @@
+import pandas as pd
+
 
 class Circus(object):
     """
@@ -147,7 +149,16 @@ class Circus(object):
         return result_tables
 
     def run(self, n_iterations):
-        return (self.one_round() for _ in range(n_iterations))
+        """
+        Executes all actions for as many iteration as specified.
+
+        :param n_iterations:
+        :return: a list of as many dataframes as there are actions configured in
+        this circus, each gathering all rows produces throughout all iterations
+        """
+
+        tables_list = zip(*(self.one_round() for _ in range(n_iterations)))
+        return [pd.concat(table, ignore_index=True) for table in tables_list]
 
     def get_contents(self):
         return (self.__clock,

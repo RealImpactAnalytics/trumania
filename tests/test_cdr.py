@@ -1,22 +1,26 @@
-from datetime import datetime
-import pandas as pd
-from src.random_generators import *
-from src.clock import *
-from src.actor import *
-from src.relationship import *
-from src.circus import *
-from src.util_functions import *
-from src.action import *
-from src.product import *
+from __future__ import division
 
 import time
+from datetime import datetime
+import json
+
+from bi.ria.generator.action import *
+from bi.ria.generator.clock import *
+from bi.ria.generator.circus import *
+from bi.ria.generator.product import *
+from bi.ria.generator.random_generators import *
+from bi.ria.generator.relationship import *
+from bi.ria.generator.util_functions import *
+
+from bi.ria.generator.actor import *
 
 
-def generate():
+def compose_circus():
+    """
+        Builds a circus simulating call, mobility and topics.
+        See test case below
     """
 
-    :rtype: tuple
-    """
     ######################################
     # Define parameters
     ######################################
@@ -25,8 +29,6 @@ def generate():
 
     seed = 123456
     n_customers = 1000
-#    n_iterations = 600
-    n_iterations = 10
     n_cells = 100
     n_agents = 100
     average_degree = 20
@@ -59,7 +61,7 @@ def generate():
     ######################################
     tg = time.clock()
     print "Generators"
-    msisdn_gen = MSISDNGenerator("msisdn-test-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
+    msisdn_gen = MSISDNGenerator("msisdn-tests-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
     activity_gen = GenericGenerator("user-activity", "pareto", {"a": 1.2, "m": 10.}, seed)
     timegen = WeekProfiler(time_step, prof, seed)
 
@@ -185,16 +187,9 @@ def generate():
                                        ("A", customers, "CELL", "CELL")]})
 
     flying.add_increment(timegen)
-    print "Done"
-
-    ######################################
-    # Run
-    ######################################
     tr = time.clock()
-    print "Start run"
-    all_cdrs, all_mov, all_topup = zip(*flying.run(n_iterations))
 
-    tf = time.clock()
+    print "Done"
 
     all_times = {"parameters": tc - tp,
                  "clocks": tg - tc,
@@ -207,11 +202,29 @@ def generate():
                  "mobility graph creation": tmoatt - tmo,
                  "mobility attribute creation": tci - tmoatt,
                  "circus creation": tr - tci,
-                 "runs (all)": tf - tr,
-                 "one run (average)": (tf - tr) / float(n_iterations)}
+                 "tr": tr,
+        }
 
-    return flying, \
-           pd.concat(all_cdrs, ignore_index=True), \
-           pd.concat(all_mov, ignore_index=True), \
-           pd.concat(all_topup, ignore_index=True), \
-           all_times
+    return flying, all_times
+
+
+def test_cdr_scenario():
+
+    cdr_circus, all_times = compose_circus()
+    n_iterations = 100
+
+    all_cdrs, all_mov, all_topup = cdr_circus.run(n_iterations)
+    tf = time.clock()
+
+    all_times["runs (all)"] = tf - all_times["tr"]
+    all_times["one run (average)"] = (tf - all_times["tr"]) / n_iterations
+
+    print (json.dumps(all_times, indent=2))
+
+    assert all_cdrs.shape[0] > 0
+    assert all_mov.shape[0] > 0
+    assert all_topup.shape[0] > 0
+
+    # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
+
+

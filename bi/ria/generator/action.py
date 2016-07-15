@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-
 
 class ActorAction(object):
     def __init__(self, name, actor, time_generator, activity_generator):

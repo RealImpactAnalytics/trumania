@@ -1,4 +1,5 @@
-from src.attribute import *
+from bi.ria.generator.attribute import *
+import numpy as np
 
 
 class Actor(object):
