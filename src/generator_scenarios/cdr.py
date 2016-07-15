@@ -25,7 +25,8 @@ def generate():
 
     seed = 123456
     n_customers = 1000
-    n_iterations = 600
+#    n_iterations = 600
+    n_iterations = 10
     n_cells = 100
     n_agents = 100
     average_degree = 20
@@ -191,17 +192,8 @@ def generate():
     ######################################
     tr = time.clock()
     print "Start run"
-    all_cdrs = []
-    all_mov = []
-    all_topup = []
-    for i in range(n_iterations):
-        print "iteration %s on %s" % (i, n_iterations),
-        all_data = flying.one_round()
-        # print len(these_cdrs.index), "CDRs generated"
-        all_cdrs.append(all_data[0])
-        all_mov.append(all_data[1])
-        all_topup.append(all_data[2])
-        print '\r',
+    all_cdrs, all_mov, all_topup = zip(*flying.run(n_iterations))
+
     tf = time.clock()
 
     all_times = {"parameters": tc - tp,

@@ -1,9 +1,7 @@
-import pandas as pd
-import numpy as np
-
 
 class Circus(object):
-    """A Circus is just a container of a lot of objects that are required to make the simulation
+    """
+    A Circus is just a container of a lot of objects that are required to make the simulation
     It is also the object that will execute the actions required for 1 iteration
 
     The different objects contained in the Circus are:
@@ -88,13 +86,13 @@ class Circus(object):
 
         self.__generators[name] = gen
 
-    def add_action(self, action, add_info):
+    def add_action(self, action, action_params):
         """Add an action to perform
 
         :type action: Action
         :param action: the action to execute
-        :type add_info: dict
-        :param add_info: dictionary of additional fields to complete for the action logs
+        :type action_params: dict
+        :param action_params: dictionary of additional fields to complete for the action logs
         Currently, the dictionary can have 2 entries:
         - "timestamp": {True, False} if a timestamp needs to be added
         - "join": [list of tuples with ("field to join on",
@@ -103,7 +101,7 @@ class Circus(object):
                                         "field name in output table")]
         :return:
         """
-        self.__actions.append((action, add_info))
+        self.__actions.append((action, action_params))
 
     def add_increment(self, to_increment):
         """Add an object to be incremented at each step (such as a TimeProfiler)
@@ -113,34 +111,43 @@ class Circus(object):
         """
         self.__incrementors.append(to_increment)
 
+    def __execute_action(self, action, action_params):
+
+        action_values = action.execute()
+
+        if action_values.shape[0]:
+            for param_name, param_val in action_params.iteritems():
+
+                if param_name == "timestamp" and param_val:
+                    action_values["datetime"] = self.__clock.get_timestamp(
+                            len(action_values.index))
+
+                elif param_name == "join":
+                    for out_field, obj_2_join, obj_field, new_name in param_val:
+                        action_values[new_name] = obj_2_join.get_join(
+                            obj_field, action_values[out_field])
+
+        return action_values
+
     def one_round(self):
         """
         Performs one round of actions
 
         :return:
         """
-        out_tables = []
-        for a in self.__actions:
-            #out = getattr(self.__actors[a[0]], a[1])(**a[2])
-            out = a[0].execute()
-            if len(out.index)>0:
-                for j in a[1]:
-                    if j == "timestamp":
-                        if a[1][j]:
-                            out["datetime"] = self.__clock.get_timestamp(len(out.index))
-                    if j == "join":
-                        for j_info in a[1][j]:
-                            # entry is then field in out, actor or item name, actor or item field, new name
-                            out_field, obj_to_join, obj_field, new_name = j_info
-                            out[new_name] = obj_to_join.get_join(obj_field, out[out_field])
 
-            out_tables.append(out)
+        result_tables = [self.__execute_action(action, params)
+                         for action, params in self.__actions]
 
         for i in self.__incrementors:
             i.increment()
+
         self.__clock.increment()
 
-        return out_tables
+        return result_tables
+
+    def run(self, n_iterations):
+        return (self.one_round() for _ in range(n_iterations))
 
     def get_contents(self):
         return (self.__clock,

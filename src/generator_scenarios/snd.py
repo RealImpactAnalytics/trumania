@@ -30,7 +30,8 @@ def generate():
 
     seed = 123456
     n_agents_a = 1000
-    n_iterations = 600
+#    n_iterations = 600
+    n_iterations = 10
     n_agents_b = 100
     average_degree = 20
     n_sims = 500000
@@ -144,7 +145,6 @@ def generate():
 
     flying.add_action(purchase,{"timestamp": True})
 
-
     flying.add_increment(timegen)
     print "Done"
 
@@ -153,13 +153,7 @@ def generate():
     ######################################
     tr = time.clock()
     print "Start run"
-    all_purchases = []
-    for i in range(n_iterations):
-        print "iteration %s on %s" % (i,n_iterations),
-        all_data = flying.one_round()
-        # print len(these_cdrs.index), "CDRs generated"
-        all_purchases.append(all_data[0])
-        print '\r',
+    all_purchases = [result[0] for result in flying.run(n_iterations)]
     tf = time.clock()
 
     all_times = {"parameters":tc-tp,

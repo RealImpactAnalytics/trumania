@@ -62,7 +62,7 @@ class Actor(object):
 
         self._transient_attributes[name] = transient_attribute
 
-    def update_attribute(self, name, generator,weights=None,weight_field=None):
+    def update_attribute(self, name, generator, weights=None,weight_field=None):
         """
 
         :param name:
