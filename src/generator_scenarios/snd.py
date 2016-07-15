@@ -100,8 +100,8 @@ def generate():
 
     print "Done"
     tatt = time.clock()
-    customers.update_attribute("activity", activity_gen)
-    customers.update_attribute("clock", timegen, weight_field="activity")
+    #customers.update_attribute("activity", activity_gen)
+    #customers.update_attribute("clock", timegen, weight_field="activity")
     customers.add_transient_attribute("SIM","labeled_stock",params={"relationship":customer_sim_rel})
     dealers.add_transient_attribute("SIM","labeled_stock",params={"relationship":dealer_sim_rel})
 
@@ -133,7 +133,7 @@ def generate():
     flying.add_relationship("Customer", "Dealer", agent_customer)
     flying.add_generator("time", timegen)
 
-    purchase = ActorAction("purchase",customers,timegen)
+    purchase = ActorAction("purchase",customers,timegen,activity_gen)
     purchase.add_secondary_actor("DEALER",dealers)
     purchase.add_relationship("customer_dealer",agent_customer)
     purchase.add_relationship("customer_sim",customer_sim_rel)

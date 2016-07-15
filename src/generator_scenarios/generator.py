@@ -3,8 +3,8 @@
 """
 
 def main():
-    from cdr import generate
-    # from snd import generate
+    #from cdr import generate
+    from snd import generate
 
     return generate()
 
