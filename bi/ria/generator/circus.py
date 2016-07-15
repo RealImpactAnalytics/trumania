@@ -88,13 +88,13 @@ class Circus(object):
 
         self.__generators[name] = gen
 
-    def add_action(self, action, action_params):
+    def add_action(self, action, supp_fields=None):
         """Add an action to perform
 
         :type action: Action
         :param action: the action to execute
-        :type action_params: dict
-        :param action_params: dictionary of additional fields to complete for the action logs
+        :type supp_fields: dict
+        :param supp_fields: dictionary of additional fields to complete for the action logs
         Currently, the dictionary can have 2 entries:
         - "timestamp": {True, False} if a timestamp needs to be added
         - "join": [list of tuples with ("field to join on",
@@ -103,7 +103,8 @@ class Circus(object):
                                         "field name in output table")]
         :return:
         """
-        self.__actions.append((action, action_params))
+        self.__actions.append(
+            (action, {} if supp_fields is None else supp_fields))
 
     def add_increment(self, to_increment):
         """Add an object to be incremented at each step (such as a TimeProfiler)
@@ -113,19 +114,20 @@ class Circus(object):
         """
         self.__incrementors.append(to_increment)
 
-    def __execute_action(self, action, action_params):
+    def __execute_action(self, action, supp_fields):
+        """
+            executes this action and adds a timestamp to the result
+        """
 
         action_values = action.execute()
+        action_values["datetime"] = self.__clock.get_timestamp(
+            action_values.shape[0])
 
+        # TODO: move this out into action
         if action_values.shape[0]:
-            for param_name, param_val in action_params.iteritems():
-
-                if param_name == "timestamp" and param_val:
-                    action_values["datetime"] = self.__clock.get_timestamp(
-                            len(action_values.index))
-
-                elif param_name == "join":
-                    for out_field, obj_2_join, obj_field, new_name in param_val:
+            for field_name, field_val in supp_fields.iteritems():
+                if field_name == "join":
+                    for out_field, obj_2_join, obj_field, new_name in field_val:
                         action_values[new_name] = obj_2_join.get_join(
                             obj_field, action_values[out_field])
 
@@ -138,8 +140,8 @@ class Circus(object):
         :return:
         """
 
-        result_tables = [self.__execute_action(action, params)
-                         for action, params in self.__actions]
+        result_tables = [self.__execute_action(action, supp_fields)
+                         for action, supp_fields in self.__actions]
 
         for i in self.__incrementors:
             i.increment()

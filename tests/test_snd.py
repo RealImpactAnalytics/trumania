@@ -144,11 +144,10 @@ def compose_circus():
     purchase.add_impact("transfer sim","SIM","transfer_item",
                         {"item":"SIM","buyer_key":"AGENT","seller_key":"DEALER","seller_table":"DEALER"})
 
-    flying.add_action(purchase,{"timestamp": True})
+    flying.add_action(purchase)
 
     flying.add_increment(timegen)
     print "Done"
-
 
     tr = time.clock()
     all_times = {"parameters":tc-tp,
@@ -172,7 +171,6 @@ def test_cdr_scenario():
     snd_circus, all_times = compose_circus()
     n_iterations = 100
 
-    #all_purchases = [result[0] for result in flying.run(n_iterations)]
     [all_purchases] = snd_circus.run(n_iterations)
     tf = time.clock()
 
@@ -181,9 +179,14 @@ def test_cdr_scenario():
 
     print (json.dumps(all_times, indent=2))
 
-    print (all_purchases)
+    print ("""
+        some purchase events:
+          {}
+
+    """.format(all_purchases.head()))
 
     assert all_purchases.shape[0] > 0
+    assert "datetime" in all_purchases.columns
 
     # TODO: add real post-conditions on all_purchases
 

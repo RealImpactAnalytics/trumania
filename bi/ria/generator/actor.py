@@ -22,15 +22,18 @@ class Actor(object):
     def get_ids(self):
         return self._table.index.values
 
-    def add_attribute(self, name, generator,weights=None,weight_field=None):
-        """Adds a column named "name" to the inner table of the actor, randomly generated from the generator.
+    def gen_attribute(self, name, generator, weights=None, weight_field=None):
+        """Adds or updates a column named "name" to the inner table of the
+        actor, randomly generated from the generator.
 
         :param name: string, will be used as name for the column in the table
-        :param generator: either a random generator or a timeprofiler. If a timeprofiler, weights or a weight field can be added
+        :param generator: either a random generator or a timeprofiler.
+        If a timeprofiler, weights or a weight field can be added
         :param weights: Pandas Series
         :param weight_field: string
         :return: none
         """
+
         if weights is not None:
             self._table[name] = generator.generate(weights=weights)
         elif weight_field is not None:
@@ -51,10 +54,13 @@ class Actor(object):
         """
         if att_type == "choice":
             transient_attribute = ChoiceAttribute(self._table.index.values)
+
         elif att_type == "stock":
-            transient_attribute = StockAttribute(self._table.index.values,params["trigger_generator"])
+            transient_attribute = StockAttribute(self._table.index.values,
+                                                 params["trigger_generator"])
         elif att_type == "labeled_stock":
-            transient_attribute = LabeledStockAttribute(self._table.index.values,params["relationship"])
+            transient_attribute = LabeledStockAttribute(self._table.index.values,
+                                                        params["relationship"])
         else:
             raise Exception("unknown type: %s" % att_type)
 
@@ -63,22 +69,22 @@ class Actor(object):
 
         self._transient_attributes[name] = transient_attribute
 
-    def update_attribute(self, name, generator, weights=None,weight_field=None):
-        """
+    # def update_attribute(self, name, generator, weights=None,weight_field=None):
+    #     """
+    #
+    #     :param name:
+    #     :param generator: either a random generator or a timeprofiler. If a timeprofiler, weights or a weight field can be added
+    #     :param weights:
+    #     :return:
+    #     """
+    #     if weights is not None:
+    #         self._table[name] = generator.generate(weights=weights)
+    #     elif weight_field is not None:
+    #         self._table[name] = generator.generate(size=self._table[weight_field])
+    #     else:
+    #         self._table[name] = generator.generate(size=len(self._table.index))
 
-        :param name:
-        :param generator: either a random generator or a timeprofiler. If a timeprofiler, weights or a weight field can be added
-        :param weights:
-        :return:
-        """
-        if weights is not None:
-            self._table[name] = generator.generate(weights=weights)
-        elif weight_field is not None:
-            self._table[name] = generator.generate(size=self._table[weight_field])
-        else:
-            self._table[name] = generator.generate(size=len(self._table.index))
-
-    def make_attribute_action(self,attr_name,ids,params):
+    def make_attribute_action(self, attr_name, ids, params):
         """
 
         :param attr_name:
@@ -97,7 +103,7 @@ class Actor(object):
         else:
             raise Exception("No transient attribute named %s" % attr_name)
 
-    def get_join(self,field,ids):
+    def get_join(self, field, ids):
         """
 
         :param field:
