@@ -69,21 +69,6 @@ class Actor(object):
 
         self._transient_attributes[name] = transient_attribute
 
-    # def update_attribute(self, name, generator, weights=None,weight_field=None):
-    #     """
-    #
-    #     :param name:
-    #     :param generator: either a random generator or a timeprofiler. If a timeprofiler, weights or a weight field can be added
-    #     :param weights:
-    #     :return:
-    #     """
-    #     if weights is not None:
-    #         self._table[name] = generator.generate(weights=weights)
-    #     elif weight_field is not None:
-    #         self._table[name] = generator.generate(size=self._table[weight_field])
-    #     else:
-    #         self._table[name] = generator.generate(size=len(self._table.index))
-
     def make_attribute_action(self, attr_name, ids, params):
         """
 
@@ -119,11 +104,7 @@ class Actor(object):
         else:
             raise Exception("No field or attribute named %s" % field)
 
-
-        left = pd.DataFrame(index=ids)
-        right = pd.DataFrame(table_to_join[field_name],index=table_to_join.index)
-        res = left.join(right)
-        return res[field_name].values
+        return table_to_join.ix[ids, field_name].values
 
     def check_attributes(self,ids,field,condition,threshold):
         """
