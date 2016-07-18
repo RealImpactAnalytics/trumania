@@ -9,8 +9,6 @@ class Circus(object):
     The different objects contained in the Circus are:
     - Actors, which do actions during the simumation
     - Items, that contain descriptive data
-    - Relationships, that contain relations between Actors and either Actors or Items
-    - Generators, the random generators used in this simulation
     - a Clock object, to manage overall time
     - Actions, a list of actions to perform on the actors
     - Incrementors, similarly to a list of actions, it's storing which generators need to be incremented at each step
@@ -27,8 +25,6 @@ class Circus(object):
         """
         self.__actors = {}
         self.__items = {}
-        self.__relationships = {}
-        self.__generators = {}
         self.__clock = clock
         self.__actions = []
         self.__incrementors = []
@@ -58,35 +54,6 @@ class Circus(object):
         if self.__items.has_key(name):
             raise Exception("Already having items named %s" % name)
         self.__items[name] = item
-
-    def add_relationship(self, r1, r2, rel):
-        """Add a relationship to the list of relationships
-
-        :type r1: str
-        :param r1: the name of the first part in the relationship
-        :type r2: str
-        :param r2: the name of the second part in the relationship
-        :type rel: Relationship
-        :param rel: the relationship to add
-        :return: None
-        """
-        if self.__relationships.has_key((r1, r2)):
-            raise Exception("Already having relationship between %s and %s" % (r1, r2))
-        self.__relationships[(r1, r2)] = rel
-
-    def add_generator(self, name, gen):
-        """Add a generator to the list of generators
-
-        :type name: str
-        :param name: the name of the generator (for referencing)
-        :type gen: Generator object or TimeProfiler object
-        :param gen: generator
-        :return: None
-        """
-        if self.__generators.has_key(name):
-            raise Exception("Already having generator named %s" % name)
-
-        self.__generators[name] = gen
 
     def add_action(self, action, supp_fields=None):
         """Add an action to perform
@@ -165,6 +132,4 @@ class Circus(object):
     def get_contents(self):
         return (self.__clock,
                 self.__actors,
-                self.__items,
-                self.__relationships,
-                self.__generators)
+                self.__items)

@@ -102,22 +102,26 @@ def compose_circus():
     print "Create callers"
     customers = Actor(n_customers)
     print "Done"
-    tatt = time.clock()
     customers.gen_attribute(name="MSISDN",
                             generator=msisdn_gen)
+    tatt = time.clock()
     # customers.gen_attribute("activity", activity_gen)
     # customers.gen_attribute("clock", timegen, weight_field="activity")
 
     print "Added atributes"
     tsna = time.clock()
     print "Creating social network"
-    social_network = create_er_social_network(customers.get_ids(), float(average_degree) / float(n_customers), seed)
+    social_network = create_er_social_network(customer_ids=customers.get_ids(),
+                                              p=average_degree / n_customers,
+                                              seed=seed)
     tsnaatt = time.clock()
     print "Done"
     network = WeightedRelationship("A", "B", networkchooser)
-    network.add_relation("A", social_network["A"].values, "B", social_network["B"].values,
+    network.add_relation("A", social_network["A"].values,
+                         "B", social_network["B"].values,
                          networkweightgenerator.generate(len(social_network.index)))
-    network.add_relation("A", social_network["B"].values, "B", social_network["A"].values,
+    network.add_relation("A", social_network["B"].values,
+                         "B", social_network["A"].values,
                          networkweightgenerator.generate(len(social_network.index)))
     print "Done SNA"
     tmo = time.clock()
@@ -127,7 +131,8 @@ def compose_circus():
     print "Network created"
     tmoatt = time.clock()
     mobility = WeightedRelationship("A", "CELL", mobilitychooser)
-    mobility.add_relation("A", mobility_df["A"], "CELL", mobility_df["CELL"],
+    mobility.add_relation("A", mobility_df["A"],
+                          "CELL", mobility_df["CELL"],
                           mobilityweightgenerator.generate(len(mobility_df.index)))
 
     customers.add_transient_attribute(name="CELL",
@@ -163,9 +168,6 @@ def compose_circus():
     print "Creating circus"
     flying = Circus(the_clock)
     flying.add_actor("customers", customers)
-    flying.add_relationship("A", "B", network)
-    flying.add_generator("time", timegen)
-    flying.add_generator("networkchooser", networkchooser)
 
     topup = AttributeAction(name="topup",
                             actor=customers,
@@ -180,7 +182,11 @@ def compose_circus():
                                          "id3": "value"}
                             )
 
-    calls = ActorAction("calls", customers, timegen, activity_gen)
+    calls = ActorAction(name="calls",
+                        actor=customers,
+                        time_generator=timegen,
+                        activity_generator=activity_gen)
+
     calls.add_relationship("network", network)
     calls.add_relationship("product", product_rel)
     calls.add_field("B", "network", {"key": "A"})

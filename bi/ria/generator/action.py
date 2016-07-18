@@ -11,7 +11,8 @@ class ActorAction(Action):
     def __init__(self, name, actor, time_generator, activity_generator):
         Action.__init__(self, name, actor)
 
-        self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
+        self.clock = pd.DataFrame({"clock": 0, "activity": 1.},
+                                  index=actor.get_ids())
         self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
         self.clock["clock"] = time_generator.generate(weights=self.clock["activity"])
 
@@ -98,8 +99,8 @@ class ActorAction(Action):
 
     def produce_field_data(self, actor_ids):
         """
-        Constructs values for all fields produced by this action, selecting
-        randomly from the "other" side of each declared relationship.
+        Constructs values for all fields produced by this actor action,
+        selecting randomly from the "other" side of each declared relationship.
 
         :param actor_ids: the actor ids being "actioned"
         :return: a dataframe with all fields produced by the action

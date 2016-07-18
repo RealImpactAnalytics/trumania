@@ -131,8 +131,6 @@ def compose_circus():
     flying = Circus(the_clock)
     flying.add_actor("customers", customers)
     flying.add_actor("dealer",dealers)
-    flying.add_relationship("Customer", "Dealer", agent_customer)
-    flying.add_generator("time", timegen)
 
     purchase = ActorAction("purchase",customers,timegen,activity_gen)
     purchase.add_secondary_actor("DEALER",dealers)
