@@ -119,6 +119,7 @@ class Actor(object):
         else:
             raise Exception("No field or attribute named %s" % field)
 
+
         left = pd.DataFrame(index=ids)
         right = pd.DataFrame(table_to_join[field_name],index=table_to_join.index)
         res = left.join(right)
