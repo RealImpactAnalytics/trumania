@@ -1,22 +1,26 @@
-from datetime import datetime
-import pandas as pd
-from src.random_generators import *
-from src.clock import *
-from src.actor import *
-from src.relationship import *
-from src.circus import *
-from src.util_functions import *
-from src.action import *
-from src.product import *
+from __future__ import division
 
 import time
+from datetime import datetime
+import json
+
+from bi.ria.generator.action import *
+from bi.ria.generator.clock import *
+from bi.ria.generator.circus import *
+from bi.ria.generator.product import *
+from bi.ria.generator.random_generators import *
+from bi.ria.generator.relationship import *
+from bi.ria.generator.util_functions import *
+
+from bi.ria.generator.actor import *
 
 
-def generate():
+def compose_circus():
+    """
+        Builds a circus simulating call, mobility and topics.
+        See test case below
     """
 
-    :rtype: tuple
-    """
     ######################################
     # Define parameters
     ######################################
@@ -25,8 +29,6 @@ def generate():
 
     seed = 123456
     n_customers = 1000
-#    n_iterations = 600
-    n_iterations = 10
     n_cells = 100
     n_agents = 100
     average_degree = 20
@@ -59,7 +61,7 @@ def generate():
     ######################################
     tg = time.clock()
     print "Generators"
-    msisdn_gen = MSISDNGenerator("msisdn-test-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
+    msisdn_gen = MSISDNGenerator("msisdn-tests-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
     activity_gen = GenericGenerator("user-activity", "pareto", {"a": 1.2, "m": 10.}, seed)
     timegen = WeekProfiler(time_step, prof, seed)
 
@@ -101,9 +103,10 @@ def generate():
     customers = Actor(n_customers)
     print "Done"
     tatt = time.clock()
-    customers.add_attribute("MSISDN", msisdn_gen)
-    # customers.update_attribute("activity", activity_gen)
-    # customers.update_attribute("clock", timegen, weight_field="activity")
+    customers.gen_attribute(name="MSISDN",
+                            generator=msisdn_gen)
+    # customers.gen_attribute("activity", activity_gen)
+    # customers.gen_attribute("clock", timegen, weight_field="activity")
 
     print "Added atributes"
     tsna = time.clock()
@@ -127,7 +130,9 @@ def generate():
     mobility.add_relation("A", mobility_df["A"], "CELL", mobility_df["CELL"],
                           mobilityweightgenerator.generate(len(mobility_df.index)))
 
-    customers.add_transient_attribute("CELL", "choice", init_mobility_generator)
+    customers.add_transient_attribute(name="CELL",
+                                      att_type="choice",
+                                      generator=init_mobility_generator)
 
     agent_df = pd.DataFrame.from_records(make_random_bipartite_data(customers.get_ids(), agents, 0.3, seed),
                                          columns=["A", "AGENT"])
@@ -137,7 +142,11 @@ def generate():
     agent_rel.add_relation("A", agent_df["A"], "AGENT", agent_df["AGENT"],
                            agentweightgenerator.generate(len(agent_df.index)))
 
-    customers.add_transient_attribute("MAIN_ACCT", "stock", recharge_init, {"trigger_generator": recharge_trigger})
+    customers.add_transient_attribute(name="MAIN_ACCT",
+                                      att_type="stock",
+                                      generator=recharge_init,
+                                      params={"trigger_generator":
+                                                  recharge_trigger})
     print "Done all customers"
 
     voice = VoiceProduct(voice_duration_generator, voice_price_generator)
@@ -158,8 +167,18 @@ def generate():
     flying.add_generator("time", timegen)
     flying.add_generator("networkchooser", networkchooser)
 
-    topup = AttributeAction("topup", customers, "MAIN_ACCT",GenericGenerator("1","constant",{"a":1.}),ConstantProfiler(-1),
-                            {"relationship": agent_rel, "id1": "A", "id2": "AGENT", "id3": "value"})
+    topup = AttributeAction(name="topup",
+                            actor=customers,
+                            field="MAIN_ACCT",
+                            activity_generator=GenericGenerator("1",
+                                                                "constant",
+                                                                {"a":1.}),
+                            time_generator=ConstantProfiler(-1),
+                            parameters={"relationship": agent_rel,
+                                         "id1": "A",
+                                         "id2": "AGENT",
+                                         "id3": "value"}
+                            )
 
     calls = ActorAction("calls", customers, timegen, activity_gen)
     calls.add_relationship("network", network)
@@ -168,33 +187,32 @@ def generate():
     calls.add_field("PRODUCT", "product", {"key": "A"})
     calls.add_impact("value decrease", "MAIN_ACCT", "decrease_stock", {"value": "VALUE", "key": "A","recharge_action":topup})
 
-    mobility = AttributeAction("mobility", customers, "CELL", GenericGenerator("1","constant",{"a":1.}), mobilitytimegen,
-                               {'relationship': mobility, 'new_time_generator': mobilitytimegen, 'id1': "A",
-                                'id2': "CELL"})
+    mobility = AttributeAction(name="mobility",
+                               actor=customers,
+                               field="CELL",
+                               activity_generator=GenericGenerator("1",
+                                                                     "constant",
+                                                                     {"a":1.}),
+                               time_generator=mobilitytimegen,
+                               parameters={'relationship': mobility,
+                                           'new_time_generator': mobilitytimegen,
+                                           'id1': "A",
+                                           'id2': "CELL"})
 
-    flying.add_action(calls, {"timestamp": True,
-                              "join": [("A", customers, "MSISDN", "A_NUMBER"),
+    flying.add_action(calls, {"join": [("A", customers, "MSISDN", "A_NUMBER"),
                                        ("B", customers, "MSISDN", "B_NUMBER"),
                                        ("A", customers, "CELL", "CELL_A"),
                                        ("B", customers, "CELL", "CELL_B"), ]})
 
-    flying.add_action(mobility, {"timestamp": True})
+    flying.add_action(mobility)
 
-    flying.add_action(topup, {"timestamp": True,
-                              "join": [("A", customers, "MSISDN", "CUSTOMER_NUMBER"),
+    flying.add_action(topup, {"join": [("A", customers, "MSISDN", "CUSTOMER_NUMBER"),
                                        ("A", customers, "CELL", "CELL")]})
 
     flying.add_increment(timegen)
-    print "Done"
-
-    ######################################
-    # Run
-    ######################################
     tr = time.clock()
-    print "Start run"
-    all_cdrs, all_mov, all_topup = zip(*flying.run(n_iterations))
 
-    tf = time.clock()
+    print "Done"
 
     all_times = {"parameters": tc - tp,
                  "clocks": tg - tc,
@@ -207,11 +225,46 @@ def generate():
                  "mobility graph creation": tmoatt - tmo,
                  "mobility attribute creation": tci - tmoatt,
                  "circus creation": tr - tci,
-                 "runs (all)": tf - tr,
-                 "one run (average)": (tf - tr) / float(n_iterations)}
+                 "tr": tr,
+        }
 
-    return flying, \
-           pd.concat(all_cdrs, ignore_index=True), \
-           pd.concat(all_mov, ignore_index=True), \
-           pd.concat(all_topup, ignore_index=True), \
-           all_times
+    return flying, all_times
+
+
+def test_cdr_scenario():
+
+    cdr_circus, all_times = compose_circus()
+    n_iterations = 100
+
+    all_cdrs, all_mov, all_topup = cdr_circus.run(n_iterations)
+    tf = time.clock()
+
+    all_times["runs (all)"] = tf - all_times["tr"]
+    all_times["one run (average)"] = (tf - all_times["tr"]) / n_iterations
+
+    print (json.dumps(all_times, indent=2))
+
+    assert all_cdrs.shape[0] > 0
+    assert "datetime" in all_cdrs.columns
+
+    assert all_mov.shape[0] > 0
+    assert "datetime" in all_mov.columns
+
+    assert all_topup.shape[0] > 0
+    assert "datetime" in all_topup.columns
+
+    print ("""
+        some cdrs:
+          {}
+
+        some mobility events:
+          {}
+
+        some topup event:
+          {}
+
+    """.format(all_cdrs.head(), all_mov.head(), all_topup.head()))
+
+    # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
+
+

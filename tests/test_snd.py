@@ -1,15 +1,18 @@
-from datetime import datetime
-import pandas as pd
-from src.random_generators import *
-from src.clock import *
-from src.actor import *
-from src.relationship import *
-from src.circus import *
-from src.util_functions import *
-from src.action import *
-from src.product import *
+from __future__ import division
 
 import time
+from datetime import datetime
+import json
+
+from bi.ria.generator.action import *
+from bi.ria.generator.clock import *
+from bi.ria.generator.circus import *
+from bi.ria.generator.product import *
+from bi.ria.generator.random_generators import *
+from bi.ria.generator.relationship import *
+from bi.ria.generator.util_functions import *
+
+from bi.ria.generator.actor import *
 
 
 # AgentA: has stock of SIMs
@@ -17,10 +20,10 @@ import time
 # SIMs: has ID
 # AgentA buys stock to AgentB
 
-def generate():
+def compose_circus():
     """
-
-    :rtype: tuple
+        Builds a circus simulating SND activity.
+        see test case below
     """
     ######################################
     # Define parameters
@@ -30,8 +33,6 @@ def generate():
 
     seed = 123456
     n_agents_a = 1000
-#    n_iterations = 600
-    n_iterations = 10
     n_agents_b = 100
     average_degree = 20
     n_sims = 500000
@@ -143,32 +144,49 @@ def generate():
     purchase.add_impact("transfer sim","SIM","transfer_item",
                         {"item":"SIM","buyer_key":"AGENT","seller_key":"DEALER","seller_table":"DEALER"})
 
-    flying.add_action(purchase,{"timestamp": True})
+    flying.add_action(purchase)
 
     flying.add_increment(timegen)
     print "Done"
 
-    ######################################
-    # Run
-    ######################################
     tr = time.clock()
-    print "Start run"
-    all_purchases = [result[0] for result in flying.run(n_iterations)]
+    all_times = {"parameters":tc-tp,
+             "clocks":tg-tc,
+             "generators":tig-tg,
+             "init generators": tcal-tig,
+             "callers creation (full)":tmo-tcal,
+             "caller creation (solo)":tatt-tcal,
+             "caller attribute creation": tsna-tatt,
+             "mobility graph creation": tmoatt-tmo,
+             "mobility attribute creation": tci - tmoatt,
+             "circus creation": tr-tci,
+             "tr": tr
+                 }
+
+    return flying, all_times
+
+
+def test_cdr_scenario():
+
+    snd_circus, all_times = compose_circus()
+    n_iterations = 100
+
+    [all_purchases] = snd_circus.run(n_iterations)
     tf = time.clock()
 
-    all_times = {"parameters":tc-tp,
-                 "clocks":tg-tc,
-                 "generators":tig-tg,
-                 "init generators": tcal-tig,
-                 "callers creation (full)":tmo-tcal,
-                 "caller creation (solo)":tatt-tcal,
-                 "caller attribute creation": tsna-tatt,
-                 "mobility graph creation": tmoatt-tmo,
-                 "mobility attribute creation": tci - tmoatt,
-                 "circus creation": tr-tci,
-                 "runs (all)": tf-tr,
-                 "one run (average)": (tf-tr)/float(n_iterations)}
+    all_times["runs (all)"] = tf - all_times["tr"]
+    all_times["one run (average)"] = (tf - all_times["tr"]) / n_iterations
 
-    return flying, \
-           pd.concat(all_purchases, ignore_index=True),\
-           all_times
+    print (json.dumps(all_times, indent=2))
+
+    print ("""
+        some purchase events:
+          {}
+
+    """.format(all_purchases.head()))
+
+    assert all_purchases.shape[0] > 0
+    assert "datetime" in all_purchases.columns
+
+    # TODO: add real post-conditions on all_purchases
+
