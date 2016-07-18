@@ -187,10 +187,8 @@ def compose_circus():
                         time_generator=timegen,
                         activity_generator=activity_gen)
 
-    calls.add_relationship("network", network)
-    calls.add_relationship("product", product_rel)
-    calls.add_field("B", "network", {"key": "A"})
-    calls.add_field("PRODUCT", "product", {"key": "A"})
+    calls.add_field("B", network, {"key": "A"})
+    calls.add_field("PRODUCT", product_rel, {"key": "A"})
     calls.add_impact("value decrease", "MAIN_ACCT", "decrease_stock", {"value": "VALUE", "key": "A","recharge_action":topup})
 
     mobility = AttributeAction(name="mobility",

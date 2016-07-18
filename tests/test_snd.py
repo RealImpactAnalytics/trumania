@@ -130,17 +130,29 @@ def compose_circus():
     print "Creating circus"
     flying = Circus(the_clock)
     flying.add_actor("customers", customers)
-    flying.add_actor("dealer",dealers)
+    flying.add_actor("dealer", dealers)
 
-    purchase = ActorAction("purchase",customers,timegen,activity_gen)
-    purchase.add_secondary_actor("DEALER",dealers)
-    purchase.add_relationship("customer_dealer",agent_customer)
-    purchase.add_relationship("customer_sim",customer_sim_rel)
-    purchase.add_relationship("dealer_sim",dealer_sim_rel)
-    purchase.add_field("DEALER","customer_dealer",{"key":"AGENT"})
-    purchase.add_secondary_field("SIM","dealer_sim",{"key_table":"DEALER","key_rel":"AGENT","out_rel":"ITEM"})
-    purchase.add_impact("transfer sim","SIM","transfer_item",
-                        {"item":"SIM","buyer_key":"AGENT","seller_key":"DEALER","seller_table":"DEALER"})
+    purchase = ActorAction("purchase", customers, timegen,activity_gen)
+    purchase.add_secondary_actor("DEALER", dealers)
+    purchase.add_field("DEALER", agent_customer, {"key":"AGENT"})
+
+    # TODO 2: move this to add_field
+    purchase.add_secondary_field("SIM", dealer_sim_rel,
+                                 {"key_table":"DEALER",
+                                  "key_rel":"AGENT",
+                                  "out_rel":"ITEM"})
+
+    # TODO: impacts should be closures
+    purchase.add_impact(name="transfer sim",
+                        attribute="SIM",
+                        function="transfer_item",
+
+                        parameters=
+                            {"item":"SIM",
+                            "buyer_key":"AGENT",
+                            "seller_key":"DEALER",
+                            "seller_table":"DEALER"
+                        })
 
     flying.add_action(purchase)
 

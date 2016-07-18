@@ -18,7 +18,7 @@ class ActorAction(Action):
 
         self.time_generator = time_generator
         self.secondary_actors = {}
-        self.relationships = {}
+        # self.relationships = {}
         self.items = {}
         self.base_fields = {}
         self.secondary_fields = {}
@@ -48,8 +48,8 @@ class ActorAction(Action):
     def add_secondary_actor(self, name, actor):
         self.secondary_actors[name] = actor
 
-    def add_relationship(self, name, relationship):
-        self.relationships[name] = relationship
+    # def add_relationship(self, name, relationship):
+    #     self.relationships[name] = relationship
 
     def add_item(self, name, item):
         self.items[name] = item
@@ -73,7 +73,7 @@ class ActorAction(Action):
         """
 
         :param name:
-        :type relationship: str
+        :type relationship: DataFrame
         :param relationship: name of relationship to use (as named in the "relationship" field of the action)
         :param params:
         :return:
@@ -84,7 +84,7 @@ class ActorAction(Action):
         """
 
         :param name:
-        :type relationship: str
+        :type relationship: DataFrame
         :param relationship: name of relationship to use (as named in the "relationship" field of the action)
         :param params:
         :return:
@@ -108,15 +108,17 @@ class ActorAction(Action):
 
         f_data = []
         # TODO there's something weird here: if only 1 field is returned, we would maybe like to have f to be the name of the field
-        for f_name, (rel_name, rel_parameters) in self.base_fields.items():
-            f_data.append(self.relationships[rel_name].select_one(
+        for f_name, (relationship, rel_parameters) in self.base_fields.items():
+            f_data.append(relationship.select_one(
                 rel_parameters["key"], actor_ids))
 
         all_fields = pd.concat(f_data, axis=1, join='inner').reset_index()
 
-        for f_name, (rel_name, rel_parameters) in self.secondary_fields.items():
-            out = self.relationships[rel_name].select_one(rel_parameters["key_rel"],
-                                                          all_fields[rel_parameters["key_table"]].values)
+        # TODO: as a speed up: we could also filter by actor id before doing
+        # the join here
+        for f_name, (relationship, rel_parameters) in self.secondary_fields.items():
+            out = relationship.select_one(rel_parameters["key_rel"],
+                      all_fields[rel_parameters["key_table"]].values)
             all_fields = pd.merge(all_fields, out.rename(columns={rel_parameters["out_rel"]: f_name}),
                                   left_on=rel_parameters["key_table"],
                                   right_index=True)
