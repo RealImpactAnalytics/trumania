@@ -23,24 +23,10 @@ class Circus(object):
         :rtype: Circus
         :return: a new Circus object, with the clock, is created
         """
-        self.__actors = {}
         self.__items = {}
         self.__clock = clock
         self.__actions = []
         self.__incrementors = []
-
-    def add_actor(self, name, actor):
-        """Add an Actor object to the list of actors
-
-        :type name: str
-        :param name: the name to reference the Actor
-        :type actor: Actor
-        :param actor: the Actor object to add
-        :return: None
-        """
-        if self.__actors.has_key(name):
-            raise Exception("Already having actors named %s" % name)
-        self.__actors[name] = actor
 
     def add_item(self, name, item):
         """Add an Item object to the list of items
@@ -95,6 +81,8 @@ class Circus(object):
             for field_name, field_val in supp_fields.iteritems():
                 if field_name == "join":
                     for out_field, obj_2_join, obj_field, new_name in field_val:
+#                        print ("---")
+#                        print (action_values)
                         action_values[new_name] = obj_2_join.get_join(
                             obj_field, action_values[out_field])
 
@@ -130,6 +118,4 @@ class Circus(object):
         return [pd.concat(table, ignore_index=True) for table in tables_list]
 
     def get_contents(self):
-        return (self.__clock,
-                self.__actors,
-                self.__items)
+        return (self.__clock, self.__items)

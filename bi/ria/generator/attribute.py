@@ -28,7 +28,8 @@ class ChoiceAttribute(TransientAttribute):
 
     """
 
-    def make_actions(self, ids, new_time_generator, relationship, id1, id2):
+    def make_actions(self, ids, actorid_field_name, new_time_generator,
+                     relationship):
         """
 
         :param new_time_generator:
@@ -39,9 +40,12 @@ class ChoiceAttribute(TransientAttribute):
         """
         out = pd.DataFrame(columns=["new"])
         if len(ids) > 0:
-            out = relationship.select_one(id1,ids.values).rename(columns={id2:"new"})
+            out = (relationship
+                    .select_one(from_ids=ids, named_as="new")
+                    .rename(columns={"from": actorid_field_name})
+                   )
             if len(out.index) > 0:
-                self._table.loc[out.index, "value"] = out["new"].values
+                self._table.loc[out[actorid_field_name], "value"] = out[actorid_field_name].values
         out.reset_index(inplace=True)
         return ids, out, None
 
@@ -60,7 +64,8 @@ class StockAttribute(TransientAttribute):
         :return:
         """
         TransientAttribute.__init__(self, ids)
-        self._table["value"] = pd.Series(0, index=self._table.index, dtype=int)
+        self._table["value"] = 0
+        #pd.Series(0, index=self._table.index, dtype=int)
         self._trigger = trigger_generator
 
     def init_clock(self,new_time_generator):
@@ -86,7 +91,7 @@ class StockAttribute(TransientAttribute):
 
         return act_now.index
 
-    def make_actions(self,ids,relationship,id1,id2,id3):
+    def make_actions(self, ids, actorid_field_name, relationship,id2,id3):
         """
 
         :param relationship: AgentRelationship
@@ -95,11 +100,18 @@ class StockAttribute(TransientAttribute):
         :param id3: id of Value
         :return:
         """
-        out = pd.DataFrame(columns=["new"])
+        out = pd.DataFrame(columns=[actorid_field_name])
         if len(ids) > 0:
-            out = relationship.select_one(id1,ids.values).rename(columns={id2:"AGENT",id3:"VALUE"})
+            out = (relationship
+                    .select_one(from_ids=ids, named_as=id2)
+                    # TODO: ask Gautier: in AgentRelationship, the value is
+                    # hardcoded to 1000 => quid?
+                    .rename(columns={"from": actorid_field_name,
+                                     id3: "VALUE"}))
+
             if len(out.index) > 0:
-                self._table.loc[out.index,"value"] += out["VALUE"]
+                # out["from"] should be equal to ids here:
+                self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]
 
         out.reset_index(inplace=True)
         return [], out, None
@@ -138,7 +150,7 @@ class LabeledStockAttribute(TransientAttribute):
         :param values:
         :return:
         """
-        self.__stock.add_relation("AGENT",ids,"ITEM",items)
+        self.__stock.add_relations("AGENT", ids, "ITEM", items)
         cpt = pd.Series(ids).value_counts()
         self._table.loc[cpt.index,"value"] += cpt.values
 

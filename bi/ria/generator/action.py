@@ -8,7 +8,8 @@ class Action(object):
 
 
 class ActorAction(Action):
-    def __init__(self, name, actor, time_generator, activity_generator):
+    def __init__(self, name, actor, actorid_field_name, time_generator,
+                 activity_generator):
         Action.__init__(self, name, actor)
 
         self.clock = pd.DataFrame({"clock": 0, "activity": 1.},
@@ -18,7 +19,6 @@ class ActorAction(Action):
 
         self.time_generator = time_generator
         self.secondary_actors = {}
-        # self.relationships = {}
         self.items = {}
         self.base_fields = {}
         self.secondary_fields = {}
@@ -26,6 +26,7 @@ class ActorAction(Action):
         self.feature_conditions = {}
         self.triggers = {}
         self.impacts = {}
+        self.actorid_field_name = actorid_field_name
 
     def who_acts_now(self):
         """
@@ -48,9 +49,6 @@ class ActorAction(Action):
     def add_secondary_actor(self, name, actor):
         self.secondary_actors[name] = actor
 
-    # def add_relationship(self, name, relationship):
-    #     self.relationships[name] = relationship
-
     def add_item(self, name, item):
         self.items[name] = item
 
@@ -69,7 +67,7 @@ class ActorAction(Action):
 
         self.impacts[name] = (attribute, function, parameters)
 
-    def add_field(self, name, relationship, params=None):
+    def add_field(self, name, relationship):
         """
 
         :param name:
@@ -78,7 +76,7 @@ class ActorAction(Action):
         :param params:
         :return:
         """
-        self.base_fields[name] = (relationship, params)
+        self.base_fields[name] = relationship
 
     def add_secondary_field(self, name, relationship, params=None):
         """
@@ -97,7 +95,7 @@ class ActorAction(Action):
     def add_feature_condition(self, name, actorfield, attributefield, item, function, parameters):
         self.feature_conditions[name] = (actorfield, attributefield, item, function, parameters)
 
-    def produce_field_data(self, actor_ids):
+    def choose_field_values(self, actor_ids):
         """
         Constructs values for all fields produced by this actor action,
         selecting randomly from the "other" side of each declared relationship.
@@ -106,24 +104,37 @@ class ActorAction(Action):
         :return: a dataframe with all fields produced by the action
         """
 
-        f_data = []
+        field_data = []
         # TODO there's something weird here: if only 1 field is returned, we would maybe like to have f to be the name of the field
-        for f_name, (relationship, rel_parameters) in self.base_fields.items():
-            f_data.append(relationship.select_one(
-                rel_parameters["key"], actor_ids))
+        for f_name, relationship in self.base_fields.items():
+            field_data.append(relationship.select_one(from_ids=actor_ids,
+                                                      named_as=f_name))
+                # rel_parameters["key"],
 
-        all_fields = pd.concat(f_data, axis=1, join='inner').reset_index()
+
+#        all_fields = pd.concat(field_data, axis=1, join='inner').reset_index()
 
         # TODO: as a speed up: we could also filter by actor id before doing
         # the join here
         for f_name, (relationship, rel_parameters) in self.secondary_fields.items():
-            out = relationship.select_one(rel_parameters["key_rel"],
-                      all_fields[rel_parameters["key_table"]].values)
-            all_fields = pd.merge(all_fields, out.rename(columns={rel_parameters["out_rel"]: f_name}),
-                                  left_on=rel_parameters["key_table"],
-                                  right_index=True)
+            field_data.append(
+                relationship.select_one(
+                # rel_parameters["key_rel"],
+                      #all_fields[rel_parameters["key_table"]].values
+                from_ids=actor_ids,
+                named_as=f_name
+            ))
 
-        return all_fields
+            # all_fields = pd.merge(left=all_fields,
+            #                       right=out,
+            #                       #.rename(columns={rel_parameters["out_rel"]: f_name}),
+            #                       left_on="from",
+            #                       right_on="from")
+
+        all_fields = reduce(lambda df1, df2: pd.merge(df1, df2, on="from"),
+                            field_data)
+
+        return all_fields.rename(columns={"from": "actor_id"})
 
     def check_post_conditions(self, fields_values):
         """
@@ -150,35 +161,42 @@ class ActorAction(Action):
 
         return valid_ids
 
-    def make_impacts(self, data):
+    def make_impacts(self, field_values):
         """
 
-        :param data:
+        :param field_values:
         :return:
         """
-        for k in self.impacts.keys():
-            if self.impacts[k][1] == "decrease_stock":
-                params = {"values": pd.Series(data[self.impacts[k][2]["value"]].values,
-                                              index=data[self.impacts[k][2]["key"]].values)}
-                ids_for_clock = self.actor.apply_to_attribute(self.impacts[k][0], self.impacts[k][1], params)
-                self.impacts[k][2]["recharge_action"].assign_clock_value(pd.Series(data=0,index=ids_for_clock))
+        for impact_name in self.impacts.keys():
 
-            if self.impacts[k][1] == "transfer_item":
-                params_for_remove = {"items": data[self.impacts[k][2]["item"]].values,
-                                     "ids": data[self.impacts[k][2]["seller_key"]].values}
+            attribute, function, impact_params = self.impacts[impact_name]
 
-                params_for_add = {"items": data[self.impacts[k][2]["item"]].values,
-                                  "ids": data[self.impacts[k][2]["buyer_key"]].values}
+            # TODO there is coupling here between the business scenario
+            # we need to externalise this to make the design extensible
 
-                self.secondary_actors[self.impacts[k][2]["seller_table"]].apply_to_attribute(self.impacts[k][0],
-                                                                                             "remove_item",
-                                                                                             params_for_remove)
+            if function == "decrease_stock":
+                params = {"values": pd.Series(field_values[impact_params["value"]].values,
+                                              index=field_values["actor_id"])}
+                ids_for_clock = self.actor.apply_to_attribute(attribute, function, params)
+                impact_params["recharge_action"].assign_clock_value(pd.Series(data=0,
+                                                                       index=ids_for_clock))
 
-                self.actor.apply_to_attribute(self.impacts[k][0], "add_item", params_for_add)
+            elif function == "transfer_item":
+                params_for_remove = {"items": field_values[impact_params["item"]].values,
+                                     "ids": field_values[impact_params["seller_key"]].values}
+
+                params_for_add = {"items": field_values[impact_params["item"]].values,
+                                  "ids": field_values[impact_params["buyer_key"]].values}
+
+                self.secondary_actors[impact_params["seller_table"]].apply_to_attribute(attribute,
+                                                                                 "remove_item",
+                                                                                 params_for_remove)
+
+                self.actor.apply_to_attribute(attribute, "add_item", params_for_add)
 
     def execute(self):
         act_now = self.who_acts_now()
-        field_values = self.produce_field_data(act_now.values)
+        field_values = self.choose_field_values(act_now.values)
 
         if len(field_values.index) > 0:
             passed = self.check_post_conditions(field_values)
@@ -191,15 +209,17 @@ class ActorAction(Action):
         self.set_clock(act_now, self.time_generator.generate(weights=self.clock.loc[act_now, "activity"]) + 1)
         self.update_clock()
 
-        return field_values
+        return field_values.rename(columns={"actor_id": self.actorid_field_name})
 
 
 class AttributeAction(Action):
-    def __init__(self, name, actor, field, activity_generator, time_generator,
+    def __init__(self, name, actor, attr_name, actorid_field_name,
+                 activity_generator, time_generator,
                  parameters):
         Action.__init__(self, name, actor)
 
-        self.field = field
+        self.attr_name = attr_name
+        self.actorid_field_name = actorid_field_name
         self.parameters = parameters
         self.time_generator = time_generator
 
@@ -226,7 +246,8 @@ class AttributeAction(Action):
         self.clock.loc[values.index,"clock"] = values.values
 
     def execute(self):
-        ids, out, values = self.actor.make_attribute_action(self.field,
+        ids, out, values = self.actor.make_attribute_action(self.attr_name,
+                                                            self.actorid_field_name,
                                                             self.who_acts_now(),
                                                             self.parameters)
 
