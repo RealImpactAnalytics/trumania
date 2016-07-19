@@ -145,7 +145,8 @@ class WeightedRelationship(object):
                                     "weight": weights
                                     })
 
-        self._table = pd.concat([self._table, new_relations]).reset_index()
+        self._table = pd.concat([self._table, new_relations]).reset_index(
+            drop=True)
 
         # df = pd.DataFrame({r1: A, r2: B, "weight": W})
         # self._table = self._table.append(df, ignore_index=True)
@@ -197,6 +198,9 @@ class ProductRelationship(WeightedRelationship):
     def select_one(self, **kwargs):
         chosen_products = WeightedRelationship.select_one(self, **kwargs)
         data_for_out = chosen_products.copy()
+
+        print ("before retrieving products")
+        print (chosen_products.head(15))
 #        choices = choices.iloc[:, 0]
         for product in chosen_products.iloc[:, 1]:
             this_p_index = chosen_products[chosen_products == product].index
@@ -205,7 +209,11 @@ class ProductRelationship(WeightedRelationship):
             # separate relationships
             p_data = self._products[product].generate(size=len(this_p_index))
             for pdf in p_data.columns.values:
-                data_for_out.loc[this_p_index,pdf] = p_data.loc[:,pdf].values
+                data_for_out.loc[this_p_index, pdf] = p_data.loc[:,pdf].values
+
+        print ("after retrieving products")
+        print (data_for_out.head(15))
+
         return data_for_out
 
 

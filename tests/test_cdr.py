@@ -186,7 +186,7 @@ def compose_circus():
     flying = Circus(the_clock)
 #    flying.add_actor("customers", customers)
 
-    # topup
+
 
     topup = AttributeAction(name="topup",
                             actor=customers,
@@ -310,7 +310,9 @@ def test_cdr_scenario():
     cdr_circus, all_times = compose_circus()
     n_iterations = 100
 
-    all_cdrs, all_mov, all_topup = cdr_circus.run(n_iterations)
+    # dataframes of outcomes are returned in the order in which the actions
+    # are added to the circus
+    all_topup, all_cdrs, all_mov = cdr_circus.run(n_iterations)
     tf = time.clock()
 
     all_times["runs (all)"] = tf - all_times["tr"]
@@ -337,7 +339,8 @@ def test_cdr_scenario():
         some topup event:
           {}
 
-    """.format(all_cdrs.head(), all_mov.head(), all_topup.head()))
+    """.format(all_cdrs.head(15).to_string(), all_mov.head().to_string(),
+               all_topup.head().to_string()))
 
     # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
 
