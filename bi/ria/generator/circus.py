@@ -41,7 +41,7 @@ class Circus(object):
             raise Exception("Already having items named %s" % name)
         self.__items[name] = item
 
-    def add_action(self, action, supp_fields=None):
+    def add_action(self, action):
         """Add an action to perform
 
         :type action: Action
@@ -56,8 +56,7 @@ class Circus(object):
                                         "field name in output table")]
         :return:
         """
-        self.__actions.append(
-            (action, {} if supp_fields is None else supp_fields))
+        self.__actions.append(action)
 
     def add_increment(self, to_increment):
         """Add an object to be incremented at each step (such as a TimeProfiler)
@@ -67,24 +66,13 @@ class Circus(object):
         """
         self.__incrementors.append(to_increment)
 
-    def __execute_action(self, action, supp_fields):
+    def __execute_action(self, action):
         """
             executes this action and adds a timestamp to the result
         """
-
         action_values = action.execute()
         action_values["datetime"] = self.__clock.get_timestamp(
             action_values.shape[0])
-
-        # TODO: move this out into action
-        if action_values.shape[0]:
-            for field_name, field_val in supp_fields.iteritems():
-                if field_name == "join":
-                    for out_field, obj_2_join, obj_field, new_name in field_val:
-#                        print ("---")
-#                        print (action_values)
-                        action_values[new_name] = obj_2_join.get_join(
-                            obj_field, action_values[out_field])
 
         return action_values
 
@@ -95,8 +83,8 @@ class Circus(object):
         :return:
         """
 
-        result_tables = [self.__execute_action(action, supp_fields)
-                         for action, supp_fields in self.__actions]
+        result_tables = [self.__execute_action(action)
+                         for action in self.__actions]
 
         for i in self.__incrementors:
             i.increment()

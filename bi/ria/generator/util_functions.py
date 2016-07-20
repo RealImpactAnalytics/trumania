@@ -2,7 +2,6 @@
 
 """
 
-
 from numpy.random import RandomState
 import pandas as pd
 import networkx as nx
@@ -24,7 +23,7 @@ def create_er_social_network(customer_ids, p, seed):
 
     return pd.DataFrame.from_records([(customer_ids[e[0]],customer_ids[e[1]])
                                      for e in nx.fast_gnp_random_graph(len(customer_ids), p, seed).edges()],
-                                    columns=["A", "B"])
+                                     columns=["A", "B"])
 
 
 def make_random_bipartite_data(group1, group2, p, seed):

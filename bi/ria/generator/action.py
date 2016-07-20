@@ -2,15 +2,30 @@ import pandas as pd
 
 
 class Action(object):
-    def __init__(self, name, actor):
+    def __init__(self, name, actor, joined_fields):
         self.name = name
         self.actor = actor
+        self.joined_fields = [] if joined_fields is None else joined_fields
+
+    def add_joined_field(self, field_values):
+
+        for joined_now in self.joined_fields:
+            actor = joined_now["from_actor"]
+
+            for named_as, actor_field in zip(joined_now["as"], joined_now["select"]):
+                actor_ids = field_values[joined_now["left_on"]]
+                field_values[named_as] = actor.get_join(actor_field, actor_ids)
+
+        return field_values
 
 
 class ActorAction(Action):
-    def __init__(self, name, actor, actorid_field_name, time_generator,
-                 activity_generator):
-        Action.__init__(self, name, actor)
+    def __init__(self, name, actor,
+                 actorid_field_name, random_relation_fields,
+                 time_generator, activity_generator,
+                 joined_fields=None):
+
+        Action.__init__(self, name, actor, joined_fields)
 
         self.clock = pd.DataFrame({"clock": 0, "activity": 1.},
                                   index=actor.get_ids())
@@ -18,10 +33,8 @@ class ActorAction(Action):
         self.clock["clock"] = time_generator.generate(weights=self.clock["activity"])
 
         self.time_generator = time_generator
-        self.secondary_actors = {}
         self.items = {}
-        self.base_fields = {}
-        self.secondary_fields = {}
+        self.random_relation_fields = random_relation_fields
         self.value_conditions = {}
         self.feature_conditions = {}
         self.triggers = {}
@@ -46,9 +59,6 @@ class ActorAction(Action):
     def set_clock(self, ids, values):
         self.clock.loc[ids, "clock"] = values
 
-    def add_secondary_actor(self, name, actor):
-        self.secondary_actors[name] = actor
-
     def add_item(self, name, item):
         self.items[name] = item
 
@@ -67,35 +77,13 @@ class ActorAction(Action):
 
         self.impacts[name] = (attribute, function, parameters)
 
-    def add_field(self, name, relationship):
-        """
-
-        :param name:
-        :type relationship: DataFrame
-        :param relationship: name of relationship to use (as named in the "relationship" field of the action)
-        :param params:
-        :return:
-        """
-        self.base_fields[name] = relationship
-
-    def add_secondary_field(self, name, relationship, params=None):
-        """
-
-        :param name:
-        :type relationship: DataFrame
-        :param relationship: name of relationship to use (as named in the "relationship" field of the action)
-        :param params:
-        :return:
-        """
-        self.secondary_fields[name] = (relationship, params)
-
     def add_value_condition(self, name, actorfield, attributefield, function, parameters):
         self.value_conditions[name] = (actorfield, attributefield, function, parameters)
 
     def add_feature_condition(self, name, actorfield, attributefield, item, function, parameters):
         self.feature_conditions[name] = (actorfield, attributefield, item, function, parameters)
 
-    def choose_field_values(self, actor_ids):
+    def __pick_field_values(self, actor_ids):
         """
         Constructs values for all fields produced by this actor action,
         selecting randomly from the "other" side of each declared relationship.
@@ -104,23 +92,23 @@ class ActorAction(Action):
         :return: a dataframe with all fields produced by the action
         """
 
-        field_data = []
-        # TODO there's something weird here: if only 1 field is returned, we would maybe like to have f to be the name of the field
-        for f_name, relationship in self.base_fields.items():
-            field_data.append(relationship.select_one(from_ids=actor_ids,
-                                                      named_as=f_name))
+        def add_field(curr_fields, field_params):
 
-        # TODO: as a speed up: we could also filter by actor id before doing
-        # the join here
-        for f_name, (relationship, rel_parameters) in self.secondary_fields.items():
-            field_data.append(
-                relationship.select_one(from_ids=actor_ids, named_as=f_name)
-            )
+            relationship = field_params["picked_from"]
+            join_on = field_params["join_on"]
+            field_name = field_params["as"]
 
-        all_fields = reduce(lambda df1, df2: pd.merge(df1, df2, on="from"),
-                            field_data)
+            new_field = relationship.select_one(from_ids=curr_fields[join_on],
+                                                named_as=field_name)
 
-        return all_fields.rename(columns={"from": "actor_id"})
+            merged = pd.merge(left=curr_fields, right=new_field,
+                              left_on=join_on, right_on="from")
+
+            return merged.drop("from", axis=1)
+
+        init_fields = pd.DataFrame(actor_ids, columns=[self.actorid_field_name])
+
+        return reduce(add_field, [init_fields] + self.random_relation_fields)
 
     def check_post_conditions(self, fields_values):
         """
@@ -162,7 +150,7 @@ class ActorAction(Action):
 
             if function == "decrease_stock":
                 params = {"values": pd.Series(field_values[impact_params["value"]].values,
-                                              index=field_values["actor_id"])}
+                                              index=field_values[self.actorid_field_name])}
                 ids_for_clock = self.actor.apply_to_attribute(attribute, function, params)
                 impact_params["recharge_action"].assign_clock_value(pd.Series(data=0,
                                                                        index=ids_for_clock))
@@ -174,15 +162,17 @@ class ActorAction(Action):
                 params_for_add = {"items": field_values[impact_params["item"]].values,
                                   "ids": field_values[impact_params["buyer_key"]].values}
 
-                self.secondary_actors[impact_params["seller_table"]].apply_to_attribute(attribute,
-                                                                                 "remove_item",
-                                                                                 params_for_remove)
+                impact_params["seller"].apply_to_attribute(attribute,
+                                                           "remove_item",
+                                                           params_for_remove)
 
-                self.actor.apply_to_attribute(attribute, "add_item", params_for_add)
+                self.actor.apply_to_attribute(attribute,
+                                              "add_item",
+                                              params_for_add)
 
     def execute(self):
         act_now = self.who_acts_now()
-        field_values = self.choose_field_values(act_now.values)
+        field_values = self.__pick_field_values(act_now)
 
         if len(field_values.index) > 0:
             passed = self.check_post_conditions(field_values)
@@ -195,19 +185,19 @@ class ActorAction(Action):
         self.set_clock(act_now, self.time_generator.generate(weights=self.clock.loc[act_now, "activity"]) + 1)
         self.update_clock()
 
-        return field_values.rename(columns={"actor_id": self.actorid_field_name})
+        return Action.add_joined_field(self, field_values)
 
 
 class AttributeAction(Action):
     def __init__(self, name, actor, attr_name, actorid_field_name,
                  activity_generator, time_generator,
-                 parameters):
-        Action.__init__(self, name, actor)
+                 parameters, joined_fields=None):
+        Action.__init__(self, name, actor, joined_fields)
 
         self.attr_name = attr_name
-        self.actorid_field_name = actorid_field_name
         self.parameters = parameters
         self.time_generator = time_generator
+        self.actorid_field_name = actorid_field_name
 
         self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
         self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
@@ -244,4 +234,4 @@ class AttributeAction(Action):
                 self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=values)+1
         self.update_clock()
 
-        return out
+        return Action.add_joined_field(self, out)

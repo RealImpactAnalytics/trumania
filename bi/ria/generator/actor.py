@@ -15,7 +15,6 @@ class Actor(object):
         :return:
         """
         ids = [prefix + str(x).zfill(max_length) for x in np.arange(id_start, id_start + size)]
-        #self._table = pd.DataFrame({"clock": 0, "activity":1.},index=ids)
         self._table = pd.DataFrame(index=ids)
         self._transient_attributes = {}
 
@@ -79,7 +78,6 @@ class Actor(object):
         :return:
         """
         if self._transient_attributes.has_key(attr_name):
-#            params["ids"] = ids
             return self._transient_attributes[attr_name].make_actions(
                 ids=ids, actorid_field_name=actorid_field_name, **params)
         else:

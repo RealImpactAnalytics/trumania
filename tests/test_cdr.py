@@ -68,10 +68,8 @@ def compose_circus():
     mobilitytimegen = DayProfiler(time_step, mov_prof, seed)
     networkweightgenerator = GenericGenerator("network-weight", "pareto", {"a": 1.2, "m": 1.}, seed)
 
-#    mobilitychooser = WeightedChooserAggregator("CELL", "weight", seed)
     mobilityweightgenerator = GenericGenerator("mobility-weight", "exponential", {"scale": 1.})
 
-#    agentchooser = WeightedChooserAggregator("AGENT", "weight", seed)
     agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
 
     init_mobility_generator = GenericGenerator("init-mobility", "choice", {"a": cells})
@@ -79,7 +77,6 @@ def compose_circus():
     SMS_price_generator = GenericGenerator("SMS-price", "constant", {"a": 10.})
     voice_duration_generator = GenericGenerator("voice-duration", "choice", {"a": range(20, 240)}, seed)
     voice_price_generator = ValueGenerator("voice-price", 1)
-#    productchooser = WeightedChooserAggregator("PRODUCT", "weight", seed)
 
     recharge_init = GenericGenerator("recharge init", "constant", {"a": 1000.})
     recharge_trigger = TriggerGenerator("Topup", "logistic", {}, seed)
@@ -184,30 +181,33 @@ def compose_circus():
     tci = time.clock()
     print "Creating circus"
     flying = Circus(the_clock)
-#    flying.add_actor("customers", customers)
-
-
 
     topup = AttributeAction(name="topup",
                             actor=customers,
 
                             attr_name="MAIN_ACCT",
                             actorid_field_name="A",
+
+                            joined_fields=[
+                                {"from_actor": customers,
+                                 "left_on": "A",
+                                 "select": ["MSISDN", "CELL"],
+                                 "as": ["CUSTOMER_NUMBER", "CELL"]},
+                            ],
+
+                            time_generator=ConstantProfiler(-1),
                             activity_generator=GenericGenerator("1",
                                                                 "constant",
                                                                 {"a": 1.}),
-                            time_generator=ConstantProfiler(-1),
+
                             parameters={"relationship": agent_rel,
-#                                        "id1": "A",
-                                       "id2": "AGENT",
-                                        "id3": "value"
-                                        }
+                                        "id2": "AGENT",
+                                        "id3": "value"}
                             )
 
     # TODO: those "join" information should be part of hte attribute action
     # definition, to keep all the definition at the same place
-    flying.add_action(topup, {"join": [("A", customers, "MSISDN", "CUSTOMER_NUMBER"),
-                                       ("A", customers, "CELL", "CELL")]})
+    flying.add_action(topup)
 
     ####
     # calls and SMS
@@ -226,15 +226,40 @@ def compose_circus():
     product_rel.add_relations(from_ids=product_df["A"],
                               to_ids=product_df["PRODUCT"],
                               weights=product_df["weight"])
-
     calls = ActorAction(name="calls",
                         actor=customers,
-                        actorid_field_name="A",
-                        time_generator=timegen,
-                        activity_generator=activity_gen)
 
-    calls.add_field("B", network)
-    calls.add_field("PRODUCT", product_rel)
+                        actorid_field_name="A",
+                        random_relation_fields=[
+                            {"picked_from": network,
+                             "as": "B",
+                             "join_on": "A"
+                             },
+                            {"picked_from": product_rel,
+                             "as": "PRODUCT",
+                             "join_on": "A"
+                             },
+                            ],
+
+                        joined_fields=[
+                            {"from_actor": customers,
+                             "left_on": "A",
+                             "select": ["MSISDN", "CELL"],
+                             "as": ["A_NUMBER", "CELL_A"],
+                             },
+                            {"from_actor": customers,
+                             "left_on": "B",
+                             "select": ["MSISDN", "CELL"],
+                             "as": ["B_NUMBER", "CELL_B"],
+                             },
+                        ],
+
+                        time_generator=timegen,
+                        activity_generator=activity_gen,
+                        )
+
+
+
     calls.add_impact(name="value decrease",
                      attribute="MAIN_ACCT",
                      function="decrease_stock",
@@ -242,19 +267,14 @@ def compose_circus():
                          # TODO: "account value" would be more explicit here
                          # I think
                         "value": "VALUE",
-                        # "key": "A",
                         "recharge_action":topup})
 
-    flying.add_action(calls, {"join": [("A", customers, "MSISDN", "A_NUMBER"),
-                                       ("B", customers, "MSISDN", "B_NUMBER"),
-                                       ("A", customers, "CELL", "CELL_A"),
-                                       ("B", customers, "CELL", "CELL_B"), ]})
+    flying.add_action(calls)
 
     # mobility
 
     mobility = WeightedRelationship(name="people's cell location",
                                     seed=seed)
-    # mobility = WeightedRelationship("A", "CELL", mobilitychooser)
     mobility.add_relations(from_ids=mobility_df["A"],
                            to_ids=mobility_df["CELL"],
                            weights=mobilityweightgenerator.generate(len(
@@ -277,8 +297,6 @@ def compose_circus():
                                       time_generator=mobilitytimegen,
                                       parameters={'relationship': mobility,
                                            'new_time_generator': mobilitytimegen,
-#                                           'id1': "A",
-#                                           'id2': "CELL"
                                                   })
 
     flying.add_action(mobility_action)

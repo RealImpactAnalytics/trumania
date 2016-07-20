@@ -109,8 +109,7 @@ class StockAttribute(TransientAttribute):
                     .rename(columns={"from": actorid_field_name,
                                      id3: "VALUE"}))
 
-            if len(out.index) > 0:
-                # out["from"] should be equal to ids here:
+            if out.shape[0] > 0:
                 self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]
 
         out.reset_index(inplace=True)
@@ -139,7 +138,7 @@ class LabeledStockAttribute(TransientAttribute):
         :param ids:
         :return:
         """
-        items = self.__stock.pop_one("AGENT",ids)
+        items = self.__stock.pop_one(from_ids=ids)
         self._table.loc[items.index,"value"] -= 1
         return items
 
@@ -150,18 +149,18 @@ class LabeledStockAttribute(TransientAttribute):
         :param values:
         :return:
         """
-        self.__stock.add_relations("AGENT", ids, "ITEM", items)
+        self.__stock.add_relations(from_ids=ids, to_ids=items)
         cpt = pd.Series(ids).value_counts()
         self._table.loc[cpt.index,"value"] += cpt.values
 
-    def remove_item(self,ids,items):
+    def remove_item(self, ids, items):
         """
 
         :param ids:
         :param items:
         :return:
         """
-        self.__stock.remove("AGENT",ids,"ITEM",items)
+        self.__stock.remove(from_ids=ids, to_ids=items)
 
     def stock(self):
         return self.__stock

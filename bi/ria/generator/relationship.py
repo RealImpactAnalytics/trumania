@@ -20,10 +20,8 @@ class Relationship(object):
         :param chooser: Chooser object that will define the random selection of an element in the relationship
         :return:
         """
-#        self._table = pd.DataFrame(columns=["from", "to"], dtype=np.int)
         self._table = None
         self.__name = name
-        # self.__chooser = chooser
         self.__chooser = ChooserAggregator(seed)
 
     def add_relations(self, from_ids, to_ids):
@@ -42,9 +40,9 @@ class Relationship(object):
         """
 
         new_relations = pd.DataFrame({"from": from_ids, "to": to_ids})
-        self._table = pd.concat([self._table, new_relations]).reset_index()
+        self._table = pd.concat([self._table, new_relations]).reset_index(
+            drop=True)
 
-    # def select_one(self, key_column, keys):
     def select_one(self, from_ids, named_as="to"):
         """
 
@@ -61,11 +59,7 @@ class Relationship(object):
                 .agg(self.__chooser.generate)
                 .rename(columns={"to": named_as})
                 )
-        #return small_tab.groupby(key_column).aggregate(self.__chooser.generate)
-        # small_tab = self._table[self._table[key_column].isin(keys)]
-        # return small_tab.groupby(key_column).aggregate(self.__chooser.generate)
 
-    # def pop_one(self,key_column,keys):
     def pop_one(self, from_ids):
         """
         Same as select_one, but the chosen rows are deleted
@@ -78,27 +72,14 @@ class Relationship(object):
         self._table.drop(choices.index, inplace=True)
         return choices
 
-        # choices = self.select_one(key_column,keys)
-        # non_key = self._table.columns.values[0]
-        # if non_key == key_column:
-        #     non_key = self._table.columns.values[1]
-        #
-        # lines = self._table[self._table[key_column].isin(choices.index.values) & self._table[non_key].isin(choices[non_key].values)]
-        # self._table.drop(lines.index,inplace=True)
-        # return choices
-
     def remove(self, from_ids, to_ids):
         lines = self._table[self._table["from"].isin(from_ids) &
                             self._table["to"].isin(to_ids)]
 
         self._table.drop(lines.index, inplace=True)
 
-    # def remove(self,key_column,keys,value_colum,values):
-    #     lines = self._table[self._table[key_column].isin(keys) & self._table[value_colum].isin(values)]
-    #     self._table.drop(lines.index, inplace=True)
 
-
-# TODO:lot's of copy/paste from the one above + missing methods
+# TODO: let's try to merge Relationship and WeightedRelationship
 class WeightedRelationship(object):
     """
 
@@ -120,12 +101,6 @@ class WeightedRelationship(object):
                                                              "weight",
                                                              seed)
 
-        # cols = {r1: pd.Series(dtype=int),
-        #         r2: pd.Series(dtype=int),
-        #         "weight": pd.Series(dtype=float)}
-        # self.__r1 = r1
-        # self.__r2 = r2
-        # self._table = pd.DataFrame(cols)
         self.__chooser = chooser
         self._table = None
 
@@ -148,7 +123,6 @@ class WeightedRelationship(object):
         self._table = pd.concat([self._table, new_relations])
         self._table.reset_index(drop=True, inplace=True)
 
-    # def select_one(self, key_column, keys):
     def select_one(self, from_ids, named_as="to"):
         """
 

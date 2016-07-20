@@ -63,12 +63,7 @@ def compose_circus():
     print "Generators"
     activity_gen = GenericGenerator("user-activity", "choice", {"a": range(1,4)}, seed)
     timegen = WeekProfiler(time_step, prof, seed)
-
-#    agentchooser = WeightedChooserAggregator("AGENT", "weight", seed)
     agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
-
-    # sim_agent_chooser = ChooserAggregator(seed)
-    # sim_dealer_chooser = ChooserAggregator(seed)
 
     print "Done"
 
@@ -85,8 +80,6 @@ def compose_circus():
     ######################################
     # Assign all sims to a dealer to start
 
-    # customer_sim_rel = Relationship("AGENT","ITEM",sim_agent_chooser)
-    # dealer_sim_rel = Relationship("AGENT","ITEM",sim_dealer_chooser)
 
     tcal = time.clock()
     print "Create callers"
@@ -103,7 +96,6 @@ def compose_circus():
                                      sims,
                                      dealers.get_ids(),
                                      seed)
-    # dealer_sim_rel.add_relation("AGENT",sims_dealer["DEALER"].values,"ITEM",sims_dealer["SIM"].values)
     dealer_sim_rel.add_relations(from_ids=sims_dealer["DEALER"],
                                  to_ids=sims_dealer["SIM"])
 
@@ -152,38 +144,33 @@ def compose_circus():
     tci = time.clock()
     print "Creating circus"
     flying = Circus(the_clock)
-    # flying.add_actor("customers", customers)
-    # flying.add_actor("dealer", dealers)
 
     purchase = ActorAction(name="purchase",
                            actor=customers,
                            actorid_field_name="AGENT",
+                           random_relation_fields=[
+                               {"picked_from": agent_customer,
+                                "as": "DEALER",
+                                "join_on": "AGENT"
+                                },
+                               {"picked_from": dealer_sim_rel,
+                                "as": "SIM",
+                                "join_on": "DEALER"
+                                },
+                           ],
+
                            time_generator=timegen,
                            activity_generator=activity_gen)
-
-    purchase.add_secondary_actor("DEALER", dealers)
-    purchase.add_field("DEALER", agent_customer)
-
-    # TODO 2: move this to add_field + review produce_field_data()
-    # purchase.add_secondary_field("SIM", dealer_sim_rel,
-    purchase.add_secondary_field("ITEM", dealer_sim_rel,
-                                 {
-                                 # "key_table":"DEALER",
-                                  # "key_rel":"AGENT",
-                                  # "out_rel":"ITEM"
-                                 })
 
     # TODO: impacts should be closures
     purchase.add_impact(name="transfer sim",
                         attribute="SIM",
                         function="transfer_item",
-
-                        parameters=
-                            {"item":"SIM",
-                            "buyer_key":"AGENT",
-                            "seller_key":"DEALER",
-                            "seller_table":"DEALER"
-                        })
+                        parameters={"item": "SIM",
+                                    "buyer_key": "AGENT",
+                                    "seller_key": "DEALER",
+                                    "seller": dealers
+                                    })
 
     flying.add_action(purchase)
 
