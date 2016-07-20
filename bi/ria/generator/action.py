@@ -109,27 +109,13 @@ class ActorAction(Action):
         for f_name, relationship in self.base_fields.items():
             field_data.append(relationship.select_one(from_ids=actor_ids,
                                                       named_as=f_name))
-                # rel_parameters["key"],
-
-
-#        all_fields = pd.concat(field_data, axis=1, join='inner').reset_index()
 
         # TODO: as a speed up: we could also filter by actor id before doing
         # the join here
         for f_name, (relationship, rel_parameters) in self.secondary_fields.items():
             field_data.append(
-                relationship.select_one(
-                # rel_parameters["key_rel"],
-                      #all_fields[rel_parameters["key_table"]].values
-                from_ids=actor_ids,
-                named_as=f_name
-            ))
-
-            # all_fields = pd.merge(left=all_fields,
-            #                       right=out,
-            #                       #.rename(columns={rel_parameters["out_rel"]: f_name}),
-            #                       left_on="from",
-            #                       right_on="from")
+                relationship.select_one(from_ids=actor_ids, named_as=f_name)
+            )
 
         all_fields = reduce(lambda df1, df2: pd.merge(df1, df2, on="from"),
                             field_data)

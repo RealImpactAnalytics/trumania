@@ -145,11 +145,8 @@ class WeightedRelationship(object):
                                     "weight": weights
                                     })
 
-        self._table = pd.concat([self._table, new_relations]).reset_index(
-            drop=True)
-
-        # df = pd.DataFrame({r1: A, r2: B, "weight": W})
-        # self._table = self._table.append(df, ignore_index=True)
+        self._table = pd.concat([self._table, new_relations])
+        self._table.reset_index(drop=True, inplace=True)
 
     # def select_one(self, key_column, keys):
     def select_one(self, from_ids, named_as="to"):
@@ -159,10 +156,6 @@ class WeightedRelationship(object):
         :param keys:
         :return: Pandas Series, index are the ones from keys
         """
-        # if key_column == self.__r1:
-        #     self.__chooser.update_choose_col(self.__r2)
-        # elif key_column == self.__r2:
-        #     self.__chooser.update_choose_col(self.__r1)
 
         return (self
                 ._table[self._table["from"].isin(from_ids)]
@@ -171,10 +164,6 @@ class WeightedRelationship(object):
                 .rename(columns={"to": named_as})
                 .drop("weight", axis=1)
                 )
-
-#        small_tab = self._table[self._table[key_column].isin(keys)]
-#        return small_tab.groupby(key_column).aggregate(
-# self.__chooser.generate).drop("weight",axis=1)
 
 
 # TODO: same thing: move this to concern-specific module
@@ -195,26 +184,19 @@ class ProductRelationship(WeightedRelationship):
         WeightedRelationship.__init__(self, **kwargs)
         self._products = products
 
-    def select_one(self, **kwargs):
-        chosen_products = WeightedRelationship.select_one(self, **kwargs)
-        data_for_out = chosen_products.copy()
+    def select_one(self, from_ids, named_as="to"):
+        chosen_products = WeightedRelationship.select_one(self, from_ids, named_as)
 
-        print ("before retrieving products")
-        print (chosen_products.head(15))
-#        choices = choices.iloc[:, 0]
-        for product in chosen_products.iloc[:, 1]:
-            this_p_index = chosen_products[chosen_products == product].index
+        # TODO: cf request from Gautier: refactor this as 2
+        # separate relationships
+        def add_products(df):
+            product = df[named_as].unique()[0]
+            p_data = self._products[product].generate(df.shape[0])
+            p_data.index = df.index
+            df[p_data.columns] = p_data
+            return df
 
-            # TODO: cf request from Gautier: refactor this as 2
-            # separate relationships
-            p_data = self._products[product].generate(size=len(this_p_index))
-            for pdf in p_data.columns.values:
-                data_for_out.loc[this_p_index, pdf] = p_data.loc[:,pdf].values
-
-        print ("after retrieving products")
-        print (data_for_out.head(15))
-
-        return data_for_out
+        return chosen_products.groupby(named_as).apply(add_products)
 
 
 # TODO: if this one is really required, it should be in a "CDR" package,
