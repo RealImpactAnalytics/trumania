@@ -5,13 +5,24 @@ class TransientAttribute(object):
     """
 
     """
-    def __init__(self, ids):
+    def __init__(self, parent_actor, init_values=None,
+                 init_values_generator=None):
         """
 
         :param ids:
         :return:
         """
-        self._table = pd.DataFrame({ "value": ""},index=ids)
+
+        if not ((init_values is None) ^ (init_values_generator is None)):
+            raise ValueError("Must pass exactly one of init_values or "
+                             "init_values_generator arguments")
+
+        if init_values is None:
+            init_values = init_values_generator.generate(
+                                                    size=parent_actor.size())
+
+        self._table = pd.DataFrame({"value": init_values},
+                                   index=parent_actor.get_ids())
 
     def update(self, ids_to_update, values):
         """
@@ -28,6 +39,9 @@ class ChoiceAttribute(TransientAttribute):
 
     """
 
+    def __init__(self, **kwargs):
+        TransientAttribute.__init__(self, **kwargs)
+
     def make_actions(self, ids, actorid_field_name, new_time_generator,
                      relationship):
         """
@@ -41,8 +55,8 @@ class ChoiceAttribute(TransientAttribute):
         out = pd.DataFrame(columns=["new"])
         if len(ids) > 0:
             out = (relationship
-                    .select_one(from_ids=ids, named_as="new")
-                    .rename(columns={"from": actorid_field_name})
+                   .select_one(from_ids=ids, named_as="new")
+                   .rename(columns={"from": actorid_field_name})
                    )
             if len(out.index) > 0:
                 self._table.loc[out[actorid_field_name], "value"] = out[actorid_field_name].values
@@ -55,7 +69,7 @@ class StockAttribute(TransientAttribute):
 
     """
 
-    def __init__(self, ids, trigger_generator):
+    def __init__(self, trigger_generator, **kwargs):
         """
 
         :param ids:
@@ -63,9 +77,7 @@ class StockAttribute(TransientAttribute):
         Usually  a check vs a logistic regression
         :return:
         """
-        TransientAttribute.__init__(self, ids)
-        self._table["value"] = 0
-        #pd.Series(0, index=self._table.index, dtype=int)
+        TransientAttribute.__init__(self, **kwargs)
         self._trigger = trigger_generator
 
     def init_clock(self,new_time_generator):
@@ -91,7 +103,7 @@ class StockAttribute(TransientAttribute):
 
         return act_now.index
 
-    def make_actions(self, ids, actorid_field_name, relationship,id2,id3):
+    def make_actions(self, ids, actorid_field_name, relationship, id2, id3):
         """
 
         :param relationship: AgentRelationship
@@ -100,14 +112,13 @@ class StockAttribute(TransientAttribute):
         :param id3: id of Value
         :return:
         """
+
         out = pd.DataFrame(columns=[actorid_field_name])
         if len(ids) > 0:
             out = (relationship
-                    .select_one(from_ids=ids, named_as=id2)
-                    # TODO: ask Gautier: in AgentRelationship, the value is
-                    # hardcoded to 1000 => quid?
-                    .rename(columns={"from": actorid_field_name,
-                                     id3: "VALUE"}))
+                   .select_one(from_ids=ids, named_as=id2)
+                   .rename(columns={"from": actorid_field_name,
+                                    id3: "VALUE"}))
 
             if out.shape[0] > 0:
                 self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]
@@ -120,17 +131,17 @@ class LabeledStockAttribute(TransientAttribute):
     """Transient Attribute where users own some stock of labeled items
 
     """
-    def __init__(self, ids,relationship):
+    def __init__(self, relationship, **kwargs):
         """
 
         :param ids:
         :param relationship: Relationship object. Needs to have an "AGENT" and an "ITEM" field. No weights.
         :return:
         """
-        TransientAttribute.__init__(self,ids)
+        TransientAttribute.__init__(self, **kwargs)
         self.__stock = relationship
 
-        self.update(ids,0)
+#        self.update(ids, 0)
 
     def get_item(self,ids):
         """
@@ -160,6 +171,8 @@ class LabeledStockAttribute(TransientAttribute):
         :param items:
         :return:
         """
+
+        # TODO: bug here? I think we should update self._table
         self.__stock.remove(from_ids=ids, to_ids=items)
 
     def stock(self):

@@ -187,7 +187,6 @@ class TriggerGenerator(object):
         return self.__name
 
 
-
 class MSISDNGenerator(object):
     """
 

@@ -18,6 +18,9 @@ class Actor(object):
         self._table = pd.DataFrame(index=ids)
         self._transient_attributes = {}
 
+    def size(self):
+        return self._table.shape[0]
+
     def get_ids(self):
         return self._table.index.values
 
@@ -40,34 +43,8 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(size=len(self._table.index))
 
-    # TODO: make all this "gen"
-    def add_transient_attribute(self, name, att_type, generator=None, params=None):
-        """
-
-        :param name:
-        :param att_type:
-        :param generator:
-        :param time_generator:
-        :param activity:
-        :param params:
-        :return: None
-        """
-        if att_type == "choice":
-            transient_attribute = ChoiceAttribute(self._table.index.values)
-
-        elif att_type == "stock":
-            transient_attribute = StockAttribute(self._table.index.values,
-                                                 params["trigger_generator"])
-        elif att_type == "labeled_stock":
-            transient_attribute = LabeledStockAttribute(self._table.index.values,
-                                                        params["relationship"])
-        else:
-            raise Exception("unknown type: %s" % att_type)
-
-        if generator is not None:
-            transient_attribute.update(self._table.index.values, generator.generate(size=len(self._table.index)))
-
-        self._transient_attributes[name] = transient_attribute
+    def add_transient_attribute(self, name, attribute):
+        self._transient_attributes[name] = attribute
 
     def make_attribute_action(self, attr_name, actorid_field_name, ids,
                                                     params):

@@ -104,18 +104,23 @@ def compose_circus():
     #customers.update_attribute("activity", activity_gen)
     #customers.update_attribute("clock", timegen, weight_field="activity")
 
-    customer_sim_rel = Relationship(name="agent to sim",
-                                    seed=seed)
+    customer_sim_rel = Relationship(name="agent to sim", seed=seed)
 
     # TODO: that's again an example of coupling between relationship and
     # transient attribute => review this
-    customers.add_transient_attribute("SIM",
-                                      "labeled_stock",
-                                      params={"relationship": customer_sim_rel})
+    # also, the "init_values=0" is coupled with the fact that the
+    # Relationship has not been initialized with any data
+    # => move the code of LabeledStockAttribute to attribute (which will all
+    # be transient anyhow? )
+    customer_sim_attr = LabeledStockAttribute(parent_actor=customers,
+                                              init_values=0,
+                                              relationship=customer_sim_rel)
+    customers.add_transient_attribute(name="SIM", attribute=customer_sim_attr)
 
-    dealers.add_transient_attribute("SIM",
-                                    "labeled_stock",
-                                    params={"relationship":dealer_sim_rel})
+    dealer_sim_attr = LabeledStockAttribute(parent_actor=dealers,
+                                            init_values=0,
+                                            relationship=dealer_sim_rel)
+    dealers.add_transient_attribute(name="SIM", attribute=dealer_sim_attr)
 
     print "Added atributes"
     tsna = time.clock()

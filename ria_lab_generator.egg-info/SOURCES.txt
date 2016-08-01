@@ -1,0 +1,5 @@
+bi/ria/__init__.py
+ria_lab_generator.egg-info/PKG-INFO
+ria_lab_generator.egg-info/SOURCES.txt
+ria_lab_generator.egg-info/dependency_links.txt
+ria_lab_generator.egg-info/top_level.txt
