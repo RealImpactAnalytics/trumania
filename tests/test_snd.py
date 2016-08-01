@@ -100,8 +100,6 @@ def compose_circus():
 
     print "Done"
     tatt = time.clock()
-    #customers.update_attribute("activity", activity_gen)
-    #customers.update_attribute("clock", timegen, weight_field="activity")
 
     customer_sim_rel = Relationship(name="agent to sim", seed=seed)
 

@@ -167,12 +167,6 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-
-    # TODO: I think all transient attributes and attributes should be
-    # initiaized at construction, to have one single placer where the
-    # object 's signature is defined.
-    # TODO there is a coupling here between the att_type and the parameters
-    # of the corresponding AttributeAction
     recharge_trigger = TriggerGenerator(name="Topup",
                                         gen_type="logistic",
                                         parameters={},
