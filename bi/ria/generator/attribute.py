@@ -1,14 +1,13 @@
 import pandas as pd
 
 
-class TransientAttribute(object):
+class Attribute(object):
+    """
+        Static actor attribute
     """
 
-    """
-    def __init__(self, parent_actor, init_values=None,
-                 init_values_generator=None):
+    def __init__(self, ids, init_values=None, init_values_generator=None):
         """
-
         :param ids:
         :return:
         """
@@ -18,11 +17,27 @@ class TransientAttribute(object):
                              "init_values_generator arguments")
 
         if init_values is None:
-            init_values = init_values_generator.generate(
-                                                    size=parent_actor.size())
+            init_values = init_values_generator.generate(size=len(ids))
 
-        self._table = pd.DataFrame({"value": init_values},
-                                   index=parent_actor.get_ids())
+        # TODO: we can probably replace this with a Series
+        self._table = pd.DataFrame({"value": init_values}, index=ids)
+
+    def get_values(self, ids):
+        """
+        :param ids: actor ids for which the attribute values are desired
+        :return: the current attribute values for those actors
+        """
+        return self._table.ix[ids, "value"].values
+
+
+class TransientAttribute(Attribute):
+    """
+        Actor attribute with method allowing to update the values during the
+        data generation.
+    """
+
+    def __init__(self, **kwargs):
+        Attribute.__init__(self, **kwargs)
 
     def update(self, ids_to_update, values):
         """
@@ -31,6 +46,8 @@ class TransientAttribute(object):
         :param ids_to_update:
         :return:
         """
+        # TODO:  bug here (and elsewhere in this class: confusion between
+        # access by id and by location.. )
         self._table.loc[ids_to_update, "value"] = values
 
 
@@ -95,7 +112,7 @@ class StockAttribute(TransientAttribute):
         :param new_time_generator:
         :return:
         """
-        self._table.loc[values.index,"value"] -= values.values
+        self._table.loc[values.index, "value"] -= values.values
 
         triggers = self._trigger.generate(weights=self._table.loc[values.index,"value"])
         small_table = self._table.loc[values.index]
@@ -140,8 +157,6 @@ class LabeledStockAttribute(TransientAttribute):
         """
         TransientAttribute.__init__(self, **kwargs)
         self.__stock = relationship
-
-#        self.update(ids, 0)
 
     def get_item(self,ids):
         """
