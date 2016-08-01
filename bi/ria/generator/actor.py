@@ -7,7 +7,7 @@ class Actor(object):
 
     """
 
-    def __init__(self, size, id_start=0, prefix="",max_length=10):
+    def __init__(self, size, id_start=0, prefix="", max_length=10):
         """
 
         :param size:
@@ -15,7 +15,6 @@ class Actor(object):
         :return:
         """
         ids = [prefix + str(x).zfill(max_length) for x in np.arange(id_start, id_start + size)]
-        #self._table = pd.DataFrame({"clock": 0, "activity":1.},index=ids)
         self._table = pd.DataFrame(index=ids)
         self._transient_attributes = {}
 
@@ -41,6 +40,7 @@ class Actor(object):
         else:
             self._table[name] = generator.generate(size=len(self._table.index))
 
+    # TODO: make all this "gen"
     def add_transient_attribute(self, name, att_type, generator=None, params=None):
         """
 
@@ -69,7 +69,8 @@ class Actor(object):
 
         self._transient_attributes[name] = transient_attribute
 
-    def make_attribute_action(self, attr_name, ids, params):
+    def make_attribute_action(self, attr_name, actorid_field_name, ids,
+                                                    params):
         """
 
         :param attr_name:
@@ -77,8 +78,8 @@ class Actor(object):
         :return:
         """
         if self._transient_attributes.has_key(attr_name):
-            params["ids"] = ids
-            return self._transient_attributes[attr_name].make_actions(**params)
+            return self._transient_attributes[attr_name].make_actions(
+                ids=ids, actorid_field_name=actorid_field_name, **params)
         else:
             raise Exception("No transient attribute named %s" % attr_name)
 

@@ -56,7 +56,6 @@ def compose_circus():
     the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
     print "Done"
 
-
     ######################################
     # Define generators
     ######################################
@@ -64,15 +63,9 @@ def compose_circus():
     print "Generators"
     activity_gen = GenericGenerator("user-activity", "choice", {"a": range(1,4)}, seed)
     timegen = WeekProfiler(time_step, prof, seed)
-
-    agentchooser = WeightedChooserAggregator("AGENT", "weight", seed)
     agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
 
-    sim_agent_chooser = ChooserAggregator(seed)
-    sim_dealer_chooser = ChooserAggregator(seed)
-
     print "Done"
-
 
     ######################################
     # Initialise generators
@@ -82,44 +75,66 @@ def compose_circus():
     timegen.initialise(the_clock)
     print "Done"
 
-
     ######################################
     # Define Actors, Relationships, ...
     ######################################
     # Assign all sims to a dealer to start
 
-    customer_sim_rel = Relationship("AGENT","ITEM",sim_agent_chooser)
-    dealer_sim_rel = Relationship("AGENT","ITEM",sim_dealer_chooser)
 
     tcal = time.clock()
     print "Create callers"
-    customers = Actor(n_agents_a,prefix="AGENT_",max_length=3)
-    dealers = Actor(n_agents_b,prefix="DEALER_",max_length=3)
+    customers = Actor(size=n_agents_a,
+                      prefix="AGENT_",
+                      max_length=3)
 
-    sims_dealer = make_random_assign("SIM","DEALER",sims,dealers.get_ids(),seed)
-    dealer_sim_rel.add_relation("AGENT",sims_dealer["DEALER"].values,"ITEM",sims_dealer["SIM"].values)
+    dealers = Actor(size=n_agents_b,
+                    prefix="DEALER_",
+                    max_length=3)
+
+    dealer_sim_rel = Relationship(name="dealer to sim", seed=seed)
+    sims_dealer = make_random_assign("SIM","DEALER",
+                                     sims,
+                                     dealers.get_ids(),
+                                     seed)
+    dealer_sim_rel.add_relations(from_ids=sims_dealer["DEALER"],
+                                 to_ids=sims_dealer["SIM"])
 
     print "Done"
     tatt = time.clock()
     #customers.update_attribute("activity", activity_gen)
     #customers.update_attribute("clock", timegen, weight_field="activity")
-    customers.add_transient_attribute("SIM","labeled_stock",params={"relationship":customer_sim_rel})
-    dealers.add_transient_attribute("SIM","labeled_stock",params={"relationship":dealer_sim_rel})
+
+    customer_sim_rel = Relationship(name="agent to sim",
+                                    seed=seed)
+
+    # TODO: that's again an example of coupling between relationship and
+    # transient attribute => review this
+    customers.add_transient_attribute("SIM",
+                                      "labeled_stock",
+                                      params={"relationship": customer_sim_rel})
+
+    dealers.add_transient_attribute("SIM",
+                                    "labeled_stock",
+                                    params={"relationship":dealer_sim_rel})
 
     print "Added atributes"
     tsna = time.clock()
 
     tmo = time.clock()
     print "Mobility"
-    deg_prob = float(average_degree)/float(n_agents_a*n_agents_b)
-    agent_customer_df = pd.DataFrame.from_records(make_random_bipartite_data(customers.get_ids(), dealers.get_ids(), deg_prob, seed),
+    deg_prob = average_degree/n_agents_a*n_agents_b
+    agent_customer_df = pd.DataFrame.from_records(
+        make_random_bipartite_data(customers.get_ids(), dealers.get_ids(), deg_prob, seed),
         columns=["AGENT", "DEALER"])
     print "Network created"
     tmoatt = time.clock()
-    agent_customer = WeightedRelationship("AGENT", "DEALER", agentchooser)
-    agent_customer.add_relation("AGENT", agent_customer_df["AGENT"], "DEALER", agent_customer_df["DEALER"],
-                          agentweightgenerator.generate(len(agent_customer_df.index)))
+    agent_customer = WeightedRelationship(name="agent to dealers",
+                                          seed=seed)
 
+    agent_customer.add_relations(from_ids=agent_customer_df["AGENT"],
+                                 to_ids=agent_customer_df["DEALER"],
+                                 weights=agentweightgenerator.generate(
+                                    agent_customer_df.shape[0]))
 
     print "Done all customers"
 
@@ -129,20 +144,33 @@ def compose_circus():
     tci = time.clock()
     print "Creating circus"
     flying = Circus(the_clock)
-    flying.add_actor("customers", customers)
-    flying.add_actor("dealer",dealers)
-    flying.add_relationship("Customer", "Dealer", agent_customer)
-    flying.add_generator("time", timegen)
 
-    purchase = ActorAction("purchase",customers,timegen,activity_gen)
-    purchase.add_secondary_actor("DEALER",dealers)
-    purchase.add_relationship("customer_dealer",agent_customer)
-    purchase.add_relationship("customer_sim",customer_sim_rel)
-    purchase.add_relationship("dealer_sim",dealer_sim_rel)
-    purchase.add_field("DEALER","customer_dealer",{"key":"AGENT"})
-    purchase.add_secondary_field("SIM","dealer_sim",{"key_table":"DEALER","key_rel":"AGENT","out_rel":"ITEM"})
-    purchase.add_impact("transfer sim","SIM","transfer_item",
-                        {"item":"SIM","buyer_key":"AGENT","seller_key":"DEALER","seller_table":"DEALER"})
+    purchase = ActorAction(name="purchase",
+                           actor=customers,
+                           actorid_field_name="AGENT",
+                           random_relation_fields=[
+                               {"picked_from": agent_customer,
+                                "as": "DEALER",
+                                "join_on": "AGENT"
+                                },
+                               {"picked_from": dealer_sim_rel,
+                                "as": "SIM",
+                                "join_on": "DEALER"
+                                },
+                           ],
+
+                           time_generator=timegen,
+                           activity_generator=activity_gen)
+
+    # TODO: impacts should be closures
+    purchase.add_impact(name="transfer sim",
+                        attribute="SIM",
+                        function="transfer_item",
+                        parameters={"item": "SIM",
+                                    "buyer_key": "AGENT",
+                                    "seller_key": "DEALER",
+                                    "seller": dealers
+                                    })
 
     flying.add_action(purchase)
 
