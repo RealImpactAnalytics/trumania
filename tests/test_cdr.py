@@ -100,8 +100,7 @@ def compose_circus():
 
     customers.add_attribute(name="MSISDN",
                             attr=Attribute(ids=customers.ids,
-                                           init_values_generator=msisdn_gen,
-                                           ))
+                                           init_values_generator=msisdn_gen))
 
     tatt = time.clock()
     # customers.gen_attribute("activity", activity_gen)
@@ -110,7 +109,7 @@ def compose_circus():
     print "Added atributes"
     tsna = time.clock()
     print "Creating social network"
-    social_network = create_er_social_network(customer_ids=customers.ids,
+    social_network_values = create_er_social_network(customer_ids=customers.ids,
                                               p=average_degree / n_customers,
                                               seed=seed)
     tsnaatt = time.clock()
@@ -119,31 +118,24 @@ def compose_circus():
     ###
     # social network
 
-    network = WeightedRelationship(name="neighbours",
-                                   seed=seed)
+    social_network = Relationship(name="neighbours",
+                                  seed=seed)
 
     # TODO: make this a add_weighted_relations, passing the arguments to
     # build th
-    network.add_relations(from_ids=social_network["A"].values,
-                          to_ids=social_network["B"].values,
+    social_network.add_relations(from_ids=social_network_values["A"].values,
+                          to_ids=social_network_values["B"].values,
                           weights=networkweightgenerator.generate(len(
-                             social_network.index)))
+                             social_network_values.index)))
 
-    network.add_relations(from_ids=social_network["B"].values,
-                          to_ids=social_network["A"].values,
+    social_network.add_relations(from_ids=social_network_values["B"].values,
+                          to_ids=social_network_values["A"].values,
                           weights=networkweightgenerator.generate(len(
-                             social_network.index)))
+                             social_network_values.index)))
 
     print "Done SNA"
     tmo = time.clock()
 
-    ###
-    # People's mobility
-
-    print "Mobility"
-    mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, cells, 0.4, seed),
-        columns=["A", "CELL"])
 
     print "Network created"
     tmoatt = time.clock()
@@ -208,8 +200,7 @@ def compose_circus():
                                                                 {"a": 1.}),
 
                             parameters={"relationship": agent_rel,
-                                        "id2": "AGENT",
-                                        "id3": "value"}
+                                        "id2": "AGENT"}
                             )
 
     # TODO: add the actions to the actors instead of the circus
@@ -238,7 +229,7 @@ def compose_circus():
 
                         actorid_field_name="A",
                         random_relation_fields=[
-                            {"picked_from": network,
+                            {"picked_from": social_network,
                              "as": "B",
                              "join_on": "A"
                              },
@@ -278,8 +269,14 @@ def compose_circus():
 
     # mobility
 
-    mobility = WeightedRelationship(name="people's cell location",
-                                    seed=seed)
+    print "Mobility"
+    mobility = Relationship(name="people's cell location",
+                            seed=seed)
+
+    mobility_df = pd.DataFrame.from_records(
+        make_random_bipartite_data(customers.ids, cells, 0.4, seed),
+        columns=["A", "CELL"])
+
     mobility.add_relations(from_ids=mobility_df["A"],
                            to_ids=mobility_df["CELL"],
                            weights=mobilityweightgenerator.generate(len(

@@ -120,7 +120,7 @@ class StockAttribute(TransientAttribute):
 
         return act_now.index
 
-    def make_actions(self, ids, actorid_field_name, relationship, id2, id3):
+    def make_actions(self, ids, actorid_field_name, relationship, id2):
         """
 
         :param relationship: AgentRelationship
@@ -135,7 +135,7 @@ class StockAttribute(TransientAttribute):
             out = (relationship
                    .select_one(from_ids=ids, named_as=id2)
                    .rename(columns={"from": actorid_field_name,
-                                    id3: "VALUE"}))
+                                    "value": "VALUE"}))
 
             if out.shape[0] > 0:
                 self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]

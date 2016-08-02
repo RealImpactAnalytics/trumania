@@ -8,7 +8,6 @@ from bi.ria.generator.action import *
 from bi.ria.generator.attribute import *
 from bi.ria.generator.clock import *
 from bi.ria.generator.circus import *
-from bi.ria.generator.product import *
 from bi.ria.generator.random_generators import *
 from bi.ria.generator.relationship import *
 from bi.ria.generator.util_functions import *
@@ -91,6 +90,7 @@ def compose_circus():
                     max_length=3)
 
     dealer_sim_rel = Relationship(name="dealer to sim", seed=seed)
+
     sims_dealer = make_random_assign("SIM","DEALER",
                                      sims,
                                      dealers.ids,
@@ -130,8 +130,8 @@ def compose_circus():
         columns=["AGENT", "DEALER"])
     print "Network created"
     tmoatt = time.clock()
-    agent_customer = WeightedRelationship(name="agent to dealers",
-                                          seed=seed)
+    agent_customer = Relationship(name="agent to dealers",
+                                  seed=seed)
 
     agent_customer.add_relations(from_ids=agent_customer_df["AGENT"],
                                  to_ids=agent_customer_df["DEALER"],

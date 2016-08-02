@@ -10,3 +10,4 @@ source activate workspace_py2.7
 cd /home/ria/work
 pip install -e .
 py.test -s
+#py.test -s tests/test_snd.py

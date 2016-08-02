@@ -2,63 +2,6 @@ import numpy as np
 from numpy.random import RandomState
 
 
-class ChooserAggregator(object):
-    def __init__(self, seed):
-        """
-
-        :param seed:
-        :return:
-        """
-        self.__state = RandomState(seed)
-
-    def generate(self, a):
-        """
-
-        :param a:
-        :return:
-        """
-        return self.__state.choice(a)
-
-
-class WeightedChooserAggregator(object):
-    def __init__(self, col_to_choose, col_for_weight, seed):
-        """
-
-        :param col_to_choose:
-        :param col_for_weight:
-        :param seed:
-        :return:
-        """
-        self.__state = RandomState(seed)
-        self.__col_to_choose = col_to_choose
-        self.__col_for_weight = col_for_weight
-
-    def update_choose_col(self, col):
-        """
-
-        :param col:
-        :return:
-        """
-        self.__col_to_choose = col
-
-    def update_weight_col(self, col):
-        """
-
-        :param col:
-        :return:
-        """
-        self.__col_for_weight = col
-
-    def generate(self, group):
-        """
-
-        :param group:
-        :return:
-        """
-        w = group[self.__col_for_weight] / sum(group[self.__col_for_weight])
-        return self.__state.choice(group[self.__col_to_choose], p=w)
-
-
 class GenericGenerator(object):
     """
 
