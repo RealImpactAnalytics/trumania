@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 
 from bi.ria.generator.action import *
+from bi.ria.generator.attribute import *
 from bi.ria.generator.clock import *
 from bi.ria.generator.circus import *
 from bi.ria.generator.product import *
@@ -78,8 +79,6 @@ def compose_circus():
     voice_duration_generator = GenericGenerator("voice-duration", "choice", {"a": range(20, 240)}, seed)
     voice_price_generator = ValueGenerator("voice-price", 1)
 
-    recharge_init = GenericGenerator("recharge init", "constant", {"a": 1000.})
-    recharge_trigger = TriggerGenerator("Topup", "logistic", {}, seed)
     print "Done"
 
     ######################################
@@ -98,8 +97,12 @@ def compose_circus():
     print "Create callers"
     customers = Actor(n_customers)
     print "Done"
-    customers.gen_attribute(name="MSISDN",
-                            generator=msisdn_gen)
+
+    customers.add_attribute(name="MSISDN",
+                            attr=Attribute(ids=customers.ids,
+                                           init_values_generator=msisdn_gen,
+                                           ))
+
     tatt = time.clock()
     # customers.gen_attribute("activity", activity_gen)
     # customers.gen_attribute("clock", timegen, weight_field="activity")
@@ -107,7 +110,7 @@ def compose_circus():
     print "Added atributes"
     tsna = time.clock()
     print "Creating social network"
-    social_network = create_er_social_network(customer_ids=customers.get_ids(),
+    social_network = create_er_social_network(customer_ids=customers.ids,
                                               p=average_degree / n_customers,
                                               seed=seed)
     tsnaatt = time.clock()
@@ -127,10 +130,9 @@ def compose_circus():
                              social_network.index)))
 
     network.add_relations(from_ids=social_network["B"].values,
-                         to_ids=social_network["A"].values,
-                         weights=networkweightgenerator.generate(len(
+                          to_ids=social_network["A"].values,
+                          weights=networkweightgenerator.generate(len(
                              social_network.index)))
-
 
     print "Done SNA"
     tmo = time.clock()
@@ -140,7 +142,7 @@ def compose_circus():
 
     print "Mobility"
     mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.get_ids(), cells, 0.4, seed),
+        make_random_bipartite_data(customers.ids, cells, 0.4, seed),
         columns=["A", "CELL"])
 
     print "Network created"
@@ -151,7 +153,7 @@ def compose_circus():
     # MSISDN -> Agent
 
     agent_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.get_ids(), agents, 0.3, seed),
+        make_random_bipartite_data(customers.ids, agents, 0.3, seed),
         columns=["A", "AGENT"])
 
     print "Agent relationship created"
@@ -165,17 +167,22 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
+    recharge_trigger = TriggerGenerator(name="Topup",
+                                        gen_type="logistic",
+                                        parameters={},
+                                        seed=seed)
 
-    # TODO: I think all transient attributes and attributes should be
-    # initiaized at construction, to have one single placer where the
-    # object 's signature is defined.
-    # TODO there is a coupling here between the att_type and the parameters
-    # of the corresponding AttributeAction
-    customers.add_transient_attribute(name="MAIN_ACCT",
-                                      att_type="stock",
-                                      generator=recharge_init,
-                                      params={"trigger_generator":
-                                                  recharge_trigger})
+    recharge_init = GenericGenerator(name="recharge init",
+                                     gen_type="constant",
+                                     parameters={"a": 1000.},
+                                     seed=seed)
+
+    main_account = StockAttribute(ids=customers.ids,
+                                  trigger_generator=recharge_trigger,
+                                  init_values_generator=recharge_init)
+
+    customers.add_attribute(name="MAIN_ACCT", attr=main_account)
+
     print "Done all customers"
 
     tci = time.clock()
@@ -184,8 +191,8 @@ def compose_circus():
 
     topup = AttributeAction(name="topup",
                             actor=customers,
-
                             attr_name="MAIN_ACCT",
+
                             actorid_field_name="A",
 
                             joined_fields=[
@@ -205,8 +212,7 @@ def compose_circus():
                                         "id3": "value"}
                             )
 
-    # TODO: those "join" information should be part of hte attribute action
-    # definition, to keep all the definition at the same place
+    # TODO: add the actions to the actors instead of the circus
     flying.add_action(topup)
 
     ####
@@ -215,7 +221,8 @@ def compose_circus():
     voice = VoiceProduct(voice_duration_generator, voice_price_generator)
     sms = SMSProduct(SMS_price_generator)
 
-    product_df = assign_random_proportions("A", "PRODUCT", customers.get_ids(), products, seed)
+    product_df = assign_random_proportions("A", "PRODUCT", customers.ids,
+                                           products, seed)
     product_rel = ProductRelationship(products={"VOICE": voice, "SMS": sms},
                                       name="people's product",
                                       seed=seed)
@@ -258,8 +265,6 @@ def compose_circus():
                         activity_generator=activity_gen,
                         )
 
-
-
     calls.add_impact(name="value decrease",
                      attribute="MAIN_ACCT",
                      function="decrease_stock",
@@ -283,9 +288,11 @@ def compose_circus():
     # Initial mobility value (ie.e cell location)
     # => TODO: there is overlap between concern of "relation" and "transient
     # attibute", they should not be initialized separately
-    customers.add_transient_attribute(name="CELL",
-                                      att_type="choice",
-                                      generator=init_mobility_generator)
+
+    cell_attr = ChoiceAttribute(ids=customers.ids,
+                                init_values_generator=init_mobility_generator)
+
+    customers.add_attribute(name="CELL", attr=cell_attr)
 
     mobility_action = AttributeAction(name="mobility",
                                       actor=customers,
@@ -318,7 +325,7 @@ def compose_circus():
                  "mobility attribute creation": tci - tmoatt,
                  "circus creation": tr - tci,
                  "tr": tr,
-        }
+                 }
 
     return flying, all_times
 

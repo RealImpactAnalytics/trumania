@@ -14,7 +14,7 @@ class Action(object):
 
             for named_as, actor_field in zip(joined_now["as"], joined_now["select"]):
                 actor_ids = field_values[joined_now["left_on"]]
-                field_values[named_as] = actor.get_join(actor_field, actor_ids)
+                field_values[named_as] = actor.get_attribute_values(actor_field, actor_ids)
 
         return field_values
 
@@ -28,7 +28,7 @@ class ActorAction(Action):
         Action.__init__(self, name, actor, joined_fields)
 
         self.clock = pd.DataFrame({"clock": 0, "activity": 1.},
-                                  index=actor.get_ids())
+                                  index=actor.ids)
         self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
         self.clock["clock"] = time_generator.generate(weights=self.clock["activity"])
 
@@ -129,7 +129,7 @@ class ActorAction(Action):
 
         for actorf, attrf, item, func, param in self.feature_conditions.values():
             current_actors = fields_values.loc[valid_ids, actorf].values
-            attr_val = self.actor.get_join(current_actors, attrf)
+            attr_val = self.actor.get_attribute_values(current_actors, attrf)
             validated = self.items[item].check_condition(attr_val, func, param)
             valid_ids = valid_ids[validated]
 
@@ -199,7 +199,7 @@ class AttributeAction(Action):
         self.time_generator = time_generator
         self.actorid_field_name = actorid_field_name
 
-        self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.get_ids())
+        self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.ids)
         self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
         self.clock["clock"] = self.time_generator.generate(weights=self.clock["activity"])
 
