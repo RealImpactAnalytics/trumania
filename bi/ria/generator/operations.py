@@ -64,7 +64,7 @@ class ColumnLogger(Operation):
         return {self.log_id: data[self.cols]}
 
 
-class JoinedOperation(Operation):
+class AddColumns(Operation):
     """
     Very typical case of an operation that appends (i.e. joins) columns to
     the previous result
@@ -73,13 +73,13 @@ class JoinedOperation(Operation):
     def __init__(self, join_kind="outer"):
         self.join_kind = join_kind
 
-    def build_output(self, input):
+    def build_output(self, data):
         """
         Produces a dataframe with one or several columns and an index aligned
         with the one of input. The columns of this will be merge with input.
 
-        :param input: current dataframe
-        :return: the column(s) to append to it
+        :param data: current dataframe
+        :return: the column(s) to append to it, as a dataframe
         """
 
         raise NotImplemented("BUG: sub-class must implement this")
@@ -89,3 +89,40 @@ class JoinedOperation(Operation):
         return pd.merge(left=data, right=output,
                         left_index=True, right_index=True,
                         how=self.join_kind)
+
+
+class Constant(AddColumns):
+    """
+    Operation that produces one single column having a fixed value
+    """
+
+    def __init__(self, value, named_as):
+        AddColumns.__init__(self)
+        self.value = value
+        self.named_as = named_as
+
+    def build_output(self, data):
+        return pd.DataFrame({self.named_as: self.value}, index=data.index)
+
+
+class RandomValues(AddColumns):
+    """
+    Operation that produces one single column generated randomly.
+    """
+
+    def __init__(self, value_generator, named_as, weights_field=None):
+        AddColumns.__init__(self)
+        self.value_generator = value_generator
+        self.named_as = named_as
+        self.weights_field = weights_field
+
+    def build_output(self, data):
+        if self.weights_field is None:
+            weights = None
+        else:
+            weights = data[self.weights_field]
+
+        values = self.value_generator.generate(data.shape[0], weights)
+        return pd.DataFrame({self.named_as: values}, index=data.index)
+
+

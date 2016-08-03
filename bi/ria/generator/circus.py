@@ -102,7 +102,8 @@ class Circus(object):
         this circus, each gathering all rows produces throughout all iterations
         """
 
-        tables_list = zip(*(self.one_round() for _ in range(n_iterations)))
+        print "starting circus"
+        tables_list = zip(*[self.one_round() for _ in range(n_iterations)])
         return [pd.concat(table, ignore_index=True) for table in tables_list]
 
     def get_contents(self):

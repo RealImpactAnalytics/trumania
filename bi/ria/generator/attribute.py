@@ -38,17 +38,19 @@ class Attribute(object):
                 raise ValueError("must provide either ids or relationship to "
                                  "initialize the attribute")
 
-            random_init = relationship.select_one()
-            self._table = pd.DataFrame({"value": random_init["to"]},
-                                       index=random_init["from"])
-
+            self._table = (relationship
+                           .select_one()
+                           .set_index("from", drop=True)
+                           .rename(columns={"to": "value"})
+                           )
 
     def get_values(self, ids):
         """
         :param ids: actor ids for which the attribute values are desired
-        :return: the current attribute values for those actors
+        :return: the current attribute values for those actors, as Series
         """
-        return self._table.loc[ids]["value"].values
+        r = self._table.loc[ids]["value"]
+        return r
 
 
 class TransientAttribute(Attribute):
@@ -69,9 +71,6 @@ class TransientAttribute(Attribute):
         :return:
         """
 
-        # print ("table: {}".format(self._table))
-        # print ("ids: {}".format(ids))
-
         self._table.loc[ids, "value"] = values
 
     class AttributeOps(object):
@@ -84,7 +83,6 @@ class TransientAttribute(Attribute):
                 self.copy_from_field = copy_from_field
 
             def transform(self, data):
-                # print ("current data: {}".format(data))
 
                 if data.shape[0] > 0:
                     self.attribute.update(ids=data.index.values,
@@ -98,55 +96,6 @@ class TransientAttribute(Attribute):
             Overwrite the value of this attribute with values in this field
             """
             return self.Overwrite(self.attribute, copy_from_field)
-
-
-# class ChoiceAttribute(TransientAttribute):
-#     """
-#         Actor attribute that simply keep a "current value" for each actor,
-#         randomly picked among the "to" side of the configured relationship.
-#     """
-#
-#     def __init__(self, relationship):
-#
-#         init_values = relationship.select_one()
-#         print "init_values {}".format(init_values)
-#         TransientAttribute.__init__(self, ids=init_values["from"],
-#                                     init_values=init_values["to"])
-#
-#
-#         print "init_tale {}".format(self._table)
-#        self.relationship = relationship
-
-    # 2 operations:
-    #  - relationshipOperation (used everywhere where we traverse a rel)
-    #   => this one comes from the relationship class
-    #  - setAttributeOp: to set the location: this one is an operation
-    #  coming from the TransientAttribute: cf update method
-
-    # + 1 emission: the mobility log: select,...
-    # def make_actions(self, ids, actorid_field_name):
-    #     """
-    #
-    #     :param new_time_generator:
-    #     :param relationship:
-    #     :param id1:
-    #     :param id2:
-    #     :return:
-    #     """
-    #
-    #     if len(ids) == 0:
-    #         return ids, pd.DataFrame(columns=[actorid_field_name, "new"])
-    #
-    #     out = (self.relationship
-    #            .select_one(from_ids=ids, named_as="new")
-    #            .rename(columns={"from": actorid_field_name}))
-    #
-    #     if out.shape[0] > 0:
-    #         # TODO: bug here? I think we should .ix[] with the current way of
-    #         #  indexing
-    #         self._table.loc[out[actorid_field_name], "value"] = out[actorid_field_name].values
-    #
-    #     return ids, out
 
 
 class StockAttribute(TransientAttribute):

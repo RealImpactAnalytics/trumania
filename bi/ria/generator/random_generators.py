@@ -99,7 +99,7 @@ class TriggerGenerator(object):
             self.__parameters = {"a":-0.01,
                                  "b":10.}
 
-    def generate(self, size=None, weights=None, pars = None):
+    def generate(self, size=None, weights=None, pars=None):
         """
 
         :type size: int
@@ -182,26 +182,26 @@ class MSISDNGenerator(object):
         return msisdns
 
 
-class ValueGenerator(object):
-    """
-
-    """
-    def __init__(self, name, price_per_second):
-        """
-
-        :type name: str
-        :param name: name of the generator (for eventual reference)
-        :type price_per_second: int
-        :param price_per_second: the price of a call, per second, in units
-        :return:
-        """
-        self.__name = name
-        self.__price = price_per_second
-
-    def generate(self,size=None,weights=None,pars=None):
-        """
-
-        :param duration: pd.Series
-        :return:
-        """
-        return weights*self.__price
+# class ValueGenerator(object):
+#     """
+#
+#     """
+#     def __init__(self, name, price_per_second):
+#         """
+#
+#         :type name: str
+#         :param name: name of the generator (for eventual reference)
+#         :type price_per_second: int
+#         :param price_per_second: the price of a call, per second, in units
+#         :return:
+#         """
+#         self.__name = name
+#         self.__price = price_per_second
+#
+#     def generate(self, size=None, weights=None, pars=None):
+#         """
+#
+#         :param duration: pd.Series
+#         :return:
+#         """
+#         return weights*self.__price

@@ -60,4 +60,4 @@ def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
     expected = pd.DataFrame({"value": ["ta", "tb", "tc", "td", "te"]},
                             index=["a", "b", "c", "d", "e"])
 
-    attr._table.sort_index().equals(expected)
+    assert attr._table.sort_index().equals(expected)

@@ -41,9 +41,9 @@ class Relationship(object):
         """
 
         new_relations = pd.DataFrame({"from": from_ids,
-                                    "to": to_ids,
-                                    "weight": weights
-                                    })
+                                      "to": to_ids,
+                                      "weight": weights
+                                      })
 
         self._table = pd.concat([self._table, new_relations])
         self._table.reset_index(drop=True, inplace=True)
@@ -60,13 +60,16 @@ class Relationship(object):
         if selected.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
 
-        return (selected
-                .groupby(by="from")
-                .apply(lambda df: df.sample(n=1, weights="weight")[["to"]])
-                .reset_index()
-                .rename(columns={"to": named_as, "index": "from"})
-                .drop("level_1", axis=1) # this one comes from the df in apply
-                )
+        result = (selected
+                  .groupby(by="from")
+                  .apply(lambda df: df.sample(n=1, weights="weight")[["to"]]))
+
+        result.reset_index(inplace=True)
+        result = result.rename(columns={"to": named_as, "index": "from"})
+        # this one comes from the df in apply
+        result.drop("level_1", axis=1, inplace=True)
+
+        return result
 
     def pop_one(self, **kwargs):
         """
