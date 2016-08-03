@@ -72,7 +72,7 @@ class Circus(object):
         """
         action_values = action.execute()
         action_values["datetime"] = self.__clock.get_timestamp(
-            action_values.shape[0])
+            action_values.shape[0]).values
 
         return action_values
 

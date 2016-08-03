@@ -275,8 +275,7 @@ def compose_circus():
     # mobility
 
     print "Mobility"
-    mobility = Relationship(name="people's cell location",
-                            seed=seed)
+    mobility = Relationship(name="people's cell location", seed=seed)
 
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(customers.ids, cells, 0.4, seed),
