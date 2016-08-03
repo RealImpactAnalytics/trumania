@@ -1,6 +1,5 @@
 from bi.ria.generator.relationship import Relationship
 import pandas as pd
-import numpy as np
 
 
 # bug fix: this was simply crashing previously

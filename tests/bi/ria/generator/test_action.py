@@ -8,13 +8,14 @@ import numpy as np
 def test_one_execution_should_merge_empty_data_correctly():
 
     # empty previous
-    prev = pd.DataFrame(columns=[]), {}
+    prev_df = pd.DataFrame(columns=[])
+    prev_log = {}
     nop = Operation()
 
-    output, logs = ActorAction._one_execution(prev, nop)
+    output, logs = ActorAction._one_execution((prev_df, prev_log), nop)
 
     assert logs == {}
-    assert output.equals(prev)
+    assert output.equals(prev_df)
 
 
 class FakeOp(Operation):

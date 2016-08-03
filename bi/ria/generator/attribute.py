@@ -61,7 +61,6 @@ class TransientAttribute(Attribute):
 
     def __init__(self, **kwargs):
         Attribute.__init__(self, **kwargs)
-        self.ops = self.AttributeOps(self)
 
     def update(self, ids, values):
         """
@@ -72,30 +71,6 @@ class TransientAttribute(Attribute):
         """
 
         self._table.loc[ids, "value"] = values
-
-    class AttributeOps(object):
-        def __init__(self, attribute):
-            self.attribute = attribute
-
-        class Overwrite(Operation):
-            def __init__(self, attribute, copy_from_field):
-                self.attribute = attribute
-                self.copy_from_field = copy_from_field
-
-            def transform(self, data):
-
-                if data.shape[0] > 0:
-                    self.attribute.update(ids=data.index.values,
-                                          values=data[self.copy_from_field])
-
-                # input data is returned as is, we merely update values here
-                return data
-
-        def overwrite(self, copy_from_field):
-            """
-            Overwrite the value of this attribute with values in this field
-            """
-            return self.Overwrite(self.attribute, copy_from_field)
 
 
 class StockAttribute(TransientAttribute):
