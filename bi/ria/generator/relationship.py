@@ -2,6 +2,7 @@ import pandas as pd
 from numpy.random import RandomState
 from bi.ria.generator.operations import *
 
+
 class Relationship(object):
     """
         One-to-many relationship between actors.
@@ -130,39 +131,6 @@ class Relationship(object):
             adds a field by randomly selecting a "to" side of the relationship
             """
             return self.SelectOne(self.relationship, from_field, named_as)
-
-
-# TODO: same thing: move this to concern-specific module
-class ProductRelationship(Relationship):
-    """
-
-    """
-
-    def __init__(self, products, **kwargs):
-        """
-
-        :param r1:
-        :param r2:
-        :param chooser:
-        :param products:
-        :return:
-        """
-        Relationship.__init__(self, **kwargs)
-        self._products = products
-
-    def select_one(self, from_ids, named_as="to"):
-        chosen_products = Relationship.select_one(self, from_ids, named_as)
-
-        # TODO: cf request from Gautier: refactor this as 2
-        # separate relationships
-        def add_products(df):
-            product = df[named_as].unique()[0]
-            p_data = self._products[product].generate(df.shape[0])
-            p_data.index = df.index
-            df[p_data.columns] = p_data
-            return df
-
-        return chosen_products.groupby(named_as).apply(add_products)
 
 
 # TODO: move this be in a "sales" package separated from the core

@@ -8,7 +8,6 @@ from bi.ria.generator.action import *
 from bi.ria.generator.attribute import *
 from bi.ria.generator.clock import *
 from bi.ria.generator.circus import *
-from bi.ria.generator.product import *
 from bi.ria.generator.random_generators import *
 from bi.ria.generator.relationship import *
 from bi.ria.generator.util_functions import *

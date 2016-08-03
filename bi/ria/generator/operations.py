@@ -93,7 +93,7 @@ class AddColumns(Operation):
 
 class Constant(AddColumns):
     """
-    Operation that produces one single column having a fixed value
+    Operation that produces one single field having a fixed value
     """
 
     def __init__(self, value, named_as):

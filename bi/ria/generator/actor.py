@@ -1,6 +1,6 @@
 import numpy as np
-from bi.ria.generator.operations import Operation
 from bi.ria.generator.operations import *
+
 
 class Actor(object):
     """
