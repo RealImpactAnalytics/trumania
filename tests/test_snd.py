@@ -147,10 +147,10 @@ def compose_circus():
     print "Creating circus"
     flying = Circus(the_clock)
 
-    purchase = ActorAction(name="purchase",
-                           actor=customers,
-                           actorid_field_name="AGENT",
-                           random_relation_fields=[
+    purchase = ActorAction_old(name="purchase",
+                               actor=customers,
+                               actorid_field_name="AGENT",
+                               random_relation_fields=[
                                {"picked_from": agent_customer,
                                 "as": "DEALER",
                                 "join_on": "AGENT"
@@ -161,10 +161,12 @@ def compose_circus():
                                 },
                            ],
 
-                           time_generator=timegen,
-                           activity_generator=activity_gen)
+                               time_generator=timegen,
+                               activity_generator=activity_gen)
 
-    # TODO: impacts should be closures
+    # those will be "transfer" operaiton, coming from a business-specific
+    # attribute (labeledStock) having business specific operations, all
+    # configurable through column name of the produced result
     purchase.add_impact(name="transfer sim",
                         attribute="SIM",
                         function="transfer_item",

@@ -12,6 +12,7 @@ from bi.ria.generator.product import *
 from bi.ria.generator.random_generators import *
 from bi.ria.generator.relationship import *
 from bi.ria.generator.util_functions import *
+from bi.ria.generator.operations import *
 
 from bi.ria.generator.actor import *
 
@@ -72,8 +73,6 @@ def compose_circus():
     mobilityweightgenerator = GenericGenerator("mobility-weight", "exponential", {"scale": 1.})
 
     agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
-
-    init_mobility_generator = GenericGenerator("init-mobility", "choice", {"a": cells})
 
     SMS_price_generator = GenericGenerator("SMS-price", "constant", {"a": 10.})
     voice_duration_generator = GenericGenerator("voice-duration", "choice", {"a": range(20, 240)}, seed)
@@ -224,10 +223,13 @@ def compose_circus():
     product_rel.add_relations(from_ids=product_df["A"],
                               to_ids=product_df["PRODUCT"],
                               weights=product_df["weight"])
-    calls = ActorAction(name="calls",
-                        actor=customers,
+    calls = ActorAction_old(name="calls",
+                            actor=customers,
 
-                        actorid_field_name="A",
+                            actorid_field_name="A",
+
+                            # this becomes 2 simple relationshipSubAction
+                        # described in attribute
                         random_relation_fields=[
                             {"picked_from": social_network,
                              "as": "B",
@@ -239,6 +241,9 @@ def compose_circus():
                              },
                             ],
 
+                            #
+                        # emissionOperation: select =..., joined_fields= ..,
+                        # include A
                         joined_fields=[
                             {"from_actor": customers,
                              "left_on": "A",
@@ -252,9 +257,9 @@ def compose_circus():
                              },
                         ],
 
-                        time_generator=timegen,
-                        activity_generator=activity_gen,
-                        )
+                            time_generator=timegen,
+                            activity_generator=activity_gen,
+                            )
 
     calls.add_impact(name="value decrease",
                      attribute="MAIN_ACCT",
@@ -286,22 +291,40 @@ def compose_circus():
     # => TODO: there is overlap between concern of "relation" and "transient
     # attibute", they should not be initialized separately
 
-    cell_attr = ChoiceAttribute(ids=customers.ids,
-                                init_values_generator=init_mobility_generator)
-
+    cell_attr = TransientAttribute(relationship=mobility)
     customers.add_attribute(name="CELL", attr=cell_attr)
 
-    mobility_action = AttributeAction(name="mobility",
-                                      actor=customers,
-                                      attr_name="CELL",
-                                      actorid_field_name="A",
-                                      activity_generator=GenericGenerator("1",
-                                                                     "constant",
-                                                                     {"a":1.}),
-                                      time_generator=mobilitytimegen,
-                                      parameters={'relationship': mobility,
-                                           'new_time_generator': mobilitytimegen,
-                                                  })
+    # mobility_action = AttributeAction(name="mobility",
+
+    #                                   actor=customers,
+    #                                   attr_name="CELL",
+    #                                   actorid_field_name="A",
+    #                                   activity_generator=GenericGenerator("1",
+    #                                                                  "constant",
+    #                                                                  {"a":1.}),
+    #                                   time_generator=mobilitytimegen,
+    #                                   parameters={})
+
+    mobility_action = ActorAction(
+        name="mobility",
+
+        triggering_actor=customers,
+        actorid_field="A",
+
+        operations=[
+            # selects a cell
+            mobility.ops.select_one(from_field="A", named_as="CELL"),
+
+            # update the CELL attribute of the actor accordingly
+            cell_attr.ops.overwrite(copy_from_field="CELL"),
+
+            # create mobility logs
+            ColumnLogger(log_id="mobility", cols=["A", "CELL"]),
+        ],
+
+        activity_gen=GenericGenerator("1", "constant", {"a": 1.}),
+        time_gen=mobilitytimegen,
+    )
 
     flying.add_action(mobility_action)
 

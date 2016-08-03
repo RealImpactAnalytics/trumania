@@ -1,33 +1,54 @@
-import pandas as pd
+from bi.ria.generator.operations import *
 
 
 class Attribute(object):
     """
-        Static actor attribute
+        Static actor attribute, with various ways to initialize it randomly
     """
 
-    def __init__(self, ids, init_values=None, init_values_generator=None):
+    def __init__(self,
+
+                 # if initializing with value, must provide ids and one of the
+                 # init values
+                 ids=None,
+                 init_values=None,
+                 init_values_generator=None,
+
+                 # otherwise, we can also initialise randomly from a
+                 # relationship (in which case the ids are extracted from the
+                 # "from" field
+                 relationship=None):
         """
         :param ids:
         :return:
         """
 
-        if not ((init_values is None) ^ (init_values_generator is None)):
-            raise ValueError("Must pass exactly one of init_values or "
-                             "init_values_generator arguments")
+        if ids is not None:
+            if not ((init_values is None) ^ (init_values_generator is None)):
+                raise ValueError("if ids is provided, you must also provide "
+                                 "init_values or init_values_generator")
 
-        if init_values is None:
-            init_values = init_values_generator.generate(size=len(ids))
+            if init_values is None:
+                init_values = init_values_generator.generate(size=len(ids))
 
-        # TODO: we can probably replace this with a Series
-        self._table = pd.DataFrame({"value": init_values}, index=ids)
+            self._table = pd.DataFrame({"value": init_values}, index=ids)
+
+        else:
+            if relationship is None:
+                raise ValueError("must provide either ids or relationship to "
+                                 "initialize the attribute")
+
+            random_init = relationship.select_one()
+            self._table = pd.DataFrame({"value": random_init["to"]},
+                                       index=random_init["from"])
+
 
     def get_values(self, ids):
         """
         :param ids: actor ids for which the attribute values are desired
         :return: the current attribute values for those actors
         """
-        return self._table.ix[ids, "value"].values
+        return self._table.loc[ids]["value"].values
 
 
 class TransientAttribute(Attribute):
@@ -38,52 +59,100 @@ class TransientAttribute(Attribute):
 
     def __init__(self, **kwargs):
         Attribute.__init__(self, **kwargs)
+        self.ops = self.AttributeOps(self)
 
-    def update(self, ids_to_update, values):
+    def update(self, ids, values):
         """
 
         :param values:
-        :param ids_to_update:
+        :param ids:
         :return:
         """
-        # TODO:  bug here (and elsewhere in this class: confusion between
-        # access by id and by location.. )
-        self._table.loc[ids_to_update, "value"] = values
+
+        # print ("table: {}".format(self._table))
+        # print ("ids: {}".format(ids))
+
+        self._table.loc[ids, "value"] = values
+
+    class AttributeOps(object):
+        def __init__(self, attribute):
+            self.attribute = attribute
+
+        class Overwrite(Operation):
+            def __init__(self, attribute, copy_from_field):
+                self.attribute = attribute
+                self.copy_from_field = copy_from_field
+
+            def transform(self, data):
+                # print ("current data: {}".format(data))
+
+                if data.shape[0] > 0:
+                    self.attribute.update(ids=data.index.values,
+                                          values=data[self.copy_from_field])
+
+                # input data is returned as is, we merely update values here
+                return data
+
+        def overwrite(self, copy_from_field):
+            """
+            Overwrite the value of this attribute with values in this field
+            """
+            return self.Overwrite(self.attribute, copy_from_field)
 
 
-class ChoiceAttribute(TransientAttribute):
-    """
+# class ChoiceAttribute(TransientAttribute):
+#     """
+#         Actor attribute that simply keep a "current value" for each actor,
+#         randomly picked among the "to" side of the configured relationship.
+#     """
+#
+#     def __init__(self, relationship):
+#
+#         init_values = relationship.select_one()
+#         print "init_values {}".format(init_values)
+#         TransientAttribute.__init__(self, ids=init_values["from"],
+#                                     init_values=init_values["to"])
+#
+#
+#         print "init_tale {}".format(self._table)
+#        self.relationship = relationship
 
-    """
+    # 2 operations:
+    #  - relationshipOperation (used everywhere where we traverse a rel)
+    #   => this one comes from the relationship class
+    #  - setAttributeOp: to set the location: this one is an operation
+    #  coming from the TransientAttribute: cf update method
 
-    def __init__(self, **kwargs):
-        TransientAttribute.__init__(self, **kwargs)
-
-    def make_actions(self, ids, actorid_field_name, new_time_generator,
-                     relationship):
-        """
-
-        :param new_time_generator:
-        :param relationship:
-        :param id1:
-        :param id2:
-        :return:
-        """
-        out = pd.DataFrame(columns=["new"])
-        if len(ids) > 0:
-            out = (relationship
-                   .select_one(from_ids=ids, named_as="new")
-                   .rename(columns={"from": actorid_field_name})
-                   )
-            if len(out.index) > 0:
-                self._table.loc[out[actorid_field_name], "value"] = out[actorid_field_name].values
-        out.reset_index(inplace=True)
-        return ids, out, None
+    # + 1 emission: the mobility log: select,...
+    # def make_actions(self, ids, actorid_field_name):
+    #     """
+    #
+    #     :param new_time_generator:
+    #     :param relationship:
+    #     :param id1:
+    #     :param id2:
+    #     :return:
+    #     """
+    #
+    #     if len(ids) == 0:
+    #         return ids, pd.DataFrame(columns=[actorid_field_name, "new"])
+    #
+    #     out = (self.relationship
+    #            .select_one(from_ids=ids, named_as="new")
+    #            .rename(columns={"from": actorid_field_name}))
+    #
+    #     if out.shape[0] > 0:
+    #         # TODO: bug here? I think we should .ix[] with the current way of
+    #         #  indexing
+    #         self._table.loc[out[actorid_field_name], "value"] = out[actorid_field_name].values
+    #
+    #     return ids, out
 
 
 class StockAttribute(TransientAttribute):
     """
-
+        A stock attribute keeps the stock level of some quantity and relies
+        on a "provider" relationship for each actor to be able to obtain topups
     """
 
     def __init__(self, trigger_generator, **kwargs):
@@ -105,6 +174,13 @@ class StockAttribute(TransientAttribute):
         """
         self._table["clock"] = new_time_generator.generate(size=len(self._table.index))
 
+    # only actions have clocks: not attributes
+
+    # this is associated with an action that has a logistic clock
+
+    # this re-uses the incrementAttributesOp below + other operation: set to
+    # zero some other clocks, based on weight
+
     def decrease_stock(self, values):
         """
 
@@ -120,6 +196,10 @@ class StockAttribute(TransientAttribute):
 
         return act_now.index
 
+    # TODO: make this an impact like "buy recharge"
+
+    # same as choiceOp, except the second is increment attribute instead
+    #  of setAttributeOp (both based on column names)
     def make_actions(self, ids, actorid_field_name, relationship, id2):
         """
 
@@ -130,18 +210,18 @@ class StockAttribute(TransientAttribute):
         :return:
         """
 
-        out = pd.DataFrame(columns=[actorid_field_name])
-        if len(ids) > 0:
-            out = (relationship
-                   .select_one(from_ids=ids, named_as=id2)
-                   .rename(columns={"from": actorid_field_name,
-                                    "value": "VALUE"}))
+        if len(ids) == 0:
+            return [], pd.DataFrame(columns=[actorid_field_name, "new"])
 
-            if out.shape[0] > 0:
-                self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]
+        out = (relationship
+               .select_one(from_ids=ids, named_as=id2)
+               .rename(columns={"from": actorid_field_name,
+                                "value": "VALUE"}))
 
-        out.reset_index(inplace=True)
-        return [], out, None
+        if out.shape[0] > 0:
+            self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]
+
+        return [], out
 
 
 class LabeledStockAttribute(TransientAttribute):

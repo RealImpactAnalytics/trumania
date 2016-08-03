@@ -1,4 +1,5 @@
 import pandas as pd
+from bi.ria.generator.operations import Operation
 
 
 class Action(object):
@@ -19,7 +20,7 @@ class Action(object):
         return field_values
 
 
-class ActorAction(Action):
+class ActorAction_old(Action):
     def __init__(self, name, actor,
                  actorid_field_name, random_relation_fields,
                  time_generator, activity_generator,
@@ -152,6 +153,9 @@ class ActorAction(Action):
                 params = {"values": pd.Series(field_values[impact_params["value"]].values,
                                               index=field_values[self.actorid_field_name])}
                 ids_for_clock = self.actor.apply_to_attribute(attribute, function, params)
+
+                # TODO: rename this, something like "set clock to zero" or
+                # something
                 impact_params["recharge_action"].assign_clock_value(pd.Series(data=0,
                                                                        index=ids_for_clock))
 
@@ -222,16 +226,121 @@ class AttributeAction(Action):
         self.clock.loc[values.index,"clock"] = values.values
 
     def execute(self):
-        ids, out, values = self.actor.make_attribute_action(self.attr_name,
-                                                            self.actorid_field_name,
-                                                            self.who_acts_now(),
-                                                            self.parameters)
+        ids, out = self.actor.make_attribute_action(self.attr_name,
+                                                    self.actorid_field_name,
+                                                    self.who_acts_now(),
+                                                    self.parameters)
 
         if len(ids) > 0:
-            if values is None:
-                self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=self.clock.loc[ids, "activity"])+1
-            else:
-                self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=values)+1
+            self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=self.clock.loc[ids, "activity"])+1
         self.update_clock()
 
         return Action.add_joined_field(self, out)
+
+
+class Clock(object):
+    """
+    Maintains a set of decreasing counter for a bunch of ids and specify
+    which ids are active (i.e. have clock at 0) at any moment)
+    """
+
+    def __init__(self, ids, time_generator, activity_generator):
+
+        activity = activity_generator.generate(size=len(ids))
+        self.clock = pd.DataFrame({"activity": activity}, index=ids)
+        self.clock["clock"] = time_generator.generate(
+            weights=self.clock["activity"])
+
+    def who_acts_now(self):
+            """
+
+            :return:
+            """
+            return self.clock[self.clock["clock"] == 0].index
+
+    def update_clock(self):
+
+        # jumps down s.t. there is at least one actor with clock to 0
+        incr = self.clock[self.clock["clock"] > 0]["clock"].min()
+
+        self.clock["clock"] -= incr
+
+
+class ActorAction(object):
+    def __init__(self, name, triggering_actor, actorid_field,
+                 time_gen, activity_gen,
+                 operations):
+
+        self.name = name
+        self.triggering_actor = triggering_actor
+        self.actorid_field_name = actorid_field
+        self.clock = Clock(triggering_actor.ids, time_gen, activity_gen)
+
+        # the first operation is always a "who acts now"
+        self.operations = [self.WhoActsNow(self)] + operations
+
+    class WhoActsNow(Operation):
+        """
+        Initial operation of an Action: creates a basic Dataframe with the
+        ids of the actor that are triggered by the clock now
+        """
+
+        def __init__(self, action):
+            self.action = action
+
+        def transform(self, ignored_input):
+            ids = self.action.clock.who_acts_now()
+            df = pd.DataFrame(ids, columns=[self.action.actorid_field_name])
+
+            # makes sure the actor id is also kept as index
+            df.set_index(self.action.actorid_field_name,
+                         drop=False,
+                         inplace=True)
+            return df
+
+    @staticmethod
+    def _one_execution((prev_output, prev_logs), operation):
+        """
+
+        executes this operation and merges its outcome with the previous one
+        :param operation:
+        :return:
+        """
+        output, supp_logs = operation.apply(prev_output)
+
+        # this merges the logs, overwriting any duplicate ids
+        all_logs = {k: v for d in [prev_logs, supp_logs] for k, v in d.items()}
+
+        return output, all_logs
+
+    def execute(self):
+
+        # empty dataframe and logs to start with:
+        init = [(None, {})]
+
+        _, all_logs = reduce(self._one_execution, init + self.operations)
+        self.clock.update_clock()
+
+        if len(all_logs.keys()) == 0:
+            return pd.DataFrame(columns=[])
+
+        if len(all_logs.keys()) > 1:
+            # TODO
+            raise NotImplemented("not supported yet: circus can only handle "
+                                 "one logger per ActorAction")
+
+        return all_logs.values()[0]
+
+
+
+
+
+
+
+
+
+
+
+
+
+

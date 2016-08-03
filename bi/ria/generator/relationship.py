@@ -1,6 +1,6 @@
 import pandas as pd
 from numpy.random import RandomState
-
+from bi.ria.generator.operations import *
 
 class Relationship(object):
     """
@@ -33,6 +33,7 @@ class Relationship(object):
         self.__name = name
         self.__state = RandomState(seed)
         self._table = pd.DataFrame(columns=["from", "to", "weight"])
+        self.ops = self.RelationshipOps(self)
 
     def add_relations(self, from_ids, to_ids, weights=1):
         """
@@ -47,15 +48,14 @@ class Relationship(object):
         self._table = pd.concat([self._table, new_relations])
         self._table.reset_index(drop=True, inplace=True)
 
-    def select_one(self, from_ids, named_as="to"):
+    def select_one(self, from_ids=None, named_as="to"):
+        """
         """
 
-        :param key_column:
-        :param keys:
-        :return: Pandas Series, index are the ones from keys
-        """
-
-        selected = self._table[self._table["from"].isin(from_ids)]
+        if from_ids is None:
+            selected = self._table
+        else:
+            selected = self._table[self._table["from"].isin(from_ids)]
 
         if selected.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
@@ -85,6 +85,48 @@ class Relationship(object):
                             self._table["to"].isin(to_ids)]
 
         self._table.drop(lines.index, inplace=True)
+
+    # Operations
+
+    class RelationshipOps(object):
+        def __init__(self, relationship):
+            self.relationship = relationship
+
+        class SelectOne(Operation):
+            """
+            Operation that wraps a select_one() call on the relationship
+            """
+
+            def __init__(self, relationship, from_field, named_as):
+                self.relationship = relationship
+                self.from_field = from_field
+                self.named_as = named_as
+
+            def transform(self, data):
+
+                selected = self.relationship.select_one(
+                    from_ids=data[self.from_field],
+                    named_as=self.named_as)
+
+                # saves index as a column to have an explicit column that will
+                # survive the join below
+                data["index_backup"] = data.index
+
+                merged = pd.merge(left=data, right=selected,
+                                  left_on=self.from_field, right_on="from")
+
+                merged.drop("from", axis=1, inplace=True)
+
+                # puts back the index in place, for further processing
+                merged.set_index("index_backup", inplace=True)
+
+                return merged
+
+        def select_one(self, from_field, named_as):
+            """
+            adds a field by randomly selecting a "to" side of the relationship
+            """
+            return self.SelectOne(self.relationship, from_field, named_as)
 
 
 # TODO: same thing: move this to concern-specific module
