@@ -89,7 +89,7 @@ class AddColumns(Operation):
     the previous result
     """
 
-    def __init__(self, join_kind="outer"):
+    def __init__(self, join_kind="left"):
         self.join_kind = join_kind
 
     def build_output(self, data):
@@ -105,9 +105,16 @@ class AddColumns(Operation):
 
     def transform(self, data):
         output = self.build_output(data)
-        return pd.merge(left=data, right=output,
+#        print "    about to merge: {}".format(data.shape[0])
+        m = pd.merge(left=data, right=output,
                         left_index=True, right_index=True,
                         how=self.join_kind)
+#        print "    merge done  {}".format(m.shape[0])
+
+        # if data.shape[0] != m.shape[0]:
+        #     a = self.build_output(data)
+
+        return m
 
 
 class Constant(AddColumns):
@@ -168,6 +175,8 @@ class Apply(AddColumns):
         self.f = f
 
     def build_output(self, data):
+#        print "    {}".format(data.shape[0])
         df = self.f(data[self.source_fields])
+#        print "    applied"
 
         return df.rename(columns={"result": self.result_field})

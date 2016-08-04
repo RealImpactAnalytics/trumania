@@ -30,6 +30,7 @@ def substract_value_from_account(data):
     # must return a dataframe with a single column named "result"
     return pd.DataFrame(new_value, columns=["result"])
 
+
 def add_value_to_account(data):
     """
     custom function expecting a dataframe with a 2 column: MAIN_ACCT_OLD and

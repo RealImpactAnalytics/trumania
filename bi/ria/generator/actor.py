@@ -95,7 +95,7 @@ class Actor(object):
                 output = data[[self.actor_id_field]]
                 for attribute, named_as in self.select_dict.items():
 
-                    actor_ids = data[self.actor_id_field]
+                    actor_ids = data[self.actor_id_field].unique()
                     vals = pd.DataFrame(
                         self.actor.get_attribute_values(attribute, actor_ids),
                         ).rename(columns={"value": named_as})

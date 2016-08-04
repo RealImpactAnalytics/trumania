@@ -2,7 +2,6 @@ from bi.ria.generator.operations import *
 from bi.ria.generator.random_generators import *
 from bi.ria.generator.clock import *
 
-
 class Action(object):
     def __init__(self, name, actor, joined_fields):
         self.name = name
@@ -294,8 +293,13 @@ class ActorAction(object):
 
         :param f: the next operation to call on the Action operations list
         :return:
+
+
         """
+
+#        print "  {}...".format(type(f))
         output, supp_logs = f(prev_output)
+#        print "   done".format(type(f))
 
         # this merges the logs, overwriting any duplicate ids
         all_logs = {k: v for d in [prev_logs, supp_logs] for k, v in d.items()}

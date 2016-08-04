@@ -61,9 +61,12 @@ def compose_circus():
 
     networkweightgenerator = GenericGenerator("network-weight", "pareto", {"a": 1.2, "m": 1.}, seed)
 
-    mobilityweightgenerator = GenericGenerator("mobility-weight", "exponential", {"scale": 1.})
+    mobilityweightgenerator = GenericGenerator("mobility-weight",
+                                               "exponential", {"scale": 1.},
+                                               seed)
 
-    agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
+    agentweightgenerator = GenericGenerator("agent-weight", "exponential",
+                                            {"scale": 1.}, seed)
 
     ######################################
     # Initialise generators
@@ -291,7 +294,7 @@ def compose_circus():
 def test_cdr_scenario():
 
     cdr_circus = compose_circus()
-    n_iterations = 100
+    n_iterations = 50
 
     # dataframes of outcomes are returned in the order in which the actions
     # are added to the circus
