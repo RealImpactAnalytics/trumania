@@ -14,28 +14,7 @@ from bi.ria.generator.util_functions import *
 import bi.ria.generator.operations as operations
 
 from bi.ria.generator.actor import *
-
-
-#####
-# custom components specific to CDRs
-
-
-class ComputeCallValue(AddColumns):
-    """
-        Custom operation for the CDR scenario: computes a price from the
-        duration
-    """
-
-    def __init__(self, price_per_second, named_as):
-        super(ComputeCallValue, self).__init__()
-        self.price_per_second = price_per_second
-        self.named_as = named_as
-
-    def build_output(self, data):
-        # we can hard-code "DURATION" here since it's scenario-specific
-        df = data[["DURATION"]] * self.price_per_second
-
-        return df.rename(columns={"DURATION": self.named_as})
+import bi.ria.generator.ext.cdr as cdr
 
 
 #####
@@ -51,7 +30,6 @@ def compose_circus():
     ######################################
     # Define parameters
     ######################################
-    tp = time.clock()
     print "Parameters"
 
     seed = 123456
@@ -71,20 +49,14 @@ def compose_circus():
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents)]
 
-    print "Done"
-
     ######################################
     # Define clocks
     ######################################
-    tc = time.clock()
-    print "Clock"
     the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
-    print "Done"
 
     ######################################
     # Define generators
     ######################################
-    tg = time.clock()
     print "Generators"
     msisdn_gen = MSISDNGenerator("msisdn-tests-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
     activity_gen = GenericGenerator("user-activity", "pareto", {"a": 1.2, "m": 10.}, seed)
@@ -102,7 +74,6 @@ def compose_circus():
     ######################################
     # Initialise generators
     ######################################
-    tig = time.clock()
     print "initialise Time Generators"
     timegen.initialise(the_clock)
     mobilitytimegen.initialise(the_clock)
@@ -111,7 +82,6 @@ def compose_circus():
     ######################################
     # Define Actors, Relationships, ...
     ######################################
-    tcal = time.clock()
     print "Create callers"
     customers = Actor(n_customers)
     print "Done"
@@ -143,12 +113,9 @@ def compose_circus():
 
     customers.add_attribute(name="CELL", attr=cell_attr)
 
-    tatt = time.clock()
     # customers.gen_attribute("activity", activity_gen)
     # customers.gen_attribute("clock", timegen, weight_field="activity")
 
-    print "Added atributes"
-    tsna = time.clock()
     print "Creating social network"
     social_network_values = create_er_social_network(customer_ids=customers.ids,
                                               p=average_degree / n_customers,
@@ -174,13 +141,6 @@ def compose_circus():
                           weights=networkweightgenerator.generate(len(
                              social_network_values.index)))
 
-    print "Done SNA"
-    tmo = time.clock()
-
-
-    print "Network created"
-    tmoatt = time.clock()
-
 
     ###
     # MSISDN -> Agent
@@ -190,9 +150,8 @@ def compose_circus():
         columns=["USER_ID", "AGENT"])
 
     print "Agent relationship created"
-    tagatt = time.clock()
-    agent_rel = AgentRelationship(name="people's agent",
-                                  seed=seed)
+    agent_rel = cdr.AgentRelationship(name="people's agent",
+                                      seed=seed)
 
     agent_rel.add_relations(from_ids=agent_df["USER_ID"],
                             to_ids=agent_df["AGENT"],
@@ -210,39 +169,61 @@ def compose_circus():
                                      parameters={"a": 1000.},
                                      seed=seed)
 
-    main_account = StockAttribute(ids=customers.ids,
-                                  trigger_generator=recharge_trigger,
-                                  init_values_generator=recharge_init)
+    # main_account = StockAttribute(ids=customers.ids,
+    #                               trigger_generator=recharge_trigger,
+    #                               init_values_generator=recharge_init)
+    main_account = TransientAttribute(ids=customers.ids,
+                                  #trigger_generator=recharge_trigger,
+                                      init_values_generator=recharge_init)
 
     customers.add_attribute(name="MAIN_ACCT", attr=main_account)
 
-    print "Done all customers"
-
-    tci = time.clock()
     print "Creating circus"
     flying = Circus(the_clock)
 
-    topup = AttributeAction(name="topup",
-                            actor=customers,
-                            attr_name="MAIN_ACCT",
+    # topup = AttributeAction(name="topup",
+    #                         actor=customers,
+    #                         attr_name="MAIN_ACCT",
+    #
+    #                         actorid_field_name="A",
+    #
+    #                         joined_fields=[
+    #                             {"from_actor": customers,
+    #                              "left_on": "A",
+    #                              "select": ["MSISDN", "CELL"],
+    #                              "as": ["CUSTOMER_NUMBER", "CELL"]},
+    #                         ],
+    #
+    #                         time_generator=ConstantProfiler(-1),
+    #                         activity_generator=GenericGenerator("1",
+    #                                                             "constant",
+    #                                                             {"a": 1.}),
+    #
+    #                         parameters={"relationship": agent_rel,
+    #                                     "id2": "AGENT"}
+    topup = ActorAction(
+        name="topup",
+        triggering_actor=customers,
+        actorid_field="A_ID",
 
-                            actorid_field_name="A",
+        operations=[
 
-                            joined_fields=[
-                                {"from_actor": customers,
-                                 "left_on": "A",
-                                 "select": ["MSISDN", "CELL"],
-                                 "as": ["CUSTOMER_NUMBER", "CELL"]},
-                            ],
+            customers.ops.lookup(
+                actor_id_field="A_ID",
+                select={"MSISDN": "CUSTOMER_NUMBER",
+                        "CELL": "CELL",
+                        "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
-                            time_generator=ConstantProfiler(-1),
-                            activity_generator=GenericGenerator("1",
-                                                                "constant",
-                                                                {"a": 1.}),
+            # agent_rel.ops.buyone
 
-                            parameters={"relationship": agent_rel,
-                                        "id2": "AGENT"}
-                            )
+            # apply: compute MAIN_ACCT
+        ],
+
+
+        time_gen=ConstantProfiler(-1),
+        activity_gen=GenericGenerator("1", "constant",  {"a": 1.}),
+
+    )
 
     # TODO: add the actions to the actors instead of the circus
 
@@ -305,7 +286,7 @@ def compose_circus():
     #                  attribute="MAIN_ACCT",
     #                  function="decrease_stock",
     #                  parameters={
-    #                      # TODO: "account value" would be more explicit here
+    #                      # TODO: "acount value" would be more explicit here
     #                      # I think
     #                     "value": "VALUE",
     #                     "recharge_action":topup})
@@ -331,7 +312,8 @@ def compose_circus():
             operations.RandomValues(value_generator=voice_duration_generator,
                                     named_as="DURATION"),
 
-            ComputeCallValue(price_per_second=2, named_as="VALUE"),
+            cdr.ComputeCallValue(price_per_second=2,
+                                           named_as="VALUE"),
 
             customers.ops.lookup(actor_id_field="A_ID",
                                  select={"MSISDN": "A",
@@ -415,47 +397,28 @@ def compose_circus():
     )
 
     flying.add_increment(timegen)
-    tr = time.clock()
 
     print "Done"
 
-    all_times = {"parameters": tc - tp,
-                 "clocks": tg - tc,
-                 "generators": tig - tg,
-                 "init generators": tcal - tig,
-                 "callers creation (full)": tmo - tcal,
-                 "caller creation (solo)": tatt - tcal,
-                 "caller attribute creation": tsna - tatt,
-                 "caller SNA graph creation": tsnaatt - tsna,
-                 "mobility graph creation": tmoatt - tmo,
-                 "mobility attribute creation": tci - tmoatt,
-                 "circus creation": tr - tci,
-                 "tr": tr,
-                 }
-
-    # flying.add_action(topup)
+    flying.add_action(topup)
     flying.add_action(calls)
     flying.add_action(sms)
     flying.add_action(mobility_action)
 
-    return flying, all_times
+    return flying
 
 
 def test_cdr_scenario():
 
-    cdr_circus, all_times = compose_circus()
+    cdr_circus = compose_circus()
     n_iterations = 100
 
     # dataframes of outcomes are returned in the order in which the actions
     # are added to the circus
-    #all_topup, all_cdrs, all_mov = cdr_circus.run(n_iterations)
-    voice_cdrs, sms_cdrs, all_mov = cdr_circus.run(n_iterations)
-    tf = time.clock()
+    topups, voice_cdrs, sms_cdrs, all_mov = cdr_circus.run(n_iterations)
+    # voice_cdrs, sms_cdrs, all_mov = cdr_circus.run(n_iterations)
+#    topups, = cdr_circus.run(n_iterations)
 
-    all_times["runs (all)"] = tf - all_times["tr"]
-    all_times["one run (average)"] = (tf - all_times["tr"]) / n_iterations
-
-    print (json.dumps(all_times, indent=2))
 
     print ("""
         some voice cdrs:
@@ -468,16 +431,17 @@ def test_cdr_scenario():
           {}
 
         some topup event:
-          ()
+          {}
 
-    """.format(voice_cdrs.head(15).to_string(),
-               sms_cdrs.head(15).to_string(),
-               all_mov.head(15).to_string(),
-#               all_topup.head().to_string())
-           ))
+    """.format(
+           voice_cdrs.head(15).to_string(),
+           sms_cdrs.head(15).to_string(),
+           all_mov.head(15).to_string(),
+           topups.head().to_string())
+           )
 
-    assert voice_cdrs.shape[0] > 0
-    assert "datetime" in voice_cdrs.columns
+    # assert voice_cdrs.shape[0] > 0
+    # assert "datetime" in voice_cdrs.columns
 
     # assert all_mov.shape[0] > 0
     # assert "datetime" in all_mov.columns

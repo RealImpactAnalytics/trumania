@@ -133,27 +133,6 @@ class Relationship(object):
             return self.SelectOne(self.relationship, from_field, named_as)
 
 
-# TODO: move this be in a "sales" package separated from the core
-class AgentRelationship(Relationship):
-    """
-
-    """
-    def __init__(self, **kwargs):
-        """
-
-        :param r1:
-        :param r2:
-        :param chooser:
-        :param agents:
-        :return:
-        """
-        Relationship.__init__(self, **kwargs)
-
-    def select_one(self, **kwargs):
-        choices = Relationship.select_one(self, **kwargs)
-        choices["value"] = 1000
-
-        return choices
 
 
 # TODO: see with Gautier: this is no longer used anywhere => should we delete,
