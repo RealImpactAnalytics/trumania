@@ -5,42 +5,49 @@
 from bi.ria.generator.relationship import *
 
 
-class ComputeCallValue(AddColumns):
+def compute_call_value(data):
     """
-        Custom operation for the CDR scenario: computes a price from the
-        duration
+    custom function expecting a dataframe with a single column: DURATION
     """
 
-    def __init__(self, price_per_second, named_as):
-        super(ComputeCallValue, self).__init__()
-        self.price_per_second = price_per_second
-        self.named_as = named_as
+    price_per_second = 2
+    df = data[["DURATION"]] * price_per_second
 
-    def build_output(self, data):
-        # we can hard-code "DURATION" here since it's scenario-specific
-        df = data[["DURATION"]] * self.price_per_second
-
-        return df.rename(columns={"DURATION": self.named_as})
+    # must return a dataframe with a single column named "result"
+    return df.rename(columns={"DURATION": "result"})
 
 
-class AgentRelationship(Relationship):
+# TODO: cf Sipho suggestion: we could have generic "add", "diff"... operations
+def substract_value_from_account(data):
     """
-        relation from user to agent (seller). When selecting one seller,
-        the operation returns both the chosen agent and the price of the item
+    custom function expecting a dataframe with a 2 column: MAIN_ACCT_OLD and
+    VALUE, and computes the new account value from that
     """
-    def __init__(self, **kwargs):
-        """
 
-        :param r1:
-        :param r2:
-        :param chooser:
-        :param agents:
-        :return:
-        """
-        Relationship.__init__(self, **kwargs)
+    # maybe we should prevent negative accounts here? or not?
+    new_value = data["MAIN_ACCT_OLD"] - data["VALUE"]
 
-    def select_one(self, **kwargs):
-        choices = Relationship.select_one(self, **kwargs)
-        choices["value"] = 1000
+    # must return a dataframe with a single column named "result"
+    return pd.DataFrame(new_value, columns=["result"])
 
-        return choices
+def add_value_to_account(data):
+    """
+    custom function expecting a dataframe with a 2 column: MAIN_ACCT_OLD and
+    VALUE, and computes the new account value from that
+    """
+
+    # maybe we should prevent negative accounts here? or not?
+    new_value = data["MAIN_ACCT_OLD"] + data["VALUE"]
+
+    # must return a dataframe with a single column named "result"
+    return pd.DataFrame(new_value, columns=["result"])
+
+
+def copy_id_if_topup(data):
+    """
+    """
+
+    copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
+
+    return copied_ids.rename(columns={"A_ID": "result"})
+

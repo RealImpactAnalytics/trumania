@@ -115,20 +115,17 @@ class Actor(object):
             """
             return self.Lookup(self.actor, actor_id_field, select)
 
-        class Overwrite(Operation):
+        class Overwrite(SideEffectOnly):
             def __init__(self, actor, attribute, copy_from_field):
                 self.actor=actor
                 self.attribute_name = attribute
                 self.copy_from_field = copy_from_field
 
-            def transform(self, data):
+            def side_effect(self, data):
                 if data.shape[0] > 0:
                     attribute = self.actor.get_attribute(self.attribute_name)
                     attribute.update(ids=data.index.values,
                                      values=data[self.copy_from_field])
-
-                # input data is returned as is, we merely update values here
-                return data
 
         def overwrite(self, attribute, copy_from_field):
             """

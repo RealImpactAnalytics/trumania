@@ -76,12 +76,14 @@ class Circus(object):
 
         return action_values
 
-    def one_round(self):
+    def one_round(self, round_number):
         """
         Performs one round of actions
 
         :return:
         """
+
+        print "round : {}".format(round_number)
 
         result_tables = [self.__execute_action(action)
                          for action in self.__actions]
@@ -103,7 +105,7 @@ class Circus(object):
         """
 
         print "starting circus"
-        tables_list = zip(*[self.one_round() for _ in range(n_iterations)])
+        tables_list = zip(*[self.one_round(r) for r in range(n_iterations)])
         return [pd.concat(table, ignore_index=True) for table in tables_list]
 
     def get_contents(self):

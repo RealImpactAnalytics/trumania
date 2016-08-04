@@ -38,7 +38,7 @@ class Operation(object):
 
         return {}
 
-    def apply(self, data):
+    def __call__(self, data):
 
         output = self.transform(data)
         logs = self.emit_logs(output)
@@ -62,6 +62,25 @@ class ColumnLogger(Operation):
 
     def emit_logs(self, data):
         return {self.log_id: data[self.cols]}
+
+
+class SideEffectOnly(Operation):
+    """
+    Operation that does not produce logs nor supplementary columns: just have
+    side effect
+    """
+
+    def transform(self, data):
+        self.side_effect(data)
+        return data
+
+    def side_effect(self, data):
+        """
+        :param data:
+        :return: nothing
+        """
+
+        raise NotImplemented("BUG: the sub-class must implement this method")
 
 
 class AddColumns(Operation):
@@ -126,3 +145,29 @@ class RandomValues(AddColumns):
         return pd.DataFrame({self.named_as: values}, index=data.index)
 
 
+class Apply(AddColumns):
+    """
+        Custom operation adding one single column computed from a user-provided
+        function.
+
+        The length of the source_fields must match the number columns
+        in the dataframe expected by the user f function
+
+        The f function must return a dataframe with one single column,
+        named "result"
+    """
+
+    def __init__(self, source_fields, result_field, f):
+        super(Apply, self).__init__()
+        if type(source_fields) == str:
+            self.source_fields = [source_fields]
+        else:
+            self.source_fields = source_fields
+
+        self.result_field = result_field
+        self.f = f
+
+    def build_output(self, data):
+        df = self.f(data[self.source_fields])
+
+        return df.rename(columns={"result": self.result_field})

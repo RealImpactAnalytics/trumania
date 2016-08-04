@@ -1,5 +1,6 @@
-import pandas as pd
-from bi.ria.generator.operations import Operation
+from bi.ria.generator.operations import *
+from bi.ria.generator.random_generators import *
+from bi.ria.generator.clock import *
 
 
 class Action(object):
@@ -192,92 +193,69 @@ class ActorAction_old(Action):
         return Action.add_joined_field(self, field_values)
 
 
-class AttributeAction(Action):
-    def __init__(self, name, actor, attr_name, actorid_field_name,
-                 activity_generator, time_generator,
-                 parameters, joined_fields=None):
-        Action.__init__(self, name, actor, joined_fields)
-
-        self.attr_name = attr_name
-        self.parameters = parameters
-        self.time_generator = time_generator
-        self.actorid_field_name = actorid_field_name
-
-        self.clock = pd.DataFrame({"clock": 0, "activity": 1.}, index=actor.ids)
-        self.clock["activity"] = activity_generator.generate(size=len(self.clock.index))
-        self.clock["clock"] = self.time_generator.generate(weights=self.clock["activity"])
-
-    def who_acts_now(self):
-        """
-
-        :return:
-        """
-        return self.clock[self.clock["clock"] == 0].index
-
-    def update_clock(self, decrease=1):
-        """
-
-        :param decrease:
-        :return:
-        """
-        self.clock["clock"] -= 1
-
-    def assign_clock_value(self,values):
-        self.clock.loc[values.index,"clock"] = values.values
-
-    def execute(self):
-        ids, out = self.actor.make_attribute_action(self.attr_name,
-                                                    self.actorid_field_name,
-                                                    self.who_acts_now(),
-                                                    self.parameters)
-
-        if len(ids) > 0:
-            self.clock.loc[ids, "clock"] = self.time_generator.generate(weights=self.clock.loc[ids, "activity"])+1
-        self.update_clock()
-
-        return Action.add_joined_field(self, out)
-
-
-class Clock(object):
-    """
-    Maintains a set of decreasing counter for a bunch of ids and specify
-    which ids are active (i.e. have clock at 0) at any moment)
-    """
-
-    def __init__(self, ids, time_generator, activity_generator):
-
-        activity = activity_generator.generate(size=len(ids))
-        self.clock = pd.DataFrame({"activity": activity}, index=ids)
-        self.clock["clock"] = time_generator.generate(
-            weights=self.clock["activity"])
-
-    def who_acts_now(self):
-            """
-
-            :return:
-            """
-            return self.clock[self.clock["clock"] == 0].index
-
-    def update_clock(self):
-
-        # jumps down s.t. there is at least one actor with clock to 0
-        incr = self.clock[self.clock["clock"] > 0]["clock"].min()
-
-        self.clock["clock"] -= incr
-
-
 class ActorAction(object):
     def __init__(self, name, triggering_actor, actorid_field,
-                 time_gen, activity_gen,
-                 operations):
+                 operations,
+
+                 # otherwise specified, all members of this actor have the
+                 # same activity
+                 activity_gen=GenericGenerator("1", "constant",  {"a": 1.}),
+
+                 # if no time_gen is provided, then the action clock is
+                 # maintained at -1 (i.e. never triggering), unless the clock
+                 # is reset by some other means
+                 time_gen=ConstantProfiler(-1)):
 
         self.name = name
         self.triggering_actor = triggering_actor
         self.actorid_field_name = actorid_field
-        self.clock = Clock(triggering_actor.ids, time_gen, activity_gen)
 
-        # the first operation is always a "who acts now"
-        self.operations = [self.WhoActsNow(self)] + operations
+        self.time_generator = time_gen
+        activity = activity_gen.generate(size=len(triggering_actor.ids))
+        self.clock = pd.DataFrame({"activity": activity, "clock": 0},
+                                  index=triggering_actor.ids)
+        self.reset_clock()
+
+        # the first operation is always a "who acts now" and ends with a
+        # clock reset
+        self.operations = [self.WhoActsNow(self)] + operations + [self.ResetClock(self)]
+        self.ops = self.ActionOps(self)
+
+    def who_acts_now(self):
+        """
+
+        :return:
+        """
+
+        active_ids = self.clock[self.clock["clock"] == 0].index
+#        print (" {}: who_acts_now clock: {}".format(self.name,
+        # len(active_ids)))
+        return active_ids
+
+    def clock_tick(self):
+
+        positive_idx = self.clock[self.clock["clock"] > 0].index
+        if len(positive_idx) > 0:
+#            print (" {}: clock_tick: {}" .format(self.name, len(positive_idx)))
+            self.clock.loc[positive_idx, "clock"] -= 1
+
+    def force_act_next(self, ids):
+
+        if len(ids) > 0:
+#            print (" {}: force_act_next clock: {}".format(self.name, len(ids)))
+            self.clock.loc[ids, "clock"] = 0
+
+    def reset_clock(self, ids=None):
+
+        if ids is None:
+            ids = self.clock.index
+
+        if len(ids) > 0:
+#            print (" {}: reseting clock: {}".format(self.name, len(ids)))
+            new_clock = self.time_generator.generate(
+                weights=self.clock.loc[ids, "activity"])
+
+            self.clock.loc[ids, "clock"] = new_clock
 
     class WhoActsNow(Operation):
         """
@@ -289,7 +267,7 @@ class ActorAction(object):
             self.action = action
 
         def transform(self, ignored_input):
-            ids = self.action.clock.who_acts_now()
+            ids = self.action.who_acts_now()
             df = pd.DataFrame(ids, columns=[self.action.actorid_field_name])
 
             # makes sure the actor id is also kept as index
@@ -298,15 +276,26 @@ class ActorAction(object):
                          inplace=True)
             return df
 
+    class ResetClock(SideEffectOnly):
+        """
+        """
+
+        def __init__(self, action):
+            self.action = action
+
+        def side_effect(self, data):
+            self.action.reset_clock(data.index)
+
     @staticmethod
-    def _one_execution((prev_output, prev_logs), operation):
+    def _one_execution((prev_output, prev_logs), f):
         """
 
         executes this operation and merges its outcome with the previous one
-        :param operation:
+
+        :param f: the next operation to call on the Action operations list
         :return:
         """
-        output, supp_logs = operation.apply(prev_output)
+        output, supp_logs = f(prev_output)
 
         # this merges the logs, overwriting any duplicate ids
         all_logs = {k: v for d in [prev_logs, supp_logs] for k, v in d.items()}
@@ -319,7 +308,7 @@ class ActorAction(object):
         init = [(None, {})]
 
         _, all_logs = reduce(self._one_execution, init + self.operations)
-        self.clock.update_clock()
+        self.clock_tick()
 
         if len(all_logs.keys()) == 0:
             return pd.DataFrame(columns=[])
@@ -329,11 +318,28 @@ class ActorAction(object):
             raise NotImplemented("not supported yet: circus can only handle "
                                  "one logger per ActorAction")
 
+        # TODO: re-create clock for all those that are now at zero !
+
         return all_logs.values()[0]
 
+    class ActionOps(object):
+        def __init__(self, action):
+            self.action = action
 
+        class ForceActNext(SideEffectOnly):
+            def __init__(self, action, active_ids_field):
+                self.action = action
+                self.active_ids_field = active_ids_field
 
+            def side_effect(self, data):
+                if data.shape[0] > 0:
+                    # active_ids_field should contain NA: which are all the
+                    # actior _NOT_ being forced to trigger
+                    ids = data[self.active_ids_field].dropna().values
+                    self.action.force_act_next(ids)
 
+        def force_act_next(self, active_ids_field):
+            return self.ForceActNext(self.action, active_ids_field)
 
 
 

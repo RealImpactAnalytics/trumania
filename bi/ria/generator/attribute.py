@@ -52,16 +52,6 @@ class Attribute(object):
         r = self._table.loc[ids]["value"]
         return r
 
-
-class TransientAttribute(Attribute):
-    """
-        Actor attribute with method allowing to update the values during the
-        data generation.
-    """
-
-    def __init__(self, **kwargs):
-        Attribute.__init__(self, **kwargs)
-
     def update(self, ids, values):
         """
 
@@ -73,7 +63,7 @@ class TransientAttribute(Attribute):
         self._table.loc[ids, "value"] = values
 
 
-class StockAttribute(TransientAttribute):
+class StockAttribute(Attribute):
     """
         A stock attribute keeps the stock level of some quantity and relies
         on a "provider" relationship for each actor to be able to obtain topups
@@ -87,7 +77,7 @@ class StockAttribute(TransientAttribute):
         Usually  a check vs a logistic regression
         :return:
         """
-        TransientAttribute.__init__(self, **kwargs)
+        Attribute.__init__(self, **kwargs)
         self._trigger = trigger_generator
 
     def init_clock(self,new_time_generator):
@@ -148,7 +138,7 @@ class StockAttribute(TransientAttribute):
         return [], out
 
 
-class LabeledStockAttribute(TransientAttribute):
+class LabeledStockAttribute(Attribute):
     """Transient Attribute where users own some stock of labeled items
 
     """
@@ -159,7 +149,7 @@ class LabeledStockAttribute(TransientAttribute):
         :param relationship: Relationship object. Needs to have an "AGENT" and an "ITEM" field. No weights.
         :return:
         """
-        TransientAttribute.__init__(self, **kwargs)
+        Attribute.__init__(self, **kwargs)
         self.__stock = relationship
 
     def get_item(self,ids):

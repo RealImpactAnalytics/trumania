@@ -45,7 +45,6 @@ def compose_circus():
 
     print "Done"
 
-
     ######################################
     # Define clocks
     ######################################
@@ -151,15 +150,15 @@ def compose_circus():
                                actor=customers,
                                actorid_field_name="AGENT",
                                random_relation_fields=[
-                               {"picked_from": agent_customer,
-                                "as": "DEALER",
-                                "join_on": "AGENT"
-                                },
-                               {"picked_from": dealer_sim_rel,
-                                "as": "SIM",
-                                "join_on": "DEALER"
-                                },
-                           ],
+                                {"picked_from": agent_customer,
+                                 "as": "DEALER",
+                                 "join_on": "AGENT"
+                                 },
+                                {"picked_from": dealer_sim_rel,
+                                 "as": "SIM",
+                                 "join_on": "DEALER"
+                                 },
+                                ],
 
                                time_generator=timegen,
                                activity_generator=activity_gen)
