@@ -170,8 +170,8 @@ def compose_circus():
                                     copy_from_field="NEW_CELL"),
 
             # create mobility logs
-            operations.ColumnLogger(log_id="mobility",
-                                    cols=["A_ID", "PREV_CELL", "NEW_CELL"]),
+            operations.FieldLogger(log_id="mobility",
+                                   cols=["A_ID", "PREV_CELL", "NEW_CELL"]),
         ],
 
         time_gen=mobilitytimegen,
@@ -201,8 +201,8 @@ def compose_circus():
             customers.ops.overwrite(attribute="MAIN_ACCT",
                                     copy_from_field="MAIN_ACCT"),
 
-            operations.ColumnLogger(log_id="topups",
-                                    cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
+            operations.FieldLogger(log_id="topups",
+                                   cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
                                           "CELL",
                                           "MAIN_ACCT_OLD", "MAIN_ACCT"]),
         ],
@@ -272,8 +272,8 @@ def compose_circus():
 
 
             # final CDRs
-            operations.ColumnLogger(log_id="cdr",
-                                    cols=["A", "B", "DURATION", "VALUE",
+            operations.FieldLogger(log_id="cdr",
+                                   cols=["A", "B", "DURATION", "VALUE",
                                           "CELL_A", "CELL_B", "PRODUCT"]),
         ],
 

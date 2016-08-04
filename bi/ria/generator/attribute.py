@@ -63,81 +63,6 @@ class Attribute(object):
         self._table.loc[ids, "value"] = values
 
 
-class StockAttribute(Attribute):
-    """
-        A stock attribute keeps the stock level of some quantity and relies
-        on a "provider" relationship for each actor to be able to obtain topups
-    """
-
-    def __init__(self, trigger_generator, **kwargs):
-        """
-
-        :param ids:
-        :param trigger_generator: Random Generator that returns 1 or 0 depending on 1 value (stock, and parameters)
-        Usually  a check vs a logistic regression
-        :return:
-        """
-        Attribute.__init__(self, **kwargs)
-        self._trigger = trigger_generator
-
-    def init_clock(self,new_time_generator):
-        """
-
-        :param new_time_generator:
-        :return:
-        """
-        self._table["clock"] = new_time_generator.generate(size=len(self._table.index))
-
-    # only actions have clocks: not attributes
-
-    # this is associated with an action that has a logistic clock
-
-    # this re-uses the incrementAttributesOp below + other operation: set to
-    # zero some other clocks, based on weight
-
-    def decrease_stock(self, values):
-        """
-
-        :param values: Pandas Series
-        :param new_time_generator:
-        :return:
-        """
-        self._table.loc[values.index, "value"] -= values.values
-
-        triggers = self._trigger.generate(weights=self._table.loc[values.index,"value"])
-        small_table = self._table.loc[values.index]
-        act_now = small_table[triggers]
-
-        return act_now.index
-
-    # TODO: make this an impact like "buy recharge"
-
-    # same as choiceOp, except the second is increment attribute instead
-    #  of setAttributeOp (both based on column names)
-    def make_actions(self, ids, actorid_field_name, relationship, id2):
-        """
-
-        :param relationship: AgentRelationship
-        :param id1: id of customer
-        :param id2: id of Agent
-        :param id3: id of Value
-        :return:
-        """
-
-        if len(ids) == 0:
-            return [], pd.DataFrame(columns=[actorid_field_name, "new"])
-
-        out = (relationship
-               .select_one(from_ids=ids, named_as=id2)
-               .rename(columns={"from": actorid_field_name,
-                                "value": "VALUE"}))
-
-        if out.shape[0] > 0:
-            self._table.loc[out[actorid_field_name], "value"] += out["VALUE"]
-
-        return [], out
-
-
 class LabeledStockAttribute(Attribute):
     """Transient Attribute where users own some stock of labeled items
 
@@ -151,18 +76,9 @@ class LabeledStockAttribute(Attribute):
         """
         Attribute.__init__(self, **kwargs)
         self.__stock = relationship
+        self.ops = self.LabeledStock(self)
 
-    def get_item(self,ids):
-        """
-
-        :param ids:
-        :return:
-        """
-        items = self.__stock.pop_one(from_ids=ids)
-        self._table.loc[items.index,"value"] -= 1
-        return items
-
-    def add_item(self,ids,items):
+    def add_item(self, ids, items):
         """
 
         :param ids:
@@ -186,3 +102,39 @@ class LabeledStockAttribute(Attribute):
 
     def stock(self):
         return self.__stock
+
+    class LabeledStock(object):
+        def __init__(self, labeled_stock):
+            self.labeled_stock = labeled_stock
+
+        class AddItem(SideEffectOnly):
+            def __init__(self, labeled_stock, actor_id_field, item_field):
+                self.labeled_stock = labeled_stock
+                self.actor_id_field = actor_id_field
+                self.item_field = item_field
+
+            def side_effect(self, data):
+                if data.shape[0] > 0:
+                    self.labeled_stock.add_item(
+                        ids=data[self.actor_id_field],
+                        items=data[self.item_field])
+
+        def add_item(self, actor_id_field, item_field):
+            return self.AddItem(self.labeled_stock, actor_id_field,
+                                item_field)
+
+        class RemoveItem(SideEffectOnly):
+            def __init__(self, labeled_stock, actor_id_field, item_field):
+                self.labeled_stock = labeled_stock
+                self.actor_id_field = actor_id_field
+                self.item_field = item_field
+
+            def side_effect(self, data):
+                if data.shape[0] > 0:
+                    self.labeled_stock.remove_item(
+                        ids=data[self.actor_id_field],
+                        items=data[self.item_field])
+
+        def remove_item(self, actor_id_field, item_field):
+            return self.AddItem(self.labeled_stock, actor_id_field,
+                                item_field)

@@ -2,6 +2,7 @@ from bi.ria.generator.operations import *
 from bi.ria.generator.random_generators import *
 from bi.ria.generator.clock import *
 
+
 class Action(object):
     def __init__(self, name, actor, joined_fields):
         self.name = name
@@ -18,7 +19,6 @@ class Action(object):
                 field_values[named_as] = actor.get_attribute_values(actor_field, actor_ids)
 
         return field_values
-
 
 class ActorAction_old(Action):
     def __init__(self, name, actor,
@@ -193,7 +193,8 @@ class ActorAction_old(Action):
 
 
 class ActorAction(object):
-    def __init__(self, name, triggering_actor, actorid_field,
+    def __init__(self, name,
+                 triggering_actor, actorid_field,
                  operations,
 
                  # otherwise specified, all members of this actor have the
@@ -235,13 +236,11 @@ class ActorAction(object):
 
         positive_idx = self.clock[self.clock["clock"] > 0].index
         if len(positive_idx) > 0:
-#            print (" {}: clock_tick: {}" .format(self.name, len(positive_idx)))
             self.clock.loc[positive_idx, "clock"] -= 1
 
     def force_act_next(self, ids):
 
         if len(ids) > 0:
-#            print (" {}: force_act_next clock: {}".format(self.name, len(ids)))
             self.clock.loc[ids, "clock"] = 0
 
     def reset_clock(self, ids=None):
@@ -250,7 +249,6 @@ class ActorAction(object):
             ids = self.clock.index
 
         if len(ids) > 0:
-#            print (" {}: reseting clock: {}".format(self.name, len(ids)))
             new_clock = self.time_generator.generate(
                 weights=self.clock.loc[ids, "activity"])
 
@@ -297,9 +295,7 @@ class ActorAction(object):
 
         """
 
-#        print "  {}...".format(type(f))
         output, supp_logs = f(prev_output)
-#        print "   done".format(type(f))
 
         # this merges the logs, overwriting any duplicate ids
         all_logs = {k: v for d in [prev_logs, supp_logs] for k, v in d.items()}

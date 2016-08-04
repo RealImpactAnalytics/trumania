@@ -46,13 +46,13 @@ class Operation(object):
         return output, logs
 
 
-class ColumnLogger(Operation):
+class FieldLogger(Operation):
     """
     Log creator that simply select a set of columns and create a logged
     dataframe from it
     """
 
-    def __init__(self, log_id, cols):
+    def __init__(self, log_id, cols=None):
         self.log_id = log_id
 
         if type(cols) == str:
@@ -61,7 +61,11 @@ class ColumnLogger(Operation):
             self.cols = cols
 
     def emit_logs(self, data):
-        return {self.log_id: data[self.cols]}
+
+        if self.cols is None:
+            return {self.log_id: data}
+        else:
+            return {self.log_id: data[self.cols]}
 
 
 class SideEffectOnly(Operation):
