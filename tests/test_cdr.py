@@ -11,9 +11,10 @@ from bi.ria.generator.relationship import *
 from bi.ria.generator.util_functions import *
 import bi.ria.generator.operations as operations
 
+from teamcity import is_running_under_teamcity
+
 from bi.ria.generator.actor import *
 import bi.ria.generator.ext.cdr as cdr
-
 
 #####
 # Circus creation
