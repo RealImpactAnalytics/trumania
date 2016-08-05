@@ -1,19 +1,22 @@
 from __future__ import division
 
-import time
 from datetime import datetime
-import json
 
 from bi.ria.generator.action import *
 from bi.ria.generator.attribute import *
 from bi.ria.generator.clock import *
 from bi.ria.generator.circus import *
-from bi.ria.generator.product import *
 from bi.ria.generator.random_generators import *
 from bi.ria.generator.relationship import *
 from bi.ria.generator.util_functions import *
+import bi.ria.generator.operations as operations
 
 from bi.ria.generator.actor import *
+import bi.ria.generator.ext.cdr as cdr
+
+
+#####
+# Circus creation
 
 
 def compose_circus():
@@ -25,8 +28,6 @@ def compose_circus():
     ######################################
     # Define parameters
     ######################################
-    tp = time.clock()
-    print "Parameters"
 
     seed = 123456
     n_customers = 1000
@@ -45,108 +46,78 @@ def compose_circus():
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents)]
 
-    products = ["VOICE", "SMS"]
-
-    print "Done"
-
     ######################################
     # Define clocks
     ######################################
-    tc = time.clock()
-    print "Clock"
     the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
-    print "Done"
 
     ######################################
     # Define generators
     ######################################
-    tg = time.clock()
-    print "Generators"
     msisdn_gen = MSISDNGenerator("msisdn-tests-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
     activity_gen = GenericGenerator("user-activity", "pareto", {"a": 1.2, "m": 10.}, seed)
     timegen = WeekProfiler(time_step, prof, seed)
-
     mobilitytimegen = DayProfiler(time_step, mov_prof, seed)
+
     networkweightgenerator = GenericGenerator("network-weight", "pareto", {"a": 1.2, "m": 1.}, seed)
 
-    mobilityweightgenerator = GenericGenerator("mobility-weight", "exponential", {"scale": 1.})
+    mobilityweightgenerator = GenericGenerator("mobility-weight",
+                                               "exponential", {"scale": 1.},
+                                               seed)
 
-    agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
-
-    init_mobility_generator = GenericGenerator("init-mobility", "choice", {"a": cells})
-
-    SMS_price_generator = GenericGenerator("SMS-price", "constant", {"a": 10.})
-    voice_duration_generator = GenericGenerator("voice-duration", "choice", {"a": range(20, 240)}, seed)
-    voice_price_generator = ValueGenerator("voice-price", 1)
-
-    print "Done"
+    agentweightgenerator = GenericGenerator("agent-weight", "exponential",
+                                            {"scale": 1.}, seed)
 
     ######################################
     # Initialise generators
     ######################################
-    tig = time.clock()
-    print "initialise Time Generators"
     timegen.initialise(the_clock)
     mobilitytimegen.initialise(the_clock)
-    print "Done"
 
     ######################################
     # Define Actors, Relationships, ...
     ######################################
-    tcal = time.clock()
-    print "Create callers"
     customers = Actor(n_customers)
-    print "Done"
 
     customers.add_attribute(name="MSISDN",
                             attr=Attribute(ids=customers.ids,
-                                           init_values_generator=msisdn_gen,
-                                           ))
+                                           init_values_generator=msisdn_gen))
 
-    tatt = time.clock()
-    # customers.gen_attribute("activity", activity_gen)
-    # customers.gen_attribute("clock", timegen, weight_field="activity")
+    # mobility
+    mobility = Relationship(name="people's cell location", seed=seed)
 
-    print "Added atributes"
-    tsna = time.clock()
-    print "Creating social network"
-    social_network = create_er_social_network(customer_ids=customers.ids,
-                                              p=average_degree / n_customers,
-                                              seed=seed)
-    tsnaatt = time.clock()
-    print "Done"
+    mobility_df = pd.DataFrame.from_records(
+        make_random_bipartite_data(customers.ids, cells, 0.4, seed),
+        columns=["USER_ID", "CELL"])
+
+    mobility.add_relations(
+        from_ids=mobility_df["USER_ID"],
+        to_ids=mobility_df["CELL"],
+        weights=mobilityweightgenerator.generate(mobility_df.shape[0]))
+
+    cell_attr = Attribute(relationship=mobility)
+    customers.add_attribute(name="CELL", attr=cell_attr)
 
     ###
     # social network
 
-    network = WeightedRelationship(name="neighbours",
-                                   seed=seed)
+    social_network_values = create_er_social_network(
+        customer_ids=customers.ids,
+        p=average_degree / n_customers,
+        seed=seed)
 
-    # TODO: make this a add_weighted_relations, passing the arguments to
-    # build th
-    network.add_relations(from_ids=social_network["A"].values,
-                          to_ids=social_network["B"].values,
-                          weights=networkweightgenerator.generate(len(
-                             social_network.index)))
+    social_network = Relationship(name="neighbours",
+                                  seed=seed)
 
-    network.add_relations(from_ids=social_network["B"].values,
-                          to_ids=social_network["A"].values,
-                          weights=networkweightgenerator.generate(len(
-                             social_network.index)))
+    social_network.add_relations(
+        from_ids=social_network_values["A"].values,
+        to_ids=social_network_values["B"].values,
+        weights=networkweightgenerator.generate(social_network_values.shape[0]))
 
-    print "Done SNA"
-    tmo = time.clock()
-
-    ###
-    # People's mobility
-
-    print "Mobility"
-    mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, cells, 0.4, seed),
-        columns=["A", "CELL"])
-
-    print "Network created"
-    tmoatt = time.clock()
+    social_network.add_relations(
+        from_ids=social_network_values["B"].values,
+        to_ids=social_network_values["A"].values,
+        weights=networkweightgenerator.generate(social_network_values.shape[0]))
 
 
     ###
@@ -154,14 +125,11 @@ def compose_circus():
 
     agent_df = pd.DataFrame.from_records(
         make_random_bipartite_data(customers.ids, agents, 0.3, seed),
-        columns=["A", "AGENT"])
+        columns=["USER_ID", "AGENT"])
 
-    print "Agent relationship created"
-    tagatt = time.clock()
-    agent_rel = AgentRelationship(name="people's agent",
-                                  seed=seed)
+    agent_rel = Relationship(name="people's agent", seed=seed)
 
-    agent_rel.add_relations(from_ids=agent_df["A"],
+    agent_rel.add_relations(from_ids=agent_df["USER_ID"],
                             to_ids=agent_df["AGENT"],
                             weights=agentweightgenerator.generate(len(
                                 agent_df.index)))
@@ -177,185 +145,163 @@ def compose_circus():
                                      parameters={"a": 1000.},
                                      seed=seed)
 
-    main_account = StockAttribute(ids=customers.ids,
-                                  trigger_generator=recharge_trigger,
-                                  init_values_generator=recharge_init)
+    main_account = Attribute(ids=customers.ids,
+                             init_values_generator=recharge_init)
 
     customers.add_attribute(name="MAIN_ACCT", attr=main_account)
 
-    print "Done all customers"
-
-    tci = time.clock()
-    print "Creating circus"
     flying = Circus(the_clock)
 
-    topup = AttributeAction(name="topup",
-                            actor=customers,
-                            attr_name="MAIN_ACCT",
+    mobility_action = ActorAction(
+        name="mobility",
 
-                            actorid_field_name="A",
+        triggering_actor=customers,
+        actorid_field="A_ID",
 
-                            joined_fields=[
-                                {"from_actor": customers,
-                                 "left_on": "A",
-                                 "select": ["MSISDN", "CELL"],
-                                 "as": ["CUSTOMER_NUMBER", "CELL"]},
-                            ],
+        operations=[
+            customers.ops.lookup(actor_id_field="A_ID",
+                                 select={"CELL": "PREV_CELL"}),
 
-                            time_generator=ConstantProfiler(-1),
-                            activity_generator=GenericGenerator("1",
-                                                                "constant",
-                                                                {"a": 1.}),
+            # selects a cell
+            mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
-                            parameters={"relationship": agent_rel,
-                                        "id2": "AGENT",
-                                        "id3": "value"}
-                            )
+            # update the CELL attribute of the actor accordingly
+            customers.ops.overwrite(attribute="CELL",
+                                    copy_from_field="NEW_CELL"),
 
-    # TODO: add the actions to the actors instead of the circus
-    flying.add_action(topup)
+            # create mobility logs
+            operations.FieldLogger(log_id="mobility",
+                                   cols=["A_ID", "PREV_CELL", "NEW_CELL"]),
+        ],
 
-    ####
-    # calls and SMS
+        time_gen=mobilitytimegen,
+    )
 
-    voice = VoiceProduct(voice_duration_generator, voice_price_generator)
-    sms = SMSProduct(SMS_price_generator)
+    topup = ActorAction(
+        name="topup",
+        triggering_actor=customers,
+        actorid_field="A_ID",
 
-    product_df = assign_random_proportions("A", "PRODUCT", customers.ids,
-                                           products, seed)
-    product_rel = ProductRelationship(products={"VOICE": voice, "SMS": sms},
-                                      name="people's product",
-                                      seed=seed)
+        operations=[
 
-    # TODO: create a contructor that accept a 2 or 3 column dataframes, with the
-    # convention that 2 means from, to and expect a weight generation parameters
-    # and 3 means from, to, wieghts
-    product_rel.add_relations(from_ids=product_df["A"],
-                              to_ids=product_df["PRODUCT"],
-                              weights=product_df["weight"])
-    calls = ActorAction(name="calls",
-                        actor=customers,
+            customers.ops.lookup(
+                actor_id_field="A_ID",
+                select={"MSISDN": "CUSTOMER_NUMBER",
+                        "CELL": "CELL",
+                        "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
-                        actorid_field_name="A",
-                        random_relation_fields=[
-                            {"picked_from": network,
-                             "as": "B",
-                             "join_on": "A"
-                             },
-                            {"picked_from": product_rel,
-                             "as": "PRODUCT",
-                             "join_on": "A"
-                             },
-                            ],
+            agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
 
-                        joined_fields=[
-                            {"from_actor": customers,
-                             "left_on": "A",
-                             "select": ["MSISDN", "CELL"],
-                             "as": ["A_NUMBER", "CELL_A"],
-                             },
-                            {"from_actor": customers,
-                             "left_on": "B",
-                             "select": ["MSISDN", "CELL"],
-                             "as": ["B_NUMBER", "CELL_B"],
-                             },
-                        ],
+            operations.Constant(value=1000, named_as="VALUE"),
 
-                        time_generator=timegen,
-                        activity_generator=activity_gen,
-                        )
+            operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
+                             result_field="MAIN_ACCT",
+                             f=cdr.add_value_to_account),
 
-    calls.add_impact(name="value decrease",
-                     attribute="MAIN_ACCT",
-                     function="decrease_stock",
-                     parameters={
-                         # TODO: "account value" would be more explicit here
-                         # I think
-                        "value": "VALUE",
-                        "recharge_action":topup})
+            customers.ops.overwrite(attribute="MAIN_ACCT",
+                                    copy_from_field="MAIN_ACCT"),
 
-    flying.add_action(calls)
+            operations.FieldLogger(log_id="topups",
+                                   cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
+                                          "CELL",
+                                          "MAIN_ACCT_OLD", "MAIN_ACCT"]),
+        ],
 
-    # mobility
+        # note that there is timegen specified => the clock is not ticking
+        # => the action can only be set externally (cf calls action)
 
-    mobility = WeightedRelationship(name="people's cell location",
-                                    seed=seed)
-    mobility.add_relations(from_ids=mobility_df["A"],
-                           to_ids=mobility_df["CELL"],
-                           weights=mobilityweightgenerator.generate(len(
-                              mobility_df.index)))
+    )
 
-    # Initial mobility value (ie.e cell location)
-    # => TODO: there is overlap between concern of "relation" and "transient
-    # attibute", they should not be initialized separately
+    voice_duration_generator = GenericGenerator(
+        name="voice-duration",
+        gen_type="choice",
+        parameters={"a": range(20, 240)},
+        seed=seed)
 
-    cell_attr = ChoiceAttribute(ids=customers.ids,
-                                init_values_generator=init_mobility_generator)
+    calls = ActorAction(
+        name="calls",
 
-    customers.add_attribute(name="CELL", attr=cell_attr)
+        triggering_actor=customers,
+        actorid_field="A_ID",
 
-    mobility_action = AttributeAction(name="mobility",
-                                      actor=customers,
-                                      attr_name="CELL",
-                                      actorid_field_name="A",
-                                      activity_generator=GenericGenerator("1",
-                                                                     "constant",
-                                                                     {"a":1.}),
-                                      time_generator=mobilitytimegen,
-                                      parameters={'relationship': mobility,
-                                           'new_time_generator': mobilitytimegen,
-                                                  })
+        operations=[
+            # selects a B party
+            social_network.ops.select_one(from_field="A_ID", named_as="B_ID"),
 
-    flying.add_action(mobility_action)
+            # some static fields
+            customers.ops.lookup(actor_id_field="A_ID",
+                                 select={"MSISDN": "A",
+                                         "CELL": "CELL_A",
+                                         "MAIN_ACCT": "MAIN_ACCT_OLD"}),
+
+            customers.ops.lookup(actor_id_field="B_ID",
+                                 select={"MSISDN": "B",
+                                         "CELL": "CELL_B"}),
+
+            operations.Constant(value="VOICE", named_as="PRODUCT"),
+
+
+
+            # computes the duration, value, new account amount and update
+            # attribute accordingly
+            operations.RandomValues(value_generator=voice_duration_generator,
+                                    named_as="DURATION"),
+
+            operations.Apply(source_fields="DURATION",
+                             result_field="VALUE",
+                             f=cdr.compute_call_value),
+
+            operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
+                             result_field="MAIN_ACCT_NEW",
+                             f=cdr.substract_value_from_account),
+
+            customers.ops.overwrite(attribute="MAIN_ACCT",
+                                    copy_from_field="MAIN_ACCT_NEW"),
+
+
+            # customer with low account are now more likely to topup
+            operations.RandomValues(value_generator=recharge_trigger,
+                                    weights_field="MAIN_ACCT_NEW",
+                                    named_as="SHOULD_TOP_UP"),
+
+            operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
+                             result_field="TOPPING_UP_A_IDS",
+                             f=cdr.copy_id_if_topup),
+
+            topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
+
+
+            # final CDRs
+            operations.FieldLogger(log_id="cdr",
+                                   cols=["A", "B", "DURATION", "VALUE",
+                                          "CELL_A", "CELL_B", "PRODUCT"]),
+        ],
+
+        time_gen=timegen,
+        activity_gen=activity_gen,
+    )
 
     flying.add_increment(timegen)
-    tr = time.clock()
+
+    flying.add_action(topup)
+    flying.add_action(calls)
+    flying.add_action(mobility_action)
 
     print "Done"
-
-    all_times = {"parameters": tc - tp,
-                 "clocks": tg - tc,
-                 "generators": tig - tg,
-                 "init generators": tcal - tig,
-                 "callers creation (full)": tmo - tcal,
-                 "caller creation (solo)": tatt - tcal,
-                 "caller attribute creation": tsna - tatt,
-                 "caller SNA graph creation": tsnaatt - tsna,
-                 "mobility graph creation": tmoatt - tmo,
-                 "mobility attribute creation": tci - tmoatt,
-                 "circus creation": tr - tci,
-                 "tr": tr,
-                 }
-
-    return flying, all_times
+    return flying
 
 
 def test_cdr_scenario():
 
-    cdr_circus, all_times = compose_circus()
-    n_iterations = 100
+    cdr_circus = compose_circus()
+    n_iterations = 50
 
     # dataframes of outcomes are returned in the order in which the actions
     # are added to the circus
-    all_topup, all_cdrs, all_mov = cdr_circus.run(n_iterations)
-    tf = time.clock()
-
-    all_times["runs (all)"] = tf - all_times["tr"]
-    all_times["one run (average)"] = (tf - all_times["tr"]) / n_iterations
-
-    print (json.dumps(all_times, indent=2))
-
-    assert all_cdrs.shape[0] > 0
-    assert "datetime" in all_cdrs.columns
-
-    assert all_mov.shape[0] > 0
-    assert "datetime" in all_mov.columns
-
-    assert all_topup.shape[0] > 0
-    assert "datetime" in all_topup.columns
+    topups, voice_cdrs, all_mov = cdr_circus.run(n_iterations)
 
     print ("""
-        some cdrs:
+        some voice cdrs:
           {}
 
         some mobility events:
@@ -364,8 +310,20 @@ def test_cdr_scenario():
         some topup event:
           {}
 
-    """.format(all_cdrs.head(15).to_string(), all_mov.head().to_string(),
-               all_topup.head().to_string()))
+    """.format(
+           voice_cdrs.tail(15).to_string(),
+           all_mov.tail(15).to_string(),
+           topups.tail().to_string())
+           )
+
+    assert voice_cdrs.shape[0] > 0
+    assert "datetime" in voice_cdrs.columns
+
+    assert all_mov.shape[0] > 0
+    assert "datetime" in all_mov.columns
+
+    assert topups.shape[0] > 0
+    assert "datetime" in topups.columns
 
     # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
 

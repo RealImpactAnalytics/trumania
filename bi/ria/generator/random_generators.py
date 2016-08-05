@@ -2,63 +2,6 @@ import numpy as np
 from numpy.random import RandomState
 
 
-class ChooserAggregator(object):
-    def __init__(self, seed):
-        """
-
-        :param seed:
-        :return:
-        """
-        self.__state = RandomState(seed)
-
-    def generate(self, a):
-        """
-
-        :param a:
-        :return:
-        """
-        return self.__state.choice(a)
-
-
-class WeightedChooserAggregator(object):
-    def __init__(self, col_to_choose, col_for_weight, seed):
-        """
-
-        :param col_to_choose:
-        :param col_for_weight:
-        :param seed:
-        :return:
-        """
-        self.__state = RandomState(seed)
-        self.__col_to_choose = col_to_choose
-        self.__col_for_weight = col_for_weight
-
-    def update_choose_col(self, col):
-        """
-
-        :param col:
-        :return:
-        """
-        self.__col_to_choose = col
-
-    def update_weight_col(self, col):
-        """
-
-        :param col:
-        :return:
-        """
-        self.__col_for_weight = col
-
-    def generate(self, group):
-        """
-
-        :param group:
-        :return:
-        """
-        w = group[self.__col_for_weight] / sum(group[self.__col_for_weight])
-        return self.__state.choice(group[self.__col_to_choose], p=w)
-
-
 class GenericGenerator(object):
     """
 
@@ -156,7 +99,7 @@ class TriggerGenerator(object):
             self.__parameters = {"a":-0.01,
                                  "b":10.}
 
-    def generate(self, size=None, weights=None, pars = None):
+    def generate(self, size=None, weights=None, pars=None):
         """
 
         :type size: int
@@ -237,28 +180,3 @@ class MSISDNGenerator(object):
         self.__available = np.delete(self.__available, generated_entries, axis=0)
 
         return msisdns
-
-
-class ValueGenerator(object):
-    """
-
-    """
-    def __init__(self, name, price_per_second):
-        """
-
-        :type name: str
-        :param name: name of the generator (for eventual reference)
-        :type price_per_second: int
-        :param price_per_second: the price of a call, per second, in units
-        :return:
-        """
-        self.__name = name
-        self.__price = price_per_second
-
-    def generate(self,size=None,weights=None,pars=None):
-        """
-
-        :param duration: pd.Series
-        :return:
-        """
-        return weights*self.__price
