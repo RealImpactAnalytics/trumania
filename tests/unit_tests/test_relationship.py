@@ -1,5 +1,5 @@
-from bi.ria.generator.relationship import Relationship
 import pandas as pd
+from datagenerator.relationship import Relationship
 
 
 # bug fix: this was simply crashing previously

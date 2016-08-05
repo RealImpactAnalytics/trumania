@@ -1,6 +1,6 @@
-from bi.ria.generator.operations import *
-from bi.ria.generator.random_generators import *
-from bi.ria.generator.clock import *
+from datagenerator.clock import *
+from datagenerator.random_generators import *
+from datagenerator.operations import *
 
 
 class ActorAction(object):

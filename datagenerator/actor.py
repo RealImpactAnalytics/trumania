@@ -1,5 +1,5 @@
 import numpy as np
-from bi.ria.generator.operations import *
+from datagenerator.operations import *
 
 
 class Actor(object):
