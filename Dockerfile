@@ -11,3 +11,6 @@ USER ria
 RUN cp /home/ria/work/tests/test_scripts/run_tests.sh /home/ria/work/
 
 ENTRYPOINT [ "/home/ria/work/run_tests.sh" ]
+
+
+
