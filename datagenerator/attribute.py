@@ -1,4 +1,4 @@
-from bi.ria.generator.operations import *
+from datagenerator.operations import *
 
 
 class Attribute(object):

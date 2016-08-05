@@ -2,16 +2,15 @@ from __future__ import division
 
 from datetime import datetime
 
-from bi.ria.generator.action import *
-from bi.ria.generator.attribute import *
-from bi.ria.generator.clock import *
-from bi.ria.generator.circus import *
-from bi.ria.generator.random_generators import *
-from bi.ria.generator.relationship import *
-import bi.ria.generator.operations as operations
-from bi.ria.generator.util_functions import *
-
-from bi.ria.generator.actor import *
+import datagenerator.operations as operations
+from datagenerator.relationship import *
+from datagenerator.action import *
+from datagenerator.actor import *
+from datagenerator.attribute import *
+from datagenerator.circus import *
+from datagenerator.clock import *
+from datagenerator.random_generators import *
+from datagenerator.util_functions import *
 
 
 # AgentA: has stock of SIMs

@@ -1,4 +1,4 @@
-from bi.ria.generator.actor import Actor
+from datagenerator.actor import Actor
 
 
 def test_resulting_size_should_be_as_expected():

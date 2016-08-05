@@ -2,22 +2,15 @@ from __future__ import division
 
 from datetime import datetime
 
-from bi.ria.generator.action import *
-from bi.ria.generator.attribute import *
-from bi.ria.generator.clock import *
-from bi.ria.generator.circus import *
-from bi.ria.generator.random_generators import *
-from bi.ria.generator.relationship import *
-from bi.ria.generator.util_functions import *
-import bi.ria.generator.operations as operations
-
-from teamcity import is_running_under_teamcity
-
-from bi.ria.generator.actor import *
-import bi.ria.generator.ext.cdr as cdr
-
-#####
-# Circus creation
+import datagenerator.operations as operations
+from datagenerator.util_functions import *
+from datagenerator.action import *
+from datagenerator.actor import *
+from datagenerator.attribute import *
+from datagenerator.circus import *
+from datagenerator.clock import *
+from datagenerator.random_generators import *
+from datagenerator.relationship import *
 
 
 def compose_circus():
@@ -178,6 +171,14 @@ def compose_circus():
         time_gen=mobilitytimegen,
     )
 
+    def add_value_to_account(data):
+        # maybe we should prevent negative accounts here? or not?
+        new_value = data["MAIN_ACCT_OLD"] + data["VALUE"]
+
+        # must return a dataframe with a single column named "result"
+        return pd.DataFrame(new_value, columns=["result"])
+
+
     topup = ActorAction(
         name="topup",
         triggering_actor=customers,
@@ -197,7 +198,7 @@ def compose_circus():
 
             operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
                              result_field="MAIN_ACCT",
-                             f=cdr.add_value_to_account),
+                             f=add_value_to_account),
 
             customers.ops.overwrite(attribute="MAIN_ACCT",
                                     copy_from_field="MAIN_ACCT"),
@@ -218,6 +219,26 @@ def compose_circus():
         gen_type="choice",
         parameters={"a": range(20, 240)},
         seed=seed)
+
+    def compute_call_value(data):
+        price_per_second = 2
+        df = data[["DURATION"]] * price_per_second
+
+        # must return a dataframe with a single column named "result"
+        return df.rename(columns={"DURATION": "result"})
+
+    # TODO: cf Sipho suggestion: we could have generic "add", "diff"... operations
+    def substract_value_from_account(data):
+        # maybe we should prevent negative accounts here? or not?
+        new_value = data["MAIN_ACCT_OLD"] - data["VALUE"]
+
+        # must return a dataframe with a single column named "result"
+        return pd.DataFrame(new_value, columns=["result"])
+
+    def copy_id_if_topup(data):
+        copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
+
+        return copied_ids.rename(columns={"A_ID": "result"})
 
     calls = ActorAction(
         name="calls",
@@ -250,11 +271,11 @@ def compose_circus():
 
             operations.Apply(source_fields="DURATION",
                              result_field="VALUE",
-                             f=cdr.compute_call_value),
+                             f=compute_call_value),
 
             operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
                              result_field="MAIN_ACCT_NEW",
-                             f=cdr.substract_value_from_account),
+                             f=substract_value_from_account),
 
             customers.ops.overwrite(attribute="MAIN_ACCT",
                                     copy_from_field="MAIN_ACCT_NEW"),
@@ -267,7 +288,7 @@ def compose_circus():
 
             operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
                              result_field="TOPPING_UP_A_IDS",
-                             f=cdr.copy_id_if_topup),
+                             f=copy_id_if_topup),
 
             topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
 

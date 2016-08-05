@@ -1,6 +1,5 @@
-import pandas as pd
+from datagenerator.operations import *
 from numpy.random import RandomState
-from bi.ria.generator.operations import *
 
 
 class Relationship(object):

@@ -1,8 +1,7 @@
-from bi.ria.generator.action import ActorAction
-from bi.ria.generator.operations import Operation
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+from datagenerator.action import ActorAction
+from datagenerator.operations import Operation
 
 
 def test_one_execution_should_merge_empty_data_correctly():
@@ -24,7 +23,7 @@ class FakeOp(Operation):
         self.output = output
         self.logs = logs
 
-    def apply(self, data):
+    def __call__(self, data):
         return self.output, self.logs
 
 

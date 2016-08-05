@@ -1,5 +1,6 @@
-from bi.ria.generator.attribute import *
-from bi.ria.generator.relationship import Relationship
+from datagenerator.relationship import Relationship
+from datagenerator.attribute import Attribute
+import pandas as pd
 
 
 def test_set_and_read_values_in_attribute_should_be_equal():
