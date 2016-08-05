@@ -14,7 +14,7 @@ def test_set_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updated_and_read_values_in_attribute_should_be_equal():
-    tested = TransientAttribute(
+    tested = Attribute(
         ids=["a", "z", "e", "d", "f"],
         init_values= [10,   20,  30,  40,  50])
 
