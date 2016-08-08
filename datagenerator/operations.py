@@ -53,6 +53,12 @@ class FieldLogger(Operation):
     """
 
     def __init__(self, log_id, cols=None):
+        """
+        :param log_id: the id of the logs in the dictionary of logs returned
+        by the Circus, at the end of the simulation
+        :param cols: sub-sets of fields from the action data that will be
+        selected in order to build the logs
+        """
         self.log_id = log_id
 
         if type(cols) == str:
