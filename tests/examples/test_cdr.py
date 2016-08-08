@@ -247,7 +247,9 @@ def compose_circus():
 
         operations=[
             # selects a B party
-            social_network.ops.select_one(from_field="A_ID", named_as="B_ID"),
+            social_network.ops.select_one(from_field="A_ID",
+                                          named_as="B_ID",
+                                          one_to_one=True),
 
             # some static fields
             customers.ops.lookup(actor_id_field="A_ID",

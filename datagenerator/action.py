@@ -99,12 +99,10 @@ class ActorAction(object):
     def _one_execution((prev_output, prev_logs), f):
         """
 
-        executes this operation and merges its outcome with the previous one
+        executes this operation and merges its logs with the previous one
 
         :param f: the next operation to call on the Action operations list
         :return:
-
-
         """
 
         output, supp_logs = f(prev_output)

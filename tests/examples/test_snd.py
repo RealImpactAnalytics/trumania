@@ -123,7 +123,8 @@ def compose_circus():
                                           named_as="DEALER"),
 
             dealer_sim_rel.ops.select_one(from_field="DEALER",
-                                          named_as="SIM"),
+                                          named_as="SIM",
+                                          one_to_one=True),
 
             customer_sim_attr.ops.add_item(actor_id_field="AGENT",
                                            item_field="SIM"),

@@ -42,8 +42,7 @@ class Relationship(object):
 
         new_relations = pd.DataFrame({"from": from_ids,
                                       "to": to_ids,
-                                      "weight": weights
-                                      })
+                                      "weight": weights})
 
         self._table = pd.concat([self._table, new_relations])
         self._table.reset_index(drop=True, inplace=True)
@@ -61,7 +60,7 @@ class Relationship(object):
             return pd.DataFrame(columns=["from", named_as])
 
         result = (selected
-                  .groupby(by="from")
+                  .groupby(by="from", sort=False)
                   .apply(lambda df: df.sample(n=1, weights="weight")[["to"]]))
 
         result.reset_index(inplace=True)
@@ -89,8 +88,6 @@ class Relationship(object):
 
         self._table.drop(lines.index, inplace=True)
 
-    # Operations
-
     class RelationshipOps(object):
         def __init__(self, relationship):
             self.relationship = relationship
@@ -100,10 +97,12 @@ class Relationship(object):
             Operation that wraps a select_one() call on the relationship
             """
 
-            def __init__(self, relationship, from_field, named_as):
+            def __init__(self, relationship, from_field, named_as,
+                         one_to_one):
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
+                self.one_to_one = one_to_one
 
             def transform(self, data):
 
@@ -123,15 +122,28 @@ class Relationship(object):
                 # puts back the index in place, for further processing
                 merged.set_index("index_backup", inplace=True)
 
+                if self.one_to_one:
+                    # drops randomly any onto relationship
+                    merged = (merged
+                              .sample(frac=1)
+                              .drop_duplicates(subset=self.named_as,
+                                               keep="first"))
+
                 return merged
 
-        def select_one(self, from_field, named_as):
+        def select_one(self, from_field, named_as, one_to_one=False):
             """
-            adds a field by randomly selecting a "to" side of the relationship
+            :param from_field: field corresponding to the "from" side of the
+                relationship
+            :param named_as: field name assigned to the selected "to" side
+                of the relationship
+            :param one_to_one: boolean indicating that any "to" value will be
+                selected at most once
+            :return: this operation adds a single column corresponding to a
+                random choice from a Relationship
             """
-            return self.SelectOne(self.relationship, from_field, named_as)
-
-
+            return self.SelectOne(self.relationship, from_field, named_as,
+                                  one_to_one)
 
 
 # TODO: see with Gautier: this is no longer used anywhere => should we delete,
