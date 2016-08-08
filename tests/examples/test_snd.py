@@ -151,16 +151,16 @@ def test_cdr_scenario():
     snd_circus = compose_circus()
     n_iterations = 100
 
-    [all_purchases] = snd_circus.run(n_iterations)
+    logs = snd_circus.run(n_iterations)
 
     print ("""
         some purchase events:
           {}
 
-    """.format(all_purchases.head()))
+    """.format(logs["cdr"].head()))
 
-    assert all_purchases.shape[0] > 0
-    assert "datetime" in all_purchases.columns
+    assert logs["cdr"].shape[0] > 0
+    assert "datetime" in logs["cdr"].columns
 
     # TODO: add real post-conditions on all_purchases
 

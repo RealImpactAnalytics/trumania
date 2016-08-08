@@ -1,6 +1,7 @@
 from datagenerator.clock import *
 from datagenerator.random_generators import *
 from datagenerator.operations import *
+from datagenerator.util_functions import merge_dicts
 
 
 class ActorAction(object):
@@ -107,11 +108,10 @@ class ActorAction(object):
         """
 
         output, supp_logs = f(prev_output)
-
-        # this merges the logs, overwriting any duplicate ids
-        all_logs = {k: v for d in [prev_logs, supp_logs] for k, v in d.items()}
-
-        return output, all_logs
+        # merging the logs of each operation of this action.
+        # TODO: I guess just adding pd.concat at the end of this would allow
+        # multiple operations to contribute to the same log => to be checked...
+        return output, merge_dicts([prev_logs, supp_logs])
 
     def execute(self):
 
@@ -125,13 +125,11 @@ class ActorAction(object):
             return pd.DataFrame(columns=[])
 
         if len(all_logs.keys()) > 1:
-            # TODO
+            # TODO: add support for more than one log emitting within the action
             raise NotImplemented("not supported yet: circus can only handle "
                                  "one logger per ActorAction")
 
-        # TODO: re-create clock for all those that are now at zero !
-
-        return all_logs.values()[0]
+        return all_logs
 
     class ActionOps(object):
         def __init__(self, action):

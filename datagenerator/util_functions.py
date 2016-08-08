@@ -82,3 +82,48 @@ def make_random_assign(name1,name2,group1,group2,seed):
     return pd.DataFrame({name2:choices,name1:group1})
 
 
+def merge_2_dicts(dict1, dict2, value_merge_func=None):
+    """
+    :param dict1: first dictionary to be merged
+    :param dict2: first dictionary to be merged
+    :param value_merge_func: specifies how to merge 2 values if present in
+    both dictionaries
+    :type value_merge_func: function (value1, value) => value
+    :return:
+    """
+
+    def merged_value(key):
+        if key not in dict1:
+            return dict2[key]
+        elif key not in dict2:
+            return dict1[key]
+        else:
+            if value_merge_func is None:
+                raise ValueError(
+                    "Conflict in merged dictionaries: merge function not "
+                    "provided butkey {} exist in both dictionaries".format(
+                        key))
+
+            return value_merge_func(dict1[key], dict2[key])
+
+    keys = set(dict1.keys()) | set(dict2.keys())
+
+    return {key: merged_value(key) for key in keys }
+
+
+def merge_dicts(dicts, merge_func=None):
+    """
+    :param dicts: list of dictionnaries to be merged
+    :type dicts: list[dict]
+    :param merge_func:
+    :type merge_func: function
+    :return: one single dictionary containing all entries received
+    """
+
+    return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dicts)
+
+
+
+
+
+

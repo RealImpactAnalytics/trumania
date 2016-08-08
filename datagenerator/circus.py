@@ -1,4 +1,5 @@
 import pandas as pd
+from datagenerator.util_functions import merge_dicts
 
 
 class Circus(object):
@@ -68,13 +69,19 @@ class Circus(object):
 
     def __execute_action(self, action):
         """
-            executes this action and adds a timestamp to the result
-        """
-        action_values = action.execute()
-        action_values["datetime"] = self.__clock.get_timestamp(
-            action_values.shape[0]).values
 
-        return action_values
+        :param action: instance of action to be executed
+        :type action: ActorAction
+
+        :return: the logs emitted by this action
+        :type: dict[DataFrame]
+        """
+        action_logs = action.execute()
+        # TODO: move this as an operation
+        for logid, df in action_logs.iteritems():
+            df["datetime"] = self.__clock.get_timestamp(df.shape[0]).values
+
+        return action_logs
 
     def one_round(self, round_number):
         """
@@ -85,15 +92,20 @@ class Circus(object):
 
         print "round : {}".format(round_number)
 
-        result_tables = [self.__execute_action(action)
-                         for action in self.__actions]
+        # puts the logs of all actions into one grand dictionary.
+        # TODO: same as in Action: I guess just adding pd.concat directly
+        # generalizes this to having several actions contributing to the same
+        # log (e.g. "cdrs", from both the "SMS" and "VOICE" action
+
+        logs = (self.__execute_action(action) for action in self.__actions)
+        actions_logs = merge_dicts(logs)
 
         for i in self.__incrementors:
             i.increment()
 
         self.__clock.increment()
 
-        return result_tables
+        return actions_logs
 
     def run(self, n_iterations):
         """
@@ -105,8 +117,9 @@ class Circus(object):
         """
 
         print "starting circus"
-        tables_list = zip(*[self.one_round(r) for r in range(n_iterations)])
-        return [pd.concat(table, ignore_index=True) for table in tables_list]
+        all_actions_logs = (self.one_round(r) for r in range(n_iterations))
 
-    def get_contents(self):
-        return (self.__clock, self.__items)
+        df_concat = lambda d1, d2: pd.concat([d1, d2])
+
+        # merging logs from all actions
+        return merge_dicts(all_actions_logs, df_concat)
