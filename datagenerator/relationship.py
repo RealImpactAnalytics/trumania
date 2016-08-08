@@ -122,7 +122,7 @@ class Relationship(object):
                 # puts back the index in place, for further processing
                 merged.set_index("index_backup", inplace=True)
 
-                if self.one_to_one:
+                if self.one_to_one and merged.shape[0] > 0:
                     # drops randomly any onto relationship
                     merged = (merged
                               .sample(frac=1)

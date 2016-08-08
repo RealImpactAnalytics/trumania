@@ -101,3 +101,21 @@ def test_select_one_to_one_should_not_return_duplicates_2():
     assert output.shape[0] == 2
 
 
+def test_select_one_to_one_among_no_data_should_return_nothing():
+    #(instead of crashing...)
+
+    four_to_one = Relationship(name="tested", seed=1)
+    four_to_one.add_relations(from_ids=["a", "b", "c", "d"],
+                              to_ids=["z", "z", "z", "z"])
+
+    op = four_to_one.ops.select_one("A", "B", one_to_one=True)
+    empty_data = pd.DataFrame(columns=["A", "B"])
+
+    output, logs = op(empty_data)
+
+    assert {} == logs
+
+    # with z being unique, only one A can call it with this select_one
+    assert output.shape[0] == 0
+
+
