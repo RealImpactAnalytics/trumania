@@ -178,7 +178,6 @@ def compose_circus():
         # must return a dataframe with a single column named "result"
         return pd.DataFrame(new_value, columns=["result"])
 
-
     topup = ActorAction(
         name="topup",
         triggering_actor=customers,
@@ -205,8 +204,8 @@ def compose_circus():
 
             operations.FieldLogger(log_id="topups",
                                    cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
-                                          "CELL",
-                                          "MAIN_ACCT_OLD", "MAIN_ACCT"]),
+                                         "CELL",
+                                         "MAIN_ACCT_OLD", "MAIN_ACCT"]),
         ],
 
         # note that there is timegen specified => the clock is not ticking
@@ -248,7 +247,9 @@ def compose_circus():
 
         operations=[
             # selects a B party
-            social_network.ops.select_one(from_field="A_ID", named_as="B_ID"),
+            social_network.ops.select_one(from_field="A_ID",
+                                          named_as="B_ID",
+                                          one_to_one=True),
 
             # some static fields
             customers.ops.lookup(actor_id_field="A_ID",
@@ -320,7 +321,7 @@ def test_cdr_scenario():
 
     # dataframes of outcomes are returned in the order in which the actions
     # are added to the circus
-    topups, voice_cdrs, all_mov = cdr_circus.run(n_iterations)
+    logs = cdr_circus.run(n_iterations)
 
     print ("""
         some voice cdrs:
@@ -333,19 +334,19 @@ def test_cdr_scenario():
           {}
 
     """.format(
-           voice_cdrs.tail(15).to_string(),
-           all_mov.tail(15).to_string(),
-           topups.tail().to_string())
-           )
+        logs["cdr"].tail(15).to_string(),
+        logs["topups"].tail(15).to_string(),
+        logs["mobility"].tail().to_string())
+        )
 
-    assert voice_cdrs.shape[0] > 0
-    assert "datetime" in voice_cdrs.columns
+    assert logs["cdr"].shape[0] > 0
+    assert "datetime" in logs["cdr"].columns
 
-    assert all_mov.shape[0] > 0
-    assert "datetime" in all_mov.columns
+    assert logs["topups"].shape[0] > 0
+    assert "datetime" in logs["topups"].columns
 
-    assert topups.shape[0] > 0
-    assert "datetime" in topups.columns
+    assert logs["mobility"].shape[0] > 0
+    assert "datetime" in logs["mobility"].columns
 
     # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
 
