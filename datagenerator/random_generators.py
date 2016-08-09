@@ -20,6 +20,9 @@ class Parameterizable(object):
         # columns of parameters => 1 value per actor
         self.parameters.update(kwargs)
 
+        # TODO: this is actually not working: we need the sub-classes to
+        # to "reload" accordingly...
+
 
 class Generator(Parameterizable):
     """
@@ -101,10 +104,7 @@ class ScaledParetoGenerator(Generator):
     def __init__(self, m, seed=None, **numpy_parameters):
         Generator.__init__(self, numpy_parameters)
 
-        # TODO: bug here (and elsewhere: we're actually not being impacted by
-        # the "update parameter" call ^^
-        self.stock_pareto = NumpyRandomGenerator(method="pareto",
-                                                 seed=seed,
+        self.stock_pareto = NumpyRandomGenerator(method="pareto", seed=seed,
                                                  **numpy_parameters)
         self.m = m
 

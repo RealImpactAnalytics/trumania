@@ -119,7 +119,7 @@ class Circus(object):
         print "starting circus"
         all_actions_logs = (self.one_round(r) for r in range(n_iterations))
 
-        df_concat = lambda d1, d2: pd.concat([d1, d2])
+        df_concat = lambda d1, d2: pd.concat([d1, d2]).reset_index(drop=True)
 
         # merging logs from all actions
         return merge_dicts(all_actions_logs, df_concat)
