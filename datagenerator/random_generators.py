@@ -28,9 +28,8 @@ class Generator(Parameterizable):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, name, parameters):
+    def __init__(self, parameters):
         Parameterizable.__init__(self, parameters)
-        self.name = name
         self.ops = self.GeneratorOps(self)
 
     @abstractmethod
@@ -67,8 +66,8 @@ class Generator(Parameterizable):
 
 
 class ConstantGenerator(Generator):
-    def __init__(self, name, value):
-        Generator.__init__(self, name, {})
+    def __init__(self, value):
+        Generator.__init__(self, {})
         self.value = value
 
     def generate(self, size):
@@ -80,10 +79,9 @@ class NumpyRandomGenerator(Generator):
         Generator wrapping any numpy.Random method.
     """
 
-    def __init__(self, name, method, seed=None, **numpy_parameters):
+    def __init__(self, method, seed=None, **numpy_parameters):
         """Initialise a random number generator
 
-        :param name: string, the name (is this useful?)
         :param method: string: must be a valid numpy.Randomstate method that
             accept the "size" parameter
 
@@ -91,7 +89,7 @@ class NumpyRandomGenerator(Generator):
         :param seed: int, seed of the generator
         :return: create a random number generator of type "gen_type", with its parameters and seeded.
         """
-        Generator.__init__(self, name, numpy_parameters)
+        Generator.__init__(self, numpy_parameters)
         self.numpy_method = getattr(RandomState(seed), method)
 
     def generate(self, size):
@@ -100,13 +98,12 @@ class NumpyRandomGenerator(Generator):
 
 
 class ScaledParetoGenerator(Generator):
-    def __init__(self, name, m, seed=None, **numpy_parameters):
-        Generator.__init__(self, name, numpy_parameters)
+    def __init__(self, m, seed=None, **numpy_parameters):
+        Generator.__init__(self, numpy_parameters)
 
         # TODO: bug here (and elsewhere: we're actually not being impacted by
         # the "update parameter" call ^^
-        self.stock_pareto = NumpyRandomGenerator(name="p",
-                                                 method="pareto",
+        self.stock_pareto = NumpyRandomGenerator(method="pareto",
                                                  seed=seed,
                                                  **numpy_parameters)
         self.m = m
@@ -121,7 +118,7 @@ class MSISDNGenerator(Generator):
 
     """
 
-    def __init__(self, name, countrycode, prefix_list, length, seed=None):
+    def __init__(self, countrycode, prefix_list, length, seed=None):
         """
 
         :param name: string
@@ -131,7 +128,7 @@ class MSISDNGenerator(Generator):
         :param seed: int
         :return:
         """
-        Generator.__init__(self, name, {})
+        Generator.__init__(self, {})
         self.__cc = countrycode
         self.__pref = prefix_list
         self.__length = length
@@ -153,9 +150,8 @@ class MSISDNGenerator(Generator):
         """
 
         available_idx = np.arange(0, self.__available.shape[0], dtype=int)
-        generator = NumpyRandomGenerator(name="inner", method="choice",
-                                         seed=self.seed, a=available_idx,
-                                         replace=False)
+        generator = NumpyRandomGenerator(
+            method="choice", a=available_idx, replace=False, seed=self.seed)
 
         generated_entries = generator.generate(size)
         msisdns = np.array(
@@ -177,9 +173,8 @@ class DependentGenerator(Parameterizable):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, name, parameters):
+    def __init__(self, parameters):
         Parameterizable.__init__(self, parameters)
-        self.name = name
         self.ops = self.DependentGeneratorOps(self)
 
     @abstractmethod
@@ -227,11 +222,10 @@ class TriggerGenerator(DependentGenerator):
     Booleans, depending if the trigger has been released or not
     """
 
-    def __init__(self, name, trigger_type, seed=None):
+    def __init__(self, trigger_type, seed=None):
 
         # random baseline to compare to each the activation
-        self.base_line = NumpyRandomGenerator(name="inner", method="uniform",
-                                              seed=seed)
+        self.base_line = NumpyRandomGenerator(method="uniform", seed=seed)
 
         if trigger_type == "logistic":
             def logistic(x, a, b):
@@ -242,7 +236,7 @@ class TriggerGenerator(DependentGenerator):
             self.triggering_function = logistic
 
             # TODO: we could allow the API to provide those parameters
-            DependentGenerator.__init__(self, name, {"a": -0.01, "b": 10.})
+            DependentGenerator.__init__(self, {"a": -0.01, "b": 10.})
             self.triggering_function = logistic
 
         else:

@@ -48,25 +48,23 @@ def compose_circus():
     ######################################
     # Define generators
     ######################################
-    msisdn_gen = MSISDNGenerator(name="msisdn-tests-1", countrycode="0032",
+    msisdn_gen = MSISDNGenerator(countrycode="0032",
                                  prefix_list=["472", "473", "475", "476",
                                               "477", "478", "479"],
                                  length=6, seed=seed)
 
-    activity_gen = ScaledParetoGenerator(
-        name="user-activity", m=10, a=1.2, seed=seed)
+    activity_gen = ScaledParetoGenerator(m=10, a=1.2, seed=seed)
 
     timegen = WeekProfiler(time_step, prof, seed)
     mobilitytimegen = DayProfiler(time_step, mov_prof, seed)
 
-    networkweightgenerator = ScaledParetoGenerator(
-        name="network-weight", m=1., a=1.2, seed=seed)
+    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2, seed=seed)
 
     mobilityweightgenerator = NumpyRandomGenerator(
-        name="mobility-weight", method="exponential", scale=1., seed=seed)
+        method="exponential", scale=1., seed=seed)
 
-    agentweightgenerator = NumpyRandomGenerator(
-        name="agent-weight", method="exponential", scale=1., seed=seed)
+    agentweightgenerator = NumpyRandomGenerator(method="exponential", scale=1.,
+                                                seed=seed)
 
     ######################################
     # Initialise generators
@@ -135,10 +133,9 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-    recharge_trigger = TriggerGenerator(name="Topup", trigger_type="logistic",
-                                        seed=seed)
+    recharge_trigger = TriggerGenerator(trigger_type="logistic", seed=seed)
 
-    recharge_gen = ConstantGenerator(name="recharge init", value=1000.)
+    recharge_gen = ConstantGenerator(value=1000.)
 
     main_account = Attribute(ids=customers.ids,
                              init_values_generator=recharge_gen)
@@ -218,8 +215,7 @@ def compose_circus():
     )
 
     voice_duration_generator = NumpyRandomGenerator(
-        name="voice-duration", method="choice", a=range(20, 240),
-        seed=seed)
+        method="choice", a=range(20, 240), seed=seed)
 
     def compute_call_value(data):
         price_per_second = 2
@@ -240,8 +236,6 @@ def compose_circus():
         copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
 
         return copied_ids.rename(columns={"A_ID": "result"})
-
-    product_gen = ConstantGenerator(name="recharge init", value="VOICE")
 
     calls = ActorAction(
         name="calls",
@@ -265,7 +259,7 @@ def compose_circus():
                                  select={"MSISDN": "B",
                                          "CELL": "CELL_B"}),
 
-            product_gen.ops.generate(named_as="PRODUCT"),
+            ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
 
             # computes the duration, value, new account amount and update
             # attribute accordingly

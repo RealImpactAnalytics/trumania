@@ -44,15 +44,10 @@ def compose_circus():
     ######################################
     the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
 
-    ######################################
-    # Define generators
-    ######################################
-    activity_gen = NumpyRandomGenerator(
-        name="user-activity", method="choice", a = range(1, 4), seed=seed)
+    activity_gen = NumpyRandomGenerator(method="choice", a = range(1, 4), seed=seed)
 
     timegen = WeekProfiler(time_step, prof, seed)
-    agentweightgenerator = NumpyRandomGenerator(
-        name="agent-weight", method="exponential", scale= 1.)
+    agentweightgenerator = NumpyRandomGenerator(method="exponential", scale= 1.)
 
     ######################################
     # Initialise generators
