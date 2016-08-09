@@ -157,7 +157,6 @@ def test_cdr_scenario():
     print ("""
         some purchase events:
           {}
-
     """.format(logs["cdr"].head()))
 
     assert logs["cdr"].shape[0] > 0
