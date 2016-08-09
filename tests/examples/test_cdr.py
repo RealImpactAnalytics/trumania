@@ -48,19 +48,25 @@ def compose_circus():
     ######################################
     # Define generators
     ######################################
-    msisdn_gen = MSISDNGenerator("msisdn-tests-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
-    activity_gen = GenericGenerator("user-activity", "pareto", {"a": 1.2, "m": 10.}, seed)
+    msisdn_gen = MSISDNGenerator(name="msisdn-tests-1", countrycode="0032",
+                                 prefix_list=["472", "473", "475", "476",
+                                              "477", "478", "479"],
+                                 length=6, seed=seed)
+
+    activity_gen = ScaledParetoGenerator(
+        name="user-activity", m=10, a=1.2, seed=seed)
+
     timegen = WeekProfiler(time_step, prof, seed)
     mobilitytimegen = DayProfiler(time_step, mov_prof, seed)
 
-    networkweightgenerator = GenericGenerator("network-weight", "pareto", {"a": 1.2, "m": 1.}, seed)
+    networkweightgenerator = ScaledParetoGenerator(
+        name="network-weight", m=1., a=1.2, seed=seed)
 
-    mobilityweightgenerator = GenericGenerator("mobility-weight",
-                                               "exponential", {"scale": 1.},
-                                               seed)
+    mobilityweightgenerator = NumpyRandomGenerator(
+        name="mobility-weight", method="exponential", scale=1., seed=seed)
 
-    agentweightgenerator = GenericGenerator("agent-weight", "exponential",
-                                            {"scale": 1.}, seed)
+    agentweightgenerator = NumpyRandomGenerator(
+        name="agent-weight", method="exponential", scale=1., seed=seed)
 
     ######################################
     # Initialise generators
@@ -87,6 +93,7 @@ def compose_circus():
     mobility.add_relations(
         from_ids=mobility_df["USER_ID"],
         to_ids=mobility_df["CELL"],
+        # TODO: use weights_gen to simplify API
         weights=mobilityweightgenerator.generate(mobility_df.shape[0]))
 
     cell_attr = Attribute(relationship=mobility)
@@ -113,8 +120,7 @@ def compose_circus():
         to_ids=social_network_values["A"].values,
         weights=networkweightgenerator.generate(social_network_values.shape[0]))
 
-
-    ###
+    #
     # MSISDN -> Agent
 
     agent_df = pd.DataFrame.from_records(
@@ -129,22 +135,20 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-    recharge_trigger = TriggerGenerator(name="Topup",
-                                        gen_type="logistic",
-                                        parameters={},
+    recharge_trigger = TriggerGenerator(name="Topup", trigger_type="logistic",
                                         seed=seed)
 
-    recharge_init = GenericGenerator(name="recharge init",
-                                     gen_type="constant",
-                                     parameters={"a": 1000.},
-                                     seed=seed)
+    recharge_gen = ConstantGenerator(name="recharge init", value=1000.)
 
     main_account = Attribute(ids=customers.ids,
-                             init_values_generator=recharge_init)
+                             init_values_generator=recharge_gen)
 
     customers.add_attribute(name="MAIN_ACCT", attr=main_account)
 
-    flying = Circus(the_clock)
+    # Operators
+    #recharge_init = ConstantGenerator(name="recharge init", value=1000.)
+
+    # Actions
 
     mobility_action = ActorAction(
         name="mobility",
@@ -193,7 +197,7 @@ def compose_circus():
 
             agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
 
-            operations.Constant(value=1000, named_as="VALUE"),
+            recharge_gen.ops.generate(named_as="VALUE"),
 
             operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
                              result_field="MAIN_ACCT",
@@ -213,10 +217,8 @@ def compose_circus():
 
     )
 
-    voice_duration_generator = GenericGenerator(
-        name="voice-duration",
-        gen_type="choice",
-        parameters={"a": range(20, 240)},
+    voice_duration_generator = NumpyRandomGenerator(
+        name="voice-duration", method="choice", a=range(20, 240),
         seed=seed)
 
     def compute_call_value(data):
@@ -238,6 +240,8 @@ def compose_circus():
         copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
 
         return copied_ids.rename(columns={"A_ID": "result"})
+
+    product_gen = ConstantGenerator(name="recharge init", value="VOICE")
 
     calls = ActorAction(
         name="calls",
@@ -261,14 +265,11 @@ def compose_circus():
                                  select={"MSISDN": "B",
                                          "CELL": "CELL_B"}),
 
-            operations.Constant(value="VOICE", named_as="PRODUCT"),
-
-
+            product_gen.ops.generate(named_as="PRODUCT"),
 
             # computes the duration, value, new account amount and update
             # attribute accordingly
-            operations.RandomValues(value_generator=voice_duration_generator,
-                                    named_as="DURATION"),
+            voice_duration_generator.ops.generate(named_as="DURATION"),
 
             operations.Apply(source_fields="DURATION",
                              result_field="VALUE",
@@ -283,9 +284,8 @@ def compose_circus():
 
 
             # customer with low account are now more likely to topup
-            operations.RandomValues(value_generator=recharge_trigger,
-                                    weights_field="MAIN_ACCT_NEW",
-                                    named_as="SHOULD_TOP_UP"),
+            recharge_trigger.ops.generate(
+                observations_field="MAIN_ACCT_NEW", named_as="SHOULD_TOP_UP"),
 
             operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
                              result_field="TOPPING_UP_A_IDS",
@@ -303,6 +303,10 @@ def compose_circus():
         time_gen=timegen,
         activity_gen=activity_gen,
     )
+
+
+    ## Circus
+    flying = Circus(the_clock)
 
     flying.add_increment(timegen)
 

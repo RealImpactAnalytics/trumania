@@ -9,7 +9,6 @@ from datagenerator.actor import *
 from datagenerator.attribute import *
 from datagenerator.circus import *
 from datagenerator.clock import *
-from datagenerator.random_generators import *
 from datagenerator.util_functions import *
 
 
@@ -48,10 +47,12 @@ def compose_circus():
     ######################################
     # Define generators
     ######################################
-    activity_gen = GenericGenerator("user-activity", "choice", {"a": range(1,4)}, seed)
-    timegen = WeekProfiler(time_step, prof, seed)
-    agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
+    activity_gen = NumpyRandomGenerator(
+        name="user-activity", method="choice", a = range(1, 4), seed=seed)
 
+    timegen = WeekProfiler(time_step, prof, seed)
+    agentweightgenerator = NumpyRandomGenerator(
+        name="agent-weight", method="exponential", scale= 1.)
 
     ######################################
     # Initialise generators

@@ -1,14 +1,6 @@
 import pandas as pd
 
 
-class Toolkit(object):
-    """
-    Just a marker class: any sub class of this in intended at containing
-         Operations
-    """
-    pass
-
-
 class Operation(object):
     """
     An Operation is able to produce transform input into an output +
@@ -115,51 +107,9 @@ class AddColumns(Operation):
 
     def transform(self, data):
         output = self.build_output(data)
-#        print "    about to merge: {}".format(data.shape[0])
-        m = pd.merge(left=data, right=output,
+        return pd.merge(left=data, right=output,
                         left_index=True, right_index=True,
                         how=self.join_kind)
-#        print "    merge done  {}".format(m.shape[0])
-
-        # if data.shape[0] != m.shape[0]:
-        #     a = self.build_output(data)
-
-        return m
-
-
-class Constant(AddColumns):
-    """
-    Operation that produces one single field having a fixed value
-    """
-
-    def __init__(self, value, named_as):
-        AddColumns.__init__(self)
-        self.value = value
-        self.named_as = named_as
-
-    def build_output(self, data):
-        return pd.DataFrame({self.named_as: self.value}, index=data.index)
-
-
-class RandomValues(AddColumns):
-    """
-    Operation that produces one single column generated randomly.
-    """
-
-    def __init__(self, value_generator, named_as, weights_field=None):
-        AddColumns.__init__(self)
-        self.value_generator = value_generator
-        self.named_as = named_as
-        self.weights_field = weights_field
-
-    def build_output(self, data):
-        if self.weights_field is None:
-            weights = None
-        else:
-            weights = data[self.weights_field]
-
-        values = self.value_generator.generate(data.shape[0], weights)
-        return pd.DataFrame({self.named_as: values}, index=data.index)
 
 
 class Apply(AddColumns):
@@ -185,8 +135,6 @@ class Apply(AddColumns):
         self.f = f
 
     def build_output(self, data):
-#        print "    {}".format(data.shape[0])
         df = self.f(data[self.source_fields])
-#        print "    applied"
 
         return df.rename(columns={"result": self.result_field})
