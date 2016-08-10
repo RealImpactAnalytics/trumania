@@ -11,7 +11,7 @@ class ActorAction(object):
 
                  # otherwise specified, all members of this actor have the
                  # same activity
-                 activity_gen=GenericGenerator("1", "constant",  {"a": 1.}),
+                 activity_gen=ConstantGenerator(value=1.),
 
                  # if no time_gen is provided, then the action clock is
                  # maintained at -1 (i.e. never triggering), unless the clock

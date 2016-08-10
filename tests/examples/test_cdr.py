@@ -39,6 +39,7 @@ def compose_circus():
 
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents)]
+    operators = ["OPERATOR_%d" % i for i in range(4)]
 
     ######################################
     # Define clocks
@@ -48,19 +49,23 @@ def compose_circus():
     ######################################
     # Define generators
     ######################################
-    msisdn_gen = MSISDNGenerator("msisdn-tests-1", "0032", ["472", "473", "475", "476", "477", "478", "479"], 6, seed)
-    activity_gen = GenericGenerator("user-activity", "pareto", {"a": 1.2, "m": 10.}, seed)
+    msisdn_gen = MSISDNGenerator(countrycode="0032",
+                                 prefix_list=["472", "473", "475", "476",
+                                              "477", "478", "479"],
+                                 length=6, seed=seed)
+
+    activity_gen = ScaledParetoGenerator(m=10, a=1.2, seed=seed)
+
     timegen = WeekProfiler(time_step, prof, seed)
     mobilitytimegen = DayProfiler(time_step, mov_prof, seed)
 
-    networkweightgenerator = GenericGenerator("network-weight", "pareto", {"a": 1.2, "m": 1.}, seed)
+    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2, seed=seed)
 
-    mobilityweightgenerator = GenericGenerator("mobility-weight",
-                                               "exponential", {"scale": 1.},
-                                               seed)
+    mobilityweightgenerator = NumpyRandomGenerator(
+        method="exponential", scale=1., seed=seed)
 
-    agentweightgenerator = GenericGenerator("agent-weight", "exponential",
-                                            {"scale": 1.}, seed)
+    agentweightgenerator = NumpyRandomGenerator(method="exponential", scale=1.,
+                                                seed=seed)
 
     ######################################
     # Initialise generators
@@ -87,6 +92,7 @@ def compose_circus():
     mobility.add_relations(
         from_ids=mobility_df["USER_ID"],
         to_ids=mobility_df["CELL"],
+        # TODO: use weights_gen to simplify API
         weights=mobilityweightgenerator.generate(mobility_df.shape[0]))
 
     cell_attr = Attribute(relationship=mobility)
@@ -100,8 +106,7 @@ def compose_circus():
         p=average_degree / n_customers,
         seed=seed)
 
-    social_network = Relationship(name="neighbours",
-                                  seed=seed)
+    social_network = Relationship(name="neighbours", seed=seed)
 
     social_network.add_relations(
         from_ids=social_network_values["A"].values,
@@ -113,8 +118,7 @@ def compose_circus():
         to_ids=social_network_values["A"].values,
         weights=networkweightgenerator.generate(social_network_values.shape[0]))
 
-
-    ###
+    #
     # MSISDN -> Agent
 
     agent_df = pd.DataFrame.from_records(
@@ -129,22 +133,25 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-    recharge_trigger = TriggerGenerator(name="Topup",
-                                        gen_type="logistic",
-                                        parameters={},
-                                        seed=seed)
+    recharge_trigger = TriggerGenerator(trigger_type="logistic", seed=seed)
 
-    recharge_init = GenericGenerator(name="recharge init",
-                                     gen_type="constant",
-                                     parameters={"a": 1000.},
-                                     seed=seed)
+    recharge_gen = ConstantGenerator(value=1000.)
 
     main_account = Attribute(ids=customers.ids,
-                             init_values_generator=recharge_init)
+                             init_values_generator=recharge_gen)
 
     customers.add_attribute(name="MAIN_ACCT", attr=main_account)
 
-    flying = Circus(the_clock)
+    # Operators
+    operator_gen = NumpyRandomGenerator(method="choice",
+                                        a=operators,
+                                        p=[.7, .1, .1, .1],
+                                        seed=seed)
+
+    customers.add_attribute(name="OPERATOR",
+                            attr=Attribute(ids=customers.ids,
+                                           init_values_generator=operator_gen))
+    # Actions
 
     mobility_action = ActorAction(
         name="mobility",
@@ -154,7 +161,8 @@ def compose_circus():
 
         operations=[
             customers.ops.lookup(actor_id_field="A_ID",
-                                 select={"CELL": "PREV_CELL"}),
+                                 select={"CELL": "PREV_CELL",
+                                         "OPERATOR": "OPERATOR"}),
 
             # selects a cell
             mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
@@ -165,7 +173,8 @@ def compose_circus():
 
             # create mobility logs
             operations.FieldLogger(log_id="mobility",
-                                   cols=["A_ID", "PREV_CELL", "NEW_CELL"]),
+                                   cols=["A_ID", "OPERATOR",
+                                         "PREV_CELL", "NEW_CELL",]),
         ],
 
         time_gen=mobilitytimegen,
@@ -189,11 +198,12 @@ def compose_circus():
                 actor_id_field="A_ID",
                 select={"MSISDN": "CUSTOMER_NUMBER",
                         "CELL": "CELL",
+                        "OPERATOR": "OPERATOR",
                         "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
             agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
 
-            operations.Constant(value=1000, named_as="VALUE"),
+            recharge_gen.ops.generate(named_as="VALUE"),
 
             operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
                              result_field="MAIN_ACCT",
@@ -204,7 +214,7 @@ def compose_circus():
 
             operations.FieldLogger(log_id="topups",
                                    cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
-                                         "CELL",
+                                         "OPERATOR", "CELL",
                                          "MAIN_ACCT_OLD", "MAIN_ACCT"]),
         ],
 
@@ -213,11 +223,8 @@ def compose_circus():
 
     )
 
-    voice_duration_generator = GenericGenerator(
-        name="voice-duration",
-        gen_type="choice",
-        parameters={"a": range(20, 240)},
-        seed=seed)
+    voice_duration_generator = NumpyRandomGenerator(
+        method="choice", a=range(20, 240), seed=seed)
 
     def compute_call_value(data):
         price_per_second = 2
@@ -225,6 +232,19 @@ def compose_circus():
 
         # must return a dataframe with a single column named "result"
         return df.rename(columns={"DURATION": "result"})
+
+    def compute_call_type(data):
+
+        def onnet(row):
+            return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"]
+                                                          == "OPERATOR_0")
+
+        result = pd.DataFrame(data.apply(onnet, axis=1), columns=["result_b"])
+
+        result["result"] = result["result_b"].map(
+            {True: "ONNET", False: "OFFNET"})
+
+        return result[["result"]]
 
     # TODO: cf Sipho suggestion: we could have generic "add", "diff"... operations
     def substract_value_from_account(data):
@@ -255,20 +275,23 @@ def compose_circus():
             customers.ops.lookup(actor_id_field="A_ID",
                                  select={"MSISDN": "A",
                                          "CELL": "CELL_A",
+                                         "OPERATOR": "OPERATOR_A",
                                          "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
             customers.ops.lookup(actor_id_field="B_ID",
                                  select={"MSISDN": "B",
+                                         "OPERATOR": "OPERATOR_B",
                                          "CELL": "CELL_B"}),
 
-            operations.Constant(value="VOICE", named_as="PRODUCT"),
+            ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
 
-
+            operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
+                             result_field="TYPE",
+                             f=compute_call_type),
 
             # computes the duration, value, new account amount and update
             # attribute accordingly
-            operations.RandomValues(value_generator=voice_duration_generator,
-                                    named_as="DURATION"),
+            voice_duration_generator.ops.generate(named_as="DURATION"),
 
             operations.Apply(source_fields="DURATION",
                              result_field="VALUE",
@@ -283,9 +306,8 @@ def compose_circus():
 
 
             # customer with low account are now more likely to topup
-            operations.RandomValues(value_generator=recharge_trigger,
-                                    weights_field="MAIN_ACCT_NEW",
-                                    named_as="SHOULD_TOP_UP"),
+            recharge_trigger.ops.generate(
+                observations_field="MAIN_ACCT_NEW", named_as="SHOULD_TOP_UP"),
 
             operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
                              result_field="TOPPING_UP_A_IDS",
@@ -297,12 +319,17 @@ def compose_circus():
             # final CDRs
             operations.FieldLogger(log_id="cdr",
                                    cols=["A", "B", "DURATION", "VALUE",
-                                          "CELL_A", "CELL_B", "PRODUCT"]),
+                                         "CELL_A", "OPERATOR_A",
+                                         "CELL_B", "OPERATOR_B",
+                                         "TYPE", "PRODUCT"]),
         ],
 
         time_gen=timegen,
         activity_gen=activity_gen,
     )
+
+    ## Circus
+    flying = Circus(the_clock)
 
     flying.add_increment(timegen)
 
@@ -334,9 +361,9 @@ def test_cdr_scenario():
           {}
 
     """.format(
-        logs["cdr"].tail(15).to_string(),
-        logs["topups"].tail(15).to_string(),
-        logs["mobility"].tail().to_string())
+        logs["cdr"].sample(15).to_string(),
+        logs["topups"].sample(15).to_string(),
+        logs["mobility"].tail(15).to_string())
         )
 
     assert logs["cdr"].shape[0] > 0

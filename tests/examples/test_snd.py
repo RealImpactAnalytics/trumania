@@ -9,7 +9,6 @@ from datagenerator.actor import *
 from datagenerator.attribute import *
 from datagenerator.circus import *
 from datagenerator.clock import *
-from datagenerator.random_generators import *
 from datagenerator.util_functions import *
 
 
@@ -45,13 +44,10 @@ def compose_circus():
     ######################################
     the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
 
-    ######################################
-    # Define generators
-    ######################################
-    activity_gen = GenericGenerator("user-activity", "choice", {"a": range(1,4)}, seed)
-    timegen = WeekProfiler(time_step, prof, seed)
-    agentweightgenerator = GenericGenerator("agent-weight", "exponential", {"scale": 1.})
+    activity_gen = NumpyRandomGenerator(method="choice", a = range(1, 4), seed=seed)
 
+    timegen = WeekProfiler(time_step, prof, seed)
+    agentweightgenerator = NumpyRandomGenerator(method="exponential", scale= 1.)
 
     ######################################
     # Initialise generators
@@ -157,7 +153,6 @@ def test_cdr_scenario():
     print ("""
         some purchase events:
           {}
-
     """.format(logs["cdr"].head()))
 
     assert logs["cdr"].shape[0] > 0

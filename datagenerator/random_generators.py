@@ -1,141 +1,124 @@
 import numpy as np
-from numpy.random import RandomState
+from util_functions import *
+from abc import ABCMeta, abstractmethod
+from datagenerator.operations import *
 
 
-class GenericGenerator(object):
+class Parameterizable(object):
+    """
+    Mixin providing the ability to contain and update parameters.
     """
 
+    def __init__(self, parameters):
+        self.parameters = parameters
+
+    def update_parameters(self, **kwargs):
+        # TODO: ultimately, this can evolve into an Action operation => the
+        # random generations characteristics evole over time
+
+        # TODO2: cf discussion from Gautier: those parameters could become
+        # columns of parameters => 1 value per actor
+        self.parameters.update(kwargs)
+
+        # TODO: this is actually not working: we need the sub-classes to
+        # to "reload" accordingly...
+
+
+class Generator(Parameterizable):
+    """
+    Independent parameterized random value generator.
+    Abstract class
+    """
+    __metaclass__ = ABCMeta
+
+    def __init__(self, parameters):
+        Parameterizable.__init__(self, parameters)
+        self.ops = self.GeneratorOps(self)
+
+    @abstractmethod
+    def generate(self, size):
+        """
+        "Independent" random value generation: do not depend on any previous
+        observation, we just want to sample the random variable `size` times
+
+        :param size: the number of random value to produce
+        :return: an array of generated random values
+        """
+        pass
+
+    class GeneratorOps(object):
+        def __init__(self, generator):
+            self.generator = generator
+
+        class RandomValues(AddColumns):
+            """
+            Operation that produces one single column generated randomly.
+            """
+
+            def __init__(self, generator, named_as):
+                AddColumns.__init__(self)
+                self.generator = generator
+                self.named_as = named_as
+
+            def build_output(self, data):
+                values = self.generator.generate(size=data.shape[0])
+                return pd.DataFrame({self.named_as: values}, index=data.index)
+
+        def generate(self, named_as):
+            return self.RandomValues(self.generator, named_as=named_as)
+
+
+class ConstantGenerator(Generator):
+    def __init__(self, value):
+        Generator.__init__(self, {})
+        self.value = value
+
+    def generate(self, size):
+        return [self.value] * size
+
+
+class NumpyRandomGenerator(Generator):
+    """
+        Generator wrapping any numpy.Random method.
     """
 
-    def __init__(self, name, gen_type, parameters, seed=None):
+    def __init__(self, method, seed=None, **numpy_parameters):
         """Initialise a random number generator
 
-        :param name: string, the name (is this useful?)
-        :param gen_type: string:
-            - "choice"
-        :param parameters: dict, see descriptions below
+        :param method: string: must be a valid numpy.Randomstate method that
+            accept the "size" parameter
+
+        :param numpy_parameters: dict, see descriptions below
         :param seed: int, seed of the generator
         :return: create a random number generator of type "gen_type", with its parameters and seeded.
         """
-        self.__name = name
+        Generator.__init__(self, numpy_parameters)
+        self.numpy_method = getattr(RandomState(seed), method)
 
-        self.__state = RandomState(seed)
-
-        if gen_type == "constant":
-            self.__gen = self.__state.choice
-            self.__parameters = {"a": [parameters.get("a",1.),]}
-
-        if gen_type == "choice":
-            self.__gen = self.__state.choice
-            self.__parameters = {"a": parameters.get("a", 10),
-                                 "size": parameters.get("size", 1),
-                                 "replace": parameters.get("replace", True),
-                                 "p": parameters.get("p", None)}
-
-        if gen_type == "pareto":
-
-            def rescale(a, size=None, m=1.):
-                return (self.__state.pareto(a, size) + 1) * m
-
-            self.__gen = rescale
-            self.__parameters = {"a": parameters.get("a", 10),
-                                 "size": parameters.get("size", 1),
-                                 "m": parameters.get("m", 1.)}
-
-        if gen_type == "exponential":
-            self.__gen = self.__state.exponential
-            self.__parameters = {"scale":parameters.get("scale",1.),
-                                 "size": parameters.get("size",1)}
-
-    def generate(self, size=None, weights=None, pars=None):
-        """
-
-        :param size:
-        :return:
-        :return:
-        """
-        params = self.__parameters
-        if size is not None:
-            params["size"] = size
-        return self.__gen(**params)
-
-    def get_name(self):
-        """
-
-        :return: string, the name of the generator
-        """
-        return self.__name
+    def generate(self, size):
+        all_params = merge_2_dicts({"size": size}, self.parameters)
+        return self.numpy_method(**all_params)
 
 
-class TriggerGenerator(object):
-    """A trigger generator takes some parameters and returns a vector of 1's and 0's, depending if the trigger
-    has been released or not
+class ScaledParetoGenerator(Generator):
+    def __init__(self, m, seed=None, **numpy_parameters):
+        Generator.__init__(self, numpy_parameters)
 
-    """
+        self.stock_pareto = NumpyRandomGenerator(method="pareto", seed=seed,
+                                                 **numpy_parameters)
+        self.m = m
 
-    def __init__(self, name, gen_type, parameters, seed=None):
-        """Initialise a trigger generator
-
-        :param name: string, the name (is this useful?)
-        :param gen_type: string:
-            - "choice"
-        :param parameters: dict, see descriptions below
-        :param seed: int, seed of the generator
-        :return: create a random number generator of type "gen_type", with its parameters and seeded.
-        """
-        self.__name = name
-
-        self.__state = RandomState(seed)
-        self.__gen = self.__state.rand
-
-        if gen_type == "logistic":
-            def logistic(x, a, b):
-                """returns the value of the logistic function 1/(1+e^-(ax+b))
-                """
-                the_exp = np.minimum(-(a*x+b),10.)
-                return 1./(1.+np.exp(the_exp))
-
-            self.__function = logistic
-            self.__parameters = {"a":-0.01,
-                                 "b":10.}
-
-    def generate(self, size=None, weights=None, pars=None):
-        """
-
-        :type size: int
-        :param size: number of values to generate
-        :type values: Pandas Series
-        :param values:
-        :type pars: dict
-        :param pars: keys correspond to parameter values required by the function, values are either floats or
-        Pandas Series of the same length as x
-        :return:
-        """
-        params = self.__parameters
-        params["x"] = weights
-        if pars is not None:
-            params.update(pars)
-
-        probs = self.__gen(len(weights.index))
-        trigger = self.__function(**params)
-        triggered = probs < trigger
-
-        return triggered
-
-    def get_name(self):
-        """
-
-        :return: string, the name of the generator
-        """
-        return self.__name
+    def generate(self, size):
+        stock_obs = self.stock_pareto.generate(size)
+        return (stock_obs + 1) * self.m
 
 
-class MSISDNGenerator(object):
+class MSISDNGenerator(Generator):
     """
 
     """
 
-    def __init__(self, name, countrycode, prefix_list, length, seed=None):
+    def __init__(self, countrycode, prefix_list, length, seed=None):
         """
 
         :param name: string
@@ -145,34 +128,32 @@ class MSISDNGenerator(object):
         :param seed: int
         :return:
         """
-        self.__name = name
-        self.__state = RandomState(seed)
+        Generator.__init__(self, {})
+        self.__cc = countrycode
+        self.__pref = prefix_list
+        self.__length = length
+        self.seed = seed
 
         maxnumber = 10 ** length - 1
-        self.__available = np.empty([maxnumber * len(prefix_list), 2], dtype=int)
+        self.__available = np.empty([maxnumber * len(prefix_list), 2],
+                                    dtype=int)
         for i in range(len(prefix_list)):
             self.__available[i * maxnumber:(i + 1) * maxnumber, 0] = np.arange(0, maxnumber, dtype=int)
             self.__available[i * maxnumber:(i + 1) * maxnumber, 1] = i
 
-        self.__cc = countrycode
-        self.__pref = prefix_list
-        self.__length = length
-
-    def get_name(self):
-        """
-
-        :return: string, the name of the generator
-        """
-        return self.__name
-
-    def generate(self, size=1, weights=None, pars=None):
+    def generate(self, size):
         """returns a list of size randomly generated msisdns.
         Those msisdns cannot be generated again from this generator
 
         :param size: int
         :return: numpy array
         """
-        generated_entries = self.__state.choice(np.arange(0, self.__available.shape[0], dtype=int), size, False)
+
+        available_idx = np.arange(0, self.__available.shape[0], dtype=int)
+        generator = NumpyRandomGenerator(
+            method="choice", a=available_idx, replace=False, seed=self.seed)
+
+        generated_entries = generator.generate(size)
         msisdns = np.array(
             [self.__cc + self.__pref[self.__available[i, 1]] + str(self.__available[i, 0]).zfill(self.__length)
              for i in generated_entries])
@@ -180,3 +161,93 @@ class MSISDNGenerator(object):
         self.__available = np.delete(self.__available, generated_entries, axis=0)
 
         return msisdns
+
+
+class DependentGenerator(Parameterizable):
+    """
+        Generator sampling values from a random variable that depends on
+        previous observations.
+    """
+
+    # TODO: observations is limited to one single column ("weights")
+
+    __metaclass__ = ABCMeta
+
+    def __init__(self, parameters):
+        Parameterizable.__init__(self, parameters)
+        self.ops = self.DependentGeneratorOps(self)
+
+    @abstractmethod
+    def generate(self, observations):
+        """
+        Generation of random values after observing the input events.
+
+
+        :param observations: one list of "previous observations", coming from
+        upstream operation in the Action or upstream random variables in this
+        graph.
+
+        :return: an array of generated random values
+        """
+
+        pass
+
+    class DependentGeneratorOps(object):
+        def __init__(self, generator):
+            self.generator = generator
+
+        class RandomValues(AddColumns):
+            """
+            Operation that produces one single column generated randomly.
+            """
+
+            def __init__(self, generator, named_as, observations_field):
+                AddColumns.__init__(self)
+                self.generator = generator
+                self.named_as = named_as
+                self.observations_field = observations_field
+
+            def build_output(self, data):
+                obs = data[self.observations_field]
+                values = self.generator.generate(observations=obs)
+                return pd.DataFrame({self.named_as: values}, index=data.index)
+
+        def generate(self, named_as, observations_field):
+            return self.RandomValues(self.generator, named_as, observations_field)
+
+
+class TriggerGenerator(DependentGenerator):
+    """
+    A trigger generator takes some observed values and returns a vector of
+    Booleans, depending if the trigger has been released or not
+    """
+
+    def __init__(self, trigger_type, seed=None):
+
+        # random baseline to compare to each the activation
+        self.base_line = NumpyRandomGenerator(method="uniform", seed=seed)
+
+        if trigger_type == "logistic":
+            def logistic(x, a, b):
+                """returns the value of the logistic function 1/(1+e^-(ax+b))
+                """
+                the_exp = np.minimum(-(a*x+b),10.)
+                return 1./(1.+np.exp(the_exp))
+            self.triggering_function = logistic
+
+            # TODO: we could allow the API to provide those parameters
+            DependentGenerator.__init__(self, {"a": -0.01, "b": 10.})
+            self.triggering_function = logistic
+
+        else:
+            raise NotImplemented("unknown trigger type: {}".format(trigger_type))
+
+    def generate(self, observations):
+        probs = self.base_line.generate(size=observations.shape[0])
+
+        params = merge_2_dicts({"x": observations}, self.parameters)
+        trigger = self.triggering_function(**params)
+
+        # BUG here? ideally we'd trigger the high probabilities => should we
+        # "flip" the sigmoid ?
+        return probs < trigger
