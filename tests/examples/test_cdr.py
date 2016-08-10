@@ -44,8 +44,8 @@ def compose_circus():
     ######################################
     # Define clocks
     ######################################
-    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S",
-                      seed=seeder.next())
+    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step,
+                      "%d%m%Y %H:%M:%S", seed=seeder.next())
 
     ######################################
     # Define generators
@@ -177,9 +177,11 @@ def compose_circus():
             customers.ops.overwrite(attribute="CELL",
                                     copy_from_field="NEW_CELL"),
 
+            the_clock.ops.timestamp(named_as="TIME"),
+
             # create mobility logs
             operations.FieldLogger(log_id="mobility",
-                                   cols=["A_ID", "OPERATOR",
+                                   cols=["TIME", "A_ID", "OPERATOR",
                                          "PREV_CELL", "NEW_CELL",]),
         ],
 
@@ -218,9 +220,11 @@ def compose_circus():
             customers.ops.overwrite(attribute="MAIN_ACCT",
                                     copy_from_field="MAIN_ACCT"),
 
+            the_clock.ops.timestamp(named_as="TIME"),
+
             operations.FieldLogger(log_id="topups",
-                                   cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
-                                         "OPERATOR", "CELL",
+                                   cols=["TIME", "CUSTOMER_NUMBER", "AGENT",
+                                         "VALUE", "OPERATOR", "CELL",
                                          "MAIN_ACCT_OLD", "MAIN_ACCT"]),
         ],
 
@@ -322,10 +326,12 @@ def compose_circus():
 
             topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
 
+            the_clock.ops.timestamp(named_as="DATETIME"),
 
             # final CDRs
             operations.FieldLogger(log_id="cdr",
-                                   cols=["A", "B", "DURATION", "VALUE",
+                                   cols=["DATETIME",
+                                         "A", "B", "DURATION", "VALUE",
                                          "CELL_A", "OPERATOR_A",
                                          "CELL_B", "OPERATOR_B",
                                          "TYPE", "PRODUCT"]),
@@ -380,13 +386,8 @@ def test_cdr_scenario():
     print df
 
     assert logs["cdr"].shape[0] > 0
-    assert "datetime" in logs["cdr"].columns
-
     assert logs["topups"].shape[0] > 0
-    assert "datetime" in logs["topups"].columns
-
     assert logs["mobility"].shape[0] > 0
-    assert "datetime" in logs["mobility"].columns
 
     # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
 

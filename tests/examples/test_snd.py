@@ -131,6 +131,8 @@ def compose_circus():
             dealer_sim_attr.ops.remove_item(actor_id_field="DEALER",
                                             item_field="SIM"),
 
+            the_clock.ops.timestamp(named_as="DATETIME"),
+
             # not specifying the columns => by defaults, log everything
             operations.FieldLogger(log_id="cdr"),
 
@@ -159,7 +161,6 @@ def test_cdr_scenario():
     """.format(logs["cdr"].head()))
 
     assert logs["cdr"].shape[0] > 0
-    assert "datetime" in logs["cdr"].columns
 
     # TODO: add real post-conditions on all_purchases
 

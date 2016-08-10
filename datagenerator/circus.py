@@ -72,22 +72,6 @@ class Circus(object):
         """
         self.__incrementors.append(to_increment)
 
-    def __execute_action(self, action):
-        """
-
-        :param action: instance of action to be executed
-        :type action: ActorAction
-
-        :return: the logs emitted by this action
-        :type: dict[DataFrame]
-        """
-        action_logs = action.execute()
-        # TODO: move this as an operation
-        for logid, df in action_logs.iteritems():
-            df["datetime"] = self.__clock.get_timestamp(df.shape[0]).values
-
-        return action_logs
-
     def one_round(self, round_number):
         """
         Performs one round of actions
@@ -102,15 +86,14 @@ class Circus(object):
         # generalizes this to having several actions contributing to the same
         # log (e.g. "cdrs", from both the "SMS" and "VOICE" action
 
-        logs = (self.__execute_action(action) for action in self.__actions)
-        actions_logs = merge_dicts(logs)
+        logs = merge_dicts(action.execute() for action in self.__actions)
 
         for i in self.__incrementors:
             i.increment()
 
         self.__clock.increment()
 
-        return actions_logs
+        return logs
 
     def run(self, n_iterations):
         """
