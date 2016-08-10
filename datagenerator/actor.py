@@ -79,6 +79,20 @@ class Actor(object):
             return attr == threshold
         raise Exception("Unknown condition : %s" % condition)
 
+    def attribute_names(self):
+        return self._attributes.keys()
+
+    def to_dataframe(self):
+        """
+        :return: all the attributes of this actor as one single dataframe
+        """
+        df = pd.DataFrame(index=self.ids)
+
+        for name in self.attribute_names():
+            df[name] = self.get_attribute_values(name, self.ids)
+
+        return df
+
     class ActorOps(object):
         def __init__(self, actor):
             self.actor = actor

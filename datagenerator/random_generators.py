@@ -4,6 +4,17 @@ from abc import ABCMeta, abstractmethod
 from datagenerator.operations import *
 
 
+def seed_provider(master_seed):
+    """
+    :param master_seed: master seed
+    :return: a generator of seeds, deterministically depending on the master one
+    """
+    state = RandomState(master_seed)
+    max_int_32 = 2**31 - 1
+    while True:
+        yield state.randint(1, max_int_32)
+
+
 class Parameterizable(object):
     """
     Mixin providing the ability to contain and update parameters.

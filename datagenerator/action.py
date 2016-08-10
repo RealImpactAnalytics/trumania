@@ -40,8 +40,6 @@ class ActorAction(object):
         """
 
         active_ids = self.clock[self.clock["clock"] == 0].index
-#        print (" {}: who_acts_now clock: {}".format(self.name,
-        # len(active_ids)))
         return active_ids
 
     def clock_tick(self):
@@ -77,6 +75,7 @@ class ActorAction(object):
 
         def transform(self, ignored_input):
             ids = self.action.who_acts_now()
+
             df = pd.DataFrame(ids, columns=[self.action.actorid_field_name])
 
             # makes sure the actor id is also kept as index

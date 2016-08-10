@@ -3,7 +3,6 @@ from __future__ import division
 from datetime import datetime
 
 import datagenerator.operations as operations
-from datagenerator.util_functions import *
 from datagenerator.action import *
 from datagenerator.actor import *
 from datagenerator.attribute import *
@@ -23,7 +22,7 @@ def compose_circus():
     # Define parameters
     ######################################
 
-    seed = 123456
+    seeder = seed_provider(master_seed=123456)
     n_customers = 1000
     n_cells = 100
     n_agents = 100
@@ -39,12 +38,14 @@ def compose_circus():
 
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents)]
+    print agents
     operators = ["OPERATOR_%d" % i for i in range(4)]
 
     ######################################
     # Define clocks
     ######################################
-    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
+    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S",
+                      seed=seeder.next())
 
     ######################################
     # Define generators
@@ -52,20 +53,22 @@ def compose_circus():
     msisdn_gen = MSISDNGenerator(countrycode="0032",
                                  prefix_list=["472", "473", "475", "476",
                                               "477", "478", "479"],
-                                 length=6, seed=seed)
+                                 length=6,
+                                 seed=seeder.next())
 
-    activity_gen = ScaledParetoGenerator(m=10, a=1.2, seed=seed)
+    activity_gen = ScaledParetoGenerator(m=10, a=1.2, seed=seeder.next())
 
-    timegen = WeekProfiler(time_step, prof, seed)
-    mobilitytimegen = DayProfiler(time_step, mov_prof, seed)
+    timegen = WeekProfiler(time_step, prof, seed=seeder.next())
+    mobilitytimegen = DayProfiler(time_step, mov_prof, seed=seeder.next())
 
-    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2, seed=seed)
+    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
+                                                   seed=seeder.next())
 
     mobilityweightgenerator = NumpyRandomGenerator(
-        method="exponential", scale=1., seed=seed)
+        method="exponential", scale=1., seed=seeder.next())
 
     agentweightgenerator = NumpyRandomGenerator(method="exponential", scale=1.,
-                                                seed=seed)
+                                                seed=seeder.next())
 
     ######################################
     # Initialise generators
@@ -83,10 +86,11 @@ def compose_circus():
                                            init_values_generator=msisdn_gen))
 
     # mobility
-    mobility = Relationship(name="people's cell location", seed=seed)
+    mobility = Relationship(name="people's cell location", seed=seeder.next())
 
     mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, cells, 0.4, seed),
+        make_random_bipartite_data(customers.ids, cells, 0.4,
+                                   seed=seeder.next()),
         columns=["USER_ID", "CELL"])
 
     mobility.add_relations(
@@ -104,9 +108,9 @@ def compose_circus():
     social_network_values = create_er_social_network(
         customer_ids=customers.ids,
         p=average_degree / n_customers,
-        seed=seed)
+        seed=seeder.next())
 
-    social_network = Relationship(name="neighbours", seed=seed)
+    social_network = Relationship(name="neighbours", seed=seeder.next())
 
     social_network.add_relations(
         from_ids=social_network_values["A"].values,
@@ -122,10 +126,11 @@ def compose_circus():
     # MSISDN -> Agent
 
     agent_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, agents, 0.3, seed),
+        make_random_bipartite_data(customers.ids, agents, 0.3,
+                                   seed=seeder.next()),
         columns=["USER_ID", "AGENT"])
 
-    agent_rel = Relationship(name="people's agent", seed=seed)
+    agent_rel = Relationship(name="people's agent", seed=seeder.next())
 
     agent_rel.add_relations(from_ids=agent_df["USER_ID"],
                             to_ids=agent_df["AGENT"],
@@ -133,7 +138,8 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-    recharge_trigger = TriggerGenerator(trigger_type="logistic", seed=seed)
+    recharge_trigger = TriggerGenerator(trigger_type="logistic",
+                                        seed=seeder.next())
 
     recharge_gen = ConstantGenerator(value=1000.)
 
@@ -145,8 +151,8 @@ def compose_circus():
     # Operators
     operator_gen = NumpyRandomGenerator(method="choice",
                                         a=operators,
-                                        p=[.7, .1, .1, .1],
-                                        seed=seed)
+                                        p=[.8, .05, .1, .05],
+                                        seed=seeder.next())
 
     customers.add_attribute(name="OPERATOR",
                             attr=Attribute(ids=customers.ids,
@@ -224,7 +230,7 @@ def compose_circus():
     )
 
     voice_duration_generator = NumpyRandomGenerator(
-        method="choice", a=range(20, 240), seed=seed)
+        method="choice", a=range(20, 240), seed=seeder.next())
 
     def compute_call_value(data):
         price_per_second = 2
@@ -307,7 +313,8 @@ def compose_circus():
 
             # customer with low account are now more likely to topup
             recharge_trigger.ops.generate(
-                observations_field="MAIN_ACCT_NEW", named_as="SHOULD_TOP_UP"),
+                observations_field="MAIN_ACCT_NEW",
+                named_as="SHOULD_TOP_UP"),
 
             operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
                              result_field="TOPPING_UP_A_IDS",
@@ -361,10 +368,16 @@ def test_cdr_scenario():
           {}
 
     """.format(
-        logs["cdr"].sample(15).to_string(),
-        logs["topups"].sample(15).to_string(),
+        logs["cdr"].head(15).to_string(),
+        logs["topups"].head(15).to_string(),
         logs["mobility"].tail(15).to_string())
         )
+
+    print "users having highest amount of calls: "
+    top_users = logs["cdr"]["A"].value_counts().head(10)
+    customers = cdr_circus.get_actor_of(action_name="calls").to_dataframe()
+    df = customers[customers["MSISDN"].isin(top_users.index)]
+    print df
 
     assert logs["cdr"].shape[0] > 0
     assert "datetime" in logs["cdr"].columns
