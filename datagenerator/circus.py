@@ -59,6 +59,11 @@ class Circus(object):
         """
         self.__actions.append(action)
 
+    def get_actor_of(self, action_name):
+
+        action = filter(lambda a: a.name == action_name, self.__actions)[0]
+        return action.triggering_actor
+
     def add_increment(self, to_increment):
         """Add an object to be incremented at each step (such as a TimeProfiler)
 

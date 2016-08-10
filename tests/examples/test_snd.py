@@ -27,7 +27,7 @@ def compose_circus():
     ######################################
     print "Parameters"
 
-    seed = 123456
+    seeder = seed_provider(master_seed=123456)
     n_agents_a = 1000
     n_agents_b = 100
     average_degree = 20
@@ -42,11 +42,13 @@ def compose_circus():
     ######################################
     # Define clocks
     ######################################
-    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S", seed)
+    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S",
+                      seed=seeder.next())
 
-    activity_gen = NumpyRandomGenerator(method="choice", a = range(1, 4), seed=seed)
+    activity_gen = NumpyRandomGenerator(method="choice", a = range(1, 4),
+                                        seed=seeder.next())
 
-    timegen = WeekProfiler(time_step, prof, seed)
+    timegen = WeekProfiler(time_step, prof, seed=seeder.next())
     agentweightgenerator = NumpyRandomGenerator(method="exponential", scale= 1.)
 
     ######################################
@@ -67,16 +69,16 @@ def compose_circus():
                     prefix="DEALER_",
                     max_length=3)
 
-    dealer_sim_rel = Relationship(name="dealer to sim", seed=seed)
+    dealer_sim_rel = Relationship(name="dealer to sim", seed=seeder.next())
 
     sims_dealer = make_random_assign("SIM","DEALER",
                                      sims,
                                      dealers.ids,
-                                     seed)
+                                     seed=seeder.next())
     dealer_sim_rel.add_relations(from_ids=sims_dealer["DEALER"],
                                  to_ids=sims_dealer["SIM"])
 
-    customer_sim_rel = Relationship(name="agent to sim", seed=seed)
+    customer_sim_rel = Relationship(name="agent to sim", seed=seeder.next())
 
     customer_sim_attr = LabeledStockAttribute(ids=customers.ids,
                                               init_values=0,
@@ -90,11 +92,12 @@ def compose_circus():
 
     deg_prob = average_degree/n_agents_a*n_agents_b
     agent_customer_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, dealers.ids, deg_prob, seed),
+        make_random_bipartite_data(customers.ids, dealers.ids, deg_prob,
+                                   seed=seeder.next()),
         columns=["AGENT", "DEALER"])
 
     agent_customer = Relationship(name="agent to dealers",
-                                  seed=seed)
+                                  seed=seeder.next())
 
     agent_customer.add_relations(from_ids=agent_customer_df["AGENT"],
                                  to_ids=agent_customer_df["DEALER"],
