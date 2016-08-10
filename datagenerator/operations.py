@@ -1,4 +1,5 @@
 import pandas as pd
+from abc import ABCMeta, abstractmethod
 
 
 class Operation(object):
@@ -71,18 +72,19 @@ class SideEffectOnly(Operation):
     Operation that does not produce logs nor supplementary columns: just have
     side effect
     """
+    __metaclass__ = ABCMeta
 
     def transform(self, data):
         self.side_effect(data)
         return data
 
+    @abstractmethod
     def side_effect(self, data):
         """
         :param data:
         :return: nothing
         """
-
-        raise NotImplemented("BUG: the sub-class must implement this method")
+        pass
 
 
 class AddColumns(Operation):
@@ -90,10 +92,12 @@ class AddColumns(Operation):
     Very typical case of an operation that appends (i.e. joins) columns to
     the previous result
     """
+    __metaclass__ = ABCMeta
 
     def __init__(self, join_kind="left"):
         self.join_kind = join_kind
 
+    @abstractmethod
     def build_output(self, data):
         """
         Produces a dataframe with one or several columns and an index aligned
@@ -102,8 +106,7 @@ class AddColumns(Operation):
         :param data: current dataframe
         :return: the column(s) to append to it, as a dataframe
         """
-
-        raise NotImplemented("BUG: sub-class must implement this")
+        pass
 
     def transform(self, data):
         output = self.build_output(data)
