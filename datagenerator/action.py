@@ -24,9 +24,9 @@ class ActorAction(object):
 
         self.time_generator = time_gen
         activity = activity_gen.generate(size=len(triggering_actor.ids))
-        self.clock = pd.DataFrame({"activity": activity, "clock": 0},
+        self.timer = pd.DataFrame({"activity": activity, "remaining": 0},
                                   index=triggering_actor.ids)
-        self.reset_clock()
+        self.reset_elapsed_timers()
 
         # the first operation is always a "who acts now" and ends with a
         # clock reset
@@ -39,30 +39,41 @@ class ActorAction(object):
         :return:
         """
 
-        active_ids = self.clock[self.clock["clock"] == 0].index
+        active_ids = self.timer[self.timer["remaining"] == 0].index
         return active_ids
 
-    def clock_tick(self):
+    def timer_tick(self):
 
-        positive_idx = self.clock[self.clock["clock"] > 0].index
+        positive_idx = self.timer[self.timer["remaining"] > 0].index
         if len(positive_idx) > 0:
-            self.clock.loc[positive_idx, "clock"] -= 1
+            self.timer.loc[positive_idx, "remaining"] -= 1
 
     def force_act_next(self, ids):
 
         if len(ids) > 0:
-            self.clock.loc[ids, "clock"] = 0
+            self.timer.loc[ids, "remaining"] = 0
 
-    def reset_clock(self, ids=None):
+    def reset_elapsed_timers(self, ids=None):
+        """
+        Resets the timers to some random positive number of ticks, related to
+        the activity level of each actor row.
+
+        We limit to a set of ids and not all the actors currently set to
+        zero, since we could have zero timers as a side effect of other
+        actions, in which case we want to trigger an exection at next clock
+        tick instead of resetting the timer.
+          
+        :param ids: the subset of actor ids to impact
+        """
 
         if ids is None:
-            ids = self.clock.index
+            ids = self.timer.index
 
         if len(ids) > 0:
             new_clock = self.time_generator.generate(
-                weights=self.clock.loc[ids, "activity"])
+                weights=self.timer.loc[ids, "activity"])
 
-            self.clock.loc[ids, "clock"] = new_clock
+            self.timer.loc[ids, "remaining"] = new_clock
 
     class WhoActsNow(Operation):
         """
@@ -92,7 +103,7 @@ class ActorAction(object):
             self.action = action
 
         def side_effect(self, data):
-            self.action.reset_clock(data.index)
+            self.action.reset_elapsed_timers(data.index)
 
     @staticmethod
     def _one_execution((prev_output, prev_logs), f):
@@ -116,7 +127,7 @@ class ActorAction(object):
         init = [(None, {})]
 
         _, all_logs = reduce(self._one_execution, init + self.operations)
-        self.clock_tick()
+        self.timer_tick()
 
         if len(all_logs.keys()) == 0:
             return pd.DataFrame(columns=[])

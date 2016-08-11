@@ -230,7 +230,6 @@ def compose_circus():
 
         # note that there is timegen specified => the clock is not ticking
         # => the action can only be set externally (cf calls action)
-
     )
 
     voice_duration_generator = NumpyRandomGenerator(
@@ -326,6 +325,9 @@ def compose_circus():
 
             topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
 
+
+
+
             the_clock.ops.timestamp(named_as="DATETIME"),
 
             # final CDRs
@@ -334,7 +336,7 @@ def compose_circus():
                                          "A", "B", "DURATION", "VALUE",
                                          "CELL_A", "OPERATOR_A",
                                          "CELL_B", "OPERATOR_B",
-                                         "TYPE", "PRODUCT"]),
+                                         "TYPE",   "PRODUCT"]),
         ],
 
         time_gen=timegen,
