@@ -18,9 +18,7 @@ class Actor(object):
             id_start, id_start + size)]
         self._attributes = {}
         self.ops = self.ActorOps(self)
-
-    def size(self):
-        return len(self.ids)
+        self.size = len(self.ids)
 
     def add_attribute(self, name, attr):
         self._attributes[name] = attr

@@ -137,8 +137,8 @@ def compose_circus():
             operations.FieldLogger(log_id="cdr"),
 
         ],
-        time_gen=timegen,
-        activity_gen=activity_gen)
+        timer_gen=timegen,
+        activity=activity_gen)
 
     flying.add_action(purchase)
 

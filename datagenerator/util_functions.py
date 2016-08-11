@@ -92,6 +92,9 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
     :return:
     """
 
+    if dict2 is None:
+        return dict1
+
     def merged_value(key):
         if key not in dict1:
             return dict2[key]

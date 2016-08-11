@@ -38,7 +38,6 @@ def compose_circus():
 
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents)]
-    print agents
     operators = ["OPERATOR_%d" % i for i in range(4)]
 
     ######################################
@@ -56,10 +55,7 @@ def compose_circus():
                                  length=6,
                                  seed=seeder.next())
 
-    activity_gen = ScaledParetoGenerator(m=10, a=1.2, seed=seeder.next())
-
     timegen = WeekProfiler(time_step, prof, seed=seeder.next())
-    mobilitytimegen = DayProfiler(time_step, mov_prof, seed=seeder.next())
 
     networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
                                                    seed=seeder.next())
@@ -74,7 +70,6 @@ def compose_circus():
     # Initialise generators
     ######################################
     timegen.initialise(the_clock)
-    mobilitytimegen.initialise(the_clock)
 
     ######################################
     # Define Actors, Relationships, ...
@@ -159,6 +154,11 @@ def compose_circus():
                                            init_values_generator=operator_gen))
     # Actions
 
+    # Mobility
+
+    mobilitytimegen = DayProfiler(time_step, mov_prof, seed=seeder.next())
+    mobilitytimegen.initialise(the_clock)
+
     mobility_action = ActorAction(
         name="mobility",
 
@@ -185,7 +185,7 @@ def compose_circus():
                                          "PREV_CELL", "NEW_CELL",]),
         ],
 
-        time_gen=mobilitytimegen,
+        timer_gen=mobilitytimegen,
     )
 
     def add_value_to_account(data):
@@ -232,6 +232,8 @@ def compose_circus():
         # => the action can only be set externally (cf calls action)
     )
 
+    # Calls
+
     voice_duration_generator = NumpyRandomGenerator(
         method="choice", a=range(20, 240), seed=seeder.next())
 
@@ -265,8 +267,16 @@ def compose_circus():
 
     def copy_id_if_topup(data):
         copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
-
         return copied_ids.rename(columns={"A_ID": "result"})
+
+    # call activity level, under normal and "excited" states
+    normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
+                                                 seed=seeder.next())
+    excited_call_activity = ScaledParetoGenerator(m=2, a=1.4,
+                                                 seed=seeder.next())
+
+    back_to_normal_prob = NumpyRandomGenerator(method="beta", a=7, b=3,
+                                               seed=seeder.next())
 
     calls = ActorAction(
         name="calls",
@@ -339,8 +349,14 @@ def compose_circus():
                                          "TYPE",   "PRODUCT"]),
         ],
 
-        time_gen=timegen,
-        activity_gen=activity_gen,
+        timer_gen=timegen,
+        activity=normal_call_activity,
+
+        states={
+            "excited": {
+                "activity": excited_call_activity,
+                "back_to_normal_probability": back_to_normal_prob}
+        }
     )
 
     ## Circus
