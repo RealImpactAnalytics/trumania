@@ -8,20 +8,20 @@ class Operation(object):
         produce logs.
     """
 
-    def transform(self, data):
+    def transform(self, action_data):
         """
-        :param data: dataframe as produced by the previous operation
+        :param action_data: dataframe as produced by the previous operation
         :return: a dataframe that replaces the previous one in the pipeline
         """
 
-        return data
+        return action_data
 
-    def emit_logs(self, data):
+    def emit_logs(self, action_data):
         """
         This method is used to produces logs (e.g. CDRs, mobility, topus...)
 
 
-        :param data: output of this operation, as produced by transform()
+        :param action_data: output of this operation, as produced by transform()
         :return: emitted logs, as a dictionary of {"log_id": some_data_frame}
 
 
@@ -59,12 +59,12 @@ class FieldLogger(Operation):
         else:
             self.cols = cols
 
-    def emit_logs(self, data):
+    def emit_logs(self, action_data):
 
         if self.cols is None:
-            return {self.log_id: data}
+            return {self.log_id: action_data}
         else:
-            return {self.log_id: data[self.cols]}
+            return {self.log_id: action_data[self.cols]}
 
 
 class SideEffectOnly(Operation):
@@ -74,14 +74,14 @@ class SideEffectOnly(Operation):
     """
     __metaclass__ = ABCMeta
 
-    def transform(self, data):
-        self.side_effect(data)
-        return data
+    def transform(self, action_data):
+        self.side_effect(action_data)
+        return action_data
 
     @abstractmethod
-    def side_effect(self, data):
+    def side_effect(self, action_data):
         """
-        :param data:
+        :param action_data:
         :return: nothing
         """
         pass
@@ -98,19 +98,19 @@ class AddColumns(Operation):
         self.join_kind = join_kind
 
     @abstractmethod
-    def build_output(self, data):
+    def build_output(self, action_data):
         """
         Produces a dataframe with one or several columns and an index aligned
         with the one of input. The columns of this will be merge with input.
 
-        :param data: current dataframe
+        :param action_data: current dataframe
         :return: the column(s) to append to it, as a dataframe
         """
         pass
 
-    def transform(self, data):
-        output = self.build_output(data)
-        return pd.merge(left=data, right=output,
+    def transform(self, action_data):
+        output = self.build_output(action_data)
+        return pd.merge(left=action_data, right=output,
                         left_index=True, right_index=True,
                         how=self.join_kind)
 
@@ -137,7 +137,7 @@ class Apply(AddColumns):
         self.result_field = result_field
         self.f = f
 
-    def build_output(self, data):
-        df = self.f(data[self.source_fields])
+    def build_output(self, action_data):
+        df = self.f(action_data[self.source_fields])
 
         return df.rename(columns={"result": self.result_field})

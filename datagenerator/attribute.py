@@ -113,11 +113,11 @@ class LabeledStockAttribute(Attribute):
                 self.actor_id_field = actor_id_field
                 self.item_field = item_field
 
-            def side_effect(self, data):
-                if data.shape[0] > 0:
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
                     self.labeled_stock.add_item(
-                        ids=data[self.actor_id_field],
-                        items=data[self.item_field])
+                        ids=action_data[self.actor_id_field],
+                        items=action_data[self.item_field])
 
         def add_item(self, actor_id_field, item_field):
             return self.AddItem(self.labeled_stock, actor_id_field,
@@ -129,11 +129,11 @@ class LabeledStockAttribute(Attribute):
                 self.actor_id_field = actor_id_field
                 self.item_field = item_field
 
-            def side_effect(self, data):
-                if data.shape[0] > 0:
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
                     self.labeled_stock.remove_item(
-                        ids=data[self.actor_id_field],
-                        items=data[self.item_field])
+                        ids=action_data[self.actor_id_field],
+                        items=action_data[self.item_field])
 
         def remove_item(self, actor_id_field, item_field):
             return self.AddItem(self.labeled_stock, actor_id_field,

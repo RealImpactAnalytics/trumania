@@ -70,9 +70,9 @@ class Generator(Parameterizable):
                 self.generator = generator
                 self.named_as = named_as
 
-            def build_output(self, data):
-                values = self.generator.generate(size=data.shape[0])
-                return pd.DataFrame({self.named_as: values}, index=data.index)
+            def build_output(self, action_data):
+                values = self.generator.generate(size=action_data.shape[0])
+                return pd.DataFrame({self.named_as: values}, index=action_data.index)
 
         def generate(self, named_as):
             return self.RandomValues(self.generator, named_as=named_as)
@@ -217,10 +217,10 @@ class DependentGenerator(Parameterizable):
                 self.named_as = named_as
                 self.observations_field = observations_field
 
-            def build_output(self, data):
-                obs = data[self.observations_field]
+            def build_output(self, action_data):
+                obs = action_data[self.observations_field]
                 values = self.generator.generate(observations=obs)
-                return pd.DataFrame({self.named_as: values}, index=data.index)
+                return pd.DataFrame({self.named_as: values}, index=action_data.index)
 
         def generate(self, named_as, observations_field):
             return self.RandomValues(self.generator, named_as, observations_field)
