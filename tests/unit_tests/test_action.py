@@ -6,6 +6,20 @@ from datagenerator.operations import Operation
 from datagenerator.random_generators import *
 
 
+def test_empty_action_should_do_nothing_and_not_crash():
+
+    customers = Actor(size=1000)
+    empty_action = ActorAction(
+        name="purchase",
+        triggering_actor=customers,
+        actorid_field="AGENT")
+
+    logs = empty_action.execute()
+
+    # no logs should be produced
+    assert logs is None
+
+
 def test_one_execution_should_merge_empty_data_correctly():
 
     # empty previous
@@ -68,8 +82,7 @@ def test_get_activity_default():
     actor = Actor(size=10)
     action = ActorAction(name="tested",
                          triggering_actor=actor,
-                         actorid_field="",
-                         operations=[])
+                         actorid_field="")
 
     # by default, each actor should be in the default state with activity 1
     assert [1.] * 10 == action.get_param("activity", actor.ids).tolist()
@@ -89,8 +102,7 @@ def test_get_activity_should_be_aligned_for_each_state():
                              "excited": {
                                  "activity": excited_call_activity,
                                  "back_to_normal_probability": back_to_normal_prob}
-                         },
-                         operations=[])
+                         })
 
     # by default, each actor should be in the default state with activity 1
     assert [1] * 10 == action.get_param("activity", actor.ids).tolist()
@@ -110,8 +122,42 @@ def test_get_activity_should_be_aligned_for_each_state():
                                               actor.ids, ).tolist()
 
 
+# def test_action_transiting_to_state_should_remain_there():
+#     """
+#     we create an action with a transit_to_state operation and 0 probability
+#     of going back to normal => after the execution, all triggered actors should
+#     still be in that starte
+#     """
+#
+#     actor = Actor(size=10, prefix="ac_", max_length=1)
+#
+#
+#     excited_call_activity = ConstantGenerator(value=10)
+#     back_to_normal_prob = ConstantGenerator(value=0)
+#
+#     action = ActorAction(name="tested",
+#                          triggering_actor=actor,
+#                          actorid_field="",
+#                          states={
+#                              "excited": {
+#                                  "activity": excited_call_activity,
+#                                  "back_to_normal_probability": back_to_normal_prob}
+#                          },
+#                          operations=[])
 
-
-
-
-
+# # by default, each actor should be in the default state with activity 1
+# assert [1] * 10 == action.get_param("activity", actor.ids).tolist()
+# assert [1] * 10 == action.get_param("back_to_normal_probability",
+#                                     actor.ids).tolist()
+# assert sorted(action.get_possible_states()) == ["excited", "normal"]
+#
+# action.transit_to_state(["ac_2", "ac_5", "ac_9"],
+#                         ["excited", "excited", "excited"])
+#
+# # activity and probability of getting back to normal should now be updated
+# expected_activity = [1, 1, 10, 1, 1, 10, 1, 1, 1, 10]
+# assert expected_activity == action.get_param("activity",
+#                                              actor.ids).tolist()
+# expected_probs = [1, 1, .3, 1, 1, .3, 1, 1, 1, .3]
+# assert expected_probs == action.get_param("back_to_normal_probability",
+#                                           actor.ids, ).tolist()

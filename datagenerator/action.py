@@ -7,7 +7,6 @@ from datagenerator.util_functions import *
 class ActorAction(object):
     def __init__(self, name,
                  triggering_actor, actorid_field,
-                 operations,
                  activity=ConstantGenerator(value=1.), states=None,
                  timer_gen=ConstantProfiler(-1)):
         """
@@ -18,8 +17,6 @@ class ActorAction(object):
 
         :param actorid_field: when building the action data, a field will be
             automatically inserted containing the actor id, with this name
-
-        :param operations: sequence of operations to be executed at each step
 
         :param activity: generator for the "normal" activity levels of the
             actors for this action. Default: same level for everybody
@@ -61,11 +58,20 @@ class ActorAction(object):
         self.timer = pd.DataFrame({"state": "normal"}, index=self.params.index)
         self.reset_timers()
 
+        self.ops = self.ActionOps(self)
+
+        # in case self.operations is not called, at least we have a basic
+        # selection
+        self.operations = [self._WhoActsNow(self)]
+
+    def set_operations(self, *operations):
+        """
+        :param operations: sequence of operations to be executed at each step
+        """
         # the first operation is always a "who acts now" and ends with a
         # clock reset
-        self.ops = self.ActionOps(self)
-        self.operations = [self.WhoActsNow(self)] + operations + [
-            self.ops.ResetTimers(self), self.ops._MaybeBackToNormal(self)]
+        self.operations = [self._WhoActsNow(self)] + list(operations) + [
+            self.ops.ResetTimers(self), self._MaybeBackToNormal(self)]
 
     def get_param(self, param_name, ids):
         """
@@ -159,7 +165,7 @@ class ActorAction(object):
         self.timer_tick()
 
         if len(all_logs.keys()) == 0:
-            return pd.DataFrame(columns=[])
+            return None
 
         if len(all_logs.keys()) > 1:
             # TODO: add support for more than one log emitting within the action
@@ -168,7 +174,7 @@ class ActorAction(object):
 
         return all_logs
 
-    class WhoActsNow(Operation):
+    class _WhoActsNow(Operation):
         """
         Initial operation of an Action: creates a basic Dataframe with the
         ids of the actor that are triggered by the clock now
@@ -189,6 +195,36 @@ class ActorAction(object):
             df.set_index(self.action.actorid_field_name,
                          drop=False, inplace=True)
             return df
+
+    class _MaybeBackToNormal(SideEffectOnly):
+        """
+        This is an internal operation of Action, that transits actors
+        back to normal with probability as declared in
+        back_to_normal_probability
+        """
+
+        def __init__(self, action):
+            self.judge = NumpyRandomGenerator(method="uniform")
+            self.action = action
+
+        def side_effect(self, action_data):
+            # only transiting actors that have ran during this clock tick
+            active_timer = self.action.timer.loc[action_data.index]
+            non_normal_ids = active_timer[active_timer["state"] !=
+                                          "normal"].index
+
+            if non_normal_ids.shape[0] == 0:
+                return
+
+            back_prob = self.action.get_param("back_to_normal_probability",
+                                              non_normal_ids)
+
+            baseline = self.judge.generate(back_prob.shape[0])
+
+            actor_ids = back_prob[back_prob > baseline].index
+            state = ["normal"] * actor_ids.shape[0]
+
+            self.action.transit_to_state(ids=actor_ids, state=state)
 
     class ActionOps(object):
         class ForceActNext(SideEffectOnly):
@@ -249,30 +285,3 @@ class ActorAction(object):
             """
             return self.TransitToState(self.action, actor_id_field, state_field)
 
-        class _MaybeBackToNormal(SideEffectOnly):
-            """
-            This is an internal operation of Action, that transits actors
-            back to normal with probabity as declared in back_to_normal_probability
-            """
-            def __init__(self, action):
-                self.judge = NumpyRandomGenerator(method="uniform")
-                self.action = action
-
-            def side_effect(self, action_data):
-                # only transiting actors that have ran during this clock tick
-                active_timer = self.action.timer.loc[action_data.index]
-                non_normal_ids = active_timer[active_timer["state"] !=
-                                              "normal"].index
-
-                if non_normal_ids.shape[0] == 0:
-                    return
-
-                back_prob = self.action.get_param("back_to_normal_probability",
-                                                  non_normal_ids)
-
-                baseline = self.judge.generate(back_prob.shape[0])
-
-                actor_ids = back_prob[back_prob > baseline].index
-                state = ["normal"] * actor_ids.shape[0]
-
-                self.action.transit_to_state(ids=actor_ids, state=state)

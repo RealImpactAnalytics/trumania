@@ -165,27 +165,28 @@ def compose_circus():
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        operations=[
-            customers.ops.lookup(actor_id_field="A_ID",
-                                 select={"CELL": "PREV_CELL",
-                                         "OPERATOR": "OPERATOR"}),
-
-            # selects a cell
-            mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
-
-            # update the CELL attribute of the actor accordingly
-            customers.ops.overwrite(attribute="CELL",
-                                    copy_from_field="NEW_CELL"),
-
-            the_clock.ops.timestamp(named_as="TIME"),
-
-            # create mobility logs
-            operations.FieldLogger(log_id="mobility",
-                                   cols=["TIME", "A_ID", "OPERATOR",
-                                         "PREV_CELL", "NEW_CELL",]),
-        ],
-
         timer_gen=mobilitytimegen,
+    )
+
+    mobility_action.set_operations(
+        customers.ops.lookup(actor_id_field="A_ID",
+                             select={"CELL": "PREV_CELL",
+                                     "OPERATOR": "OPERATOR"}),
+
+        # selects a cell
+        mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
+
+        # update the CELL attribute of the actor accordingly
+        customers.ops.overwrite(attribute="CELL",
+                                copy_from_field="NEW_CELL"),
+
+        the_clock.ops.timestamp(named_as="TIME"),
+
+        # create mobility logs
+        operations.FieldLogger(log_id="mobility",
+                               cols=["TIME", "A_ID", "OPERATOR",
+                                     "PREV_CELL", "NEW_CELL", ]),
+
     )
 
     def add_value_to_account(data):
@@ -200,36 +201,36 @@ def compose_circus():
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        operations=[
-
-            customers.ops.lookup(
-                actor_id_field="A_ID",
-                select={"MSISDN": "CUSTOMER_NUMBER",
-                        "CELL": "CELL",
-                        "OPERATOR": "OPERATOR",
-                        "MAIN_ACCT": "MAIN_ACCT_OLD"}),
-
-            agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
-
-            recharge_gen.ops.generate(named_as="VALUE"),
-
-            operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
-                             result_field="MAIN_ACCT",
-                             f=add_value_to_account),
-
-            customers.ops.overwrite(attribute="MAIN_ACCT",
-                                    copy_from_field="MAIN_ACCT"),
-
-            the_clock.ops.timestamp(named_as="TIME"),
-
-            operations.FieldLogger(log_id="topups",
-                                   cols=["TIME", "CUSTOMER_NUMBER", "AGENT",
-                                         "VALUE", "OPERATOR", "CELL",
-                                         "MAIN_ACCT_OLD", "MAIN_ACCT"]),
-        ],
-
         # note that there is timegen specified => the clock is not ticking
         # => the action can only be set externally (cf calls action)
+    )
+
+    topup.set_operations(
+        customers.ops.lookup(
+            actor_id_field="A_ID",
+            select={"MSISDN": "CUSTOMER_NUMBER",
+                    "CELL": "CELL",
+                    "OPERATOR": "OPERATOR",
+                    "MAIN_ACCT": "MAIN_ACCT_OLD"}),
+
+        agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
+
+        recharge_gen.ops.generate(named_as="VALUE"),
+
+        operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
+                         result_field="MAIN_ACCT",
+                         f=add_value_to_account),
+
+        customers.ops.overwrite(attribute="MAIN_ACCT",
+                                copy_from_field="MAIN_ACCT"),
+
+        the_clock.ops.timestamp(named_as="TIME"),
+
+        operations.FieldLogger(log_id="topups",
+                               cols=["TIME", "CUSTOMER_NUMBER", "AGENT",
+                                     "VALUE", "OPERATOR", "CELL",
+                                     "MAIN_ACCT_OLD", "MAIN_ACCT"]),
+
     )
 
     # Calls
@@ -284,71 +285,6 @@ def compose_circus():
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        operations=[
-            # selects a B party
-            social_network.ops.select_one(from_field="A_ID",
-                                          named_as="B_ID",
-                                          one_to_one=True),
-
-            # some static fields
-            customers.ops.lookup(actor_id_field="A_ID",
-                                 select={"MSISDN": "A",
-                                         "CELL": "CELL_A",
-                                         "OPERATOR": "OPERATOR_A",
-                                         "MAIN_ACCT": "MAIN_ACCT_OLD"}),
-
-            customers.ops.lookup(actor_id_field="B_ID",
-                                 select={"MSISDN": "B",
-                                         "OPERATOR": "OPERATOR_B",
-                                         "CELL": "CELL_B"}),
-
-            ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
-
-            operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
-                             result_field="TYPE",
-                             f=compute_call_type),
-
-            # computes the duration, value, new account amount and update
-            # attribute accordingly
-            voice_duration_generator.ops.generate(named_as="DURATION"),
-
-            operations.Apply(source_fields="DURATION",
-                             result_field="VALUE",
-                             f=compute_call_value),
-
-            operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
-                             result_field="MAIN_ACCT_NEW",
-                             f=substract_value_from_account),
-
-            customers.ops.overwrite(attribute="MAIN_ACCT",
-                                    copy_from_field="MAIN_ACCT_NEW"),
-
-
-            # customer with low account are now more likely to topup
-            recharge_trigger.ops.generate(
-                observations_field="MAIN_ACCT_NEW",
-                named_as="SHOULD_TOP_UP"),
-
-            operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
-                             result_field="TOPPING_UP_A_IDS",
-                             f=copy_id_if_topup),
-
-            topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
-
-
-
-
-            the_clock.ops.timestamp(named_as="DATETIME"),
-
-            # final CDRs
-            operations.FieldLogger(log_id="cdr",
-                                   cols=["DATETIME",
-                                         "A", "B", "DURATION", "VALUE",
-                                         "CELL_A", "OPERATOR_A",
-                                         "CELL_B", "OPERATOR_B",
-                                         "TYPE",   "PRODUCT"]),
-        ],
-
         timer_gen=timegen,
         activity=normal_call_activity,
 
@@ -357,6 +293,69 @@ def compose_circus():
                 "activity": excited_call_activity,
                 "back_to_normal_probability": back_to_normal_prob}
         }
+    )
+
+    calls.set_operations(
+        # selects a B party
+        social_network.ops.select_one(from_field="A_ID",
+                                      named_as="B_ID",
+                                      one_to_one=True),
+
+        # some static fields
+        customers.ops.lookup(actor_id_field="A_ID",
+                             select={"MSISDN": "A",
+                                     "CELL": "CELL_A",
+                                     "OPERATOR": "OPERATOR_A",
+                                     "MAIN_ACCT": "MAIN_ACCT_OLD"}),
+
+        customers.ops.lookup(actor_id_field="B_ID",
+                             select={"MSISDN": "B",
+                                     "OPERATOR": "OPERATOR_B",
+                                     "CELL": "CELL_B"}),
+
+        ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
+
+        operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
+                         result_field="TYPE",
+                         f=compute_call_type),
+
+        # computes the duration, value, new account amount and update
+        # attribute accordingly
+        voice_duration_generator.ops.generate(named_as="DURATION"),
+
+        operations.Apply(source_fields="DURATION",
+                         result_field="VALUE",
+                         f=compute_call_value),
+
+        operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
+                         result_field="MAIN_ACCT_NEW",
+                         f=substract_value_from_account),
+
+        customers.ops.overwrite(attribute="MAIN_ACCT",
+                                copy_from_field="MAIN_ACCT_NEW"),
+
+
+        # customer with low account are now more likely to topup
+        recharge_trigger.ops.generate(
+            observations_field="MAIN_ACCT_NEW",
+            named_as="SHOULD_TOP_UP"),
+
+        operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
+                         result_field="TOPPING_UP_A_IDS",
+                         f=copy_id_if_topup),
+
+        topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
+
+
+        the_clock.ops.timestamp(named_as="DATETIME"),
+
+        # final CDRs
+        operations.FieldLogger(log_id="cdr",
+                               cols=["DATETIME",
+                                     "A", "B", "DURATION", "VALUE",
+                                     "CELL_A", "OPERATOR_A",
+                                     "CELL_B", "OPERATOR_B",
+                                     "TYPE",   "PRODUCT"]),
     )
 
     ## Circus
