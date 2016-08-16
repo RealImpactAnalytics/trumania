@@ -1,4 +1,3 @@
-import numpy as np
 from util_functions import *
 from datagenerator.operations import *
 
@@ -165,10 +164,12 @@ class MSISDNGenerator(Generator):
 
         generated_entries = generator.generate(size)
         msisdns = np.array(
-            [self.__cc + self.__pref[self.__available[i, 1]] + str(self.__available[i, 0]).zfill(self.__length)
+            [self.__cc + self.__pref[self.__available[i, 1]] +
+                str(self.__available[i, 0]).zfill(self.__length)
              for i in generated_entries])
 
-        self.__available = np.delete(self.__available, generated_entries, axis=0)
+        self.__available = np.delete(self.__available, generated_entries,
+                                     axis=0)
 
         return msisdns
 
@@ -176,7 +177,7 @@ class MSISDNGenerator(Generator):
 class DependentGenerator(Parameterizable):
     """
     Generator providing random values depending on some live observation
-    amonng the fields of the action or attributes of the actors.
+    among the fields of the action or attributes of the actors.
 
     This opens the door to "probability given" distributions
     """
@@ -193,7 +194,6 @@ class DependentGenerator(Parameterizable):
     def generate(self, observations):
         """
         Generation of random values after observing the input events.
-
 
         :param observations: one list of "previous observations", coming from
         upstream operation in the Action or upstream random variables in this
@@ -213,19 +213,34 @@ class DependentGenerator(Parameterizable):
             Operation that produces one single column generated randomly.
             """
 
-            def __init__(self, generator, named_as, observations_field):
+            def __init__(self, generator, named_as, observations_field,
+                         attribute):
                 AddColumns.__init__(self)
+
+                if not ((attribute is None) ^ (observations_field is None)):
+                    raise ValueError("can only depend on exactly one of "
+                                     "attribute or observation_field")
+
                 self.generator = generator
                 self.named_as = named_as
                 self.observations_field = observations_field
+                self.attribute = attribute
 
             def build_output(self, action_data):
-                obs = action_data[self.observations_field]
-                values = self.generator.generate(observations=obs)
-                return pd.DataFrame({self.named_as: values}, index=action_data.index)
+                # observing either a field or an attribute
+                if self.observations_field is not None:
+                    obs = action_data[self.observations_field]
+                else:
+                    obs = self.attribute.get_values(action_data.index)
 
-        def generate(self, named_as, observations_field):
-            return self.RandomValues(self.generator, named_as, observations_field)
+                values = self.generator.generate(observations=obs)
+                return pd.DataFrame({self.named_as: values},
+                                    index=action_data.index)
+
+        def generate(self, named_as, observed_field=None,
+                     observed_attribute=None):
+            return self.RandomValues(self.generator, named_as,
+                                     observed_field, observed_attribute)
 
 
 class DependentTriggerGenerator(DependentGenerator):
@@ -238,7 +253,7 @@ class DependentTriggerGenerator(DependentGenerator):
 
     """
 
-    def __init__(self, value_mapper, seed=None):
+    def __init__(self, value_mapper=identity, seed=None):
 
         # random baseline to compare to each the activation
         DependentGenerator.__init__(self, {})

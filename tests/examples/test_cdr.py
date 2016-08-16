@@ -78,7 +78,7 @@ def compose_circus():
 
     customers.add_attribute(name="MSISDN",
                             attr=Attribute(ids=customers.ids,
-                                           init_values_generator=msisdn_gen))
+                                           init_values_gen=msisdn_gen))
 
     # mobility
     mobility = Relationship(name="people's cell location", seed=seeder.next())
@@ -139,7 +139,7 @@ def compose_circus():
     recharge_gen = ConstantGenerator(value=1000.)
 
     main_account = Attribute(ids=customers.ids,
-                             init_values_generator=recharge_gen)
+                             init_values_gen=recharge_gen)
 
     customers.add_attribute(name="MAIN_ACCT", attr=main_account)
 
@@ -151,7 +151,7 @@ def compose_circus():
 
     customers.add_attribute(name="OPERATOR",
                             attr=Attribute(ids=customers.ids,
-                                           init_values_generator=operator_gen))
+                                           init_values_gen=operator_gen))
     # Actions
 
     # Mobility
@@ -189,13 +189,6 @@ def compose_circus():
 
     )
 
-    def add_value_to_account(data):
-        # maybe we should prevent negative accounts here? or not?
-        new_value = data["MAIN_ACCT_OLD"] + data["VALUE"]
-
-        # must return a dataframe with a single column named "result"
-        return pd.DataFrame(new_value, columns=["result"])
-
     topup = ActorAction(
         name="topup",
         triggering_actor=customers,
@@ -219,7 +212,7 @@ def compose_circus():
 
         operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
                          named_as="MAIN_ACCT",
-                         f=add_value_to_account),
+                         f=np.add, f_args="series"),
 
         customers.ops.overwrite(attribute="MAIN_ACCT",
                                 copy_from_field="MAIN_ACCT"),
@@ -258,36 +251,27 @@ def compose_circus():
 
         return result[["result"]]
 
-    # TODO: cf Sipho suggestion: we could have generic "add", "diff"... operations
-    def substract_value_from_account(action_data):
-        # maybe we should prevent negative accounts here? or not?
-        new_value = action_data["MAIN_ACCT_OLD"] - action_data["VALUE"]
-
-        # must return a dataframe with a single column named "result"
-        return pd.DataFrame(new_value, columns=["result"])
-
     # call activity level, under normal and "excited" states
     normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
                                                  seed=seeder.next())
-    excited_call_activity = ScaledParetoGenerator(m=1000, a=1.1,
-                                                 seed=seeder.next())
+    excited_call_activity = ScaledParetoGenerator(m=100, a=1.1,
+                                                  seed=seeder.next())
 
-    # after a call, probability of getting into "excited" mode (i.e., having
-    # a shorted expected delay until next call
-    to_excited_prob = ConstantGenerator(value=1)
+    # after a call, excitability is the probability of getting into "excited"
+    # mode (i.e., having a shorted expected delay until next call
 
-    back_to_normal_prob = ConstantGenerator(value=0)
+    excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
+                                            seed=seeder.next())
 
-    # TODO: that is not correct: we need to generate booleans, not p
-    # => generated uniform(0,1) and compare them to those activation levels
-    # => maybe this is a trigger attribute? though there is overlap with
-    # DependentTriggerGenerator
+    excitability = Attribute(ids=customers.ids,
+                             init_values_gen=excitability_gen)
 
-    # to_excited_prob = NumpyRandomGenerator(method="beta", a=1, b=9,
-    #                                        seed=seeder.next())
-    #
-    # back_to_normal_prob = NumpyRandomGenerator(method="beta", a=9, b=1,
-    #                                            seed=seeder.next())
+    customers.add_attribute(name="EXCITABILITY", attr=excitability)
+
+    to_excited_trigger = DependentTriggerGenerator(seed=seeder.next())
+
+    back_to_normal_prob = NumpyRandomGenerator(method="beta", a=3, b=7,
+                                               seed=seeder.next())
 
     calls = ActorAction(
         name="calls",
@@ -321,7 +305,8 @@ def compose_circus():
         customers.ops.lookup(actor_id_field="B_ID",
                              select={"MSISDN": "B",
                                      "OPERATOR": "OPERATOR_B",
-                                     "CELL": "CELL_B"}),
+                                     "CELL": "CELL_B",
+                                     "EXCITABILITY": "EXCITABILITY_B"}),
 
         ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
 
@@ -337,9 +322,9 @@ def compose_circus():
                          named_as="VALUE",
                          f=compute_call_value),
 
-        operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
+        operations.Apply(source_fields=["MAIN_ACCT_OLD", "VALUE"],
                          named_as="MAIN_ACCT_NEW",
-                         f=substract_value_from_account),
+                         f=np.subtract, f_args="series"),
 
         customers.ops.overwrite(attribute="MAIN_ACCT",
                                 copy_from_field="MAIN_ACCT_NEW"),
@@ -347,18 +332,38 @@ def compose_circus():
 
         # customer with low account are now more likely to topup
         recharge_trigger.ops.generate(
-            observations_field="MAIN_ACCT_NEW",
+            observed_field="MAIN_ACCT_NEW",
             named_as="SHOULD_TOP_UP"),
 
         topup.ops.force_act_next(actor_id_field="A_ID",
                                  condition_field="SHOULD_TOP_UP"),
 
 
-        # triggering another call soon
-        # excited_trigger.ops.generate(named_as="A_GETTING_BURSTY"),
-        # calls.ops.transit_to_state(actor_id_field="A_ID",
-        #                            condition_field="A_GETTING_BURSTY",
-        #                            state="excited"),
+        # Trigger to get into "excited" mode because A gave a call
+        to_excited_trigger.ops.generate(
+            observed_attribute=customers.get_attribute("EXCITABILITY"),
+            named_as="A_GETTING_BURSTY"),
+
+        # transiting to excited mode, according to trigger value
+        calls.ops.transit_to_state(actor_id_field="A_ID",
+                                   condition_field="A_GETTING_BURSTY",
+                                   state="excited"),
+
+
+        # Trigger to get into "excited" mode because B received a call
+        to_excited_trigger.ops.generate(
+            observed_field="EXCITABILITY_B",
+            named_as="B_GETTING_BURSTY"),
+
+        # transiting to excited mode, according to trigger value
+        calls.ops.transit_to_state(actor_id_field="B_ID",
+                                   condition_field="B_GETTING_BURSTY",
+                                   state="excited"),
+
+        # B party need to have their time reset explicitally since they were
+        # not active at this round. A party will be reset automatically
+        calls.ops.reset_timers(actor_id_field="B_ID"),
+
 
         the_clock.ops.timestamp(named_as="DATETIME"),
 
@@ -413,10 +418,11 @@ def test_cdr_scenario():
     top_users = logs["cdr"]["A"].value_counts().head(10)
     print top_users
 
-
     customers = cdr_circus.get_actor_of(action_name="calls").to_dataframe()
     df = customers[customers["MSISDN"].isin(top_users.index)]
     print df
+
+    print "total number of cdrs: {}".format(logs["cdr"].shape[0])
 
     assert logs["cdr"].shape[0] > 0
     assert logs["topups"].shape[0] > 0

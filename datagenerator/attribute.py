@@ -12,7 +12,7 @@ class Attribute(object):
                  # init values
                  ids=None,
                  init_values=None,
-                 init_values_generator=None,
+                 init_values_gen=None,
 
                  # otherwise, we can also initialise randomly from a
                  # relationship (in which case the ids are extracted from the
@@ -24,12 +24,12 @@ class Attribute(object):
         """
 
         if ids is not None:
-            if not ((init_values is None) ^ (init_values_generator is None)):
+            if not ((init_values is None) ^ (init_values_gen is None)):
                 raise ValueError("if ids is provided, you must also provide "
                                  "init_values or init_values_generator")
 
             if init_values is None:
-                init_values = init_values_generator.generate(size=len(ids))
+                init_values = init_values_gen.generate(size=len(ids))
 
             self._table = pd.DataFrame({"value": init_values}, index=ids)
 
@@ -41,8 +41,7 @@ class Attribute(object):
             self._table = (relationship
                            .select_one()
                            .set_index("from", drop=True)
-                           .rename(columns={"to": "value"})
-                           )
+                           .rename(columns={"to": "value"}))
 
     def get_values(self, ids):
         """

@@ -82,7 +82,8 @@ class ActorAction(object):
         """
 
         # pairs of (actorid, state), to select the appropriate activity level
-        activity_idx = zip(ids, self.timer["state"])
+        activity_idx = zip(ids, self.timer.ix[ids, "state"].tolist())
+        #activity_idx = self.timer.ix[ids, "state"]
 
         activities = self.params.loc[ids][param_name].stack()[activity_idx]
         activities.index = activities.index.droplevel(level=1)
@@ -292,8 +293,7 @@ class ActorAction(object):
                 if self.condition_field is None:
                     filtered = action_data
                 else:
-                    condition = action_data[self.condition_field]
-                    filtered = action_data.where(condition)
+                    filtered = action_data[action_data[self.condition_field]]
 
                 if self.state_field is None:
                     actor_ids = filtered[self.actor_id_field].dropna()

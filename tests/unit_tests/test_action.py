@@ -1,11 +1,8 @@
-import numpy as np
-import pandas as pd
 from datagenerator.actor import Actor
 from datagenerator.action import ActorAction
-from datagenerator.operations import Operation
-from datagenerator.random_generators import *
 from datagenerator.clock import *
 from tests.mocks.random_generators import *
+
 
 def test_empty_action_should_do_nothing_and_not_crash():
 
@@ -119,6 +116,14 @@ def test_get_activity_should_be_aligned_for_each_state():
     expected_activity = [1, 1, 10, 1, 1, 10, 1, 1, 1, 10]
     assert expected_activity == action.get_param("activity",
                                                  actor.ids).tolist()
+
+    # also, doing a get_param for some specific actor ids should return the
+    # correct values (was buggy if we requested sth else than the whole list)
+    assert expected_activity[2:7] == action.get_param("activity",
+                                                      actor.ids[2:7]).tolist()
+
+    assert [1, 10] == action.get_param("activity",actor.ids[-2:]).tolist()
+
     expected_probs = [1, 1, .3, 1, 1, .3, 1, 1, 1, .3]
     assert expected_probs == action.get_param("back_to_default_probability",
                                               actor.ids, ).tolist()

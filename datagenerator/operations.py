@@ -1,3 +1,4 @@
+from __future__ import division
 import pandas as pd
 from abc import ABCMeta, abstractmethod
 import numpy as np
@@ -124,12 +125,23 @@ class Apply(AddColumns):
         The length of the source_fields must match the number columns
         in the dataframe expected by the user f function
 
-        The f function must return a dataframe with one single column,
-        named "result"
     """
 
-    def __init__(self, source_fields, named_as, f):
-        super(Apply, self).__init__()
+    def __init__(self, source_fields, named_as, f, f_args="dataframe"):
+        """
+        :param source_fields: input field from the action data
+        :param named_as: name of the resulting field added to the action data
+        :param f: tranforming fonction
+        :param f_args: "dataframe" or "columns", depending on the signature
+            of f:
+
+            - "dataframe": input and output of the function is a dataframe
+            containing one single column named "result"
+
+            - "columns" input of f is a list of columns and output is 1
+            column (like many numpy built-it function)
+        """
+        AddColumns.__init__(self)
         if type(source_fields) == str:
             self.source_fields = [source_fields]
         else:
@@ -137,11 +149,19 @@ class Apply(AddColumns):
 
         self.named_as = named_as
         self.f = f
+        if f_args not in ["dataframe", "series"]:
+            raise ValueError("unrecognized f input type: {}".format(f_args))
+
+        self.f_input = f_args
 
     def build_output(self, action_data):
-        df = self.f(action_data[self.source_fields])
-
-        return df.rename(columns={"result": self.named_as})
+        if self.f_input == "dataframe":
+            result = self.f(action_data[self.source_fields])
+            return result.rename(columns={"result": self.named_as})
+        else:
+            cols = [action_data[c] for c in self.source_fields]
+            result = pd.DataFrame({self.named_as: self.f(*cols)})
+            return result
 
 
 #####################
@@ -182,9 +202,11 @@ def logistic(a, b):
         """
         returns the value of the logistic function 1/(1+e^-(ax+b))
         """
-
         the_exp = np.minimum(-(a * x + b), 10.)
-        return 1. / (1. + np.exp(the_exp))
+        return 1 / (1 + np.exp(the_exp))
 
     return _logistic
 
+
+def identity(x):
+    return x
