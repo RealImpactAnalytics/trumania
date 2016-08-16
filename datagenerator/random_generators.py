@@ -175,8 +175,10 @@ class MSISDNGenerator(Generator):
 
 class DependentGenerator(Parameterizable):
     """
-        Generator sampling values from a random variable that depends on
-        previous observations.
+    Generator providing random values depending on some live observation
+    amonng the fields of the action or attributes of the actors.
+
+    This opens the door to "probability given" distributions
     """
 
     # TODO: observations is limited to one single column ("weights")
@@ -226,38 +228,28 @@ class DependentGenerator(Parameterizable):
             return self.RandomValues(self.generator, named_as, observations_field)
 
 
-class TriggerGenerator(DependentGenerator):
+class DependentTriggerGenerator(DependentGenerator):
     """
-    A trigger generator takes some observed values and returns a vector of
-    Booleans, depending if the trigger has been released or not
+    A trigger is a boolean Generator.
+
+    A dependent trigger transforms, with the specified function, the value
+    of the depended on action field or actor attribute into the [0, 1] range
+    and uses that as the probability of triggering (i.e. of returning True)
+
     """
 
-    def __init__(self, trigger_type, seed=None):
+    def __init__(self, value_mapper, seed=None):
 
         # random baseline to compare to each the activation
-        self.base_line = NumpyRandomGenerator(method="uniform", seed=seed)
-
-        if trigger_type == "logistic":
-            def logistic(x, a, b):
-                """returns the value of the logistic function 1/(1+e^-(ax+b))
-                """
-                the_exp = np.minimum(-(a*x+b),10.)
-                return 1./(1.+np.exp(the_exp))
-            self.triggering_function = logistic
-
-            # TODO: we could allow the API to provide those parameters
-            DependentGenerator.__init__(self, {"a": -0.01, "b": 10.})
-            self.triggering_function = logistic
-
-        else:
-            raise NotImplemented("unknown trigger type: {}".format(trigger_type))
+        DependentGenerator.__init__(self, {})
+        self.base_line = NumpyRandomGenerator(method="uniform",
+                                              low=0.0, high=1.0,
+                                              seed=seed)
+        self.value_mapper = value_mapper
 
     def generate(self, observations):
         probs = self.base_line.generate(size=observations.shape[0])
+        triggers = self.value_mapper(observations)
 
-        params = merge_2_dicts({"x": observations}, self.parameters)
-        trigger = self.triggering_function(**params)
+        return probs < triggers
 
-        # BUG here? ideally we'd trigger the high probabilities => should we
-        # "flip" the sigmoid ?
-        return probs < trigger

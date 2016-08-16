@@ -133,8 +133,8 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-    recharge_trigger = TriggerGenerator(trigger_type="logistic",
-                                        seed=seeder.next())
+    recharge_trigger = DependentTriggerGenerator(
+        value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
 
     recharge_gen = ConstantGenerator(value=1000.)
 
@@ -218,7 +218,7 @@ def compose_circus():
         recharge_gen.ops.generate(named_as="VALUE"),
 
         operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
-                         result_field="MAIN_ACCT",
+                         named_as="MAIN_ACCT",
                          f=add_value_to_account),
 
         customers.ops.overwrite(attribute="MAIN_ACCT",
@@ -238,20 +238,20 @@ def compose_circus():
     voice_duration_generator = NumpyRandomGenerator(
         method="choice", a=range(20, 240), seed=seeder.next())
 
-    def compute_call_value(data):
+    def compute_call_value(action_data):
         price_per_second = 2
-        df = data[["DURATION"]] * price_per_second
+        df = action_data[["DURATION"]] * price_per_second
 
         # must return a dataframe with a single column named "result"
         return df.rename(columns={"DURATION": "result"})
 
-    def compute_call_type(data):
+    def compute_call_type(action_data):
 
         def onnet(row):
             return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"]
                                                           == "OPERATOR_0")
 
-        result = pd.DataFrame(data.apply(onnet, axis=1), columns=["result_b"])
+        result = pd.DataFrame(action_data.apply(onnet, axis=1), columns=["result_b"])
 
         result["result"] = result["result_b"].map(
             {True: "ONNET", False: "OFFNET"})
@@ -259,25 +259,35 @@ def compose_circus():
         return result[["result"]]
 
     # TODO: cf Sipho suggestion: we could have generic "add", "diff"... operations
-    def substract_value_from_account(data):
+    def substract_value_from_account(action_data):
         # maybe we should prevent negative accounts here? or not?
-        new_value = data["MAIN_ACCT_OLD"] - data["VALUE"]
+        new_value = action_data["MAIN_ACCT_OLD"] - action_data["VALUE"]
 
         # must return a dataframe with a single column named "result"
         return pd.DataFrame(new_value, columns=["result"])
 
-    def copy_id_if_topup(data):
-        copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
-        return copied_ids.rename(columns={"A_ID": "result"})
-
     # call activity level, under normal and "excited" states
     normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
                                                  seed=seeder.next())
-    excited_call_activity = ScaledParetoGenerator(m=2, a=1.4,
+    excited_call_activity = ScaledParetoGenerator(m=1000, a=1.1,
                                                  seed=seeder.next())
 
-    back_to_normal_prob = NumpyRandomGenerator(method="beta", a=7, b=3,
-                                               seed=seeder.next())
+    # after a call, probability of getting into "excited" mode (i.e., having
+    # a shorted expected delay until next call
+    to_excited_prob = ConstantGenerator(value=1)
+
+    back_to_normal_prob = ConstantGenerator(value=0)
+
+    # TODO: that is not correct: we need to generate booleans, not p
+    # => generated uniform(0,1) and compare them to those activation levels
+    # => maybe this is a trigger attribute? though there is overlap with
+    # DependentTriggerGenerator
+
+    # to_excited_prob = NumpyRandomGenerator(method="beta", a=1, b=9,
+    #                                        seed=seeder.next())
+    #
+    # back_to_normal_prob = NumpyRandomGenerator(method="beta", a=9, b=1,
+    #                                            seed=seeder.next())
 
     calls = ActorAction(
         name="calls",
@@ -291,7 +301,7 @@ def compose_circus():
         states={
             "excited": {
                 "activity": excited_call_activity,
-                "back_to_normal_probability": back_to_normal_prob}
+                "back_to_default_probability": back_to_normal_prob}
         }
     )
 
@@ -316,7 +326,7 @@ def compose_circus():
         ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
 
         operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
-                         result_field="TYPE",
+                         named_as="TYPE",
                          f=compute_call_type),
 
         # computes the duration, value, new account amount and update
@@ -324,11 +334,11 @@ def compose_circus():
         voice_duration_generator.ops.generate(named_as="DURATION"),
 
         operations.Apply(source_fields="DURATION",
-                         result_field="VALUE",
+                         named_as="VALUE",
                          f=compute_call_value),
 
         operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
-                         result_field="MAIN_ACCT_NEW",
+                         named_as="MAIN_ACCT_NEW",
                          f=substract_value_from_account),
 
         customers.ops.overwrite(attribute="MAIN_ACCT",
@@ -340,12 +350,15 @@ def compose_circus():
             observations_field="MAIN_ACCT_NEW",
             named_as="SHOULD_TOP_UP"),
 
-        operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
-                         result_field="TOPPING_UP_A_IDS",
-                         f=copy_id_if_topup),
+        topup.ops.force_act_next(actor_id_field="A_ID",
+                                 condition_field="SHOULD_TOP_UP"),
 
-        topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
 
+        # triggering another call soon
+        # excited_trigger.ops.generate(named_as="A_GETTING_BURSTY"),
+        # calls.ops.transit_to_state(actor_id_field="A_ID",
+        #                            condition_field="A_GETTING_BURSTY",
+        #                            state="excited"),
 
         the_clock.ops.timestamp(named_as="DATETIME"),
 
@@ -398,6 +411,9 @@ def test_cdr_scenario():
 
     print "users having highest amount of calls: "
     top_users = logs["cdr"]["A"].value_counts().head(10)
+    print top_users
+
+
     customers = cdr_circus.get_actor_of(action_name="calls").to_dataframe()
     df = customers[customers["MSISDN"].isin(top_users.index)]
     print df

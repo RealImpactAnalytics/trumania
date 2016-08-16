@@ -18,12 +18,12 @@ class ActorAction(object):
         :param actorid_field: when building the action data, a field will be
             automatically inserted containing the actor id, with this name
 
-        :param activity: generator for the "normal" activity levels of the
+        :param activity: generator for the default activity levels of the
             actors for this action. Default: same level for everybody
 
         :param states: dictionary of states providing activity level for
             other states of the actors + a probability level to transit back to
-            the normal state after each execution (NOT after each clock
+            the default state after each execution (NOT after each clock
             tick). Default: no supplementary states.
 
         :param timer_gen: timer generator: this must be a generator able to
@@ -39,23 +39,23 @@ class ActorAction(object):
         self.time_generator = timer_gen
 
         # activity and transition probability parameters, for each state
-        self.params = pd.DataFrame({("normal", "activity"): 0},
+        self.params = pd.DataFrame({("default", "activity"): 0},
                                    index=triggering_actor.ids)
 
-        normal_state = {"normal": {
+        default_state = {"default": {
             "activity": activity,
-            "back_to_normal_probability": ConstantGenerator(value=1.),
+            "back_to_default_probability": ConstantGenerator(value=1.),
         }}
-        for state, state_gens in merge_2_dicts(normal_state, states).items():
+        for state, state_gens in merge_2_dicts(default_state, states).items():
             activity_vals = state_gens["activity"].generate(size=self.size)
-            probs_vals = state_gens["back_to_normal_probability"].generate(
+            probs_vals = state_gens["back_to_default_probability"].generate(
                 size=self.size)
 
             self.params[("activity", state)] = activity_vals
-            self.params[("back_to_normal_probability", state)] = probs_vals
+            self.params[("back_to_default_probability", state)] = probs_vals
 
         # current state and timer value for each actor id
-        self.timer = pd.DataFrame({"state": "normal"}, index=self.params.index)
+        self.timer = pd.DataFrame({"state": "default"}, index=self.params.index)
         self.reset_timers()
 
         self.ops = self.ActionOps(self)
@@ -71,11 +71,11 @@ class ActorAction(object):
         # the first operation is always a "who acts now" and ends with a
         # clock reset
         self.operations = [self._WhoActsNow(self)] + list(operations) + [
-            self.ops.ResetTimers(self), self._MaybeBackToNormal(self)]
+            self.ops.ResetTimers(self), self._MaybeBackToDefault(self)]
 
     def get_param(self, param_name, ids):
         """
-        :param param_name: either "activity" or ""back_to_normal_probability""
+        :param param_name: either "activity" or ""back_to_default_probability""
         :param ids: actor ids
         :return: the activity level of each requested actor id, depending its
         current state
@@ -196,11 +196,11 @@ class ActorAction(object):
                          drop=False, inplace=True)
             return df
 
-    class _MaybeBackToNormal(SideEffectOnly):
+    class _MaybeBackToDefault(SideEffectOnly):
         """
         This is an internal operation of Action, that transits actors
-        back to normal with probability as declared in
-        back_to_normal_probability
+        back to default with probability as declared in
+        back_to_default_probability
         """
 
         def __init__(self, action):
@@ -210,44 +210,54 @@ class ActorAction(object):
         def side_effect(self, action_data):
             # only transiting actors that have ran during this clock tick
             active_timer = self.action.timer.loc[action_data.index]
-            non_normal_ids = active_timer[active_timer["state"] !=
-                                          "normal"].index
 
-            if non_normal_ids.shape[0] == 0:
+            non_default_ids = active_timer[
+                active_timer["state"] != "default"].index
+
+            if non_default_ids.shape[0] == 0:
                 return
 
-            back_prob = self.action.get_param("back_to_normal_probability",
-                                              non_normal_ids)
+            back_prob = self.action.get_param("back_to_default_probability",
+                                              non_default_ids)
 
             baseline = self.judge.generate(back_prob.shape[0])
 
             actor_ids = back_prob[back_prob > baseline].index
-            state = ["normal"] * actor_ids.shape[0]
+            states = ["default"] * actor_ids.shape[0]
 
-            self.action.transit_to_state(ids=actor_ids, state=state)
+            self.action.transit_to_state(ids=actor_ids, states=states)
 
     class ActionOps(object):
         class ForceActNext(SideEffectOnly):
-            def __init__(self, action, active_ids_field):
+            def __init__(self, action, actor_id_field, condition_field):
                 self.action = action
-                self.active_ids_field = active_ids_field
+                self.active_ids_field = actor_id_field
+                self.condition_field = condition_field
 
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
                     # active_ids_field should contain NA: which are all the
                     # actior _NOT_ being forced to trigger
-                    ids = action_data[self.active_ids_field].dropna().values
+
+                    if self.condition_field is None:
+                        filtered = action_data
+                    else:
+                        condition = action_data[self.condition_field]
+                        filtered = action_data.where(condition)
+
+                    ids = filtered[self.active_ids_field].dropna().values
                     self.action.force_act_next(ids)
 
         def __init__(self, action):
             self.action = action
 
-        def force_act_next(self, active_ids_field):
+        def force_act_next(self, actor_id_field, condition_field=None):
             """
             Sets the timer of those actor to 0, forcing them to act at the
             next clock tick
             """
-            return self.ForceActNext(self.action, active_ids_field)
+            return self.ForceActNext(self.action, actor_id_field,
+                                     condition_field)
 
         class ResetTimers(SideEffectOnly):
             def __init__(self, action, actor_id_field=None):
@@ -269,19 +279,43 @@ class ActorAction(object):
             return self.ResetTimers(self.action, actor_id_field)
 
         class TransitToState(SideEffectOnly):
-            def __init__(self, action, actor_id_field, state_field):
+            def __init__(self, action, actor_id_field, state_field, state,
+                         condition_field):
                 self.action = action
                 self.state_field = state_field
+                self.state=state
                 self.actor_id_field = actor_id_field
+                self.condition_field = condition_field
 
             def side_effect(self, action_data):
-                updated = action_data[[self.actor_id_field, self.state_field]].dropna()
-                self.action.transit_to_state(ids=updated[self.actor_id_field],
-                                             states=updated[self.state_field])
 
-        def transit_to_state(self, actor_id_field, state_field):
+                if self.condition_field is None:
+                    filtered = action_data
+                else:
+                    condition = action_data[self.condition_field]
+                    filtered = action_data.where(condition)
+
+                if self.state_field is None:
+                    actor_ids = filtered[self.actor_id_field].dropna()
+                    states = [self.state] * actor_ids.shape[0]
+
+                else:
+                    updated = filtered[[self.actor_id_field, self.state_field]].dropna()
+                    actor_ids = updated[self.actor_id_field]
+                    states = updated[self.state_field].tolist()
+
+                self.action.transit_to_state(ids=actor_ids, states=states)
+
+        def transit_to_state(self, actor_id_field, state_field=None,
+                             state=None, condition_field=None):
             """
             changes the state of those actor ids
             """
-            return self.TransitToState(self.action, actor_id_field, state_field)
+
+            if not ((state_field is None) ^ (state is None)):
+                raise ValueError("must provide exactly one of state_field or "
+                                 "state")
+
+            return self.TransitToState(self.action, actor_id_field,
+                                       state_field, state, condition_field)
 

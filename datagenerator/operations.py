@@ -1,5 +1,6 @@
 import pandas as pd
 from abc import ABCMeta, abstractmethod
+import numpy as np
 
 
 class Operation(object):
@@ -127,17 +128,63 @@ class Apply(AddColumns):
         named "result"
     """
 
-    def __init__(self, source_fields, result_field, f):
+    def __init__(self, source_fields, named_as, f):
         super(Apply, self).__init__()
         if type(source_fields) == str:
             self.source_fields = [source_fields]
         else:
             self.source_fields = source_fields
 
-        self.result_field = result_field
+        self.named_as = named_as
         self.f = f
 
     def build_output(self, action_data):
         df = self.f(action_data[self.source_fields])
 
-        return df.rename(columns={"result": self.result_field})
+        return df.rename(columns={"result": self.named_as})
+
+
+#####################
+# Collection of functions directly usable in Apply
+
+def copy_if(action_data):
+    """
+    Copies values from the source to the "named_as" if the condition is True,
+    otherwise inserts NA
+
+    usage:
+
+        Apply(source_fields=["some_source_field", "some_condition_field"],
+              named_as="some_result_field",
+              f=copy_if)
+    """
+
+    condition_field, source_field = action_data.columns
+    copied = action_data.where(action_data[condition_field])[[source_field]]
+    return copied.rename(columns={source_field: "result"})
+
+
+def logistic(a, b):
+    """
+
+    Returns a function, usable in an Apply operation, that transforms the
+    specified field with a sigmoid with the provided parameters
+    _logistic
+
+    usage:
+
+        Apply(source_fields=["some_source_field"],
+              named_as="some_result_field",
+              f=sigmoid(a=-0.01, b=10.)
+    """
+
+    def _logistic(x):
+        """
+        returns the value of the logistic function 1/(1+e^-(ax+b))
+        """
+
+        the_exp = np.minimum(-(a * x + b), 10.)
+        return 1. / (1. + np.exp(the_exp))
+
+    return _logistic
+
