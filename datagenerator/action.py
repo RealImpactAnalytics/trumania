@@ -142,27 +142,7 @@ class ActorAction(object):
 
             self.timer.loc[ids, "remaining"] = new_timer
 
-    # @staticmethod
-    # def execute_operation((action_data, prev_logs), operation):
-    #     """
-    #
-    #     executes this operation and merges its logs with the previous one
-    #     :param operation: the operation to call
-    #     :return: the merged action data and logs
-    #     """
-    #
-    #     output, supp_logs = operation(action_data)
-    #     # merging the logs of each operation of this action.
-    #     # TODO: I guess just adding pd.concat at the end of this would allow
-    #     # multiple operations to contribute to the same log => to be checked...
-    #     return output, merge_dicts([prev_logs, supp_logs])
-
     def execute(self):
-
-        # empty dataframe and logs to start with:
-#        init = [(None, {})]
-
-        #_, all_logs = reduce(self.execute_operation, init + self.operations)
         _, all_logs = self.operation_chain([(None, {})])
         self.timer_tick()
 
