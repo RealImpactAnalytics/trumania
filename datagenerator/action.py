@@ -1,6 +1,6 @@
 from datagenerator.clock import *
 from datagenerator.random_generators import *
-from datagenerator.operations import *
+from datagenerator import operations
 from datagenerator.util_functions import *
 
 
@@ -62,16 +62,18 @@ class ActorAction(object):
 
         # in case self.operations is not called, at least we have a basic
         # selection
-        self.operations = [self._WhoActsNow(self)]
+        self.operation_chain = operations.Chain(self._WhoActsNow(self))
 
-    def set_operations(self, *operations):
+    def set_operations(self, *ops):
         """
         :param operations: sequence of operations to be executed at each step
         """
-        # the first operation is always a "who acts now" and ends with a
-        # clock reset
-        self.operations = [self._WhoActsNow(self)] + list(operations) + [
-            self.ops.ResetTimers(self), self._MaybeBackToDefault(self)]
+        self.operation_chain = operations.Chain(*(
+            # the first operation is always a "who acts now"
+            [self._WhoActsNow(self)] +
+            list(ops) +
+            [self.ops.ResetTimers(self), self._MaybeBackToDefault(self)]
+        ))
 
     def get_param(self, param_name, ids):
         """
@@ -83,8 +85,6 @@ class ActorAction(object):
 
         # pairs of (actorid, state), to select the appropriate activity level
         activity_idx = zip(ids, self.timer.ix[ids, "state"].tolist())
-        #activity_idx = self.timer.ix[ids, "state"]
-
         activities = self.params.loc[ids][param_name].stack()[activity_idx]
         activities.index = activities.index.droplevel(level=1)
         return activities
@@ -107,7 +107,7 @@ class ActorAction(object):
 
     def timer_tick(self):
 
-        positive_idx = self.timer[self.timer["remaining"] > 0].index
+        positive_idx = self.timer[self.timer["remaining"] >= 0].index
         if len(positive_idx) > 0:
             self.timer.loc[positive_idx, "remaining"] -= 1
 
@@ -142,27 +142,28 @@ class ActorAction(object):
 
             self.timer.loc[ids, "remaining"] = new_timer
 
-    @staticmethod
-    def execute_operation((action_data, prev_logs), operation):
-        """
-
-        executes this operation and merges its logs with the previous one
-        :param operation: the operation to call
-        :return: the merged action data and logs
-        """
-
-        output, supp_logs = operation(action_data)
-        # merging the logs of each operation of this action.
-        # TODO: I guess just adding pd.concat at the end of this would allow
-        # multiple operations to contribute to the same log => to be checked...
-        return output, merge_dicts([prev_logs, supp_logs])
+    # @staticmethod
+    # def execute_operation((action_data, prev_logs), operation):
+    #     """
+    #
+    #     executes this operation and merges its logs with the previous one
+    #     :param operation: the operation to call
+    #     :return: the merged action data and logs
+    #     """
+    #
+    #     output, supp_logs = operation(action_data)
+    #     # merging the logs of each operation of this action.
+    #     # TODO: I guess just adding pd.concat at the end of this would allow
+    #     # multiple operations to contribute to the same log => to be checked...
+    #     return output, merge_dicts([prev_logs, supp_logs])
 
     def execute(self):
 
         # empty dataframe and logs to start with:
-        init = [(None, {})]
+#        init = [(None, {})]
 
-        _, all_logs = reduce(self.execute_operation, init + self.operations)
+        #_, all_logs = reduce(self.execute_operation, init + self.operations)
+        _, all_logs = self.operation_chain([(None, {})])
         self.timer_tick()
 
         if len(all_logs.keys()) == 0:
