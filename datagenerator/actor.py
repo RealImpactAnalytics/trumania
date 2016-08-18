@@ -1,6 +1,5 @@
-import numpy as np
 from datagenerator.operations import *
-
+from datagenerator.random_generators import *
 
 class Actor(object):
     """
@@ -146,3 +145,41 @@ class Actor(object):
             Overwrite the value of this attribute with values in this field
             """
             return self.Overwrite(self.actor, attribute, copy_from_field)
+
+
+class AttributeDependentTriggerGenerator(object):
+    """
+    This is basically a Trigger that depends on an Attribute value
+
+    => this is the very common case where an actor has some
+    probability to act (a user getting bursty, a health level of a
+    cell...)
+
+    """
+
+    def __init__(self, actor, seeder):
+        self.actor = actor
+        self.seeder = seeder
+
+    class _AttributeDependentTriggerGenerator(AddColumns):
+        def __init__(self, actor, trigger, actor_id_field, named_as):
+
+            self.actor_id_field = actor_id_field
+            self.named_as = named_as
+            self.actor = actor
+            self.trigger = trigger
+
+        def build_output(self, action_data):
+            # TODO
+
+            values = self.trigger.generate(observations=obs)
+            return pd.DataFrame({self.named_as: values},
+                                index=action_data.index)
+
+    def generate(self, actor_id_field, named_as):
+        trigger = DependentTrigger(seed=self.seeder.next())
+
+        return self._AttributeDependentTriggerGenerator(
+            self.actor, trigger, actor_id_field, named_as)
+
+

@@ -20,7 +20,89 @@ params = {
 }
 
 
-def add_mobility(circus, customers, seeder):
+def add_cells(circus, seeder):
+    """
+    Creates the CELL actors + the actions to let them randomly break down and
+    get back up
+    """
+    cells = Actor(prefix="CELL_", size = params["n_cells"])
+
+    # the cell "health" is its probability of accepting a call. By default
+    # let's says it's one expected failure every 1000 calls
+    healthy_level_gen = NumpyRandomGenerator(method="beta", a=999, b=1,
+                                             seed=seeder.next())
+
+    # tendency is inversed in case of broken cell: it's probability of
+    # accepting a call is much lower
+    unhealthy_level_gen = NumpyRandomGenerator(method="beta", a=1, b=999,
+                                             seed=seeder.next())
+
+    health = Attribute(ids=cells.ids, init_values_gen=healthy_level_gen)
+    cells.add_attribute(name="HEALTH", attr=health)
+
+    # same profiler for breakdown and repair: they are both related to
+    # typical human activity
+    default_day_profiler = DayProfiler(step=params["time_step"])
+    default_day_profiler.initialise(circus.clock)
+
+    cell_break_down_action = ActorAction(
+        name="cell_break_down",
+
+        triggering_actor=cells,
+        actorid_field="CELL_ID",
+
+        timer_gen=default_day_profiler,
+
+        # fault activity is very low: most cell tend never to break down (
+        # hopefully...)
+        activity=ScaledParetoGenerator(m=5, a=1.4, seed=seeder.next())
+    )
+
+    cell_repair_action = ActorAction(
+        name="cell_break_down",
+
+        triggering_actor=cells,
+        actorid_field="CELL_ID",
+
+        timer_gen=default_day_profiler,
+
+        # repair activity is much higher
+        activity=ScaledParetoGenerator(m=100, a=1.2, seed=seeder.next()),
+
+        # repair is not re-scheduled at the end of a repair, but only triggered
+        # from a "break-down" action
+        auto_reset_timer=False
+    )
+
+    cell_break_down_action.set_operations(
+        unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
+        cells.ops.overwrite(attribute="HEALTH",
+                            copy_from_field="NEW_HEALTH_LEVEL"),
+        cell_repair_action.ops.reset_timers(actor_id_field="CELL_ID"),
+        circus.clock.ops.timestamp(named_as="TIME"),
+
+        operations.FieldLogger(log_id="cell_status",
+                               cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
+    )
+
+    cell_repair_action.set_operations(
+        healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
+        cells.ops.overwrite(attribute="HEALTH",
+                            copy_from_field="NEW_HEALTH_LEVEL"),
+        circus.clock.ops.timestamp(named_as="TIME"),
+
+        # note that both actions are contributing to the same "cell_status" log
+        operations.FieldLogger(log_id="cell_status",
+                               cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
+    )
+
+    circus.add_action(cell_break_down_action)
+    circus.add_action(cell_repair_action)
+
+    return cells
+
+
+def add_mobility(circus, customers, cells, seeder):
     """
     adds a CELL attribute to the customer actor + a mobility action that
     randomly moves customers from CELL to CELL among their used cells.
@@ -43,9 +125,8 @@ def add_mobility(circus, customers, seeder):
 
     mobility = Relationship(name="people's cell location", seed=seeder.next())
 
-    cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(params["n_cells"])]
     mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, cells, 0.4,
+        make_random_bipartite_data(customers.ids, cells.ids, 0.4,
                                    seed=seeder.next()),
         columns=["USER_ID", "CELL"])
 
@@ -218,7 +299,14 @@ def compute_cdr_type(action_data):
     return result[["result"]]
 
 
-def add_communications(circus, customers, seeder):
+def compute_call_status(action_data):
+    dropped = action_data["CELL_A_ACCEPTS"] & action_data["CELL_B_ACCEPTS"]
+
+    status = dropped.map({True: "OK", False: "DROPPED"})
+    return pd.DataFrame({"result": status})
+
+
+def add_communications(circus, customers, cells, seeder):
     """
     Adds Calls and SMS actions, which in turn may trigger topups actions.
     """
@@ -273,11 +361,14 @@ def add_communications(circus, customers, seeder):
     # "excited" mode (i.e., having a shorted expected delay until next call
     excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
                                             seed=seeder.next())
+
     excitability = Attribute(ids=customers.ids,
                              init_values_gen=excitability_gen)
     customers.add_attribute(name="EXCITABILITY", attr=excitability)
 
-    to_excited_trigger = DependentTriggerGenerator(seed=seeder.next())
+    # same "basic" trigger, without any value mapper
+    flat_trigger = DependentTriggerGenerator(seed=seeder.next())
+
     back_to_normal_prob = NumpyRandomGenerator(method="beta", a=3, b=7,
                                                seed=seeder.next())
 
@@ -335,11 +426,29 @@ def add_communications(circus, customers, seeder):
                              select={"MSISDN": "B",
                                      "OPERATOR": "OPERATOR_B",
                                      "CELL": "CELL_B",
-                                     "EXCITABILITY": "EXCITABILITY_B"}),
+                                     "EXCITABILITY": "EXCITABILITY_B"
+                                     }),
 
         operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
                          named_as="TYPE",
                          f=compute_cdr_type),
+    )
+
+    # Both CELL_A and CELL_B might drop the call, based on their current "health"
+    compute_cell_status = Chain(
+        flat_trigger.ops.generate_from_attr(
+            observed_attribute=cells.get_attribute("HEALTH"),
+            observed_attribute_actor_id_field="CELL_A",
+            named_as="CELL_A_ACCEPTS"),
+
+        flat_trigger.ops.generate_from_attr(
+            observed_attribute=cells.get_attribute("HEALTH"),
+            observed_attribute_actor_id_field="CELL_B",
+            named_as="CELL_B_ACCEPTS"),
+
+        operations.Apply(source_fields=["CELL_A_ACCEPTS", "CELL_B_ACCEPTS"],
+                         named_as="STATUS",
+                         f=compute_call_status)
     )
 
     # update the main account based on the value of this CDR
@@ -355,7 +464,7 @@ def add_communications(circus, customers, seeder):
     # triggers the topup action if the main account is low
     trigger_topups = Chain(
         # customer with low account are now more likely to topup
-        recharge_trigger.ops.generate(
+        recharge_trigger.ops.generate_from_field(
             observed_field="MAIN_ACCT_NEW",
             named_as="SHOULD_TOP_UP"),
 
@@ -368,8 +477,9 @@ def add_communications(circus, customers, seeder):
     get_bursty = Chain(
         # Trigger to get into "excited" mode because A gave a call or sent an
         #  SMS
-        to_excited_trigger.ops.generate(
+        flat_trigger.ops.generate_from_attr(
             observed_attribute=customers.get_attribute("EXCITABILITY"),
+            observed_attribute_actor_id_field="A_ID",
             named_as="A_GETTING_BURSTY"),
 
         calls.ops.transit_to_state(actor_id_field="A_ID",
@@ -380,7 +490,7 @@ def add_communications(circus, customers, seeder):
                                  state="excited"),
 
         # Trigger to get into "excited" mode because B received a call
-        to_excited_trigger.ops.generate(
+        flat_trigger.ops.generate_from_field(
             observed_field="EXCITABILITY_B",
             named_as="B_GETTING_BURSTY"),
 
@@ -402,6 +512,7 @@ def add_communications(circus, customers, seeder):
     calls.set_operations(
 
         compute_ab_fields,
+        compute_cell_status,
 
         ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
         voice_duration_generator.ops.generate(named_as="DURATION"),
@@ -415,7 +526,8 @@ def add_communications(circus, customers, seeder):
 
         # final CDRs
         operations.FieldLogger(log_id="voice_cdr",
-                               cols=["DATETIME", "A", "B", "DURATION", "VALUE",
+                               cols=["DATETIME", "A", "B", "STATUS",
+                                     "DURATION", "VALUE",
                                      "CELL_A", "OPERATOR_A",
                                      "CELL_B", "OPERATOR_B",
                                      "TYPE",   "PRODUCT"]),
@@ -424,6 +536,7 @@ def add_communications(circus, customers, seeder):
     sms.set_operations(
 
         compute_ab_fields,
+        compute_cell_status,
 
         ConstantGenerator(value="SMS").ops.generate(named_as="PRODUCT"),
         operations.Apply(source_fields=["DATETIME", "TYPE"],
@@ -436,7 +549,8 @@ def add_communications(circus, customers, seeder):
 
         # final CDRs
         operations.FieldLogger(log_id="sms_cdr",
-                               cols=["DATETIME", "A", "B", "VALUE",
+                               cols=["DATETIME", "A", "B", "STATUS",
+                                     "VALUE",
                                      "CELL_A", "OPERATOR_A",
                                      "CELL_B", "OPERATOR_B",
                                      "TYPE", "PRODUCT"]),
@@ -480,9 +594,10 @@ def test_cdr_scenario():
 
     flying = Circus(the_clock)
 
-    add_mobility(flying, customers, seeder)
+    cells = add_cells(flying, seeder)
+    add_mobility(flying, customers, cells, seeder)
     add_topups(flying, customers, seeder)
-    add_communications(flying, customers, seeder)
+    add_communications(flying, customers, cells, seeder)
     built_time = pd.Timestamp(datetime.now())
 
     # running it
@@ -493,8 +608,17 @@ def test_cdr_scenario():
         print " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string())
 
     print "users having highest amount of calls: "
-    top_users = logs["voice_cdr"]["A"].value_counts().head(10)
+    voice_cdr = logs["voice_cdr"]
+    top_users = voice_cdr["A"].value_counts().head(10)
     print top_users
+
+    print "some dropped calls: "
+    dropped_calls = voice_cdr[voice_cdr["STATUS"] == "DROPPED"]
+
+    if dropped_calls.shape[0] > 15:
+        print dropped_calls.sample(15).sort_values("DATETIME")
+    else:
+        print dropped_calls
 
     customers = flying.get_actor_of(action_name="calls").to_dataframe()
     df = customers[customers["MSISDN"].isin(top_users.index)]

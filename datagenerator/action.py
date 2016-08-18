@@ -8,7 +8,8 @@ class ActorAction(object):
     def __init__(self, name,
                  triggering_actor, actorid_field,
                  activity=ConstantGenerator(value=1.), states=None,
-                 timer_gen=ConstantProfiler(-1)):
+                 timer_gen=ConstantProfiler(-1),
+                 auto_reset_timer=True):
         """
         :param name: name of this action
 
@@ -30,6 +31,10 @@ class ActorAction(object):
             generate new timer values based on the activity level. Default:
             no such generator, in which case the timer never triggers this
             action.
+
+        :param auto_reset_timer: if True, we automatically re-schedule a new
+            execution for the same actor id after at the end of the previous
+            ont, by resetting the timer.
         """
 
         self.name = name
@@ -37,6 +42,7 @@ class ActorAction(object):
         self.actorid_field_name = actorid_field
         self.size = triggering_actor.size
         self.time_generator = timer_gen
+        self.auto_reset_timer = auto_reset_timer
 
         # activity and transition probability parameters, for each state
         self.params = pd.DataFrame({("default", "activity"): 0},
@@ -55,8 +61,10 @@ class ActorAction(object):
             self.params[("back_to_default_probability", state)] = probs_vals
 
         # current state and timer value for each actor id
-        self.timer = pd.DataFrame({"state": "default"}, index=self.params.index)
-        self.reset_timers()
+        self.timer = pd.DataFrame({"state": "default", "remaining": -1},
+                                  index=self.params.index)
+        if self.auto_reset_timer:
+            self.reset_timers()
 
         self.ops = self.ActionOps(self)
 
@@ -68,9 +76,13 @@ class ActorAction(object):
         """
         :param operations: sequence of operations to be executed at each step
         """
-        self.operation_chain = operations.Chain(*( list(ops) +
-            [self.ops.ResetTimers(self), self._MaybeBackToDefault(self)]
-            ))
+
+        all_ops = list(ops)
+        if self.auto_reset_timer:
+            all_ops += [self.ops.ResetTimers(self)]
+        all_ops += [self._MaybeBackToDefault(self)]
+
+        self.operation_chain = operations.Chain(*all_ops)
 
     def get_param(self, param_name, ids):
         """

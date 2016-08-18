@@ -13,35 +13,14 @@ def seed_provider(master_seed):
         yield state.randint(1, max_int_32)
 
 
-class Parameterizable(object):
-    """
-    Mixin providing the ability to contain and update parameters.
-    """
-
-    def __init__(self, parameters):
-        self.parameters = parameters
-
-    def update_parameters(self, **kwargs):
-        # TODO: ultimately, this can evolve into an Action operation => the
-        # random generations characteristics evole over time
-
-        # TODO2: cf discussion from Gautier: those parameters could become
-        # columns of parameters => 1 value per actor
-        self.parameters.update(kwargs)
-
-        # TODO: this is actually not working: we need the sub-classes to
-        # to "reload" accordingly...
-
-
-class Generator(Parameterizable):
+class Generator():
     """
     Independent parameterized random value generator.
     Abstract class
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, parameters):
-        Parameterizable.__init__(self, parameters)
+    def __init__(self):
         self.ops = self.GeneratorOps(self)
 
     @abstractmethod
@@ -79,7 +58,7 @@ class Generator(Parameterizable):
 
 class ConstantGenerator(Generator):
     def __init__(self, value):
-        Generator.__init__(self, {})
+        Generator.__init__(self)
         self.value = value
 
     def generate(self, size):
@@ -101,17 +80,18 @@ class NumpyRandomGenerator(Generator):
         :param seed: int, seed of the generator
         :return: create a random number generator of type "gen_type", with its parameters and seeded.
         """
-        Generator.__init__(self, numpy_parameters)
+        Generator.__init__(self)
+        self.numpy_parameters = numpy_parameters
         self.numpy_method = getattr(RandomState(seed), method)
 
     def generate(self, size):
-        all_params = merge_2_dicts({"size": size}, self.parameters)
+        all_params = merge_2_dicts({"size": size}, self.numpy_parameters)
         return self.numpy_method(**all_params)
 
 
 class ScaledParetoGenerator(Generator):
     def __init__(self, m, seed=None, **numpy_parameters):
-        Generator.__init__(self, numpy_parameters)
+        Generator.__init__(self)
 
         self.stock_pareto = NumpyRandomGenerator(method="pareto", seed=seed,
                                                  **numpy_parameters)
@@ -137,7 +117,7 @@ class MSISDNGenerator(Generator):
         :param seed: int
         :return:
         """
-        Generator.__init__(self, {})
+        Generator.__init__(self)
         self.__cc = countrycode
         self.__pref = prefix_list
         self.__length = length
@@ -174,7 +154,7 @@ class MSISDNGenerator(Generator):
         return msisdns
 
 
-class DependentGenerator(Parameterizable):
+class DependentGenerator(object):
     """
     Generator providing random values depending on some live observation
     among the fields of the action or attributes of the actors.
@@ -186,8 +166,7 @@ class DependentGenerator(Parameterizable):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, parameters):
-        Parameterizable.__init__(self, parameters)
+    def __init__(self):
         self.ops = self.DependentGeneratorOps(self)
 
     @abstractmethod
@@ -208,42 +187,64 @@ class DependentGenerator(Parameterizable):
         def __init__(self, generator):
             self.generator = generator
 
-        class RandomValues(AddColumns):
+        class RandomValuesFromField(AddColumns):
             """
             Operation that produces one single column generated randomly.
             """
 
-            def __init__(self, generator, named_as, observations_field,
-                         attribute):
+            def __init__(self, generator, named_as, observations_field):
                 AddColumns.__init__(self)
-
-                if not ((attribute is None) ^ (observations_field is None)):
-                    raise ValueError("can only depend on exactly one of "
-                                     "attribute or observation_field")
 
                 self.generator = generator
                 self.named_as = named_as
                 self.observations_field = observations_field
-                self.attribute = attribute
 
             def build_output(self, action_data):
                 # observing either a field or an attribute
-                if self.observations_field is not None:
-                    obs = action_data[self.observations_field]
-                else:
-                    obs = self.attribute.get_values(action_data.index)
-
-                values = self.generator.generate(observations=obs)
+                obs = action_data[self.observations_field]
+                values = self.generator.generate(observations=obs).values
                 return pd.DataFrame({self.named_as: values},
                                     index=action_data.index)
 
-        def generate(self, named_as, observed_field=None,
-                     observed_attribute=None):
-            return self.RandomValues(self.generator, named_as,
-                                     observed_field, observed_attribute)
+        class RandomValuesFromAttr(AddColumns):
+            """
+            Operation that produces one single attribute generated randomly.
+            """
+
+            def __init__(self, generator, named_as, attribute,
+                         attribute_actor_id_field):
+                AddColumns.__init__(self)
+
+                self.generator = generator
+                self.named_as = named_as
+                self.attribute = attribute
+                self.attribute_actor_id_field = attribute_actor_id_field
+
+            def build_output(self, action_data):
+                actor_ids = action_data[self.attribute_actor_id_field]
+                obs = self.attribute.get_values(actor_ids)
+                values = self.generator.generate(observations=obs).values
+                return pd.DataFrame({self.named_as: values},
+                                    index=action_data.index)
+
+        def generate_from_field(self, named_as, observed_field):
+            """
+            :param named_as:
+            :param observed_field:
+            :return:
+            """
+            return self.RandomValuesFromField(self.generator, named_as,
+                                              observed_field)
+
+        def generate_from_attr(self, named_as, observed_attribute,
+                               observed_attribute_actor_id_field):
+
+            return self.RandomValuesFromAttr(
+                self.generator, named_as, observed_attribute,
+                observed_attribute_actor_id_field)
 
 
-class DependentTriggerGenerator(DependentGenerator):
+class DependentTrigger(object):
     """
     A trigger is a boolean Generator.
 
@@ -256,7 +257,6 @@ class DependentTriggerGenerator(DependentGenerator):
     def __init__(self, value_mapper=identity, seed=None):
 
         # random baseline to compare to each the activation
-        DependentGenerator.__init__(self, {})
         self.base_line = NumpyRandomGenerator(method="uniform",
                                               low=0.0, high=1.0,
                                               seed=seed)
@@ -267,4 +267,17 @@ class DependentTriggerGenerator(DependentGenerator):
         triggers = self.value_mapper(observations)
 
         return probs < triggers
+
+
+class DependentTriggerGenerator(DependentTrigger, DependentGenerator):
+    """
+    Composition of the two mixin above:
+        DependentGenerator: , with the ability to build operation that generate
+         random values
+        DependentTrigger: to specify that the the generation actually
+        produces booleans with a value_mapper
+    """
+    def __init__(self, value_mapper=identity, seed=None):
+        DependentTrigger.__init__(self, value_mapper, seed)
+        DependentGenerator.__init__(self)
 

@@ -2,6 +2,8 @@ import pandas as pd
 from datagenerator.util_functions import merge_dicts
 
 
+df_concat = lambda d1, d2: pd.concat([d1, d2]).reset_index(drop=True)
+
 class Circus(object):
     """
     A Circus is just a container of a lot of objects that are required to make the simulation
@@ -87,7 +89,8 @@ class Circus(object):
         # generalizes this to having several actions contributing to the same
         # log (e.g. "cdrs", from both the "SMS" and "VOICE" action
 
-        logs = merge_dicts(action.execute() for action in self.__actions)
+        logs = merge_dicts((action.execute() for action in self.__actions),
+                           df_concat)
 
         for i in self.__incrementors:
             i.increment()
@@ -107,8 +110,6 @@ class Circus(object):
 
         print "starting circus"
         all_actions_logs = (self.one_round(r) for r in range(n_iterations))
-
-        df_concat = lambda d1, d2: pd.concat([d1, d2]).reset_index(drop=True)
 
         # merging logs from all actions
         return merge_dicts(all_actions_logs, df_concat)
