@@ -86,7 +86,8 @@ class Clock(object):
 
             def build_output(self, action_data):
                 values = self.clock.get_timestamp(action_data.shape[0]).values
-                df = pd.DataFrame({self.named_as: values}, index=action_data.index)
+                df = pd.DataFrame({self.named_as: values},
+                                  index=action_data.index)
                 return df
 
         def timestamp(self, named_as):

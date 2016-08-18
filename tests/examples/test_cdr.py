@@ -32,9 +32,8 @@ def add_mobility(circus, customers, seeder):
         [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1.,
          5., 10., 5., 1., 1., 1., 1.],
         index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
-    mobility_time_gen = DayProfiler(params["time_step"],
-                                  mov_prof,
-                                  seed=seeder.next())
+    mobility_time_gen = DayProfiler(params["time_step"], mov_prof,
+                                    seed=seeder.next())
     mobility_time_gen.initialise(circus.clock)
 
     # Mobility network, i.e. choice of cells per user, i.e. these are the
@@ -86,7 +85,7 @@ def add_mobility(circus, customers, seeder):
         circus.clock.ops.timestamp(named_as="TIME"),
 
         # create mobility logs
-        operations.FieldLogger(log_id="mobility",
+        operations.FieldLogger(log_id="mobility_logs",
                                cols=["TIME", "A_ID", "OPERATOR",
                                      "PREV_CELL", "NEW_CELL", ]),
     )
@@ -451,6 +450,8 @@ def add_communications(circus, customers, seeder):
 def test_cdr_scenario():
 
     # building the circus
+    start_time = pd.Timestamp(datetime.now())
+
     seeder = seed_provider(master_seed=123456)
     the_clock = Clock(datetime(year=2016, month=6, day=8), params["time_step"],
                       "%d%m%Y %H:%M:%S", seed=seeder.next())
@@ -482,28 +483,14 @@ def test_cdr_scenario():
     add_mobility(flying, customers, seeder)
     add_topups(flying, customers, seeder)
     add_communications(flying, customers, seeder)
-    print "Done"
+    built_time = pd.Timestamp(datetime.now())
 
     # running it
     logs = flying.run(n_iterations=50)
+    execution_time = pd.Timestamp(datetime.now())
 
-    print ("""
-        some voice cdrs:
-          {}
-
-        some sms cdrs:
-          {}
-
-        some mobility events:
-          {}
-
-        some topup event:
-          {}
-    """.format(
-        logs["voice_cdr"].head(15).to_string(),
-        logs["sms_cdr"].head(15).to_string(),
-        logs["topups"].head(15).to_string(),
-        logs["mobility"].tail(15).to_string()))
+    for logid, lg in logs.iteritems():
+        print " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string())
 
     print "users having highest amount of calls: "
     top_users = logs["voice_cdr"]["A"].value_counts().head(10)
@@ -514,8 +501,10 @@ def test_cdr_scenario():
     print df
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
-    print "total number of logs: {}".format(all_logs_size)
+    print "\ntotal number of logs: {}".format(all_logs_size)
 
-    assert logs["voice_cdr"].shape[0] > 0
-    assert logs["topups"].shape[0] > 0
-    assert logs["mobility"].shape[0] > 0
+    print """\nexecution times: "
+     - building the circus: {}
+     - running the simulation: {}
+    """.format(built_time - start_time, execution_time - built_time)
+

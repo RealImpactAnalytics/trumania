@@ -59,12 +59,11 @@ class Relationship(object):
         if selected.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
 
-        result = (selected
-                  .groupby(by="from", sort=False)
+        result = (selected.groupby(by="from", sort=False)
                   .apply(lambda df: df.sample(n=1, weights="weight")[["to"]]))
 
         result.reset_index(inplace=True)
-        result = result.rename(columns={"to": named_as, "index": "from"})
+        result.rename(columns={"to": named_as, "index": "from"}, inplace=True)
         # this one comes from the df in apply
         result.drop("level_1", axis=1, inplace=True)
 
@@ -124,8 +123,15 @@ class Relationship(object):
 
                 if self.one_to_one and merged.shape[0] > 0:
                     # drops randomly any onto relationship
-                    merged = (merged
-                              .sample(frac=1)
+
+                    # TODO (?): I guess this skews the distribution in case of a
+                    # lot of collisions => we could filter earlier (but that
+                    # would be slower)
+
+                    idx = range(merged.shape[0])
+                    np.random.shuffle(idx)
+
+                    merged = (merged.iloc[idx]
                               .drop_duplicates(subset=self.named_as,
                                                keep="first"))
 

@@ -110,7 +110,8 @@ class Actor(object):
                     actor_ids = action_data[self.actor_id_field].unique()
                     vals = pd.DataFrame(
                         self.actor.get_attribute_values(attribute, actor_ids),
-                        ).rename(columns={"value": named_as})
+                        )
+                    vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
                                       left_on=self.actor_id_field,
@@ -118,7 +119,8 @@ class Actor(object):
 
                 # self.actor_id_field is already in the parent result, we only
                 # want to return the new columns from here
-                return output.drop(self.actor_id_field, axis=1)
+                output.drop(self.actor_id_field, axis=1, inplace=True)
+                return output
 
         def lookup(self, actor_id_field, select):
             """

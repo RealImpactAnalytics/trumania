@@ -5,6 +5,20 @@ def test_merge_two_empty_dict_should_return_empty_dict():
     assert {} == merge_2_dicts({}, {})
 
 
+def test_merge_two_none_dict_should_return_empty_dict():
+    assert {} == merge_2_dicts(None, None)
+
+
+def test_merging_one_dict_with_none_should_yield_dict():
+    d1 = {"a": 1, "b": 2}
+    assert d1 == merge_2_dicts(d1, None)
+
+
+def test_merging_none_with_one_dict_should_yield_dict():
+    d2 = {"a": 1, "b": 2}
+    assert d2 == merge_2_dicts(None, d2)
+
+
 def test_merge_empty_with_dict_should_return_itself():
 
     d1 = {"a": 1, "b": 2}
@@ -29,11 +43,6 @@ def test_merge_dict_to_itslef_should_return_doubled_values():
 def test_merging_one_dictionary_should_yield_itself():
     d1 = {"a": 1, "b": 2}
     assert d1 == merge_dicts([d1], lambda a, b: a+b)
-
-
-def test_merging_one_dict_with_none_should_yield_dict():
-    d1 = {"a": 1, "b": 2}
-    assert d1 == merge_2_dicts(d1, None)
 
 
 def test_merging_many_dictionary_should_yield_expected_result():

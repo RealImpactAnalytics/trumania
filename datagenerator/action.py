@@ -62,18 +62,15 @@ class ActorAction(object):
 
         # in case self.operations is not called, at least we have a basic
         # selection
-        self.operation_chain = operations.Chain(self._WhoActsNow(self))
+        self.operation_chain = operations.Chain()
 
     def set_operations(self, *ops):
         """
         :param operations: sequence of operations to be executed at each step
         """
-        self.operation_chain = operations.Chain(*(
-            # the first operation is always a "who acts now"
-            [self._WhoActsNow(self)] +
-            list(ops) +
+        self.operation_chain = operations.Chain(*( list(ops) +
             [self.ops.ResetTimers(self), self._MaybeBackToDefault(self)]
-        ))
+            ))
 
     def get_param(self, param_name, ids):
         """
@@ -143,40 +140,18 @@ class ActorAction(object):
             self.timer.loc[ids, "remaining"] = new_timer
 
     def execute(self):
-        _, all_logs = self.operation_chain([(None, {})])
+
+        ids = self.who_acts_now()
+
+        if ids.shape[0] == 0:
+            all_logs = None
+
+        else:
+            ids_df = pd.DataFrame({self.actorid_field_name: ids}, index=ids)
+            _, all_logs = self.operation_chain(ids_df)
+
         self.timer_tick()
-
-        if len(all_logs.keys()) == 0:
-            return None
-
-        if len(all_logs.keys()) > 1:
-            # TODO: add support for more than one log emitting within the action
-            raise NotImplemented("not supported yet: circus can only handle "
-                                 "one logger per ActorAction")
-
         return all_logs
-
-    class _WhoActsNow(Operation):
-        """
-        Initial operation of an Action: creates a basic Dataframe with the
-        ids of the actor that are triggered by the clock now
-        """
-        # TODO: if we remove this action but do this as first step of
-        # execute + allow None to be return, clock ticks with no actor
-        # executing might be faster
-
-        def __init__(self, action):
-            self.action = action
-
-        def transform(self, ignored_input):
-            ids = self.action.who_acts_now()
-
-            df = pd.DataFrame(ids, columns=[self.action.actorid_field_name])
-
-            # makes sure the actor id is also kept as index
-            df.set_index(self.action.actorid_field_name,
-                         drop=False, inplace=True)
-            return df
 
     class _MaybeBackToDefault(SideEffectOnly):
         """
