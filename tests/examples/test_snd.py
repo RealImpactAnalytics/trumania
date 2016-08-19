@@ -48,7 +48,7 @@ def compose_circus():
     activity_gen = NumpyRandomGenerator(method="choice", a = range(1, 4),
                                         seed=seeder.next())
 
-    timegen = WeekProfiler(the_clock, time_step, prof, seed=seeder.next())
+    timegen = WeekProfiler(the_clock, prof, seed=seeder.next())
     agentweightgenerator = NumpyRandomGenerator(method="exponential", scale= 1.)
 
     ######################################

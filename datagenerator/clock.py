@@ -1,7 +1,6 @@
+from __future__ import division
 from datetime import timedelta
-import numpy as np
 from numpy.random import RandomState
-import pandas as pd
 import itertools
 from datagenerator.operations import *
 
@@ -30,6 +29,13 @@ class Clock(object):
         self.__current = start
         self.step_s = step_s
         self.step_delta = timedelta(seconds=step_s)
+        self.number_of_ticks_per_day = int(24 * 60 * 60 / step_s)
+        self.number_of_ticks_per_week = 7 * self.number_of_ticks_per_day
+
+        self.day_index = int((start.hour * 3600 + start.minute * 60
+                              + start.second) / step_s)
+        self.week_index = int((start.weekday() * 24 * 3600) /
+                              step_s) + self.day_index
 
         self.__format_for_out = format_for_out
         self.__state = RandomState(seed)
@@ -42,6 +48,8 @@ class Clock(object):
         :return: None
         """
         self.__current += self.step_delta
+        self.day_index = (self.day_index + 1) % self.number_of_ticks_per_day
+        self.week_index = (self.week_index + 1) % self.number_of_ticks_per_week
 
     def get_timestamp(self, size=1):
         """Returns random timestamps within the current value of the clock and the next step
@@ -64,10 +72,7 @@ class Clock(object):
         :rtype: int
         :return: the count of number of steps already taken since the start of the week
         """
-        return (self.__current.hour * 3600 +
-                self.__current.minute * 60 +
-                self.__current.second
-                ) / self.step_s
+        return self.week_index
 
     def get_day_index(self):
         """Return the number of steps in which the Clock is from the start of the day.
@@ -76,10 +81,7 @@ class Clock(object):
         :rtype: int
         :return: the count of number of steps already taken since the start of the day
         """
-        return (self.__current.hour * 3600 +
-                self.__current.minute * 60 +
-                self.__current.second
-                ) / self.step_s
+        return self.day_index
 
     class ClockOps(object):
         def __init__(self, clock):

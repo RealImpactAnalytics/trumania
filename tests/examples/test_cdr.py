@@ -561,8 +561,9 @@ def test_cdr_scenario():
     start_time = pd.Timestamp(datetime.now())
 
     seeder = seed_provider(master_seed=123456)
-    the_clock = Clock(datetime(year=2016, month=6, day=8), params["time_step"],
-                      "%d%m%Y %H:%M:%S", seed=seeder.next())
+    the_clock = Clock(datetime(year=2016, month=6, day=8),
+                      params["time_step"], "%d%m%Y %H:%M:%S",
+                      seed=seeder.next())
 
     customers = Actor(params["n_customers"])
 
