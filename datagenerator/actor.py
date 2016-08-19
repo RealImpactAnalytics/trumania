@@ -1,5 +1,6 @@
-from datagenerator.operations import *
+from datagenerator.relationship import *
 from datagenerator.random_generators import *
+
 
 class Actor(object):
     """
@@ -18,6 +19,22 @@ class Actor(object):
         self._attributes = {}
         self.ops = self.ActorOps(self)
         self.size = len(self.ids)
+        self.relationships = {}
+
+    def create_relationship(self, name, seed):
+        """
+        creates an empty relation ship from this actor
+        """
+
+        if name is self.relationships:
+            raise ValueError("cannot create a second relationship with "
+                             "existing name {}".format(name))
+
+        self.relationships[name] = Relationship(seed=seed)
+        return self.relationships[name]
+
+    def get_relationship(self, name):
+        return self.relationships[name]
 
     def add_attribute(self, name, attr):
         self._attributes[name] = attr

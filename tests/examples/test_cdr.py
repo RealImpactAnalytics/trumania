@@ -109,10 +109,8 @@ def add_mobility(circus, customers, cells, seeder):
 
     # mobility time profile: assign high mobility activities to busy hours
     # of the day
-    mov_prof = pd.Series(
-        [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1.,
-         5., 10., 5., 1., 1., 1., 1.],
-        index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
+    mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1.,
+                1., 1., 5., 10., 5., 1., 1., 1., 1.]
     mobility_time_gen = DayProfiler(circus.clock, mov_prof, seed=seeder.next())
 
     # Mobility network, i.e. choice of cells per user, i.e. these are the
@@ -120,21 +118,22 @@ def add_mobility(circus, customers, cells, seeder):
     mobility_weight_gen = NumpyRandomGenerator(
         method="exponential", scale=1., seed=seeder.next())
 
-    mobility = Relationship(name="people's cell location", seed=seeder.next())
+    mobility_rel = customers.create_relationship("POSSIBLE_CELLS",
+                                                 seed=seeder.next())
 
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(customers.ids, cells.ids, 0.4,
                                    seed=seeder.next()),
         columns=["USER_ID", "CELL"])
 
-    mobility.add_relations(
+    mobility_rel.add_relations(
         from_ids=mobility_df["USER_ID"],
         to_ids=mobility_df["CELL"],
         weights=mobility_weight_gen.generate(mobility_df.shape[0]))
 
     # Initialize the mobility by allocating one first random cell to each
     # customer among its network
-    cell_attr = Attribute(relationship=mobility)
+    cell_attr = Attribute(relationship=mobility_rel)
     customers.add_attribute(name="CELL", attr=cell_attr)
 
     # Mobility action itself, basically just a random hop from cell to cell,
@@ -154,7 +153,7 @@ def add_mobility(circus, customers, cells, seeder):
                                      "OPERATOR": "OPERATOR"}),
 
         # selects a destination cell
-        mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
+        mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
         # update the CELL attribute of the customers accordingly
         customers.ops.overwrite(attribute="CELL",
@@ -169,6 +168,34 @@ def add_mobility(circus, customers, cells, seeder):
     )
 
     circus.add_action(mobility_action)
+
+
+def add_social_network(customers, seeder):
+    """
+    Creates a random relationship from and to customers, to represent the
+    social network
+    """
+
+    # create a random A to B symmetric relationship
+    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
+                                                   seed=seeder.next())
+
+    social_network_values = create_er_social_network(
+        customer_ids=customers.ids,
+        p=params["average_degree"]/ params["n_customers"],
+        seed=seeder.next())
+
+    social_network = customers.create_relationship("FRIENDS",
+                                                   seed=seeder.next())
+    social_network.add_relations(
+        from_ids=social_network_values["A"].values,
+        to_ids=social_network_values["B"].values,
+        weights=networkweightgenerator.generate(social_network_values.shape[0]))
+
+    social_network.add_relations(
+        from_ids=social_network_values["B"].values,
+        to_ids=social_network_values["A"].values,
+        weights=networkweightgenerator.generate(social_network_values.shape[0]))
 
 
 def add_topups(circus, customers, seeder):
@@ -190,7 +217,8 @@ def add_topups(circus, customers, seeder):
                                    seed=seeder.next()),
         columns=["USER_ID", "AGENT"])
 
-    agent_rel = Relationship(name="people's agent", seed=seeder.next())
+    agent_rel = customers.create_relationship("POSSIBLE_SHOPS",
+                                              seed=seeder.next())
 
     agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.,
                                             seed=seeder.next())
@@ -308,27 +336,6 @@ def add_communications(circus, customers, cells, seeder):
     Adds Calls and SMS actions, which in turn may trigger topups actions.
     """
 
-    # create a random A to B symmetric relationship
-    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
-                                                   seed=seeder.next())
-
-    social_network_values = create_er_social_network(
-        customer_ids=customers.ids,
-        p=params["average_degree"]/ params["n_customers"],
-        seed=seeder.next())
-
-    social_network = Relationship(name="neighbours", seed=seeder.next())
-
-    social_network.add_relations(
-        from_ids=social_network_values["A"].values,
-        to_ids=social_network_values["B"].values,
-        weights=networkweightgenerator.generate(social_network_values.shape[0]))
-
-    social_network.add_relations(
-        from_ids=social_network_values["B"].values,
-        to_ids=social_network_values["A"].values,
-        weights=networkweightgenerator.generate(social_network_values.shape[0]))
-
     # generators for topups and call duration
     recharge_trigger = DependentTriggerGenerator(
         value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
@@ -337,13 +344,9 @@ def add_communications(circus, customers, cells, seeder):
         method="choice", a=range(20, 240), seed=seeder.next())
 
     # call and sms timer generator, depending on the day of the week
-
-    week_profile = pd.Series([5., 5., 5., 5., 5., 3., 3.],
-                             index=[timedelta(days=x, hours=23, minutes=59,
-                                              seconds=59)
-                             for x in range(7)])
-
-    call_timegen = WeekProfiler(circus.clock, week_profile, seed=seeder.next())
+    call_timegen = WeekProfiler(clock=circus.clock,
+                                week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                                seed=seeder.next())
 
     # call activity level, under normal and "excited" states
     normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
@@ -405,9 +408,9 @@ def add_communications(circus, customers, cells, seeder):
         circus.clock.ops.timestamp(named_as="DATETIME"),
 
         # selects a B party
-        social_network.ops.select_one(from_field="A_ID",
-                                      named_as="B_ID",
-                                      one_to_one=True),
+        customers.get_relationship("FRIENDS").ops.select_one(from_field="A_ID",
+                                                             named_as="B_ID",
+                                                             one_to_one=True),
 
         # some static fields
         customers.ops.lookup(actor_id_field="A_ID",
@@ -590,6 +593,7 @@ def test_cdr_scenario():
 
     cells = add_cells(flying, seeder)
     add_mobility(flying, customers, cells, seeder)
+    add_social_network(customers, seeder)
     add_topups(flying, customers, seeder)
     add_communications(flying, customers, cells, seeder)
     built_time = pd.Timestamp(datetime.now())

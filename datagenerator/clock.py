@@ -45,9 +45,6 @@ class Clock(object):
 
     def register_increment_listener(self, listener):
         """Add an object to be incremented at each step (such as a TimeProfiler)
-
-        :param to_increment:
-        :return:
         """
         self.__increment_listeners.append(listener)
 
@@ -131,6 +128,29 @@ class TimeProfiler(object):
 
     """
 
+    # TODO: this concept seems now a specific case of the DependentGenerator
+    # and is actually a first use case for a probability
+    # given distribution, where the pdf changes depending on an external value
+    # (here, the day or week index)
+    #
+    # it also shares the generate(self, observations) signature, although
+    # here the observation is the same value for all actors
+    #
+    # also, we already have another factor influencing the timer generation:
+    # the state of the actorAction (e.g bursty vs normal)
+
+    # => this all could be merged into one 3D joint distribution
+    # (time_index, state, timer_value), for which we systematically marginalize
+    # the time_index and state based on observations and generate timer_values
+    # according to the result :)
+    #
+    # => to be merged with the states of the ActorAction => this will also
+    # simplify the calling API, allowing something like
+    #    timer=DayTimerTrigger(...specify the states activity here )
+    #
+    # (to be refined...)
+    #
+
     def __init__(self, clock, profile, seed=None):
         """
         This should not be used, only child classes
@@ -205,12 +225,13 @@ class TimeProfiler(object):
 
 
 class WeekProfiler(TimeProfiler):
-    """WeekProfiler is a TimeProfiler on a period of a week. This imposes that the last time bin in the profile
-    of the constructor needs to be equal to 6 days, 23h, 59m and 59s.
+    """WeekProfiler is a TimeProfiler on a period of a week.
+        This imposes that the last time bin in the profile
+        of the constructor needs to be equal to 6 days, 23h, 59m and 59s.
 
     """
 
-    def __init__(self, clock, profile, seed=None):
+    def __init__(self, clock, week_profile, seed=None):
         """
 
         :type step: int
@@ -224,7 +245,15 @@ class WeekProfiler(TimeProfiler):
         :param seed: seed for random number generator, default None
         :return:
         """
-        assert profile.index.values[-1] == np.timedelta64(604799, "s")
+
+        if len(week_profile) != 7:
+            raise ValueError("Week profile must be initialized with 7 daily "
+                             "weights")
+
+        profile = pd.Series(
+            week_profile,
+            index=[timedelta(days=d, hours=23, minutes=59, seconds=59)
+                   for d in range(7)])
 
         TimeProfiler.__init__(self, clock, profile, seed)
 
@@ -246,12 +275,11 @@ class DayProfiler(TimeProfiler):
 
     # naked eye guesstimation from
     # https://github.com/RealImpactAnalytics/lab-home-work-detection/blob/3bacb58a53f69824102437a27218149f75d322e2/pub/chimayblue/01%20basic%20exploration.ipynb
-    default_profile = pd.Series(
-        [1, .5, .2, .15, .2, .4, 3.8, 7.2, 8.4, 9.1, 9.0, 8.3, 8.1, 7.7, 7.4,
-         7.8, 8.0, 7.9, 9.7, 10.4, 10.5, 8.8, 5.7, 2.8],
-        index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
+    default_profile = [1, .5, .2, .15, .2, .4, 3.8, 7.2, 8.4, 9.1, 9.0, 8.3,
+                       8.1, 7.7, 7.4, 7.8, 8.0, 7.9, 9.7, 10.4, 10.5, 8.8,
+                       5.7, 2.8]
 
-    def __init__(self, clock, profile=default_profile, seed=None):
+    def __init__(self, clock, day_profile=default_profile, seed=None):
         """
 
         :type step: int
@@ -265,7 +293,15 @@ class DayProfiler(TimeProfiler):
         :param seed: seed for random number generator, default None
         :return:
         """
-        assert profile.index.values[-1] == np.timedelta64(86399, "s")
+
+        if len(day_profile) != 24:
+            raise ValueError("day profile must be initialized with 24 hourly"
+                             "weights")
+
+        profile = pd.Series(
+            day_profile,
+            index=[timedelta(hours=h, minutes=59, seconds=59)
+                   for h in range(24)])
 
         TimeProfiler.__init__(self, clock, profile, seed)
 

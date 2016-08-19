@@ -30,7 +30,7 @@ def test_updated_and_read_values_in_attribute_should_be_equal():
 
 def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
-    oneto1= Relationship(name="tested", seed=1)
+    oneto1= Relationship(seed=1)
     oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
                          to_ids=["ta", "tb", "tc", "td", "te"])
 

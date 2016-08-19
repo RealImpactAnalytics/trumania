@@ -4,14 +4,14 @@ from datagenerator.relationship import Relationship
 
 # bug fix: this was simply crashing previously
 def test_select_one_from_empty_relationship_should_return_void():
-    tested = Relationship(name="tested", seed=1)
+    tested = Relationship(seed=1)
 
     assert tested.select_one([]).shape[0] == 0
 
 
 # bug fix: this was simply crashing previously
 def test_select_one_from_non_existing_ids_should_return_void():
-    tested = Relationship(name="tested", seed=1)
+    tested = Relationship(seed=1)
     tested.add_relations(from_ids=["a", "b", "b", "c"],
                          to_ids=["b", "c", "a", "b"])
 
@@ -19,7 +19,7 @@ def test_select_one_from_non_existing_ids_should_return_void():
 
 
 def test_select_one_from_all_ids_should_return_one_line_per_id():
-    tested = Relationship(name="tested", seed=1)
+    tested = Relationship(seed=1)
     tested.add_relations(from_ids=["a", "b", "b", "c"],
                          to_ids=["b", "c", "a", "b"])
 
@@ -30,7 +30,7 @@ def test_select_one_from_all_ids_should_return_one_line_per_id():
 
 def test_one_to_one_relationship_should_find_unique_counterpart():
 
-    oneto1= Relationship(name="tested", seed=1)
+    oneto1= Relationship(seed=1)
     oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
                          to_ids=["ta", "tb", "tc", "td", "te"])
 
@@ -42,7 +42,7 @@ def test_one_to_one_relationship_should_find_unique_counterpart():
 
 def test_one_to_one_relationship_operation_should_find_unique_counterpart():
 
-    oneto1= Relationship(name="tested", seed=1)
+    oneto1= Relationship(seed=1)
     oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
                          to_ids=["ta", "tb", "tc", "td", "te"])
 
@@ -63,7 +63,7 @@ def test_one_to_one_relationship_operation_should_find_unique_counterpart():
 
 def test_select_one_to_one_should_not_return_duplicates_1():
 
-    four_to_one = Relationship(name="tested", seed=1)
+    four_to_one = Relationship(seed=1)
     four_to_one.add_relations(from_ids=["a", "b", "c", "d"],
                               to_ids=["z", "z", "z", "z"])
 
@@ -82,7 +82,7 @@ def test_select_one_to_one_should_not_return_duplicates_1():
 
 def test_select_one_to_one_should_not_return_duplicates_2():
 
-    four_to_two = Relationship(name="tested", seed=1)
+    four_to_two = Relationship(seed=1)
     four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
                               to_ids=["y", "y", "y", "y"])
     four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
@@ -104,7 +104,7 @@ def test_select_one_to_one_should_not_return_duplicates_2():
 def test_select_one_to_one_among_no_data_should_return_nothing():
     #(instead of crashing...)
 
-    four_to_one = Relationship(name="tested", seed=1)
+    four_to_one = Relationship(seed=1)
     four_to_one.add_relations(from_ids=["a", "b", "c", "d"],
                               to_ids=["z", "z", "z", "z"])
 

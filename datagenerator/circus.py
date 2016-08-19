@@ -33,7 +33,6 @@ class Circus(object):
         self.__items = {}
         self.clock = clock
         self.__actions = []
-        self.__incrementors = []
 
     def add_item(self, name, item):
         """Add an Item object to the list of items
@@ -71,14 +70,14 @@ class Circus(object):
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
 
-    def one_round(self, round_number):
+    def one_step(self, round_number):
         """
         Performs one round of actions
 
         :return:
         """
 
-        print "round : {}".format(round_number)
+        print "step : {}".format(round_number)
 
         # puts the logs of all actions into one grand dictionary.
         logs = merge_dicts((action.execute() for action in self.__actions),
@@ -98,7 +97,7 @@ class Circus(object):
         """
 
         print "starting circus"
-        all_actions_logs = (self.one_round(r) for r in range(n_iterations))
+        all_actions_logs = (self.one_step(r) for r in range(n_iterations))
 
         # merging logs from all actions
         return merge_dicts(all_actions_logs, df_concat)
