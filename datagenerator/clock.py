@@ -41,6 +41,16 @@ class Clock(object):
         self.__state = RandomState(seed)
         self.ops = self.ClockOps(self)
 
+        self.__increment_listeners = []
+
+    def register_increment_listener(self, listener):
+        """Add an object to be incremented at each step (such as a TimeProfiler)
+
+        :param to_increment:
+        :return:
+        """
+        self.__increment_listeners.append(listener)
+
     def increment(self):
         """Increments the clock by 1 step
 
@@ -50,6 +60,9 @@ class Clock(object):
         self.__current += self.step_delta
         self.day_index = (self.day_index + 1) % self.number_of_ticks_per_day
         self.week_index = (self.week_index + 1) % self.number_of_ticks_per_week
+
+        for listener in self.__increment_listeners:
+            listener.increment()
 
     def get_timestamp(self, size=1):
         """Returns random timestamps within the current value of the clock and the next step
@@ -148,6 +161,9 @@ class TimeProfiler(object):
         self._profile = pd.DataFrame({"weight": norm_prof,
                                       "next_prob": np.nan,
                                       "timeframe": np.arange(len(norm_prof))})
+
+        # makes sure we'll get notified when the clock goes forward
+        clock.register_increment_listener(self)
 
     def get_profile(self):
         """Returns the profile, for debugging mostly

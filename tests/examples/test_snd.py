@@ -135,8 +135,6 @@ def compose_circus():
     )
 
     flying.add_action(purchase)
-
-    flying.add_increment(timegen)
     print "Done"
 
     return flying

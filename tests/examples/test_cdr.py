@@ -343,8 +343,7 @@ def add_communications(circus, customers, cells, seeder):
                                               seconds=59)
                              for x in range(7)])
 
-    timegen = WeekProfiler(circus.clock, week_profile, seed=seeder.next())
-    circus.add_increment(timegen)
+    call_timegen = WeekProfiler(circus.clock, week_profile, seed=seeder.next())
 
     # call activity level, under normal and "excited" states
     normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
@@ -374,7 +373,7 @@ def add_communications(circus, customers, cells, seeder):
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        timer_gen=timegen,
+        timer_gen=call_timegen,
         activity=normal_call_activity,
 
         states={
@@ -390,7 +389,7 @@ def add_communications(circus, customers, cells, seeder):
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        timer_gen=timegen,
+        timer_gen=call_timegen,
         activity=normal_call_activity,
 
         states={

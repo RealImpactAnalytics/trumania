@@ -2,7 +2,11 @@ import pandas as pd
 from datagenerator.util_functions import merge_dicts
 
 
-df_concat = lambda d1, d2: pd.concat([d1, d2]).reset_index(drop=True)
+def df_concat(d1, d2):
+        df = pd.concat([d1, d2])
+        df.reset_index(drop=True, inplace=True)
+        return df
+
 
 class Circus(object):
     """
@@ -67,14 +71,6 @@ class Circus(object):
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
 
-    def add_increment(self, to_increment):
-        """Add an object to be incremented at each step (such as a TimeProfiler)
-
-        :param to_increment:
-        :return:
-        """
-        self.__incrementors.append(to_increment)
-
     def one_round(self, round_number):
         """
         Performs one round of actions
@@ -85,15 +81,8 @@ class Circus(object):
         print "round : {}".format(round_number)
 
         # puts the logs of all actions into one grand dictionary.
-        # TODO: same as in Action: I guess just adding pd.concat directly
-        # generalizes this to having several actions contributing to the same
-        # log (e.g. "cdrs", from both the "SMS" and "VOICE" action
-
         logs = merge_dicts((action.execute() for action in self.__actions),
                            df_concat)
-
-        for i in self.__incrementors:
-            i.increment()
 
         self.clock.increment()
 
