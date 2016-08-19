@@ -95,8 +95,7 @@ def add_cells(circus, seeder):
                                cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
     )
 
-    circus.add_action(cell_break_down_action)
-    circus.add_action(cell_repair_action)
+    circus.add_actions(cell_break_down_action, cell_repair_action)
 
     return cells
 
@@ -299,8 +298,6 @@ def compute_sms_value(action_data):
     """
         Computes the value of an call based on duration, onnet/offnet and time
         of the day.
-
-        This is meant to be called in an Apply of the CDR use case
     """
     return pd.DataFrame({"result": 10}, index=action_data.index)
 
@@ -308,8 +305,6 @@ def compute_sms_value(action_data):
 def compute_cdr_type(action_data):
     """
         Computes the ONNET/OFFNET value based on the operator ids
-
-        This is meant to be called in an Apply of the CDR use case
     """
     def onnet(row):
         return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"]
@@ -423,8 +418,7 @@ def add_communications(circus, customers, cells, seeder):
                              select={"MSISDN": "B",
                                      "OPERATOR": "OPERATOR_B",
                                      "CELL": "CELL_B",
-                                     "EXCITABILITY": "EXCITABILITY_B"
-                                     }),
+                                     "EXCITABILITY": "EXCITABILITY_B"}),
 
         operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
                          named_as="TYPE",
@@ -553,8 +547,7 @@ def add_communications(circus, customers, cells, seeder):
                                      "TYPE", "PRODUCT"]),
     )
 
-    circus.add_action(calls)
-    circus.add_action(sms)
+    circus.add_actions(calls, sms)
 
 
 def test_cdr_scenario():
@@ -563,11 +556,12 @@ def test_cdr_scenario():
     start_time = pd.Timestamp(datetime.now())
 
     seeder = seed_provider(master_seed=123456)
-    the_clock = Clock(datetime(year=2016, month=6, day=8),
-                      params["time_step"], "%d%m%Y %H:%M:%S",
+    the_clock = Clock(start=datetime(year=2016, month=6, day=8),
+                      step_s=params["time_step"],
+                      format_for_out="%d%m%Y %H:%M:%S",
                       seed=seeder.next())
 
-    customers = Actor(params["n_customers"])
+    customers = Actor(size=params["n_customers"])
 
     msisdn_gen = MSISDNGenerator(countrycode="0032",
                                  prefix_list=["472", "473", "475", "476",

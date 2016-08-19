@@ -193,9 +193,15 @@ class ActorAction(object):
             back_prob = self.action.get_param("back_to_default_probability",
                                               non_default_ids)
 
-            baseline = self.judge.generate(back_prob.shape[0])
+            if np.all(back_prob == 0):
+                cond = [False] * non_default_ids.shape[0]
+            elif np.all(back_prob == 1):
+                cond = [True] * non_default_ids.shape[0]
+            else:
+                baseline = self.judge.generate(back_prob.shape[0])
+                cond = back_prob > baseline
 
-            actor_ids = back_prob[back_prob > baseline].index
+            actor_ids = back_prob[cond].index
             states = ["default"] * actor_ids.shape[0]
 
             self.action.transit_to_state(ids=actor_ids, states=states)

@@ -63,6 +63,11 @@ class Attribute(object):
 
 
 class LabeledStockAttribute(Attribute):
+    # TODO: maybe the LabeledStockAttribute is actually a dyanmic relationship
+    # i.e. we could just move those methods to Relationship to allow updates
+    # usually, a relationship describes potential links (e.g. list of shops
+    # a person can buy from), though here is encompasses the set of SIM owned
+    #  by a person. This is ok 
     """Transient Attribute where users own some stock of labeled items
 
     """

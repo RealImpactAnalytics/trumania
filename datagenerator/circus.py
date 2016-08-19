@@ -64,6 +64,10 @@ class Circus(object):
         """
         self.__actions.append(action)
 
+    def add_actions(self, *actions):
+        for action in actions:
+            self.add_action(action)
+
     def get_action(self, action_name):
         return filter(lambda a: a.name == action_name, self.__actions)[0]
 
