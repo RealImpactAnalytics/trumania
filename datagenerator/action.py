@@ -146,8 +146,12 @@ class ActorAction(object):
             ids = self.timer.index
 
         if len(ids) > 0:
-            new_timer = self.time_generator.generate(
-                weights=self.get_param("activity", ids))
+            activity = self.get_param("activity", ids)
+
+            new_timer = self.time_generator.generate(weights=activity)
+
+            # replacing any generated timer with -1 for fully inactive actors
+            new_timer = new_timer.where(cond=activity, other=-1)
 
             self.timer.loc[ids, "remaining"] = new_timer
 
