@@ -25,7 +25,7 @@ def add_cells(circus, seeder):
     Creates the CELL actors + the actions to let them randomly break down and
     get back up
     """
-    cells = Actor(prefix="CELL_", size = params["n_cells"])
+    cells = Actor(prefix="CELL_", size=params["n_cells"])
 
     # the cell "health" is its probability of accepting a call. By default
     # let's says it's one expected failure every 1000 calls
@@ -42,8 +42,7 @@ def add_cells(circus, seeder):
 
     # same profiler for breakdown and repair: they are both related to
     # typical human activity
-    default_day_profiler = DayProfiler(step=params["time_step"])
-    default_day_profiler.initialise(circus.clock)
+    default_day_profiler = DayProfiler(circus.clock)
 
     cell_break_down_action = ActorAction(
         name="cell_break_down",
@@ -114,9 +113,7 @@ def add_mobility(circus, customers, cells, seeder):
         [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1.,
          5., 10., 5., 1., 1., 1., 1.],
         index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
-    mobility_time_gen = DayProfiler(params["time_step"], mov_prof,
-                                    seed=seeder.next())
-    mobility_time_gen.initialise(circus.clock)
+    mobility_time_gen = DayProfiler(circus.clock, mov_prof, seed=seeder.next())
 
     # Mobility network, i.e. choice of cells per user, i.e. these are the
     # weighted "used cells" (as in "most used cells) for each user
@@ -346,9 +343,7 @@ def add_communications(circus, customers, cells, seeder):
                                               seconds=59)
                              for x in range(7)])
 
-    timegen = WeekProfiler(params["time_step"], week_profile,
-                           seed=seeder.next())
-    timegen.initialise(circus.clock)
+    timegen = WeekProfiler(circus.clock, week_profile, seed=seeder.next())
     circus.add_increment(timegen)
 
     # call activity level, under normal and "excited" states
@@ -434,7 +429,7 @@ def add_communications(circus, customers, cells, seeder):
                          f=compute_cdr_type),
     )
 
-    # Both CELL_A and CELL_B might drop the call, based on their current "health"
+    # Both CELL_A and CELL_B might drop the call based on their current HEALTH
     compute_cell_status = Chain(
         flat_trigger.ops.generate_from_attr(
             observed_attribute=cells.get_attribute("HEALTH"),
@@ -554,7 +549,6 @@ def add_communications(circus, customers, cells, seeder):
                                      "CELL_A", "OPERATOR_A",
                                      "CELL_B", "OPERATOR_B",
                                      "TYPE", "PRODUCT"]),
-
     )
 
     circus.add_action(calls)
