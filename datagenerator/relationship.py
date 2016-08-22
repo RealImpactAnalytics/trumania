@@ -74,21 +74,8 @@ class Relationship(object):
         if drop:
             self._table.drop(selected["selected_index"], inplace=True)
 
-            selected.drop("selected_index", axis=1, inplace=True)
+        selected.drop("selected_index", axis=1, inplace=True)
         return selected
-
-    # def pop_one(self, **select_kwargs):
-    #     """
-    #     Same as select_one, but the chosen rows are deleted
-    #     :param key_columnn:
-    #     :param keys:
-    #     :return:
-    #     """
-    #
-    #     selected = self._select_one(**select_kwargs)
-    #     self._table.drop(selected["selected_index"], inplace=True)
-    #     selected.drop("selected_index", axis=1, inplace=True)
-    #     return selected
 
     def remove(self, from_ids, to_ids):
         lines = self._table[self._table["from"].isin(from_ids) &
