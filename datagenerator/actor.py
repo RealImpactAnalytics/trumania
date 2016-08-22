@@ -1,4 +1,3 @@
-from datagenerator.relationship import *
 from datagenerator.random_generators import *
 from datagenerator.attribute import *
 
@@ -35,10 +34,6 @@ class Actor(object):
 
     def create_attribute(self, name, **kwargs):
         self._attributes[name] = Attribute(actor=self, **kwargs)
-        return self._attributes[name]
-
-    def create_multi_attribute(self, name, **kwargs):
-        self._attributes[name] = MultiAttribute(actor=self, **kwargs)
         return self._attributes[name]
 
     def get_attribute(self, attribute_name):

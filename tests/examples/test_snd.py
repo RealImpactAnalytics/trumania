@@ -31,7 +31,7 @@ def create_agents_with_sims(seeder):
     stock, to keep track of which SIMs are own by which agent
     """
     agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
-    agents.create_multi_attribute(name="SIM", seed=seeder.next())
+    agents.create_relationship(name="SIM", seed=seeder.next())
 
     # note: the SIM multi-atribute is not initialized with any SIM: agents
     # start with no SIM
@@ -47,14 +47,14 @@ def create_dealers_with_sims(seeder):
 
     dealers = Actor(size=params["n_dealers"], prefix="DEALER_", max_length=3)
 
-    sims = dealers.create_multi_attribute(name="SIM", seed=seeder.next())
-
+    sims = dealers.create_relationship(name="SIM", seed=seeder.next())
     sim_ids = ["SIM_%s" % (str(i).zfill(6)) for i in range(params["n_sims"])]
     sims_dealer = make_random_assign("SIM", "DEALER",
                                      sim_ids, dealers.ids,
                                      seed=seeder.next())
 
-    sims.add(actor_ids=sims_dealer["DEALER"], items=sims_dealer["SIM"])
+    sims.add_relations(from_ids=sims_dealer["DEALER"],
+                       to_ids=sims_dealer["SIM"])
 
     return dealers
 
@@ -119,14 +119,18 @@ def add_purchase_action(circus, agents, dealers, seeder):
     purchase.set_operations(
         circus.clock.ops.timestamp(named_as="DATETIME"),
 
-        agents.get_relationship("DEALERS").ops.select_one(from_field="AGENT",
-                                                          named_as="DEALER"),
+        agents.get_relationship("DEALERS").ops.select_one(
+            from_field="AGENT",
+            named_as="DEALER"),
 
-        dealers.get_attribute("SIM").ops.pop_one(actor_id_field="DEALER",
-                                             named_as="SOLD_SIM"),
+        dealers.get_relationship("SIM").ops.select_one(
+            from_field="DEALER",
+            named_as="SOLD_SIM",
+            drop=True),
 
-        agents.get_attribute("SIM").ops.add(actor_id_field="AGENT",
-                                            item_field="SOLD_SIM"),
+        agents.get_relationship("SIM").ops.add(
+            from_field="AGENT",
+            item_field="SOLD_SIM"),
 
         # not specifying the logged columns => by defaults, log everything
         operations.FieldLogger(log_id="purchases"),

@@ -149,6 +149,36 @@ class Relationship(object):
             return self.SelectOne(self.relationship, from_field, named_as,
                                   one_to_one, drop)
 
+        class Add(SideEffectOnly):
+            def __init__(self, relationship, from_field, item_field):
+                self.relationship = relationship
+                self.from_field = from_field
+                self.item_field = item_field
+
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
+                    self.relationship.add_relations(
+                        from_ids=action_data[self.from_field],
+                        to_ids=action_data[self.item_field])
+
+        def add(self, from_field, item_field):
+            return self.Add(self.relationship, from_field, item_field)
+
+        class Remove(SideEffectOnly):
+            def __init__(self, relationship, from_field, item_field):
+                self.relationship = relationship
+                self.from_field = from_field
+                self.item_field = item_field
+
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
+                    self.relationship.remove(
+                        from_ids=action_data[self.from_field],
+                        to_ids=action_data[self.item_field])
+
+        def remove(self, from_field, item_field):
+            return self.Add(self.relationship, from_field, item_field)
+
 
 # TODO: see with Gautier: this is no longer used anywhere => should we delete,
 # or are these projects for later ?

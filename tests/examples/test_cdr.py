@@ -34,7 +34,7 @@ def add_cells(circus, seeder):
     # tendency is inversed in case of broken cell: it's probability of
     # accepting a call is much lower
     unhealthy_level_gen = NumpyRandomGenerator(method="beta", a=1, b=999,
-                                             seed=seeder.next())
+                                               seed=seeder.next())
 
     cells.create_attribute(name="HEALTH", init_values_gen=healthy_level_gen)
 
@@ -610,4 +610,3 @@ def test_cdr_scenario():
      - building the circus: {}
      - running the simulation: {}
     """.format(built_time - start_time, execution_time - built_time)
-
