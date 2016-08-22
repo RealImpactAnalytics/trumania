@@ -29,3 +29,18 @@ def test_seeder_should_be_deterministic():
     seeder2 = seed_provider(master_seed)
 
     assert list(islice(seeder1, 1000)) == list(islice(seeder2, 1000))
+
+
+def test_depend_trigger_should_trigger_given_constant_value():
+
+    # returns 6 hard-coded 1 and zero
+    def fake_mapper(x):
+        return [1,1,0,0,1,0]
+
+    g = DependentTriggerGenerator(value_mapper=fake_mapper)
+
+    triggers = g.generate(observations=pd.Series([10, 20, 30, 0, 1, 2]))
+
+    # because the fake_mapper returns fake values, we should always have the
+    # following triggers, no matter what the internal uniform distro provided
+    assert triggers.tolist() == [True, True, False, False, True, False]

@@ -116,27 +116,28 @@ def compose_circus():
         name="purchase",
         triggering_actor=customers,
         actorid_field="AGENT",
+        timer_gen=timegen,
+        activity=activity_gen)
 
-        operations=[
-            agent_customer.ops.select_one(from_field="AGENT",
-                                          named_as="DEALER"),
+    purchase.set_operations(
+        agent_customer.ops.select_one(from_field="AGENT",
+                                      named_as="DEALER"),
 
-            dealer_sim_rel.ops.select_one(from_field="DEALER",
-                                          named_as="SIM",
-                                          one_to_one=True),
+        dealer_sim_rel.ops.select_one(from_field="DEALER",
+                                      named_as="SIM",
+                                      one_to_one=True),
 
-            customer_sim_attr.ops.add_item(actor_id_field="AGENT",
-                                           item_field="SIM"),
+        customer_sim_attr.ops.add_item(actor_id_field="AGENT",
+                                       item_field="SIM"),
 
-            dealer_sim_attr.ops.remove_item(actor_id_field="DEALER",
-                                            item_field="SIM"),
+        dealer_sim_attr.ops.remove_item(actor_id_field="DEALER",
+                                        item_field="SIM"),
 
-            # not specifying the columns => by defaults, log everything
-            operations.FieldLogger(log_id="cdr"),
+        the_clock.ops.timestamp(named_as="DATETIME"),
 
-        ],
-        time_gen=timegen,
-        activity_gen=activity_gen)
+        # not specifying the columns => by defaults, log everything
+        operations.FieldLogger(log_id="cdr"),
+    )
 
     flying.add_action(purchase)
 
@@ -159,7 +160,6 @@ def test_cdr_scenario():
     """.format(logs["cdr"].head()))
 
     assert logs["cdr"].shape[0] > 0
-    assert "datetime" in logs["cdr"].columns
 
     # TODO: add real post-conditions on all_purchases
 

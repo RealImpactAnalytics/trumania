@@ -38,14 +38,13 @@ def compose_circus():
 
     cells = ["CELL_%s" % (str(i).zfill(4)) for i in range(n_cells)]
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(n_agents)]
-    print agents
     operators = ["OPERATOR_%d" % i for i in range(4)]
 
     ######################################
     # Define clocks
     ######################################
-    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S",
-                      seed=seeder.next())
+    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step,
+                      "%d%m%Y %H:%M:%S", seed=seeder.next())
 
     ######################################
     # Define generators
@@ -56,10 +55,7 @@ def compose_circus():
                                  length=6,
                                  seed=seeder.next())
 
-    activity_gen = ScaledParetoGenerator(m=10, a=1.2, seed=seeder.next())
-
     timegen = WeekProfiler(time_step, prof, seed=seeder.next())
-    mobilitytimegen = DayProfiler(time_step, mov_prof, seed=seeder.next())
 
     networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
                                                    seed=seeder.next())
@@ -74,7 +70,6 @@ def compose_circus():
     # Initialise generators
     ######################################
     timegen.initialise(the_clock)
-    mobilitytimegen.initialise(the_clock)
 
     ######################################
     # Define Actors, Relationships, ...
@@ -83,7 +78,7 @@ def compose_circus():
 
     customers.add_attribute(name="MSISDN",
                             attr=Attribute(ids=customers.ids,
-                                           init_values_generator=msisdn_gen))
+                                           init_values_gen=msisdn_gen))
 
     # mobility
     mobility = Relationship(name="people's cell location", seed=seeder.next())
@@ -138,13 +133,13 @@ def compose_circus():
                                 agent_df.index)))
 
     # customers's account
-    recharge_trigger = TriggerGenerator(trigger_type="logistic",
-                                        seed=seeder.next())
+    recharge_trigger = DependentTriggerGenerator(
+        value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
 
     recharge_gen = ConstantGenerator(value=1000.)
 
     main_account = Attribute(ids=customers.ids,
-                             init_values_generator=recharge_gen)
+                             init_values_gen=recharge_gen)
 
     customers.add_attribute(name="MAIN_ACCT", attr=main_account)
 
@@ -156,8 +151,13 @@ def compose_circus():
 
     customers.add_attribute(name="OPERATOR",
                             attr=Attribute(ids=customers.ids,
-                                           init_values_generator=operator_gen))
+                                           init_values_gen=operator_gen))
     # Actions
+
+    # Mobility
+
+    mobilitytimegen = DayProfiler(time_step, mov_prof, seed=seeder.next())
+    mobilitytimegen.initialise(the_clock)
 
     mobility_action = ActorAction(
         name="mobility",
@@ -165,105 +165,113 @@ def compose_circus():
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        operations=[
-            customers.ops.lookup(actor_id_field="A_ID",
-                                 select={"CELL": "PREV_CELL",
-                                         "OPERATOR": "OPERATOR"}),
-
-            # selects a cell
-            mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
-
-            # update the CELL attribute of the actor accordingly
-            customers.ops.overwrite(attribute="CELL",
-                                    copy_from_field="NEW_CELL"),
-
-            # create mobility logs
-            operations.FieldLogger(log_id="mobility",
-                                   cols=["A_ID", "OPERATOR",
-                                         "PREV_CELL", "NEW_CELL",]),
-        ],
-
-        time_gen=mobilitytimegen,
+        timer_gen=mobilitytimegen,
     )
 
-    def add_value_to_account(data):
-        # maybe we should prevent negative accounts here? or not?
-        new_value = data["MAIN_ACCT_OLD"] + data["VALUE"]
+    mobility_action.set_operations(
+        customers.ops.lookup(actor_id_field="A_ID",
+                             select={"CELL": "PREV_CELL",
+                                     "OPERATOR": "OPERATOR"}),
 
-        # must return a dataframe with a single column named "result"
-        return pd.DataFrame(new_value, columns=["result"])
+        # selects a cell
+        mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
+
+        # update the CELL attribute of the actor accordingly
+        customers.ops.overwrite(attribute="CELL",
+                                copy_from_field="NEW_CELL"),
+
+        the_clock.ops.timestamp(named_as="TIME"),
+
+        # create mobility logs
+        operations.FieldLogger(log_id="mobility",
+                               cols=["TIME", "A_ID", "OPERATOR",
+                                     "PREV_CELL", "NEW_CELL", ]),
+
+    )
 
     topup = ActorAction(
         name="topup",
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        operations=[
-
-            customers.ops.lookup(
-                actor_id_field="A_ID",
-                select={"MSISDN": "CUSTOMER_NUMBER",
-                        "CELL": "CELL",
-                        "OPERATOR": "OPERATOR",
-                        "MAIN_ACCT": "MAIN_ACCT_OLD"}),
-
-            agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
-
-            recharge_gen.ops.generate(named_as="VALUE"),
-
-            operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
-                             result_field="MAIN_ACCT",
-                             f=add_value_to_account),
-
-            customers.ops.overwrite(attribute="MAIN_ACCT",
-                                    copy_from_field="MAIN_ACCT"),
-
-            operations.FieldLogger(log_id="topups",
-                                   cols=["CUSTOMER_NUMBER", "AGENT", "VALUE",
-                                         "OPERATOR", "CELL",
-                                         "MAIN_ACCT_OLD", "MAIN_ACCT"]),
-        ],
-
         # note that there is timegen specified => the clock is not ticking
         # => the action can only be set externally (cf calls action)
+    )
+
+    topup.set_operations(
+        customers.ops.lookup(
+            actor_id_field="A_ID",
+            select={"MSISDN": "CUSTOMER_NUMBER",
+                    "CELL": "CELL",
+                    "OPERATOR": "OPERATOR",
+                    "MAIN_ACCT": "MAIN_ACCT_OLD"}),
+
+        agent_rel.ops.select_one(from_field="A_ID", named_as="AGENT"),
+
+        recharge_gen.ops.generate(named_as="VALUE"),
+
+        operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
+                         named_as="MAIN_ACCT",
+                         f=np.add, f_args="series"),
+
+        customers.ops.overwrite(attribute="MAIN_ACCT",
+                                copy_from_field="MAIN_ACCT"),
+
+        the_clock.ops.timestamp(named_as="TIME"),
+
+        operations.FieldLogger(log_id="topups",
+                               cols=["TIME", "CUSTOMER_NUMBER", "AGENT",
+                                     "VALUE", "OPERATOR", "CELL",
+                                     "MAIN_ACCT_OLD", "MAIN_ACCT"]),
 
     )
+
+    # Calls
 
     voice_duration_generator = NumpyRandomGenerator(
         method="choice", a=range(20, 240), seed=seeder.next())
 
-    def compute_call_value(data):
+    def compute_call_value(action_data):
         price_per_second = 2
-        df = data[["DURATION"]] * price_per_second
+        df = action_data[["DURATION"]] * price_per_second
 
         # must return a dataframe with a single column named "result"
         return df.rename(columns={"DURATION": "result"})
 
-    def compute_call_type(data):
+    def compute_call_type(action_data):
 
         def onnet(row):
             return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"]
                                                           == "OPERATOR_0")
 
-        result = pd.DataFrame(data.apply(onnet, axis=1), columns=["result_b"])
+        result = pd.DataFrame(action_data.apply(onnet, axis=1), columns=["result_b"])
 
         result["result"] = result["result_b"].map(
             {True: "ONNET", False: "OFFNET"})
 
         return result[["result"]]
 
-    # TODO: cf Sipho suggestion: we could have generic "add", "diff"... operations
-    def substract_value_from_account(data):
-        # maybe we should prevent negative accounts here? or not?
-        new_value = data["MAIN_ACCT_OLD"] - data["VALUE"]
+    # call activity level, under normal and "excited" states
+    normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
+                                                 seed=seeder.next())
+    excited_call_activity = ScaledParetoGenerator(m=100, a=1.1,
+                                                  seed=seeder.next())
 
-        # must return a dataframe with a single column named "result"
-        return pd.DataFrame(new_value, columns=["result"])
+    # after a call, excitability is the probability of getting into "excited"
+    # mode (i.e., having a shorted expected delay until next call
 
-    def copy_id_if_topup(data):
-        copied_ids = data[data["SHOULD_TOP_UP"]][["A_ID"]].reindex(data.index)
+    excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
+                                            seed=seeder.next())
 
-        return copied_ids.rename(columns={"A_ID": "result"})
+    excitability = Attribute(ids=customers.ids,
+                             init_values_gen=excitability_gen)
+
+    customers.add_attribute(name="EXCITABILITY", attr=excitability)
+
+    to_excited_trigger = DependentTriggerGenerator(seed=seeder.next())
+
+    back_to_normal_prob = NumpyRandomGenerator(method="beta", a=3, b=7,
+                                               seed=seeder.next())
 
     calls = ActorAction(
         name="calls",
@@ -271,68 +279,101 @@ def compose_circus():
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        operations=[
-            # selects a B party
-            social_network.ops.select_one(from_field="A_ID",
-                                          named_as="B_ID",
-                                          one_to_one=True),
+        timer_gen=timegen,
+        activity=normal_call_activity,
 
-            # some static fields
-            customers.ops.lookup(actor_id_field="A_ID",
-                                 select={"MSISDN": "A",
-                                         "CELL": "CELL_A",
-                                         "OPERATOR": "OPERATOR_A",
-                                         "MAIN_ACCT": "MAIN_ACCT_OLD"}),
+        states={
+            "excited": {
+                "activity": excited_call_activity,
+                "back_to_default_probability": back_to_normal_prob}
+        }
+    )
 
-            customers.ops.lookup(actor_id_field="B_ID",
-                                 select={"MSISDN": "B",
-                                         "OPERATOR": "OPERATOR_B",
-                                         "CELL": "CELL_B"}),
+    calls.set_operations(
+        # selects a B party
+        social_network.ops.select_one(from_field="A_ID",
+                                      named_as="B_ID",
+                                      one_to_one=True),
 
-            ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
+        # some static fields
+        customers.ops.lookup(actor_id_field="A_ID",
+                             select={"MSISDN": "A",
+                                     "CELL": "CELL_A",
+                                     "OPERATOR": "OPERATOR_A",
+                                     "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
-            operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
-                             result_field="TYPE",
-                             f=compute_call_type),
+        customers.ops.lookup(actor_id_field="B_ID",
+                             select={"MSISDN": "B",
+                                     "OPERATOR": "OPERATOR_B",
+                                     "CELL": "CELL_B",
+                                     "EXCITABILITY": "EXCITABILITY_B"}),
 
-            # computes the duration, value, new account amount and update
-            # attribute accordingly
-            voice_duration_generator.ops.generate(named_as="DURATION"),
+        ConstantGenerator(value="VOICE").ops.generate(named_as="PRODUCT"),
 
-            operations.Apply(source_fields="DURATION",
-                             result_field="VALUE",
-                             f=compute_call_value),
+        operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
+                         named_as="TYPE",
+                         f=compute_call_type),
 
-            operations.Apply(source_fields=["VALUE", "MAIN_ACCT_OLD"],
-                             result_field="MAIN_ACCT_NEW",
-                             f=substract_value_from_account),
+        # computes the duration, value, new account amount and update
+        # attribute accordingly
+        voice_duration_generator.ops.generate(named_as="DURATION"),
 
-            customers.ops.overwrite(attribute="MAIN_ACCT",
-                                    copy_from_field="MAIN_ACCT_NEW"),
+        operations.Apply(source_fields="DURATION",
+                         named_as="VALUE",
+                         f=compute_call_value),
 
+        operations.Apply(source_fields=["MAIN_ACCT_OLD", "VALUE"],
+                         named_as="MAIN_ACCT_NEW",
+                         f=np.subtract, f_args="series"),
 
-            # customer with low account are now more likely to topup
-            recharge_trigger.ops.generate(
-                observations_field="MAIN_ACCT_NEW",
-                named_as="SHOULD_TOP_UP"),
-
-            operations.Apply(source_fields=["A_ID", "SHOULD_TOP_UP"],
-                             result_field="TOPPING_UP_A_IDS",
-                             f=copy_id_if_topup),
-
-            topup.ops.force_act_next(active_ids_field="TOPPING_UP_A_IDS"),
+        customers.ops.overwrite(attribute="MAIN_ACCT",
+                                copy_from_field="MAIN_ACCT_NEW"),
 
 
-            # final CDRs
-            operations.FieldLogger(log_id="cdr",
-                                   cols=["A", "B", "DURATION", "VALUE",
-                                         "CELL_A", "OPERATOR_A",
-                                         "CELL_B", "OPERATOR_B",
-                                         "TYPE", "PRODUCT"]),
-        ],
+        # customer with low account are now more likely to topup
+        recharge_trigger.ops.generate(
+            observed_field="MAIN_ACCT_NEW",
+            named_as="SHOULD_TOP_UP"),
 
-        time_gen=timegen,
-        activity_gen=activity_gen,
+        topup.ops.force_act_next(actor_id_field="A_ID",
+                                 condition_field="SHOULD_TOP_UP"),
+
+
+        # Trigger to get into "excited" mode because A gave a call
+        to_excited_trigger.ops.generate(
+            observed_attribute=customers.get_attribute("EXCITABILITY"),
+            named_as="A_GETTING_BURSTY"),
+
+        # transiting to excited mode, according to trigger value
+        calls.ops.transit_to_state(actor_id_field="A_ID",
+                                   condition_field="A_GETTING_BURSTY",
+                                   state="excited"),
+
+
+        # Trigger to get into "excited" mode because B received a call
+        to_excited_trigger.ops.generate(
+            observed_field="EXCITABILITY_B",
+            named_as="B_GETTING_BURSTY"),
+
+        # transiting to excited mode, according to trigger value
+        calls.ops.transit_to_state(actor_id_field="B_ID",
+                                   condition_field="B_GETTING_BURSTY",
+                                   state="excited"),
+
+        # B party need to have their time reset explicitally since they were
+        # not active at this round. A party will be reset automatically
+        calls.ops.reset_timers(actor_id_field="B_ID"),
+
+
+        the_clock.ops.timestamp(named_as="DATETIME"),
+
+        # final CDRs
+        operations.FieldLogger(log_id="cdr",
+                               cols=["DATETIME",
+                                     "A", "B", "DURATION", "VALUE",
+                                     "CELL_A", "OPERATOR_A",
+                                     "CELL_B", "OPERATOR_B",
+                                     "TYPE",   "PRODUCT"]),
     )
 
     ## Circus
@@ -375,18 +416,17 @@ def test_cdr_scenario():
 
     print "users having highest amount of calls: "
     top_users = logs["cdr"]["A"].value_counts().head(10)
+    print top_users
+
     customers = cdr_circus.get_actor_of(action_name="calls").to_dataframe()
     df = customers[customers["MSISDN"].isin(top_users.index)]
     print df
 
+    print "total number of cdrs: {}".format(logs["cdr"].shape[0])
+
     assert logs["cdr"].shape[0] > 0
-    assert "datetime" in logs["cdr"].columns
-
     assert logs["topups"].shape[0] > 0
-    assert "datetime" in logs["topups"].columns
-
     assert logs["mobility"].shape[0] > 0
-    assert "datetime" in logs["mobility"].columns
 
     # TODO: add real post-conditions on all_cdrs, all_mov and all_topus
 

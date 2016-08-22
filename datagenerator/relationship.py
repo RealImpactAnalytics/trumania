@@ -104,17 +104,17 @@ class Relationship(object):
                 self.named_as = named_as
                 self.one_to_one = one_to_one
 
-            def transform(self, data):
+            def transform(self, action_data):
 
                 selected = self.relationship.select_one(
-                    from_ids=data[self.from_field],
+                    from_ids=action_data[self.from_field],
                     named_as=self.named_as)
 
                 # saves index as a column to have an explicit column that will
                 # survive the join below
-                data["index_backup"] = data.index
+                action_data["index_backup"] = action_data.index
 
-                merged = pd.merge(left=data, right=selected,
+                merged = pd.merge(left=action_data, right=selected,
                                   left_on=self.from_field, right_on="from")
 
                 merged.drop("from", axis=1, inplace=True)

@@ -4,7 +4,7 @@ from datagenerator.attribute import *
 
 def test_resulting_size_should_be_as_expected():
     tested = Actor(size=100)
-    assert tested.size() == 100
+    assert tested.size == 100
 
 
 def test_transforming_actor_to_dataframe_should_provide_all_data():

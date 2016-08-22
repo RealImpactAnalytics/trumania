@@ -18,9 +18,7 @@ class Actor(object):
             id_start, id_start + size)]
         self._attributes = {}
         self.ops = self.ActorOps(self)
-
-    def size(self):
-        return len(self.ids)
+        self.size = len(self.ids)
 
     def add_attribute(self, name, attr):
         self._attributes[name] = attr
@@ -104,12 +102,12 @@ class Actor(object):
                 self.actor_id_field = actor_id_field
                 self.select_dict = select_dict
 
-            def build_output(self, data):
+            def build_output(self, action_data):
 
-                output = data[[self.actor_id_field]]
+                output = action_data[[self.actor_id_field]]
                 for attribute, named_as in self.select_dict.items():
 
-                    actor_ids = data[self.actor_id_field].unique()
+                    actor_ids = action_data[self.actor_id_field].unique()
                     vals = pd.DataFrame(
                         self.actor.get_attribute_values(attribute, actor_ids),
                         ).rename(columns={"value": named_as})
@@ -135,11 +133,11 @@ class Actor(object):
                 self.attribute_name = attribute
                 self.copy_from_field = copy_from_field
 
-            def side_effect(self, data):
-                if data.shape[0] > 0:
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
                     attribute = self.actor.get_attribute(self.attribute_name)
-                    attribute.update(ids=data.index.values,
-                                     values=data[self.copy_from_field])
+                    attribute.update(ids=action_data.index.values,
+                                     values=action_data[self.copy_from_field])
 
         def overwrite(self, attribute, copy_from_field):
             """

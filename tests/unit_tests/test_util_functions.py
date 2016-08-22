@@ -31,6 +31,11 @@ def test_merging_one_dictionary_should_yield_itself():
     assert d1 == merge_dicts([d1], lambda a, b: a+b)
 
 
+def test_merging_one_dict_with_none_should_yield_dict():
+    d1 = {"a": 1, "b": 2}
+    assert d1 == merge_2_dicts(d1, None)
+
+
 def test_merging_many_dictionary_should_yield_expected_result():
     d1 ={"a": 10, "b": 20}
     d2 ={"a": 100, "c": 30}

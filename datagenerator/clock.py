@@ -3,6 +3,7 @@ import numpy as np
 from numpy.random import RandomState
 import pandas as pd
 import itertools
+from datagenerator.operations import *
 
 
 class Clock(object):
@@ -30,6 +31,7 @@ class Clock(object):
         self.__step = step
         self.__format_for_out = format_for_out
         self.__state = RandomState(seed)
+        self.ops = self.ClockOps(self)
 
     def increment(self):
         """Increments the clock by 1 step
@@ -71,6 +73,27 @@ class Clock(object):
         :return: the count of number of steps already taken since the start of the day
         """
         return (self.__current.hour * 3600 + self.__current.minute * 60 + self.__current.second) / self.__step
+
+    class ClockOps(object):
+        def __init__(self, clock):
+            self.clock = clock
+
+        class Timestamp(AddColumns):
+            def __init__(self, clock, named_as):
+                AddColumns.__init__(self)
+                self.clock = clock
+                self.named_as = named_as
+
+            def build_output(self, action_data):
+                values = self.clock.get_timestamp(action_data.shape[0]).values
+                df = pd.DataFrame({self.named_as: values}, index=action_data.index)
+                return df
+
+        def timestamp(self, named_as):
+            """
+            Generates a random timestamp within the current time slice
+            """
+            return self.Timestamp(self.clock, named_as)
 
 
 class TimeProfiler(object):

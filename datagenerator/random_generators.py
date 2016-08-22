@@ -1,6 +1,4 @@
-import numpy as np
 from util_functions import *
-from abc import ABCMeta, abstractmethod
 from datagenerator.operations import *
 
 
@@ -71,9 +69,9 @@ class Generator(Parameterizable):
                 self.generator = generator
                 self.named_as = named_as
 
-            def build_output(self, data):
-                values = self.generator.generate(size=data.shape[0])
-                return pd.DataFrame({self.named_as: values}, index=data.index)
+            def build_output(self, action_data):
+                values = self.generator.generate(size=action_data.shape[0])
+                return pd.DataFrame({self.named_as: values}, index=action_data.index)
 
         def generate(self, named_as):
             return self.RandomValues(self.generator, named_as=named_as)
@@ -166,18 +164,22 @@ class MSISDNGenerator(Generator):
 
         generated_entries = generator.generate(size)
         msisdns = np.array(
-            [self.__cc + self.__pref[self.__available[i, 1]] + str(self.__available[i, 0]).zfill(self.__length)
+            [self.__cc + self.__pref[self.__available[i, 1]] +
+                str(self.__available[i, 0]).zfill(self.__length)
              for i in generated_entries])
 
-        self.__available = np.delete(self.__available, generated_entries, axis=0)
+        self.__available = np.delete(self.__available, generated_entries,
+                                     axis=0)
 
         return msisdns
 
 
 class DependentGenerator(Parameterizable):
     """
-        Generator sampling values from a random variable that depends on
-        previous observations.
+    Generator providing random values depending on some live observation
+    among the fields of the action or attributes of the actors.
+
+    This opens the door to "probability given" distributions
     """
 
     # TODO: observations is limited to one single column ("weights")
@@ -192,7 +194,6 @@ class DependentGenerator(Parameterizable):
     def generate(self, observations):
         """
         Generation of random values after observing the input events.
-
 
         :param observations: one list of "previous observations", coming from
         upstream operation in the Action or upstream random variables in this
@@ -212,53 +213,58 @@ class DependentGenerator(Parameterizable):
             Operation that produces one single column generated randomly.
             """
 
-            def __init__(self, generator, named_as, observations_field):
+            def __init__(self, generator, named_as, observations_field,
+                         attribute):
                 AddColumns.__init__(self)
+
+                if not ((attribute is None) ^ (observations_field is None)):
+                    raise ValueError("can only depend on exactly one of "
+                                     "attribute or observation_field")
+
                 self.generator = generator
                 self.named_as = named_as
                 self.observations_field = observations_field
+                self.attribute = attribute
 
-            def build_output(self, data):
-                obs = data[self.observations_field]
+            def build_output(self, action_data):
+                # observing either a field or an attribute
+                if self.observations_field is not None:
+                    obs = action_data[self.observations_field]
+                else:
+                    obs = self.attribute.get_values(action_data.index)
+
                 values = self.generator.generate(observations=obs)
-                return pd.DataFrame({self.named_as: values}, index=data.index)
+                return pd.DataFrame({self.named_as: values},
+                                    index=action_data.index)
 
-        def generate(self, named_as, observations_field):
-            return self.RandomValues(self.generator, named_as, observations_field)
+        def generate(self, named_as, observed_field=None,
+                     observed_attribute=None):
+            return self.RandomValues(self.generator, named_as,
+                                     observed_field, observed_attribute)
 
 
-class TriggerGenerator(DependentGenerator):
+class DependentTriggerGenerator(DependentGenerator):
     """
-    A trigger generator takes some observed values and returns a vector of
-    Booleans, depending if the trigger has been released or not
+    A trigger is a boolean Generator.
+
+    A dependent trigger transforms, with the specified function, the value
+    of the depended on action field or actor attribute into the [0, 1] range
+    and uses that as the probability of triggering (i.e. of returning True)
+
     """
 
-    def __init__(self, trigger_type, seed=None):
+    def __init__(self, value_mapper=identity, seed=None):
 
         # random baseline to compare to each the activation
-        self.base_line = NumpyRandomGenerator(method="uniform", seed=seed)
-
-        if trigger_type == "logistic":
-            def logistic(x, a, b):
-                """returns the value of the logistic function 1/(1+e^-(ax+b))
-                """
-                the_exp = np.minimum(-(a*x+b),10.)
-                return 1./(1.+np.exp(the_exp))
-            self.triggering_function = logistic
-
-            # TODO: we could allow the API to provide those parameters
-            DependentGenerator.__init__(self, {"a": -0.01, "b": 10.})
-            self.triggering_function = logistic
-
-        else:
-            raise NotImplemented("unknown trigger type: {}".format(trigger_type))
+        DependentGenerator.__init__(self, {})
+        self.base_line = NumpyRandomGenerator(method="uniform",
+                                              low=0.0, high=1.0,
+                                              seed=seed)
+        self.value_mapper = value_mapper
 
     def generate(self, observations):
         probs = self.base_line.generate(size=observations.shape[0])
+        triggers = self.value_mapper(observations)
 
-        params = merge_2_dicts({"x": observations}, self.parameters)
-        trigger = self.triggering_function(**params)
+        return probs < triggers
 
-        # BUG here? ideally we'd trigger the high probabilities => should we
-        # "flip" the sigmoid ?
-        return probs < trigger
