@@ -30,7 +30,7 @@ class Relationship(object):
         :return:
         """
 
-        self.__state = RandomState(seed)
+        self.state = RandomState(seed)
         self._table = pd.DataFrame(columns=["from", "to", "weight"])
         self.ops = self.RelationshipOps(self)
 
@@ -58,8 +58,11 @@ class Relationship(object):
         if selected.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
 
-        result = (selected.groupby(by="from", sort=False)
-                  .apply(lambda df: df.sample(n=1, weights="weight")[["to"]]))
+        def pick_one(df):
+            return df.sample(n=1, weights="weight",
+                             random_state=self.state)[["to"]]
+
+        result = selected.groupby(by="from", sort=False).apply(pick_one)
 
         result.reset_index(inplace=True)
         result.rename(columns={"to": named_as, "index": "from"}, inplace=True)
@@ -127,12 +130,11 @@ class Relationship(object):
                     # lot of collisions => we could filter earlier (but that
                     # would be slower)
 
-                    idx = range(merged.shape[0])
-                    np.random.shuffle(idx)
+                    idx = self.relationship.state.permutation(merged.index)
+                    merged = merged.loc[idx]
 
-                    merged = (merged.iloc[idx]
-                              .drop_duplicates(subset=self.named_as,
-                                               keep="first"))
+                    merged.drop_duplicates(subset=self.named_as,
+                                           keep="first", inplace=True)
 
                 return merged
 

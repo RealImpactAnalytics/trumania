@@ -28,6 +28,32 @@ def test_select_one_from_all_ids_should_return_one_line_per_id():
     assert set(selected["from"].unique()) == {"a", "b", "c"}
 
 
+def test_seeded_relationship_should_always_return_same_selection():
+
+    from_ids = ["a", "a", "a",
+                "b", "b", "b",
+                "c", "c", "c"]
+    to_ids = ["af1", "af2", "af3",
+              "bf1", "bf2", "bf3",
+              "cf1", "cf2", "cf3", ]
+
+    # two relationship seeded identically
+    tested1 = Relationship(seed=1345)
+    tested2 = Relationship(seed=1345)
+
+    tested1.add_relations(from_ids=from_ids, to_ids=to_ids)
+    tested2.add_relations(from_ids=from_ids, to_ids=to_ids)
+
+    assert tested1.select_one(from_ids=["a"]).equals(
+            tested2.select_one(from_ids=["a"]))
+
+    assert tested1.select_one(from_ids=["b"]).equals(
+            tested2.select_one(from_ids=["b"]))
+
+    assert tested1.select_one(from_ids=["a", "b", "d"]).equals(
+            tested2.select_one(from_ids=["a", "b", "d"]))
+
+
 def test_one_to_one_relationship_should_find_unique_counterpart():
 
     oneto1= Relationship(seed=1)
