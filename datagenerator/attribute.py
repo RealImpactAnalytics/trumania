@@ -1,4 +1,4 @@
-from datagenerator.operations import *
+from datagenerator.relationship import *
 
 
 class Attribute(object):
@@ -7,38 +7,40 @@ class Attribute(object):
     """
 
     def __init__(self,
+                 actor,
 
                  # if initializing with value, must provide ids and one of the
                  # init values
-                 ids=None,
                  init_values=None,
                  init_values_gen=None,
 
                  # otherwise, we can also initialise randomly from a
                  # relationship (in which case the ids are extracted from the
-                 # "from" field
-                 relationship=None):
+                 # "from" field. init_relationship is a string that contains
+                 # the name of the
+                 init_relationship=None):
         """
         :param ids:
         :return:
         """
 
-        if ids is not None:
+        if init_relationship is None:
             if not ((init_values is None) ^ (init_values_gen is None)):
-                raise ValueError("if ids is provided, you must also provide "
-                                 "init_values or init_values_generator")
+                raise ValueError("if init_relationship is not provided, "
+                                 "you must also provide init_values or "
+                                 "init_values_gen")
 
-            if init_values is None:
-                init_values = init_values_gen.generate(size=len(ids))
+            elif init_values is None:
+                init_values = init_values_gen.generate(size=actor.size)
 
-            self._table = pd.DataFrame({"value": init_values}, index=ids)
+            self._table = pd.DataFrame({"value": init_values}, index=actor.ids)
 
         else:
-            if relationship is None:
+            if init_relationship is None:
                 raise ValueError("must provide either ids or relationship to "
                                  "initialize the attribute")
 
-            self._table = (relationship
+            self._table = (actor.get_relationship(init_relationship)
                            .select_one()
                            .set_index("from", drop=True)
                            .rename(columns={"to": "value"}))
@@ -60,85 +62,3 @@ class Attribute(object):
         """
 
         self._table.loc[ids, "value"] = values
-
-
-class LabeledStockAttribute(Attribute):
-    # TODO: maybe the LabeledStockAttribute is actually a dyanmic relationship
-    # i.e. we could just move those methods to Relationship to allow updates
-    # usually, a relationship describes potential links (e.g. list of shops
-    # a person can buy from), though here is encompasses the set of SIM owned
-    #  by a person. This is ok 
-    """Transient Attribute where users own some stock of labeled items
-
-    """
-    def __init__(self, relationship, **kwargs):
-        """
-
-        :param ids:
-        :param relationship: Relationship object. Needs to have an "AGENT" and an "ITEM" field. No weights.
-        :return:
-        """
-        Attribute.__init__(self, **kwargs)
-        self.__stock = relationship
-        self.ops = self.LabeledStock(self)
-
-    def add_item(self, ids, items):
-        """
-
-        :param ids:
-        :param values:
-        :return:
-        """
-        self.__stock.add_relations(from_ids=ids, to_ids=items)
-        cpt = pd.Series(ids).value_counts()
-        self._table.loc[cpt.index,"value"] += cpt.values
-
-    def remove_item(self, ids, items):
-        """
-
-        :param ids:
-        :param items:
-        :return:
-        """
-
-        # TODO: bug here? I think we should update self._table
-        self.__stock.remove(from_ids=ids, to_ids=items)
-
-    def stock(self):
-        return self.__stock
-
-    class LabeledStock(object):
-        def __init__(self, labeled_stock):
-            self.labeled_stock = labeled_stock
-
-        class AddItem(SideEffectOnly):
-            def __init__(self, labeled_stock, actor_id_field, item_field):
-                self.labeled_stock = labeled_stock
-                self.actor_id_field = actor_id_field
-                self.item_field = item_field
-
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
-                    self.labeled_stock.add_item(
-                        ids=action_data[self.actor_id_field],
-                        items=action_data[self.item_field])
-
-        def add_item(self, actor_id_field, item_field):
-            return self.AddItem(self.labeled_stock, actor_id_field,
-                                item_field)
-
-        class RemoveItem(SideEffectOnly):
-            def __init__(self, labeled_stock, actor_id_field, item_field):
-                self.labeled_stock = labeled_stock
-                self.actor_id_field = actor_id_field
-                self.item_field = item_field
-
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
-                    self.labeled_stock.remove_item(
-                        ids=action_data[self.actor_id_field],
-                        items=action_data[self.item_field])
-
-        def remove_item(self, actor_id_field, item_field):
-            return self.AddItem(self.labeled_stock, actor_id_field,
-                                item_field)

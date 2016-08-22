@@ -4,7 +4,6 @@ from datetime import datetime
 
 from datagenerator.action import *
 from datagenerator.actor import *
-from datagenerator.attribute import *
 from datagenerator.circus import *
 from datagenerator.clock import *
 from datagenerator.random_generators import *
@@ -35,10 +34,9 @@ def add_cells(circus, seeder):
     # tendency is inversed in case of broken cell: it's probability of
     # accepting a call is much lower
     unhealthy_level_gen = NumpyRandomGenerator(method="beta", a=1, b=999,
-                                             seed=seeder.next())
+                                               seed=seeder.next())
 
-    health = Attribute(ids=cells.ids, init_values_gen=healthy_level_gen)
-    cells.add_attribute(name="HEALTH", attr=health)
+    cells.create_attribute(name="HEALTH", init_values_gen=healthy_level_gen)
 
     # same profiler for breakdown and repair: they are both related to
     # typical human activity
@@ -132,8 +130,7 @@ def add_mobility(circus, customers, cells, seeder):
 
     # Initialize the mobility by allocating one first random cell to each
     # customer among its network
-    cell_attr = Attribute(relationship=mobility_rel)
-    customers.add_attribute(name="CELL", attr=cell_attr)
+    customers.create_attribute(name="CELL", init_relationship="POSSIBLE_CELLS")
 
     # Mobility action itself, basically just a random hop from cell to cell,
     # that updates the "CELL" attributes + generates mobility logs
@@ -176,8 +173,7 @@ def add_social_network(customers, seeder):
     """
 
     # create a random A to B symmetric relationship
-    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
-                                                   seed=seeder.next())
+    network_weight_gen = ScaledParetoGenerator(m=1., a=1.2, seed=seeder.next())
 
     social_network_values = create_er_social_network(
         customer_ids=customers.ids,
@@ -189,12 +185,12 @@ def add_social_network(customers, seeder):
     social_network.add_relations(
         from_ids=social_network_values["A"].values,
         to_ids=social_network_values["B"].values,
-        weights=networkweightgenerator.generate(social_network_values.shape[0]))
+        weights=network_weight_gen.generate(social_network_values.shape[0]))
 
     social_network.add_relations(
         from_ids=social_network_values["B"].values,
         to_ids=social_network_values["A"].values,
-        weights=networkweightgenerator.generate(social_network_values.shape[0]))
+        weights=network_weight_gen.generate(social_network_values.shape[0]))
 
 
 def add_topups(circus, customers, seeder):
@@ -230,11 +226,7 @@ def add_topups(circus, customers, seeder):
     # Main account of each users + one initial "recharge" to all so customers do
     # not start with no money
     recharge_gen = ConstantGenerator(value=1000.)
-
-    main_account = Attribute(ids=customers.ids,
-                             init_values_gen=recharge_gen)
-
-    customers.add_attribute(name="MAIN_ACCT", attr=main_account)
+    customers.create_attribute(name="MAIN_ACCT", init_values_gen=recharge_gen)
 
     # topup action itself, basically just a selection of a dealer and subsequent
     # computation of the value
@@ -354,9 +346,8 @@ def add_communications(circus, customers, cells, seeder):
     excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
                                             seed=seeder.next())
 
-    excitability = Attribute(ids=customers.ids,
-                             init_values_gen=excitability_gen)
-    customers.add_attribute(name="EXCITABILITY", attr=excitability)
+    customers.create_attribute(name="EXCITABILITY",
+                               init_values_gen=excitability_gen)
 
     # same "basic" trigger, without any value mapper
     flat_trigger = DependentTriggerGenerator(seed=seeder.next())
@@ -569,9 +560,7 @@ def test_cdr_scenario():
                                  length=6,
                                  seed=seeder.next())
 
-    customers.add_attribute(name="MSISDN",
-                            attr=Attribute(ids=customers.ids,
-                                           init_values_gen=msisdn_gen))
+    customers.create_attribute(name="MSISDN", init_values_gen=msisdn_gen)
 
     operator_gen = NumpyRandomGenerator(
         method="choice",
@@ -579,9 +568,7 @@ def test_cdr_scenario():
         p=[.8, .05, .1, .05],
         seed=seeder.next())
 
-    customers.add_attribute(name="OPERATOR",
-                            attr=Attribute(ids=customers.ids,
-                                           init_values_gen=operator_gen))
+    customers.create_attribute(name="OPERATOR", init_values_gen=operator_gen)
 
     flying = Circus(the_clock)
 
@@ -623,4 +610,3 @@ def test_cdr_scenario():
      - building the circus: {}
      - running the simulation: {}
     """.format(built_time - start_time, execution_time - built_time)
-
