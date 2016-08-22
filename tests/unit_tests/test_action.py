@@ -124,7 +124,7 @@ def test_scenario_transiting_to_state_should_remain_there():
     logs = action.execute()
 
     # no logs are expected as output
-    assert logs is None
+    assert logs == {}
 
     # the first 5 actors should still be in "excited", since
     # "back_to_normal_probability" is 0, the other 5 should not have
@@ -184,7 +184,7 @@ def test_scenario_transiting_to_state_should_go_back_to_normal():
     logs = action.execute()
 
     # no logs are expected as output
-    assert logs is None
+    assert logs == {}
 
     # this time, all actors should have transited back to "normal" at the end
     print action.timer["state"].tolist()

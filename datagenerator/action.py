@@ -8,7 +8,8 @@ class ActorAction(object):
     def __init__(self, name,
                  triggering_actor, actorid_field,
                  activity=ConstantGenerator(value=1.), states=None,
-                 timer_gen=ConstantProfiler(-1)):
+                 timer_gen=ConstantProfiler(-1),
+                 auto_reset_timer=True):
         """
         :param name: name of this action
 
@@ -30,6 +31,10 @@ class ActorAction(object):
             generate new timer values based on the activity level. Default:
             no such generator, in which case the timer never triggers this
             action.
+
+        :param auto_reset_timer: if True, we automatically re-schedule a new
+            execution for the same actor id after at the end of the previous
+            ont, by resetting the timer.
         """
 
         self.name = name
@@ -37,6 +42,7 @@ class ActorAction(object):
         self.actorid_field_name = actorid_field
         self.size = triggering_actor.size
         self.time_generator = timer_gen
+        self.auto_reset_timer = auto_reset_timer
 
         # activity and transition probability parameters, for each state
         self.params = pd.DataFrame({("default", "activity"): 0},
@@ -55,25 +61,28 @@ class ActorAction(object):
             self.params[("back_to_default_probability", state)] = probs_vals
 
         # current state and timer value for each actor id
-        self.timer = pd.DataFrame({"state": "default"}, index=self.params.index)
-        self.reset_timers()
+        self.timer = pd.DataFrame({"state": "default", "remaining": -1},
+                                  index=self.params.index)
+        if self.auto_reset_timer:
+            self.reset_timers()
 
         self.ops = self.ActionOps(self)
 
         # in case self.operations is not called, at least we have a basic
         # selection
-        self.operation_chain = operations.Chain(self._WhoActsNow(self))
+        self.operation_chain = operations.Chain()
 
     def set_operations(self, *ops):
         """
         :param operations: sequence of operations to be executed at each step
         """
-        self.operation_chain = operations.Chain(*(
-            # the first operation is always a "who acts now"
-            [self._WhoActsNow(self)] +
-            list(ops) +
-            [self.ops.ResetTimers(self), self._MaybeBackToDefault(self)]
-        ))
+
+        all_ops = list(ops)
+        if self.auto_reset_timer:
+            all_ops += [self.ops.ResetTimers(self)]
+        all_ops += [self._MaybeBackToDefault(self)]
+
+        self.operation_chain = operations.Chain(*all_ops)
 
     def get_param(self, param_name, ids):
         """
@@ -143,40 +152,18 @@ class ActorAction(object):
             self.timer.loc[ids, "remaining"] = new_timer
 
     def execute(self):
-        _, all_logs = self.operation_chain([(None, {})])
+
+        ids = self.who_acts_now()
+
+        if ids.shape[0] == 0:
+            all_logs = None
+
+        else:
+            ids_df = pd.DataFrame({self.actorid_field_name: ids}, index=ids)
+            _, all_logs = self.operation_chain(ids_df)
+
         self.timer_tick()
-
-        if len(all_logs.keys()) == 0:
-            return None
-
-        if len(all_logs.keys()) > 1:
-            # TODO: add support for more than one log emitting within the action
-            raise NotImplemented("not supported yet: circus can only handle "
-                                 "one logger per ActorAction")
-
         return all_logs
-
-    class _WhoActsNow(Operation):
-        """
-        Initial operation of an Action: creates a basic Dataframe with the
-        ids of the actor that are triggered by the clock now
-        """
-        # TODO: if we remove this action but do this as first step of
-        # execute + allow None to be return, clock ticks with no actor
-        # executing might be faster
-
-        def __init__(self, action):
-            self.action = action
-
-        def transform(self, ignored_input):
-            ids = self.action.who_acts_now()
-
-            df = pd.DataFrame(ids, columns=[self.action.actorid_field_name])
-
-            # makes sure the actor id is also kept as index
-            df.set_index(self.action.actorid_field_name,
-                         drop=False, inplace=True)
-            return df
 
     class _MaybeBackToDefault(SideEffectOnly):
         """

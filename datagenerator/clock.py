@@ -86,7 +86,8 @@ class Clock(object):
 
             def build_output(self, action_data):
                 values = self.clock.get_timestamp(action_data.shape[0]).values
-                df = pd.DataFrame({self.named_as: values}, index=action_data.index)
+                df = pd.DataFrame({self.named_as: values},
+                                  index=action_data.index)
                 return df
 
         def timestamp(self, named_as):
@@ -173,7 +174,8 @@ class TimeProfiler(object):
         if sum(np.isnan(self._profile["next_prob"])) > 0:
             raise Exception("Time profiler is not initialised!")
         p = self._state.rand(len(weights.index)) / weights.values
-        return pd.Series(self._profile["next_prob"].searchsorted(p), index=weights.index)
+        return pd.Series(self._profile["next_prob"].searchsorted(p),
+                         index=weights.index)
 
 
 class WeekProfiler(TimeProfiler):
@@ -219,7 +221,14 @@ class DayProfiler(TimeProfiler):
 
     """
 
-    def __init__(self, step, profile, seed=None):
+    # naked eye guesstimation from
+    # https://github.com/RealImpactAnalytics/lab-home-work-detection/blob/3bacb58a53f69824102437a27218149f75d322e2/pub/chimayblue/01%20basic%20exploration.ipynb
+    default_profile = pd.Series(
+        [1, .5, .2, .15, .2, .4, 3.8, 7.2, 8.4, 9.1, 9.0, 8.3, 8.1, 7.7, 7.4,
+         7.8, 8.0, 7.9, 9.7, 10.4, 10.5, 8.8, 5.7, 2.8],
+        index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
+
+    def __init__(self, step, profile=default_profile, seed=None):
         """
 
         :type step: int
@@ -251,7 +260,8 @@ class DayProfiler(TimeProfiler):
 
 
 class ConstantProfiler(object):
-    """ConstantProfiler is a TimeProfiler that always returns the same value. It's a bit stupid but handy.
+    """ConstantProfiler is a TimeProfiler that always returns the same value.
+    It's a bit stupid but handy.
 
     """
 
