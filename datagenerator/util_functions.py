@@ -72,14 +72,14 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
     return data
 
 
-def make_random_assign(name1,name2,group1,group2,seed):
+def make_random_assign(name1, name2, group1, group2, seed):
     """Assign randomly each member from group1 to a member of group2
 
     """
     state = RandomState(seed)
-    choices = state.choice(group2,size=len(group1))
+    choices = state.choice(group2, size=len(group1))
 
-    return pd.DataFrame({name2:choices,name1:group1})
+    return pd.DataFrame({name2: choices, name1: group1})
 
 
 def merge_2_dicts(dict1, dict2, value_merge_func=None):

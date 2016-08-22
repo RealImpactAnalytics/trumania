@@ -31,16 +31,10 @@ def create_agents_with_sims(seeder):
     stock, to keep track of which SIMs are own by which agent
     """
     agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
+    agents.create_multi_attribute(name="SIM", seed=seeder.next())
 
-    customer_sim_rel = agents.create_relationship("SIM", seed=seeder.next())
-
-    customer_sim_attr = LabeledStockAttribute(ids=agents.ids,
-                                              init_values=0,
-                                              relationship=customer_sim_rel)
-    agents.add_attribute(name="SIM", attr=customer_sim_attr)
-
-    # note: the relationship is not initialized with any SIM: agents start with
-    # no SIM
+    # note: the SIM multi-atribute is not initialized with any SIM: agents
+    # start with no SIM
 
     return agents
 
@@ -53,22 +47,14 @@ def create_dealers_with_sims(seeder):
 
     dealers = Actor(size=params["n_dealers"], prefix="DEALER_", max_length=3)
 
-    sims = ["SIM_%s" % (str(i).zfill(6)) for i in range(params["n_sims"])]
+    sims = dealers.create_multi_attribute(name="SIM", seed=seeder.next())
 
-    # relationship from dealer to sim, to keep track of their stock
-    dealer_sim_rel = dealers.create_relationship("SIM", seed=seeder.next())
-
+    sim_ids = ["SIM_%s" % (str(i).zfill(6)) for i in range(params["n_sims"])]
     sims_dealer = make_random_assign("SIM", "DEALER",
-                                     sims, dealers.ids,
+                                     sim_ids, dealers.ids,
                                      seed=seeder.next())
-    dealer_sim_rel.add_relations(from_ids=sims_dealer["DEALER"],
-                                 to_ids=sims_dealer["SIM"])
 
-    # the same stock is also kept as an attribute
-    dealer_sim_attr = LabeledStockAttribute(ids=dealers.ids,
-                                            init_values=0,
-                                            relationship=dealer_sim_rel)
-    dealers.add_attribute(name="SIM", attr=dealer_sim_attr)
+    sims.add(actor_ids=sims_dealer["DEALER"], items=sims_dealer["SIM"])
 
     return dealers
 
@@ -136,18 +122,11 @@ def add_purchase_action(circus, agents, dealers, seeder):
         agents.get_relationship("DEALERS").ops.select_one(from_field="AGENT",
                                                           named_as="DEALER"),
 
-        # TODO: cf note above on LabeledStock: this could become a pop_one()
-        dealers.get_relationship("SIM").ops.select_one(from_field="DEALER",
-                                                       named_as="SIM",
-                                                       one_to_one=True),
+        dealers.get_attribute("SIM").ops.pop_one(actor_id_field="DEALER",
+                                             named_as="SOLD_SIM"),
 
-        # TODO: cf note above on LabeledStock: this could be on the relationship
-        agents.get_attribute("SIM").ops.add_item(actor_id_field="AGENT",
-                                                 item_field="SIM"),
-
-        # TODO: cf note above on LabeledStock: and this could disappear :)
-        dealers.get_attribute("SIM").ops.remove_item(actor_id_field="DEALER",
-                                                     item_field="SIM"),
+        agents.get_attribute("SIM").ops.add(actor_id_field="AGENT",
+                                            item_field="SOLD_SIM"),
 
         # not specifying the logged columns => by defaults, log everything
         operations.FieldLogger(log_id="purchases"),

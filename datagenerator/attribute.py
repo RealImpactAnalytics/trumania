@@ -1,4 +1,5 @@
 from datagenerator.operations import *
+from datagenerator.relationship import *
 
 
 class Attribute(object):
@@ -7,38 +8,40 @@ class Attribute(object):
     """
 
     def __init__(self,
+                 actor,
 
                  # if initializing with value, must provide ids and one of the
                  # init values
-                 ids=None,
                  init_values=None,
                  init_values_gen=None,
 
                  # otherwise, we can also initialise randomly from a
                  # relationship (in which case the ids are extracted from the
-                 # "from" field
-                 relationship=None):
+                 # "from" field. init_relationship is a string that contains
+                 # the name of the
+                 init_relationship=None):
         """
         :param ids:
         :return:
         """
 
-        if ids is not None:
+        if init_relationship is None:
             if not ((init_values is None) ^ (init_values_gen is None)):
-                raise ValueError("if ids is provided, you must also provide "
-                                 "init_values or init_values_generator")
+                raise ValueError("if init_relationship is not provided, "
+                                 "you must also provide init_values or "
+                                 "init_values_gen")
 
-            if init_values is None:
-                init_values = init_values_gen.generate(size=len(ids))
+            elif init_values is None:
+                init_values = init_values_gen.generate(size=actor.size)
 
-            self._table = pd.DataFrame({"value": init_values}, index=ids)
+            self._table = pd.DataFrame({"value": init_values}, index=actor.ids)
 
         else:
-            if relationship is None:
+            if init_relationship is None:
                 raise ValueError("must provide either ids or relationship to "
                                  "initialize the attribute")
 
-            self._table = (relationship
+            self._table = (actor.get_relationship(init_relationship)
                            .select_one()
                            .set_index("from", drop=True)
                            .rename(columns={"to": "value"}))
@@ -62,83 +65,118 @@ class Attribute(object):
         self._table.loc[ids, "value"] = values
 
 
-class LabeledStockAttribute(Attribute):
-    # TODO: maybe the LabeledStockAttribute is actually a dyanmic relationship
-    # i.e. we could just move those methods to Relationship to allow updates
-    # usually, a relationship describes potential links (e.g. list of shops
-    # a person can buy from), though here is encompasses the set of SIM owned
-    #  by a person. This is ok 
-    """Transient Attribute where users own some stock of labeled items
-
+class MultiAttribute(Attribute):
     """
-    def __init__(self, relationship, **kwargs):
+        Attribute that can hold several values per ids (e.g. a list of SIM ids).
+        Internally, mostly everything is delegated to a relationship.
+    """
+    def __init__(self, seed, **kwargs):
         """
-
-        :param ids:
-        :param relationship: Relationship object. Needs to have an "AGENT" and an "ITEM" field. No weights.
         :return:
         """
-        Attribute.__init__(self, **kwargs)
-        self.__stock = relationship
-        self.ops = self.LabeledStock(self)
+        Attribute.__init__(self, init_values=0, **kwargs)
+        self.values = Relationship(seed=seed)
+        self.ops = self.MultiAttributeOps(self)
 
-    def add_item(self, ids, items):
+    def add(self, actor_ids, items):
         """
 
-        :param ids:
-        :param values:
+        :param actor_ids:
+        :param items:
         :return:
         """
-        self.__stock.add_relations(from_ids=ids, to_ids=items)
-        cpt = pd.Series(ids).value_counts()
-        self._table.loc[cpt.index,"value"] += cpt.values
+        self.values.add_relations(from_ids=actor_ids, to_ids=items)
+        cpt = pd.Series(actor_ids).value_counts()
+        self._table.loc[cpt.index, "value"] += cpt.values
 
-    def remove_item(self, ids, items):
+    def remove(self, actor_ids, items):
         """
 
-        :param ids:
+        :param actor_ids:
         :param items:
         :return:
         """
 
-        # TODO: bug here? I think we should update self._table
-        self.__stock.remove(from_ids=ids, to_ids=items)
+        self.values.remove(from_ids=actor_ids, to_ids=items)
+        cpt = pd.Series(actor_ids).value_counts()
+        self._table.loc[cpt.index, "value"] -= cpt.values
+
+    def pop(self, actor_ids):
+        """
+
+        :param actor_ids:
+        :return:
+        """
+
+        taken = self.values.select_one(from_ids=actor_ids, drop=True)
+        cpt = pd.Series(actor_ids).value_counts()
+        self._table.loc[cpt.index, "value"] -= cpt.values
+        return taken
 
     def stock(self):
-        return self.__stock
+        return self.values
 
-    class LabeledStock(object):
+    class MultiAttributeOps(object):
         def __init__(self, labeled_stock):
-            self.labeled_stock = labeled_stock
+            self.m_attribute = labeled_stock
 
-        class AddItem(SideEffectOnly):
-            def __init__(self, labeled_stock, actor_id_field, item_field):
-                self.labeled_stock = labeled_stock
+        class Add(SideEffectOnly):
+            def __init__(self, m_attribute, actor_id_field, item_field):
+                self.m_attribute = m_attribute
                 self.actor_id_field = actor_id_field
                 self.item_field = item_field
 
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
-                    self.labeled_stock.add_item(
-                        ids=action_data[self.actor_id_field],
+                    self.m_attribute.add(
+                        actor_ids=action_data[self.actor_id_field],
                         items=action_data[self.item_field])
 
-        def add_item(self, actor_id_field, item_field):
-            return self.AddItem(self.labeled_stock, actor_id_field,
-                                item_field)
+        def add(self, actor_id_field, item_field):
+            return self.Add(self.m_attribute, actor_id_field, item_field)
 
-        class RemoveItem(SideEffectOnly):
-            def __init__(self, labeled_stock, actor_id_field, item_field):
-                self.labeled_stock = labeled_stock
+        class Remove(SideEffectOnly):
+            def __init__(self, m_attribute, actor_id_field, item_field):
+                self.m_attribute = m_attribute
                 self.actor_id_field = actor_id_field
                 self.item_field = item_field
 
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
-                    self.labeled_stock.remove_item(
-                        ids=action_data[self.actor_id_field],
+                    self.m_attribute.remove(
+                        actor_ids=action_data[self.actor_id_field],
                         items=action_data[self.item_field])
 
-        def remove_item(self, actor_id_field, item_field):
-            return self.AddItem(self.labeled_stock, actor_id_field,
-                                item_field)
+        def remove(self, actor_id_field, item_field):
+            return self.Add(self.m_attribute, actor_id_field, item_field)
+
+        class PopOne(Operation):
+            def __init__(self, m_attribute, actor_id_field, named_as):
+                Operation.__init__(self)
+                self.m_attribute = m_attribute
+                self.actor_id_field = actor_id_field
+                self.named_as = named_as
+
+            def transform(self, action_data):
+                if action_data.shape[0] > 0:
+                    taken = self.m_attribute.pop(
+                        actor_ids=action_data[self.actor_id_field])
+
+                    # TODO: this is mostly copy-paste from Relationship :(
+                    taken.rename(columns={"to": self.named_as}, inplace=True)
+                    # saves index as a column to have an explicit column that will
+                    # survive the join below
+                    action_data["index_backup"] = action_data.index
+
+                    merged = pd.merge(left=action_data, right=taken,
+                                      left_on=self.actor_id_field, right_on="from")
+
+                    merged.drop("from", axis=1, inplace=True)
+
+                    # puts back the index in place, for further processing
+                    merged.set_index("index_backup", inplace=True)
+
+                    return merged
+
+        def pop_one(self, actor_id_field, named_as):
+                return self.PopOne(self.m_attribute, actor_id_field, named_as)

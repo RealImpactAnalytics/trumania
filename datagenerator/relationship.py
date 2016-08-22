@@ -46,42 +46,49 @@ class Relationship(object):
         self._table = pd.concat([self._table, new_relations])
         self._table.reset_index(drop=True, inplace=True)
 
-    def select_one(self, from_ids=None, named_as="to"):
+    def select_one(self, from_ids=None, named_as="to", drop=False):
         """
+        Select randomly one "to" for each specified "from" values.
+         If drop is True, we the selected relations are removed
         """
 
         if from_ids is None:
-            selected = self._table
+            candidates = self._table
         else:
-            selected = self._table[self._table["from"].isin(from_ids)]
+            candidates = self._table[self._table["from"].isin(from_ids)]
 
-        if selected.shape[0] == 0:
+        if candidates.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
 
         def pick_one(df):
-            return df.sample(n=1, weights="weight",
-                             random_state=self.state)[["to"]]
+            selected_to = df.sample(n=1, weights="weight",
+                                    random_state=self.state)[["to"]]
+            return pd.DataFrame({"to": selected_to,
+                                "selected_index": selected_to.index})
 
-        result = selected.groupby(by="from", sort=False).apply(pick_one)
+        selected = candidates.groupby(by="from", sort=False).apply(pick_one)
+        selected.reset_index(inplace=True)
+        selected.rename(columns={"to": named_as}, inplace=True)
+        selected.drop("level_1", axis=1, inplace=True)
 
-        result.reset_index(inplace=True)
-        result.rename(columns={"to": named_as, "index": "from"}, inplace=True)
-        # this one comes from the df in apply
-        result.drop("level_1", axis=1, inplace=True)
+        if drop:
+            self._table.drop(selected["selected_index"], inplace=True)
 
-        return result
+            selected.drop("selected_index", axis=1, inplace=True)
+        return selected
 
-    def pop_one(self, **kwargs):
-        """
-        Same as select_one, but the chosen rows are deleted
-        :param key_columnn:
-        :param keys:
-        :return:
-        """
-
-        choices = self.select_one(**kwargs)
-        self._table.drop(choices.index, inplace=True)
-        return choices
+    # def pop_one(self, **select_kwargs):
+    #     """
+    #     Same as select_one, but the chosen rows are deleted
+    #     :param key_columnn:
+    #     :param keys:
+    #     :return:
+    #     """
+    #
+    #     selected = self._select_one(**select_kwargs)
+    #     self._table.drop(selected["selected_index"], inplace=True)
+    #     selected.drop("selected_index", axis=1, inplace=True)
+    #     return selected
 
     def remove(self, from_ids, to_ids):
         lines = self._table[self._table["from"].isin(from_ids) &
@@ -99,17 +106,19 @@ class Relationship(object):
             """
 
             def __init__(self, relationship, from_field, named_as,
-                         one_to_one):
+                         one_to_one, drop):
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
                 self.one_to_one = one_to_one
+                self.drop = drop
 
             def transform(self, action_data):
 
                 selected = self.relationship.select_one(
                     from_ids=action_data[self.from_field],
-                    named_as=self.named_as)
+                    named_as=self.named_as,
+                    drop=self.drop)
 
                 # saves index as a column to have an explicit column that will
                 # survive the join below
@@ -138,7 +147,8 @@ class Relationship(object):
 
                 return merged
 
-        def select_one(self, from_field, named_as, one_to_one=False):
+        def select_one(self, from_field, named_as, one_to_one=False,
+                       drop=False):
             """
             :param from_field: field corresponding to the "from" side of the
                 relationship
@@ -150,7 +160,7 @@ class Relationship(object):
                 random choice from a Relationship
             """
             return self.SelectOne(self.relationship, from_field, named_as,
-                                  one_to_one)
+                                  one_to_one, drop)
 
 
 # TODO: see with Gautier: this is no longer used anywhere => should we delete,
