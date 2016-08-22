@@ -2,6 +2,7 @@ from __future__ import division
 import pandas as pd
 from abc import ABCMeta, abstractmethod
 import numpy as np
+from datagenerator import util_functions
 
 
 class Operation(object):
@@ -39,6 +40,34 @@ class Operation(object):
         logs = self.emit_logs(output)
 
         return output, logs
+
+
+class Chain(Operation):
+    """
+    A chain is a list of operation to be executed sequencially
+    """
+
+    def __init__(self, *operations):
+        self.operations = list(operations)
+
+    @staticmethod
+    def _execute_operation((action_data, prev_logs), operation):
+        """
+
+        executes this operation and merges its logs with the previous one
+        :param operation: the operation to call
+        :return: the merged action data and logs
+        """
+
+        output, supp_logs = operation(action_data)
+        # merging the logs of each operation of this action.
+        # TODO: I guess just adding pd.concat at the end of this would allow
+        # multiple operations to contribute to the same log => to be checked...
+        return output, util_functions.merge_dicts([prev_logs, supp_logs])
+
+    def __call__(self, data):
+        init = [(data, {})]
+        return reduce(self._execute_operation, init + self.operations)
 
 
 class FieldLogger(Operation):

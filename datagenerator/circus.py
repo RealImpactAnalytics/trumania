@@ -25,7 +25,7 @@ class Circus(object):
         :return: a new Circus object, with the clock, is created
         """
         self.__items = {}
-        self.__clock = clock
+        self.clock = clock
         self.__actions = []
         self.__incrementors = []
 
@@ -59,10 +59,11 @@ class Circus(object):
         """
         self.__actions.append(action)
 
-    def get_actor_of(self, action_name):
+    def get_action(self, action_name):
+        return filter(lambda a: a.name == action_name, self.__actions)[0]
 
-        action = filter(lambda a: a.name == action_name, self.__actions)[0]
-        return action.triggering_actor
+    def get_actor_of(self, action_name):
+        return self.get_action(action_name).triggering_actor
 
     def add_increment(self, to_increment):
         """Add an object to be incremented at each step (such as a TimeProfiler)
@@ -91,7 +92,7 @@ class Circus(object):
         for i in self.__incrementors:
             i.increment()
 
-        self.__clock.increment()
+        self.clock.increment()
 
         return logs
 

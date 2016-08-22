@@ -18,63 +18,6 @@ def test_empty_action_should_do_nothing_and_not_crash():
     assert logs is None
 
 
-def test_one_execution_should_merge_empty_data_correctly():
-
-    # empty previous
-    prev_df = pd.DataFrame(columns=[])
-    prev_log = {}
-    nop = Operation()
-
-    output, logs = ActorAction.execute_operation((prev_df, prev_log), nop)
-
-    assert logs == {}
-    assert output.equals(prev_df)
-
-
-class FakeOp(Operation):
-
-    def __init__(self, output, logs):
-        self.output = output
-        self.logs = logs
-
-    def __call__(self, data):
-        return self.output, self.logs
-
-
-def test_one_execution_should_merge_one_op_with_nothing_into_one_result():
-
-    # empty previous
-    prev = pd.DataFrame(columns=[]), {}
-
-    cdrs = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
-    input = pd.DataFrame(np.random.rand(10, 2), columns=["C", "D"])
-    op = FakeOp(input, logs={"cdrs": cdrs})
-
-    output, logs = ActorAction.execute_operation(prev, op)
-
-    assert logs == {"cdrs": cdrs}
-    assert input.equals(output)
-
-
-def test_one_execution_should_merge_2_ops_correctly():
-
-    # previous results
-    init = pd.DataFrame(columns=[])
-    mobility_logs = pd.DataFrame(np.random.rand(12, 3),
-                                 columns=["A", "CELL", "duration"])
-
-    cdrs = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
-    input = pd.DataFrame(np.random.rand(10, 2), columns=["C", "D"])
-    op = FakeOp(input, {"cdrs" :cdrs})
-
-    output, logs = ActorAction.execute_operation((init,
-                                                  {"mobility": mobility_logs}),
-                                                 op)
-
-    assert logs == {"cdrs": cdrs, "mobility": mobility_logs}
-    assert input.equals(output)
-
-
 def test_get_activity_default():
 
     actor = Actor(size=10)
