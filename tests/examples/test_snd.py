@@ -33,7 +33,7 @@ def create_agents_with_sims(seeder):
     agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
     agents.create_relationship(name="SIM", seed=seeder.next())
 
-    # note: the SIM multi-atribute is not initialized with any SIM: agents
+    # note: the SIM multi-attribute is not initialized with any SIM: agents
     # start with no SIM
 
     return agents
@@ -150,9 +150,9 @@ def add_agent_holidays_action(circus, agents, seeder):
     # until next typical holidays :)
     # We could call this YearProfile though the internal mechanics would be
     # different than week and day profiler
-    holidaytimegen = WeekProfiler(clock=circus.clock,
-                                  week_profile=[1, 1, 1, 1, 1, 1, 1],
-                                  seed=seeder.next())
+    holiday_time_gen = WeekProfiler(clock=circus.clock,
+                                    week_profile=[1, 1, 1, 1, 1, 1, 1],
+                                    seed=seeder.next())
 
     # TODO: we'd obviously have to adapt those weitgh to longer periods
     # thought this interface is not very intuitive
@@ -162,20 +162,20 @@ def add_agent_holidays_action(circus, agents, seeder):
                                                    seed=seeder.next())
 
     holiday_end_activity = ScaledParetoGenerator(m=150, a=1.2,
-                                                   seed=seeder.next())
+                                                 seed=seeder.next())
 
     going_on_holidays = ActorAction(
         name="agent_start_holidays",
         triggering_actor=agents,
         actorid_field="AGENT",
-        timer_gen=holidaytimegen,
+        timer_gen=holiday_time_gen,
         activity=holiday_start_activity)
 
     returning_from_holidays = ActorAction(
         name="agent_start_holidays",
         triggering_actor=agents,
         actorid_field="AGENT",
-        timer_gen=holidaytimegen,
+        timer_gen=holiday_time_gen,
         activity=holiday_end_activity,
         auto_reset_timer=False)
 

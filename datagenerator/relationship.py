@@ -35,9 +35,6 @@ class Relationship(object):
         self.ops = self.RelationshipOps(self)
 
     def add_relations(self, from_ids, to_ids, weights=1):
-        """
-
-        """
 
         new_relations = pd.DataFrame({"from": from_ids,
                                       "to": to_ids,
@@ -63,18 +60,18 @@ class Relationship(object):
         def pick_one(df):
             selected_to = df.sample(n=1, weights="weight",
                                     random_state=self.state)[["to"]]
-            return pd.DataFrame({"to": selected_to,
-                                "selected_index": selected_to.index})
+            if drop:
+                selected_to["selected_index"] = selected_to.index
+            return selected_to
 
         selected = candidates.groupby(by="from", sort=False).apply(pick_one)
-        selected.reset_index(inplace=True)
+        selected["from"] = selected.index.get_level_values(level="from")
         selected.rename(columns={"to": named_as}, inplace=True)
-        selected.drop("level_1", axis=1, inplace=True)
 
         if drop:
             self._table.drop(selected["selected_index"], inplace=True)
+            selected.drop("selected_index", axis=1, inplace=True)
 
-        selected.drop("selected_index", axis=1, inplace=True)
         return selected
 
     def remove(self, from_ids, to_ids):
@@ -101,11 +98,24 @@ class Relationship(object):
                 self.drop = drop
 
             def transform(self, action_data):
+                """because of the one-to-one, we must have full access to the
+                 dataframe in order to drop row that lead to duplications
+                """
 
                 selected = self.relationship.select_one(
                     from_ids=action_data[self.from_field],
                     named_as=self.named_as,
                     drop=self.drop)
+
+                if self.one_to_one and selected.shape[0] > 0:
+                    # TODO (?): I guess this skews the distribution in case of a
+                    # lot of collisions => we could filter earlier (but that
+                    # would be slower)
+
+                    idx = self.relationship.state.permutation(selected.index)
+                    selected = selected.loc[idx]
+                    selected.drop_duplicates(subset=self.named_as,
+                                             keep="first", inplace=True)
 
                 # saves index as a column to have an explicit column that will
                 # survive the join below
@@ -117,20 +127,7 @@ class Relationship(object):
                 merged.drop("from", axis=1, inplace=True)
 
                 # puts back the index in place, for further processing
-                merged.set_index("index_backup", inplace=True)
-
-                if self.one_to_one and merged.shape[0] > 0:
-                    # drops randomly any onto relationship
-
-                    # TODO (?): I guess this skews the distribution in case of a
-                    # lot of collisions => we could filter earlier (but that
-                    # would be slower)
-
-                    idx = self.relationship.state.permutation(merged.index)
-                    merged = merged.loc[idx]
-
-                    merged.drop_duplicates(subset=self.named_as,
-                                           keep="first", inplace=True)
+                merged.set_index("index_backup", inplace=True, drop=True)
 
                 return merged
 
@@ -179,9 +176,6 @@ class Relationship(object):
         def remove(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
 
-
-# TODO: see with Gautier: this is no longer used anywhere => should we delete,
-# or are these projects for later ?
 
 # class SimpleMobilityRelationship(WeightedRelationship):
 #     """

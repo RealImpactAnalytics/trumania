@@ -6,7 +6,7 @@ from numpy.random import RandomState
 import pandas as pd
 import networkx as nx
 from networkx.algorithms import bipartite
-
+import logging
 
 def create_er_social_network(customer_ids, p, seed):
     """
@@ -129,6 +129,13 @@ def merge_dicts(dicts, merge_func=None):
     """
 
     return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dicts)
+
+
+def setup_logging():
+    logging.basicConfig(
+        format='%(asctime)s %(message)s',
+        level=logging.INFO)
+
 
 
 

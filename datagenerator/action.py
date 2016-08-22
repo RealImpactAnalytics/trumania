@@ -91,12 +91,14 @@ class ActorAction(object):
         :return: the activity level of each requested actor id, depending its
         current state
         """
-
-        # pairs of (actorid, state), to select the appropriate activity level
-        activity_idx = zip(ids, self.timer.ix[ids, "state"].tolist())
-        activities = self.params.loc[ids][param_name].stack()[activity_idx]
-        activities.index = activities.index.droplevel(level=1)
-        return activities
+        if len(self.get_possible_states()) == 1:
+            return self.params.loc[ids][(param_name, "default")]
+        else:
+            # pairs of (actorid, state), to select the appropriate activity level
+            param_idx = zip(ids, self.timer.ix[ids, "state"].tolist())
+            param_values = self.params.loc[ids][param_name].stack()[param_idx]
+            param_values.index = param_values.index.droplevel(level=1)
+            return param_values
 
     def get_possible_states(self):
         return self.params["activity"].columns.tolist()
@@ -116,6 +118,8 @@ class ActorAction(object):
 
     def timer_tick(self):
 
+        # not updating actors that keep a negative counter: those are "marked
+        #  inactive" already
         positive_idx = self.timer[self.timer["remaining"] >= 0].index
         if len(positive_idx) > 0:
             self.timer.loc[positive_idx, "remaining"] -= 1
@@ -157,6 +161,7 @@ class ActorAction(object):
 
     def execute(self):
 
+        logging.info(" executing {} action ".format(self.name))
         ids = self.who_acts_now()
 
         if ids.shape[0] == 0:

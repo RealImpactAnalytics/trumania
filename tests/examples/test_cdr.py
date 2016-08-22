@@ -10,20 +10,13 @@ from datagenerator.random_generators import *
 from datagenerator.relationship import *
 
 
-params = {
-    "time_step": 60,
-    "n_cells": 100,
-    "n_agents": 100,
-    "n_customers": 1000,
-    "average_degree": 20
-}
-
-
-def add_cells(circus, seeder):
+def add_cells(circus, seeder, params):
     """
     Creates the CELL actors + the actions to let them randomly break down and
     get back up
     """
+    logging.info("Adding cells ")
+
     cells = Actor(prefix="CELL_", size=params["n_cells"])
 
     # the cell "health" is its probability of accepting a call. By default
@@ -56,7 +49,7 @@ def add_cells(circus, seeder):
     )
 
     cell_repair_action = ActorAction(
-        name="cell_break_down",
+        name="cell_repair_down",
 
         triggering_actor=cells,
         actorid_field="CELL_ID",
@@ -98,11 +91,12 @@ def add_cells(circus, seeder):
     return cells
 
 
-def add_mobility(circus, customers, cells, seeder):
+def add_mobility(circus, customers, cells, seeder, params):
     """
     adds a CELL attribute to the customer actor + a mobility action that
     randomly moves customers from CELL to CELL among their used cells.
     """
+    logging.info("Adding mobility ")
 
     # mobility time profile: assign high mobility activities to busy hours
     # of the day
@@ -118,15 +112,19 @@ def add_mobility(circus, customers, cells, seeder):
     mobility_rel = customers.create_relationship("POSSIBLE_CELLS",
                                                  seed=seeder.next())
 
+    logging.info(" creating bipartite graph ")
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(customers.ids, cells.ids, 0.4,
                                    seed=seeder.next()),
         columns=["USER_ID", "CELL"])
 
+    logging.info(" adding mobility relationships to customer")
     mobility_rel.add_relations(
         from_ids=mobility_df["USER_ID"],
         to_ids=mobility_df["CELL"],
         weights=mobility_weight_gen.generate(mobility_df.shape[0]))
+
+    logging.info(" creating customer's CELL attribute ")
 
     # Initialize the mobility by allocating one first random cell to each
     # customer among its network
@@ -134,6 +132,7 @@ def add_mobility(circus, customers, cells, seeder):
 
     # Mobility action itself, basically just a random hop from cell to cell,
     # that updates the "CELL" attributes + generates mobility logs
+    logging.info(" creating mobility action")
     mobility_action = ActorAction(
         name="mobility",
 
@@ -143,6 +142,7 @@ def add_mobility(circus, customers, cells, seeder):
         timer_gen=mobility_time_gen,
     )
 
+    logging.info(" adding operations")
     mobility_action.set_operations(
         customers.ops.lookup(actor_id_field="A_ID",
                              select={"CELL": "PREV_CELL",
@@ -164,13 +164,15 @@ def add_mobility(circus, customers, cells, seeder):
     )
 
     circus.add_action(mobility_action)
+    logging.info(" done")
 
 
-def add_social_network(customers, seeder):
+def add_social_network(customers, seeder, params):
     """
     Creates a random relationship from and to customers, to represent the
     social network
     """
+    logging.info("Creating the social network ")
 
     # create a random A to B symmetric relationship
     network_weight_gen = ScaledParetoGenerator(m=1., a=1.2, seed=seeder.next())
@@ -193,7 +195,7 @@ def add_social_network(customers, seeder):
         weights=network_weight_gen.generate(social_network_values.shape[0]))
 
 
-def add_topups(circus, customers, seeder):
+def add_topups(circus, customers, seeder, params):
     """
     Adds a MAIN_ACCT attribute to the customer to keep track of their finance
     level +  a topup actions to allow buying recharges.
@@ -202,6 +204,7 @@ def add_topups(circus, customers, seeder):
         by itself this action is permanently inactive. This action is meant
         to be triggered externally (from the "calls" or "sms" actions)
     """
+    logging.info("Adding topups actions")
 
     # agent relationship: set of available agents to each user, weighted by
     # user's preference
@@ -212,6 +215,7 @@ def add_topups(circus, customers, seeder):
                                    seed=seeder.next()),
         columns=["USER_ID", "AGENT"])
 
+    logging.info(" creating random agent/shop relationship ")
     agent_rel = customers.create_relationship("POSSIBLE_SHOPS",
                                               seed=seeder.next())
 
@@ -226,6 +230,7 @@ def add_topups(circus, customers, seeder):
     # Main account of each users + one initial "recharge" to all so customers do
     # not start with no money
     recharge_gen = ConstantGenerator(value=1000.)
+    logging.info(" creating random main accounts ")
     customers.create_attribute(name="MAIN_ACCT", init_values_gen=recharge_gen)
 
     # topup action itself, basically just a selection of a dealer and subsequent
@@ -318,10 +323,11 @@ def compute_call_status(action_data):
     return pd.DataFrame({"result": status})
 
 
-def add_communications(circus, customers, cells, seeder):
+def add_communications(circus, customers, cells, seeder, params):
     """
     Adds Calls and SMS actions, which in turn may trigger topups actions.
     """
+    logging.info("Adding calls and sms actions ")
 
     # generators for topups and call duration
     recharge_trigger = DependentTriggerGenerator(
@@ -541,10 +547,7 @@ def add_communications(circus, customers, cells, seeder):
     circus.add_actions(calls, sms)
 
 
-def test_cdr_scenario():
-
-    # building the circus
-    start_time = pd.Timestamp(datetime.now())
+def build_cdr_scenario(params):
 
     seeder = seed_provider(master_seed=123456)
     the_clock = Clock(start=datetime(year=2016, month=6, day=8),
@@ -552,6 +555,7 @@ def test_cdr_scenario():
                       format_for_out="%d%m%Y %H:%M:%S",
                       seed=seeder.next())
 
+    logging.info("building customer actors ")
     customers = Actor(size=params["n_customers"])
 
     msisdn_gen = MSISDNGenerator(countrycode="0032",
@@ -572,41 +576,69 @@ def test_cdr_scenario():
 
     flying = Circus(the_clock)
 
-    cells = add_cells(flying, seeder)
-    add_mobility(flying, customers, cells, seeder)
-    add_social_network(customers, seeder)
-    add_topups(flying, customers, seeder)
-    add_communications(flying, customers, cells, seeder)
+    cells = add_cells(flying, seeder, params)
+    add_mobility(flying, customers, cells, seeder, params)
+    add_social_network(customers, seeder, params)
+    add_topups(flying, customers, seeder, params)
+    add_communications(flying, customers, cells, seeder, params)
+
+    return flying
+
+
+def run_cdr_scenario(params):
+    # building the circus
+    start_time = pd.Timestamp(datetime.now())
+
+    flying = build_cdr_scenario(params)
     built_time = pd.Timestamp(datetime.now())
 
     # running it
-    logs = flying.run(n_iterations=50)
+    logs = flying.run(n_iterations=params["n_iterations"])
     execution_time = pd.Timestamp(datetime.now())
 
     for logid, lg in logs.iteritems():
-        print " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string())
+        logging.info(" - some {}:\n{}\n\n".format(logid, lg.head(
+            15).to_string()))
 
-    print "users having highest amount of calls: "
+    logging.info("users having highest amount of calls: ")
     voice_cdr = logs["voice_cdr"]
     top_users = voice_cdr["A"].value_counts().head(10)
-    print top_users
+    logging.info(top_users)
 
-    print "some dropped calls: "
+    logging.info("some dropped calls: ")
     dropped_calls = voice_cdr[voice_cdr["STATUS"] == "DROPPED"]
 
     if dropped_calls.shape[0] > 15:
-        print dropped_calls.sample(15).sort_values("DATETIME")
+        logging.info(dropped_calls.sample(15).sort_values("DATETIME"))
     else:
-        print dropped_calls
+        logging.info(dropped_calls)
 
     customers = flying.get_actor_of(action_name="calls").to_dataframe()
     df = customers[customers["MSISDN"].isin(top_users.index)]
-    print df
+    logging.info(df)
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
-    print "\ntotal number of logs: {}".format(all_logs_size)
+    logging.info("\ntotal number of logs: {}".format(all_logs_size))
 
-    print """\nexecution times: "
+    logging.info("""\nexecution times: "
      - building the circus: {}
      - running the simulation: {}
-    """.format(built_time - start_time, execution_time - built_time)
+    """.format(built_time - start_time, execution_time - built_time))
+
+
+def test_cdr_scenario():
+
+    setup_logging()
+    logging.info("test_cdr_scenario")
+
+    params = {
+        "time_step": 60,
+        "n_cells": 100,
+        "n_agents": 100,
+        "n_customers": 1000,
+        "average_degree": 20,
+        "n_iterations": 50
+    }
+
+    run_cdr_scenario(params)
+
