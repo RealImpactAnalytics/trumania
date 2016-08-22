@@ -24,8 +24,7 @@ def test_add_action_get_action_should_work_as_expected():
         [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1.,
          5., 10., 5., 1., 1., 1., 1.],
         index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
-    mobility_time_gen = DayProfiler(60, mov_prof,1)
-    mobility_time_gen.initialise(flying.clock)
+    mobility_time_gen = DayProfiler(the_clock, mov_prof, seed=1)
 
     mobility_action = ActorAction(
         name="mobility",

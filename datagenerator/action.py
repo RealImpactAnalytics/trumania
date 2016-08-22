@@ -146,8 +146,12 @@ class ActorAction(object):
             ids = self.timer.index
 
         if len(ids) > 0:
-            new_timer = self.time_generator.generate(
-                weights=self.get_param("activity", ids))
+            activity = self.get_param("activity", ids)
+
+            new_timer = self.time_generator.generate(weights=activity)
+
+            # replacing any generated timer with -1 for fully inactive actors
+            new_timer = new_timer.where(cond=activity, other=-1)
 
             self.timer.loc[ids, "remaining"] = new_timer
 
@@ -189,9 +193,15 @@ class ActorAction(object):
             back_prob = self.action.get_param("back_to_default_probability",
                                               non_default_ids)
 
-            baseline = self.judge.generate(back_prob.shape[0])
+            if np.all(back_prob == 0):
+                cond = [False] * non_default_ids.shape[0]
+            elif np.all(back_prob == 1):
+                cond = [True] * non_default_ids.shape[0]
+            else:
+                baseline = self.judge.generate(back_prob.shape[0])
+                cond = back_prob > baseline
 
-            actor_ids = back_prob[back_prob > baseline].index
+            actor_ids = back_prob[cond].index
             states = ["default"] * actor_ids.shape[0]
 
             self.action.transit_to_state(ids=actor_ids, states=states)

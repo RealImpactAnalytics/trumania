@@ -1,11 +1,8 @@
-from datagenerator.operations import *
+from datagenerator.relationship import *
 from datagenerator.random_generators import *
 
+
 class Actor(object):
-    """
-
-    """
-
     def __init__(self, size, id_start=0, prefix="", max_length=10):
         """
 
@@ -18,28 +15,25 @@ class Actor(object):
         self._attributes = {}
         self.ops = self.ActorOps(self)
         self.size = len(self.ids)
+        self.relationships = {}
+
+    def create_relationship(self, name, seed):
+        """
+        creates an empty relation ship from this actor
+        """
+
+        if name is self.relationships:
+            raise ValueError("cannot create a second relationship with "
+                             "existing name {}".format(name))
+
+        self.relationships[name] = Relationship(seed=seed)
+        return self.relationships[name]
+
+    def get_relationship(self, name):
+        return self.relationships[name]
 
     def add_attribute(self, name, attr):
         self._attributes[name] = attr
-
-    def make_attribute_action(self, attr_name, actorid_field_name, ids, params):
-        """
-
-        :param attr_name:
-        :param params:
-        :return:
-        """
-        if self._attributes.has_key(attr_name):
-            return self._attributes[attr_name].make_actions(
-                ids=ids, actorid_field_name=actorid_field_name, **params)
-        else:
-            raise Exception("No transient attribute named %s" % attr_name)
-
-    def apply_to_attribute(self,attr_name,function,params):
-        if self._attributes.has_key(attr_name):
-            return getattr(self._attributes[attr_name], function)(**params)
-        else:
-            raise Exception("No transient attribute named %s" % attr_name)
 
     def get_attribute(self, attribute_name):
         return self._attributes[attribute_name]
@@ -51,7 +45,6 @@ class Actor(object):
 
         return self.get_attribute(attribute_name).get_values(ids)
 
-    # TODO: refactor this as a lambda or np.nfunc
     def check_attributes(self, ids, field, condition, threshold):
         """
 

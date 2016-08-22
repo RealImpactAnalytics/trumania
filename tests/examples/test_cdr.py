@@ -25,7 +25,7 @@ def add_cells(circus, seeder):
     Creates the CELL actors + the actions to let them randomly break down and
     get back up
     """
-    cells = Actor(prefix="CELL_", size = params["n_cells"])
+    cells = Actor(prefix="CELL_", size=params["n_cells"])
 
     # the cell "health" is its probability of accepting a call. By default
     # let's says it's one expected failure every 1000 calls
@@ -42,8 +42,7 @@ def add_cells(circus, seeder):
 
     # same profiler for breakdown and repair: they are both related to
     # typical human activity
-    default_day_profiler = DayProfiler(step=params["time_step"])
-    default_day_profiler.initialise(circus.clock)
+    default_day_profiler = DayProfiler(circus.clock)
 
     cell_break_down_action = ActorAction(
         name="cell_break_down",
@@ -96,8 +95,7 @@ def add_cells(circus, seeder):
                                cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
     )
 
-    circus.add_action(cell_break_down_action)
-    circus.add_action(cell_repair_action)
+    circus.add_actions(cell_break_down_action, cell_repair_action)
 
     return cells
 
@@ -110,34 +108,31 @@ def add_mobility(circus, customers, cells, seeder):
 
     # mobility time profile: assign high mobility activities to busy hours
     # of the day
-    mov_prof = pd.Series(
-        [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1.,
-         5., 10., 5., 1., 1., 1., 1.],
-        index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
-    mobility_time_gen = DayProfiler(params["time_step"], mov_prof,
-                                    seed=seeder.next())
-    mobility_time_gen.initialise(circus.clock)
+    mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1.,
+                1., 1., 5., 10., 5., 1., 1., 1., 1.]
+    mobility_time_gen = DayProfiler(circus.clock, mov_prof, seed=seeder.next())
 
     # Mobility network, i.e. choice of cells per user, i.e. these are the
     # weighted "used cells" (as in "most used cells) for each user
     mobility_weight_gen = NumpyRandomGenerator(
         method="exponential", scale=1., seed=seeder.next())
 
-    mobility = Relationship(name="people's cell location", seed=seeder.next())
+    mobility_rel = customers.create_relationship("POSSIBLE_CELLS",
+                                                 seed=seeder.next())
 
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(customers.ids, cells.ids, 0.4,
                                    seed=seeder.next()),
         columns=["USER_ID", "CELL"])
 
-    mobility.add_relations(
+    mobility_rel.add_relations(
         from_ids=mobility_df["USER_ID"],
         to_ids=mobility_df["CELL"],
         weights=mobility_weight_gen.generate(mobility_df.shape[0]))
 
     # Initialize the mobility by allocating one first random cell to each
     # customer among its network
-    cell_attr = Attribute(relationship=mobility)
+    cell_attr = Attribute(relationship=mobility_rel)
     customers.add_attribute(name="CELL", attr=cell_attr)
 
     # Mobility action itself, basically just a random hop from cell to cell,
@@ -157,7 +152,7 @@ def add_mobility(circus, customers, cells, seeder):
                                      "OPERATOR": "OPERATOR"}),
 
         # selects a destination cell
-        mobility.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
+        mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
         # update the CELL attribute of the customers accordingly
         customers.ops.overwrite(attribute="CELL",
@@ -172,6 +167,34 @@ def add_mobility(circus, customers, cells, seeder):
     )
 
     circus.add_action(mobility_action)
+
+
+def add_social_network(customers, seeder):
+    """
+    Creates a random relationship from and to customers, to represent the
+    social network
+    """
+
+    # create a random A to B symmetric relationship
+    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
+                                                   seed=seeder.next())
+
+    social_network_values = create_er_social_network(
+        customer_ids=customers.ids,
+        p=params["average_degree"]/ params["n_customers"],
+        seed=seeder.next())
+
+    social_network = customers.create_relationship("FRIENDS",
+                                                   seed=seeder.next())
+    social_network.add_relations(
+        from_ids=social_network_values["A"].values,
+        to_ids=social_network_values["B"].values,
+        weights=networkweightgenerator.generate(social_network_values.shape[0]))
+
+    social_network.add_relations(
+        from_ids=social_network_values["B"].values,
+        to_ids=social_network_values["A"].values,
+        weights=networkweightgenerator.generate(social_network_values.shape[0]))
 
 
 def add_topups(circus, customers, seeder):
@@ -193,7 +216,8 @@ def add_topups(circus, customers, seeder):
                                    seed=seeder.next()),
         columns=["USER_ID", "AGENT"])
 
-    agent_rel = Relationship(name="people's agent", seed=seeder.next())
+    agent_rel = customers.create_relationship("POSSIBLE_SHOPS",
+                                              seed=seeder.next())
 
     agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.,
                                             seed=seeder.next())
@@ -274,8 +298,6 @@ def compute_sms_value(action_data):
     """
         Computes the value of an call based on duration, onnet/offnet and time
         of the day.
-
-        This is meant to be called in an Apply of the CDR use case
     """
     return pd.DataFrame({"result": 10}, index=action_data.index)
 
@@ -283,8 +305,6 @@ def compute_sms_value(action_data):
 def compute_cdr_type(action_data):
     """
         Computes the ONNET/OFFNET value based on the operator ids
-
-        This is meant to be called in an Apply of the CDR use case
     """
     def onnet(row):
         return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"]
@@ -311,27 +331,6 @@ def add_communications(circus, customers, cells, seeder):
     Adds Calls and SMS actions, which in turn may trigger topups actions.
     """
 
-    # create a random A to B symmetric relationship
-    networkweightgenerator = ScaledParetoGenerator(m=1., a=1.2,
-                                                   seed=seeder.next())
-
-    social_network_values = create_er_social_network(
-        customer_ids=customers.ids,
-        p=params["average_degree"]/ params["n_customers"],
-        seed=seeder.next())
-
-    social_network = Relationship(name="neighbours", seed=seeder.next())
-
-    social_network.add_relations(
-        from_ids=social_network_values["A"].values,
-        to_ids=social_network_values["B"].values,
-        weights=networkweightgenerator.generate(social_network_values.shape[0]))
-
-    social_network.add_relations(
-        from_ids=social_network_values["B"].values,
-        to_ids=social_network_values["A"].values,
-        weights=networkweightgenerator.generate(social_network_values.shape[0]))
-
     # generators for topups and call duration
     recharge_trigger = DependentTriggerGenerator(
         value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
@@ -340,16 +339,9 @@ def add_communications(circus, customers, cells, seeder):
         method="choice", a=range(20, 240), seed=seeder.next())
 
     # call and sms timer generator, depending on the day of the week
-
-    week_profile = pd.Series([5., 5., 5., 5., 5., 3., 3.],
-                             index=[timedelta(days=x, hours=23, minutes=59,
-                                              seconds=59)
-                             for x in range(7)])
-
-    timegen = WeekProfiler(params["time_step"], week_profile,
-                           seed=seeder.next())
-    timegen.initialise(circus.clock)
-    circus.add_increment(timegen)
+    call_timegen = WeekProfiler(clock=circus.clock,
+                                week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                                seed=seeder.next())
 
     # call activity level, under normal and "excited" states
     normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
@@ -379,7 +371,7 @@ def add_communications(circus, customers, cells, seeder):
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        timer_gen=timegen,
+        timer_gen=call_timegen,
         activity=normal_call_activity,
 
         states={
@@ -395,7 +387,7 @@ def add_communications(circus, customers, cells, seeder):
         triggering_actor=customers,
         actorid_field="A_ID",
 
-        timer_gen=timegen,
+        timer_gen=call_timegen,
         activity=normal_call_activity,
 
         states={
@@ -411,9 +403,9 @@ def add_communications(circus, customers, cells, seeder):
         circus.clock.ops.timestamp(named_as="DATETIME"),
 
         # selects a B party
-        social_network.ops.select_one(from_field="A_ID",
-                                      named_as="B_ID",
-                                      one_to_one=True),
+        customers.get_relationship("FRIENDS").ops.select_one(from_field="A_ID",
+                                                             named_as="B_ID",
+                                                             one_to_one=True),
 
         # some static fields
         customers.ops.lookup(actor_id_field="A_ID",
@@ -426,15 +418,14 @@ def add_communications(circus, customers, cells, seeder):
                              select={"MSISDN": "B",
                                      "OPERATOR": "OPERATOR_B",
                                      "CELL": "CELL_B",
-                                     "EXCITABILITY": "EXCITABILITY_B"
-                                     }),
+                                     "EXCITABILITY": "EXCITABILITY_B"}),
 
         operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
                          named_as="TYPE",
                          f=compute_cdr_type),
     )
 
-    # Both CELL_A and CELL_B might drop the call, based on their current "health"
+    # Both CELL_A and CELL_B might drop the call based on their current HEALTH
     compute_cell_status = Chain(
         flat_trigger.ops.generate_from_attr(
             observed_attribute=cells.get_attribute("HEALTH"),
@@ -554,11 +545,9 @@ def add_communications(circus, customers, cells, seeder):
                                      "CELL_A", "OPERATOR_A",
                                      "CELL_B", "OPERATOR_B",
                                      "TYPE", "PRODUCT"]),
-
     )
 
-    circus.add_action(calls)
-    circus.add_action(sms)
+    circus.add_actions(calls, sms)
 
 
 def test_cdr_scenario():
@@ -567,10 +556,12 @@ def test_cdr_scenario():
     start_time = pd.Timestamp(datetime.now())
 
     seeder = seed_provider(master_seed=123456)
-    the_clock = Clock(datetime(year=2016, month=6, day=8), params["time_step"],
-                      "%d%m%Y %H:%M:%S", seed=seeder.next())
+    the_clock = Clock(start=datetime(year=2016, month=6, day=8),
+                      step_s=params["time_step"],
+                      format_for_out="%d%m%Y %H:%M:%S",
+                      seed=seeder.next())
 
-    customers = Actor(params["n_customers"])
+    customers = Actor(size=params["n_customers"])
 
     msisdn_gen = MSISDNGenerator(countrycode="0032",
                                  prefix_list=["472", "473", "475", "476",
@@ -596,6 +587,7 @@ def test_cdr_scenario():
 
     cells = add_cells(flying, seeder)
     add_mobility(flying, customers, cells, seeder)
+    add_social_network(customers, seeder)
     add_topups(flying, customers, seeder)
     add_communications(flying, customers, cells, seeder)
     built_time = pd.Timestamp(datetime.now())

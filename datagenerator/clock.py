@@ -1,7 +1,6 @@
+from __future__ import division
 from datetime import timedelta
-import numpy as np
 from numpy.random import RandomState
-import pandas as pd
 import itertools
 from datagenerator.operations import *
 
@@ -13,13 +12,13 @@ class Clock(object):
 
     """
 
-    def __init__(self, start, step, format_for_out, seed):
+    def __init__(self, start, step_s, format_for_out, seed):
         """Create a Clock object.
 
         :type start: DateTime object
         :param start: instant of start of the generation
-        :type step: int
-        :param step: number of seconds between each iteration
+        :type step_s: int
+        :param step_s: number of seconds between each iteration
         :type format_for_out: string
         :param format_for_out: format string to return timestamps (need to be accepted by the strftime function)
         :type seed: int
@@ -28,10 +27,26 @@ class Clock(object):
         """
 
         self.__current = start
-        self.__step = step
+        self.step_s = step_s
+        self.step_delta = timedelta(seconds=step_s)
+        self.number_of_ticks_per_day = int(24 * 60 * 60 / step_s)
+        self.number_of_ticks_per_week = 7 * self.number_of_ticks_per_day
+
+        self.day_index = int((start.hour * 3600 + start.minute * 60
+                              + start.second) / step_s)
+        self.week_index = int((start.weekday() * 24 * 3600) /
+                              step_s) + self.day_index
+
         self.__format_for_out = format_for_out
         self.__state = RandomState(seed)
         self.ops = self.ClockOps(self)
+
+        self.__increment_listeners = []
+
+    def register_increment_listener(self, listener):
+        """Add an object to be incremented at each step (such as a TimeProfiler)
+        """
+        self.__increment_listeners.append(listener)
 
     def increment(self):
         """Increments the clock by 1 step
@@ -39,7 +54,12 @@ class Clock(object):
         :rtype: NoneType
         :return: None
         """
-        self.__current += timedelta(seconds=self.__step)
+        self.__current += self.step_delta
+        self.day_index = (self.day_index + 1) % self.number_of_ticks_per_day
+        self.week_index = (self.week_index + 1) % self.number_of_ticks_per_week
+
+        for listener in self.__increment_listeners:
+            listener.increment()
 
     def get_timestamp(self, size=1):
         """Returns random timestamps within the current value of the clock and the next step
@@ -53,7 +73,7 @@ class Clock(object):
         def make_ts(x):
             return (self.__current + timedelta(seconds=x)).strftime(self.__format_for_out)
 
-        return pd.Series(self.__state.choice(self.__step, size)).apply(make_ts)
+        return pd.Series(self.__state.choice(self.step_s, size)).apply(make_ts)
 
     def get_week_index(self):
         """Return the number of steps in which the Clock is from the start of the week.
@@ -62,8 +82,7 @@ class Clock(object):
         :rtype: int
         :return: the count of number of steps already taken since the start of the week
         """
-        return (
-               self.__current.weekday() * 24 * 3600 + self.__current.hour * 3600 + self.__current.minute * 60 + self.__current.second) / self.__step
+        return self.week_index
 
     def get_day_index(self):
         """Return the number of steps in which the Clock is from the start of the day.
@@ -72,7 +91,7 @@ class Clock(object):
         :rtype: int
         :return: the count of number of steps already taken since the start of the day
         """
-        return (self.__current.hour * 3600 + self.__current.minute * 60 + self.__current.second) / self.__step
+        return self.day_index
 
     class ClockOps(object):
         def __init__(self, clock):
@@ -109,13 +128,35 @@ class TimeProfiler(object):
 
     """
 
-    def __init__(self, step, profile, seed=None):
+    # TODO: this concept seems now a specific case of the DependentGenerator
+    # and is actually a first use case for a probability
+    # given distribution, where the pdf changes depending on an external value
+    # (here, the day or week index)
+    #
+    # it also shares the generate(self, observations) signature, although
+    # here the observation is the same value for all actors
+    #
+    # also, we already have another factor influencing the timer generation:
+    # the state of the actorAction (e.g bursty vs normal)
+
+    # => this all could be merged into one 3D joint distribution
+    # (time_index, state, timer_value), for which we systematically marginalize
+    # the time_index and state based on observations and generate timer_values
+    # according to the result :)
+    #
+    # => to be merged with the states of the ActorAction => this will also
+    # simplify the calling API, allowing something like
+    #    timer=DayTimerTrigger(...specify the states activity here )
+    #
+    # (to be refined...)
+    #
+
+    def __init__(self, clock, profile, seed=None):
         """
         This should not be used, only child classes
 
-        :type step: int
-        :param step: number of steps between each item of the profile, needs to be a common divisor of the width of
-        the bins
+        :type clock: Clock
+        :param clock: the master clock driving this simulator
         :type profile: Pandas Series, index is a timedelta object (minimum 1 sec and last is defined by the type of profile)
         values are floats
         :param profile: Weight of each period. The index indicate the right bound of the bin (left bound is 0 for the
@@ -124,7 +165,6 @@ class TimeProfiler(object):
         :param seed: seed for random number generator, default None
         :return: A new TimeProfiler is created
         """
-        self._step = step
         self._state = RandomState(seed)
 
         totalweight = profile.sum()
@@ -132,12 +172,18 @@ class TimeProfiler(object):
 
         leftbounds = np.append(np.array([np.timedelta64(-1, "s")]), profile.index.values[:-1])
         widths = rightbounds - leftbounds
-        n_subbins = widths / np.timedelta64(step, "s")
+        n_subbins = widths / np.timedelta64(clock.step_s, "s")
 
         norm_prof = list(itertools.chain(
-            *[n_subbins[i] * [profile.iloc[i] / float(n_subbins[i] * totalweight), ] for i in range(len(n_subbins))]))
+            *[n_subbins[i] * [profile.iloc[i] / float(n_subbins[i] * totalweight), ]
+              for i in range(len(n_subbins))]))
 
-        self._profile = pd.DataFrame({"weight": norm_prof, "next_prob": np.nan, "timeframe": np.arange(len(norm_prof))})
+        self._profile = pd.DataFrame({"weight": norm_prof,
+                                      "next_prob": np.nan,
+                                      "timeframe": np.arange(len(norm_prof))})
+
+        # makes sure we'll get notified when the clock goes forward
+        clock.register_increment_listener(self)
 
     def get_profile(self):
         """Returns the profile, for debugging mostly
@@ -179,12 +225,13 @@ class TimeProfiler(object):
 
 
 class WeekProfiler(TimeProfiler):
-    """WeekProfiler is a TimeProfiler on a period of a week. This imposes that the last time bin in the profile
-    of the constructor needs to be equal to 6 days, 23h, 59m and 59s.
+    """WeekProfiler is a TimeProfiler on a period of a week.
+        This imposes that the last time bin in the profile
+        of the constructor needs to be equal to 6 days, 23h, 59m and 59s.
 
     """
 
-    def __init__(self, step, profile, seed=None):
+    def __init__(self, clock, week_profile, seed=None):
         """
 
         :type step: int
@@ -198,20 +245,25 @@ class WeekProfiler(TimeProfiler):
         :param seed: seed for random number generator, default None
         :return:
         """
-        assert profile.index.values[-1] == np.timedelta64(604799, "s")
 
-        TimeProfiler.__init__(self, step, profile, seed)
+        if len(week_profile) != 7:
+            raise ValueError("Week profile must be initialized with 7 daily "
+                             "weights")
 
-    def initialise(self, clock):
-        """Initialisation of the profiler (actually, this needs to happen before any profiler is made)
-        It sets the first bin of the cdf to the current timestamp of the clock
+        profile = pd.Series(
+            week_profile,
+            index=[timedelta(days=d, hours=23, minutes=59, seconds=59)
+                   for d in range(7)])
 
-        :param clock: a Clock object
-        :return: None
-        """
+        TimeProfiler.__init__(self, clock, profile, seed)
+
+        # Initialisation of the profiler
+        # It sets the first bin of the cdf to the current timestamp of the clock
         start = clock.get_week_index()
-        self._profile = pd.concat([self._profile.iloc[start:len(self._profile.index)], self._profile.iloc[0:start]],
-                                  ignore_index=True)
+        self._profile = pd.concat(
+            [self._profile.iloc[start:len(self._profile.index)],
+             self._profile.iloc[0:start]],
+            ignore_index=True)
         self._profile["next_prob"] = self._profile["weight"].cumsum()
 
 
@@ -223,12 +275,11 @@ class DayProfiler(TimeProfiler):
 
     # naked eye guesstimation from
     # https://github.com/RealImpactAnalytics/lab-home-work-detection/blob/3bacb58a53f69824102437a27218149f75d322e2/pub/chimayblue/01%20basic%20exploration.ipynb
-    default_profile = pd.Series(
-        [1, .5, .2, .15, .2, .4, 3.8, 7.2, 8.4, 9.1, 9.0, 8.3, 8.1, 7.7, 7.4,
-         7.8, 8.0, 7.9, 9.7, 10.4, 10.5, 8.8, 5.7, 2.8],
-        index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
+    default_profile = [1, .5, .2, .15, .2, .4, 3.8, 7.2, 8.4, 9.1, 9.0, 8.3,
+                       8.1, 7.7, 7.4, 7.8, 8.0, 7.9, 9.7, 10.4, 10.5, 8.8,
+                       5.7, 2.8]
 
-    def __init__(self, step, profile=default_profile, seed=None):
+    def __init__(self, clock, day_profile=default_profile, seed=None):
         """
 
         :type step: int
@@ -242,20 +293,25 @@ class DayProfiler(TimeProfiler):
         :param seed: seed for random number generator, default None
         :return:
         """
-        assert profile.index.values[-1] == np.timedelta64(86399, "s")
 
-        TimeProfiler.__init__(self, step, profile, seed)
+        if len(day_profile) != 24:
+            raise ValueError("day profile must be initialized with 24 hourly"
+                             "weights")
 
-    def initialise(self, clock):
-        """Initialisation of the profiler (actually, this needs to happen before any profiler is made)
-        It sets the first bin of the cdf to the current timestamp of the clock
+        profile = pd.Series(
+            day_profile,
+            index=[timedelta(hours=h, minutes=59, seconds=59)
+                   for h in range(24)])
 
-        :param clock: a Clock object
-        :return: None
-        """
+        TimeProfiler.__init__(self, clock, profile, seed)
+
+        # Initialisation of the profiler
+        # It sets the first bin of the cdf to the current timestamp of the clock
         start = clock.get_day_index()
-        self._profile = pd.concat([self._profile.iloc[start:len(self._profile.index)], self._profile.iloc[0:start]],
-                                  ignore_index=True)
+        self._profile = pd.concat(
+            [self._profile.iloc[start:len(self._profile.index)],
+             self._profile.iloc[0:start]],
+            ignore_index=True)
         self._profile["next_prob"] = self._profile["weight"].cumsum()
 
 
@@ -273,14 +329,6 @@ class ConstantProfiler(object):
         :return:
         """
         self._val = return_value
-
-    def initialise(self, clock):
-        """Doesn't do anything since it's a constant profiler.
-
-        :param clock: a Clock object
-        :return: None
-        """
-        pass
 
     def get_profile(self):
         """Returns the profile, for debugging mostly

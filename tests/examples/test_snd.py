@@ -17,149 +17,235 @@ from datagenerator.util_functions import *
 # SIMs: has ID
 # AgentA buys stock to AgentB
 
-def compose_circus():
+params = {
+    "n_agents": 1000,
+    "n_dealers": 100,
+    "average_degree": 20,
+    "n_sims": 500000
+}
+
+
+def create_agents_with_sims(seeder):
     """
-        Builds a circus simulating SND activity.
-        see test case below
+    Create the AGENT actor (i.e. customer) together with its "SIM" labeled
+    stock, to keep track of which SIMs are own by which agent
     """
-    ######################################
-    # Define parameters
-    ######################################
-    print "Parameters"
+    agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
 
-    seeder = seed_provider(master_seed=123456)
-    n_agents_a = 1000
-    n_agents_b = 100
-    average_degree = 20
-    n_sims = 500000
+    customer_sim_rel = agents.create_relationship("SIM", seed=seeder.next())
 
-    prof = pd.Series([5., 5., 5., 5., 5., 3., 3.],
-                     index=[timedelta(days=x, hours=23, minutes=59, seconds=59) for x in range(7)])
-    time_step = 60
+    customer_sim_attr = LabeledStockAttribute(ids=agents.ids,
+                                              init_values=0,
+                                              relationship=customer_sim_rel)
+    agents.add_attribute(name="SIM", attr=customer_sim_attr)
 
-    sims = ["SIM_%s" % (str(i).zfill(6)) for i in range(n_sims)]
+    # note: the relationship is not initialized with any SIM: agents start with
+    # no SIM
 
-    ######################################
-    # Define clocks
-    ######################################
-    the_clock = Clock(datetime(year=2016, month=6, day=8), time_step, "%d%m%Y %H:%M:%S",
-                      seed=seeder.next())
+    return agents
 
-    activity_gen = NumpyRandomGenerator(method="choice", a = range(1, 4),
-                                        seed=seeder.next())
 
-    timegen = WeekProfiler(time_step, prof, seed=seeder.next())
-    agentweightgenerator = NumpyRandomGenerator(method="exponential", scale= 1.)
+def create_dealers_with_sims(seeder):
+    """
+    Create the DEALER actor together with its "SIM" labeled stock, to keep
+     track of which SIMs are available at which agents
+    """
 
-    ######################################
-    # Initialise generators
-    ######################################
-    timegen.initialise(the_clock)
+    dealers = Actor(size=params["n_dealers"], prefix="DEALER_", max_length=3)
 
-    ######################################
-    # Define Actors, Relationships, ...
-    ######################################
-    # Assign all sims to a dealer to start
+    sims = ["SIM_%s" % (str(i).zfill(6)) for i in range(params["n_sims"])]
 
-    customers = Actor(size=n_agents_a,
-                      prefix="AGENT_",
-                      max_length=3)
+    # relationship from dealer to sim, to keep track of their stock
+    dealer_sim_rel = dealers.create_relationship("SIM", seed=seeder.next())
 
-    dealers = Actor(size=n_agents_b,
-                    prefix="DEALER_",
-                    max_length=3)
-
-    dealer_sim_rel = Relationship(name="dealer to sim", seed=seeder.next())
-
-    sims_dealer = make_random_assign("SIM","DEALER",
-                                     sims,
-                                     dealers.ids,
+    sims_dealer = make_random_assign("SIM", "DEALER",
+                                     sims, dealers.ids,
                                      seed=seeder.next())
     dealer_sim_rel.add_relations(from_ids=sims_dealer["DEALER"],
                                  to_ids=sims_dealer["SIM"])
 
-    customer_sim_rel = Relationship(name="agent to sim", seed=seeder.next())
-
-    customer_sim_attr = LabeledStockAttribute(ids=customers.ids,
-                                              init_values=0,
-                                              relationship=customer_sim_rel)
-    customers.add_attribute(name="SIM", attr=customer_sim_attr)
-
+    # the same stock is also kept as an attribute
     dealer_sim_attr = LabeledStockAttribute(ids=dealers.ids,
                                             init_values=0,
                                             relationship=dealer_sim_rel)
     dealers.add_attribute(name="SIM", attr=dealer_sim_attr)
 
-    deg_prob = average_degree/n_agents_a*n_agents_b
+    return dealers
+
+
+def connect_agent_to_dealer(agents, dealers, seeder):
+    """
+    Creates a random relationship from agents to dealers
+    """
+
+    deg_prob = params["average_degree"] / params["n_agents"] * params["n_dealers"]
+
+    agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.)
+
     agent_customer_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, dealers.ids, deg_prob,
+        make_random_bipartite_data(agents.ids, dealers.ids, deg_prob,
                                    seed=seeder.next()),
         columns=["AGENT", "DEALER"])
 
-    agent_customer = Relationship(name="agent to dealers",
-                                  seed=seeder.next())
+    agent_customer_rel = agents.create_relationship(name="DEALERS",
+                                                    seed=seeder.next())
 
-    agent_customer.add_relations(from_ids=agent_customer_df["AGENT"],
-                                 to_ids=agent_customer_df["DEALER"],
-                                 weights=agentweightgenerator.generate(
-                                    agent_customer_df.shape[0]))
+    agent_customer_rel.add_relations(
+        from_ids=agent_customer_df["AGENT"],
+        to_ids=agent_customer_df["DEALER"],
+        weights=agent_weight_gen.generate(agent_customer_df.shape[0]))
 
-    print "Done all customers"
 
-    ######################################
-    # Create circus
-    ######################################
-    print "Creating circus"
-    flying = Circus(the_clock)
+def add_purchase_action(circus, agents, dealers, seeder):
+    """
+    Adds a SIM purchase action from agents to dealer, with impact on stock of
+    both actors
+    """
+
+    timegen = WeekProfiler(clock=circus.clock,
+                           week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                           seed=seeder.next())
+
+    purchase_activity_gen = NumpyRandomGenerator(
+        method="choice", a=range(1, 4), seed=seeder.next())
+
+    # TODO: if we merge profiler and generator, we could have higher probs here
+    # based on calendar
+    # TODO2: or not, maybe we should have a sub-operation with its own counter
+    #  to "come back to normal", instead of sampling a random variable at
+    #  each turn => would improve efficiency
 
     purchase = ActorAction(
-        name="purchase",
-        triggering_actor=customers,
+        name="purchases",
+        triggering_actor=agents,
         actorid_field="AGENT",
         timer_gen=timegen,
-        activity=activity_gen)
+        activity=purchase_activity_gen,
 
-    purchase.set_operations(
-        agent_customer.ops.select_one(from_field="AGENT",
-                                      named_as="DEALER"),
-
-        dealer_sim_rel.ops.select_one(from_field="DEALER",
-                                      named_as="SIM",
-                                      one_to_one=True),
-
-        customer_sim_attr.ops.add_item(actor_id_field="AGENT",
-                                       item_field="SIM"),
-
-        dealer_sim_attr.ops.remove_item(actor_id_field="DEALER",
-                                        item_field="SIM"),
-
-        the_clock.ops.timestamp(named_as="DATETIME"),
-
-        # not specifying the columns => by defaults, log everything
-        operations.FieldLogger(log_id="cdr"),
+        states={
+            "on_holiday": {
+                "activity": ConstantGenerator(value=0),
+                "back_to_default_probability": ConstantGenerator(value=0)
+            }
+        }
     )
 
-    flying.add_action(purchase)
+    purchase.set_operations(
+        circus.clock.ops.timestamp(named_as="DATETIME"),
 
-    flying.add_increment(timegen)
-    print "Done"
+        agents.get_relationship("DEALERS").ops.select_one(from_field="AGENT",
+                                                          named_as="DEALER"),
 
-    return flying
+        # TODO: cf note above on LabeledStock: this could become a pop_one()
+        dealers.get_relationship("SIM").ops.select_one(from_field="DEALER",
+                                                       named_as="SIM",
+                                                       one_to_one=True),
+
+        # TODO: cf note above on LabeledStock: this could be on the relationship
+        agents.get_attribute("SIM").ops.add_item(actor_id_field="AGENT",
+                                                 item_field="SIM"),
+
+        # TODO: cf note above on LabeledStock: and this could disappear :)
+        dealers.get_attribute("SIM").ops.remove_item(actor_id_field="DEALER",
+                                                     item_field="SIM"),
+
+        # not specifying the logged columns => by defaults, log everything
+        operations.FieldLogger(log_id="purchases"),
+    )
+
+    circus.add_action(purchase)
+
+
+def add_agent_holidays_action(circus, agents, seeder):
+    """
+    Adds actions that reset to 0 the activity level of the purchases action of
+    some actors
+    """
+
+    # TODO: this is a bit weird, I think what I'd need is a profiler that would
+    # return duration (i.e timer count) with probability related to time
+    # until next typical holidays :)
+    # We could call this YearProfile though the internal mechanics would be
+    # different than week and day profiler
+    holidaytimegen = WeekProfiler(clock=circus.clock,
+                                  week_profile=[1, 1, 1, 1, 1, 1, 1],
+                                  seed=seeder.next())
+
+    # TODO: we'd obviously have to adapt those weitgh to longer periods
+    # thought this interface is not very intuitive
+    # => create a method where can can specify the expected value of the
+    # inter-event interval, and convert that into an activity
+    holiday_start_activity = ScaledParetoGenerator(m=.25, a=1.2,
+                                                   seed=seeder.next())
+
+    holiday_end_activity = ScaledParetoGenerator(m=150, a=1.2,
+                                                   seed=seeder.next())
+
+    going_on_holidays = ActorAction(
+        name="agent_start_holidays",
+        triggering_actor=agents,
+        actorid_field="AGENT",
+        timer_gen=holidaytimegen,
+        activity=holiday_start_activity)
+
+    returning_from_holidays = ActorAction(
+        name="agent_start_holidays",
+        triggering_actor=agents,
+        actorid_field="AGENT",
+        timer_gen=holidaytimegen,
+        activity=holiday_end_activity,
+        auto_reset_timer=False)
+
+    going_on_holidays.set_operations(
+
+        circus.get_action("purchases").ops.transit_to_state(
+            actor_id_field="AGENT",
+            state="on_holiday"),
+        returning_from_holidays.ops.reset_timers(actor_id_field="AGENT"),
+
+        # just for the logs
+        circus.clock.ops.timestamp(named_as="TIME"),
+        ConstantGenerator(value="going").ops.generate(named_as="STATES"),
+        operations.FieldLogger(log_id="holidays"),
+    )
+
+    returning_from_holidays.set_operations(
+        circus.get_action("purchases").ops.transit_to_state(
+            actor_id_field="AGENT",
+            state="default"),
+
+        # just for the logs
+        circus.clock.ops.timestamp(named_as="TIME"),
+        ConstantGenerator(value="returning").ops.generate(named_as="STATES"),
+        operations.FieldLogger(log_id="holidays"),
+    )
+
+    circus.add_actions(going_on_holidays, returning_from_holidays)
 
 
 def test_cdr_scenario():
 
-    snd_circus = compose_circus()
-    n_iterations = 100
+    seeder = seed_provider(master_seed=123456)
 
-    logs = snd_circus.run(n_iterations)
+    the_clock = Clock(datetime(year=2016, month=6, day=8), step_s=60,
+                      format_for_out="%d%m%Y %H:%M:%S", seed=seeder.next())
 
-    print ("""
-        some purchase events:
-          {}
-    """.format(logs["cdr"].head()))
+    flying = Circus(the_clock)
 
-    assert logs["cdr"].shape[0] > 0
+    agents = create_agents_with_sims(seeder)
+    dealers = create_dealers_with_sims(seeder)
+    connect_agent_to_dealer(agents, dealers, seeder)
 
-    # TODO: add real post-conditions on all_purchases
+    add_purchase_action(flying, agents, dealers, seeder)
+    add_agent_holidays_action(flying, agents, seeder)
+
+    logs = flying.run(n_iterations=100)
+
+    for logid, lg in logs.iteritems():
+        print " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string())
+
+    # TODO: we could add post-checks here that verify that no calls were
+    # made by agents during their holiday
+    # that's annoying to do though since the timestamp are partially random
+    # => we need to round them to the upper/lower minute
 

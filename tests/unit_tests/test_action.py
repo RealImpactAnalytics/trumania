@@ -30,6 +30,28 @@ def test_get_activity_default():
     assert action.get_possible_states() == ["default"]
 
 
+def test_actors_with_zero_activity_should_never_have_positive_timer():
+
+    actor = Actor(size=10)
+
+    action = ActorAction(
+        name="tested",
+        triggering_actor=actor,
+        # fake generator that assign zero activity to 3 actors
+        activity=ConstantsMockGenerator([1,1,1,1,0,1,1, 0,0,1]),
+        timer_gen=ConstantProfiler(10),
+        actorid_field="")
+
+    action.reset_timers()
+
+    # all non zero actors should have been through the profiler => timer to 10
+    # all others should be locked to -1, to reflect that activity 0 never
+    # triggers anything
+    expected_timers = [10, 10, 10, 10, -1, 10, 10, -1, -1, 10]
+
+    assert expected_timers == action.timer["remaining"].tolist()
+
+
 def test_get_activity_should_be_aligned_for_each_state():
 
     excited_call_activity = ConstantGenerator(value=10)

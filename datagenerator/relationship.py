@@ -21,7 +21,7 @@ class Relationship(object):
 
     """
 
-    def __init__(self, name, seed):
+    def __init__(self, seed):
         """
 
         :param r1: string, name for first element
@@ -30,7 +30,6 @@ class Relationship(object):
         :return:
         """
 
-        self.__name = name
         self.__state = RandomState(seed)
         self._table = pd.DataFrame(columns=["from", "to", "weight"])
         self.ops = self.RelationshipOps(self)

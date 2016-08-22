@@ -2,7 +2,11 @@ import pandas as pd
 from datagenerator.util_functions import merge_dicts
 
 
-df_concat = lambda d1, d2: pd.concat([d1, d2]).reset_index(drop=True)
+def df_concat(d1, d2):
+        df = pd.concat([d1, d2])
+        df.reset_index(drop=True, inplace=True)
+        return df
+
 
 class Circus(object):
     """
@@ -29,7 +33,6 @@ class Circus(object):
         self.__items = {}
         self.clock = clock
         self.__actions = []
-        self.__incrementors = []
 
     def add_item(self, name, item):
         """Add an Item object to the list of items
@@ -61,39 +64,28 @@ class Circus(object):
         """
         self.__actions.append(action)
 
+    def add_actions(self, *actions):
+        for action in actions:
+            self.add_action(action)
+
     def get_action(self, action_name):
         return filter(lambda a: a.name == action_name, self.__actions)[0]
 
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
 
-    def add_increment(self, to_increment):
-        """Add an object to be incremented at each step (such as a TimeProfiler)
-
-        :param to_increment:
-        :return:
-        """
-        self.__incrementors.append(to_increment)
-
-    def one_round(self, round_number):
+    def one_step(self, round_number):
         """
         Performs one round of actions
 
         :return:
         """
 
-        print "round : {}".format(round_number)
+        print "step : {}".format(round_number)
 
         # puts the logs of all actions into one grand dictionary.
-        # TODO: same as in Action: I guess just adding pd.concat directly
-        # generalizes this to having several actions contributing to the same
-        # log (e.g. "cdrs", from both the "SMS" and "VOICE" action
-
         logs = merge_dicts((action.execute() for action in self.__actions),
                            df_concat)
-
-        for i in self.__incrementors:
-            i.increment()
 
         self.clock.increment()
 
@@ -109,7 +101,7 @@ class Circus(object):
         """
 
         print "starting circus"
-        all_actions_logs = (self.one_round(r) for r in range(n_iterations))
+        all_actions_logs = (self.one_step(r) for r in range(n_iterations))
 
         # merging logs from all actions
         return merge_dicts(all_actions_logs, df_concat)
