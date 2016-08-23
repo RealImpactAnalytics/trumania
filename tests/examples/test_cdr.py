@@ -411,6 +411,7 @@ def add_communications(circus, customers, cells, seeder, params):
                              select={"MSISDN": "A",
                                      "CELL": "CELL_A",
                                      "OPERATOR": "OPERATOR_A",
+                                     "EXCITABILITY": "EXCITABILITY_A",
                                      "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
         customers.ops.lookup(actor_id_field="B_ID",
@@ -426,15 +427,17 @@ def add_communications(circus, customers, cells, seeder, params):
 
     # Both CELL_A and CELL_B might drop the call based on their current HEALTH
     compute_cell_status = Chain(
-        flat_trigger.ops.generate_from_attr(
-            observed_attribute=cells.get_attribute("HEALTH"),
-            observed_attribute_actor_id_field="CELL_A",
-            named_as="CELL_A_ACCEPTS"),
+        cells.ops.lookup(actor_id_field="CELL_A",
+                         select={"HEALTH": "CELL_A_HEALTH"}),
 
-        flat_trigger.ops.generate_from_attr(
-            observed_attribute=cells.get_attribute("HEALTH"),
-            observed_attribute_actor_id_field="CELL_B",
-            named_as="CELL_B_ACCEPTS"),
+        cells.ops.lookup(actor_id_field="CELL_B",
+                         select={"HEALTH": "CELL_B_HEALTH"}),
+
+        flat_trigger.ops.generate(observed_field="CELL_A_HEALTH",
+                                  named_as="CELL_A_ACCEPTS"),
+
+        flat_trigger.ops.generate(observed_field="CELL_B_HEALTH",
+                                  named_as="CELL_B_ACCEPTS"),
 
         operations.Apply(source_fields=["CELL_A_ACCEPTS", "CELL_B_ACCEPTS"],
                          named_as="STATUS",
@@ -454,7 +457,7 @@ def add_communications(circus, customers, cells, seeder, params):
     # triggers the topup action if the main account is low
     trigger_topups = Chain(
         # customer with low account are now more likely to topup
-        recharge_trigger.ops.generate_from_field(
+        recharge_trigger.ops.generate(
             observed_field="MAIN_ACCT_NEW",
             named_as="SHOULD_TOP_UP"),
 
@@ -467,10 +470,8 @@ def add_communications(circus, customers, cells, seeder, params):
     get_bursty = Chain(
         # Trigger to get into "excited" mode because A gave a call or sent an
         #  SMS
-        flat_trigger.ops.generate_from_attr(
-            observed_attribute=customers.get_attribute("EXCITABILITY"),
-            observed_attribute_actor_id_field="A_ID",
-            named_as="A_GETTING_BURSTY"),
+        flat_trigger.ops.generate(observed_field="EXCITABILITY_A",
+                                 named_as="A_GETTING_BURSTY"),
 
         calls.ops.transit_to_state(actor_id_field="A_ID",
                                    condition_field="A_GETTING_BURSTY",
@@ -480,9 +481,8 @@ def add_communications(circus, customers, cells, seeder, params):
                                  state="excited"),
 
         # Trigger to get into "excited" mode because B received a call
-        flat_trigger.ops.generate_from_field(
-            observed_field="EXCITABILITY_B",
-            named_as="B_GETTING_BURSTY"),
+        flat_trigger.ops.generate(observed_field="EXCITABILITY_B",
+                                  named_as="B_GETTING_BURSTY"),
 
         # transiting to excited mode, according to trigger value
         calls.ops.transit_to_state(actor_id_field="B_ID",

@@ -206,28 +206,7 @@ class DependentGenerator(object):
                 return pd.DataFrame({self.named_as: values},
                                     index=action_data.index)
 
-        class RandomValuesFromAttr(AddColumns):
-            """
-            Operation that produces one single attribute generated randomly.
-            """
-
-            def __init__(self, generator, named_as, attribute,
-                         attribute_actor_id_field):
-                AddColumns.__init__(self)
-
-                self.generator = generator
-                self.named_as = named_as
-                self.attribute = attribute
-                self.attribute_actor_id_field = attribute_actor_id_field
-
-            def build_output(self, action_data):
-                actor_ids = action_data[self.attribute_actor_id_field]
-                obs = self.attribute.get_values(actor_ids)
-                values = self.generator.generate(observations=obs).values
-                return pd.DataFrame({self.named_as: values},
-                                    index=action_data.index)
-
-        def generate_from_field(self, named_as, observed_field):
+        def generate(self, named_as, observed_field):
             """
             :param named_as:
             :param observed_field:
@@ -235,13 +214,6 @@ class DependentGenerator(object):
             """
             return self.RandomValuesFromField(self.generator, named_as,
                                               observed_field)
-
-        def generate_from_attr(self, named_as, observed_attribute,
-                               observed_attribute_actor_id_field):
-
-            return self.RandomValuesFromAttr(
-                self.generator, named_as, observed_attribute,
-                observed_attribute_actor_id_field)
 
 
 class DependentTrigger(object):
