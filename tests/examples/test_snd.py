@@ -30,10 +30,12 @@ def create_agents_with_sims(seeder):
     Create the AGENT actor (i.e. customer) together with its "SIM" labeled
     stock, to keep track of which SIMs are own by which agent
     """
+    logging.info("Creating agents ")
+
     agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
     agents.create_relationship(name="SIM", seed=seeder.next())
 
-    # note: the SIM multi-atribute is not initialized with any SIM: agents
+    # note: the SIM multi-attribute is not initialized with any SIM: agents
     # start with no SIM
 
     return agents
@@ -44,6 +46,7 @@ def create_dealers_with_sims(seeder):
     Create the DEALER actor together with its "SIM" labeled stock, to keep
      track of which SIMs are available at which agents
     """
+    logging.info("Creating dealer and their SIM stock  ")
 
     dealers = Actor(size=params["n_dealers"], prefix="DEALER_", max_length=3)
 
@@ -63,6 +66,7 @@ def connect_agent_to_dealer(agents, dealers, seeder):
     """
     Creates a random relationship from agents to dealers
     """
+    logging.info("Randomly connecting agents to dealer ")
 
     deg_prob = params["average_degree"] / params["n_agents"] * params["n_dealers"]
 
@@ -87,6 +91,7 @@ def add_purchase_action(circus, agents, dealers, seeder):
     Adds a SIM purchase action from agents to dealer, with impact on stock of
     both actors
     """
+    logging.info("Creating purchase action")
 
     timegen = WeekProfiler(clock=circus.clock,
                            week_profile=[5., 5., 5., 5., 5., 3., 3.],
@@ -101,7 +106,7 @@ def add_purchase_action(circus, agents, dealers, seeder):
     #  to "come back to normal", instead of sampling a random variable at
     #  each turn => would improve efficiency
 
-    purchase = ActorAction(
+    purchase = Action(
         name="purchases",
         triggering_actor=agents,
         actorid_field="AGENT",
@@ -121,7 +126,9 @@ def add_purchase_action(circus, agents, dealers, seeder):
 
         agents.get_relationship("DEALERS").ops.select_one(
             from_field="AGENT",
-            named_as="DEALER"),
+            named_as="DEALER",
+            one_to_one=True,
+        ),
 
         dealers.get_relationship("SIM").ops.select_one(
             from_field="DEALER",
@@ -144,15 +151,16 @@ def add_agent_holidays_action(circus, agents, seeder):
     Adds actions that reset to 0 the activity level of the purchases action of
     some actors
     """
+    logging.info("Adding 'holiday' periods for agents ")
 
     # TODO: this is a bit weird, I think what I'd need is a profiler that would
     # return duration (i.e timer count) with probability related to time
     # until next typical holidays :)
     # We could call this YearProfile though the internal mechanics would be
     # different than week and day profiler
-    holidaytimegen = WeekProfiler(clock=circus.clock,
-                                  week_profile=[1, 1, 1, 1, 1, 1, 1],
-                                  seed=seeder.next())
+    holiday_time_gen = WeekProfiler(clock=circus.clock,
+                                    week_profile=[1, 1, 1, 1, 1, 1, 1],
+                                    seed=seeder.next())
 
     # TODO: we'd obviously have to adapt those weitgh to longer periods
     # thought this interface is not very intuitive
@@ -162,20 +170,20 @@ def add_agent_holidays_action(circus, agents, seeder):
                                                    seed=seeder.next())
 
     holiday_end_activity = ScaledParetoGenerator(m=150, a=1.2,
-                                                   seed=seeder.next())
+                                                 seed=seeder.next())
 
-    going_on_holidays = ActorAction(
+    going_on_holidays = Action(
         name="agent_start_holidays",
         triggering_actor=agents,
         actorid_field="AGENT",
-        timer_gen=holidaytimegen,
+        timer_gen=holiday_time_gen,
         activity=holiday_start_activity)
 
-    returning_from_holidays = ActorAction(
+    returning_from_holidays = Action(
         name="agent_start_holidays",
         triggering_actor=agents,
         actorid_field="AGENT",
-        timer_gen=holidaytimegen,
+        timer_gen=holiday_time_gen,
         activity=holiday_end_activity,
         auto_reset_timer=False)
 
@@ -208,6 +216,7 @@ def add_agent_holidays_action(circus, agents, seeder):
 
 def test_cdr_scenario():
 
+    util_functions.setup_logging()
     seeder = seed_provider(master_seed=123456)
 
     the_clock = Clock(datetime(year=2016, month=6, day=8), step_s=60,
@@ -225,7 +234,8 @@ def test_cdr_scenario():
     logs = flying.run(n_iterations=100)
 
     for logid, lg in logs.iteritems():
-        print " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string())
+        logging.info(
+            " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string()))
 
     # TODO: we could add post-checks here that verify that no calls were
     # made by agents during their holiday

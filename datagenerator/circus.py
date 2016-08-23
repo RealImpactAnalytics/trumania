@@ -1,5 +1,6 @@
 import pandas as pd
 from datagenerator.util_functions import merge_dicts
+import logging
 
 
 def df_concat(d1, d2):
@@ -81,7 +82,7 @@ class Circus(object):
         :return:
         """
 
-        print "step : {}".format(round_number)
+        logging.info("step : {}".format(round_number))
 
         # puts the logs of all actions into one grand dictionary.
         logs = merge_dicts((action.execute() for action in self.__actions),
@@ -100,7 +101,7 @@ class Circus(object):
         this circus, each gathering all rows produces throughout all iterations
         """
 
-        print "starting circus"
+        logging.info("starting circus")
         all_actions_logs = (self.one_step(r) for r in range(n_iterations))
 
         # merging logs from all actions

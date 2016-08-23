@@ -1,5 +1,5 @@
 from datagenerator.actor import Actor
-from datagenerator.action import ActorAction
+from datagenerator.action import Action
 from datagenerator.clock import *
 from tests.mocks.random_generators import *
 
@@ -7,7 +7,7 @@ from tests.mocks.random_generators import *
 def test_empty_action_should_do_nothing_and_not_crash():
 
     customers = Actor(size=1000)
-    empty_action = ActorAction(
+    empty_action = Action(
         name="purchase",
         triggering_actor=customers,
         actorid_field="AGENT")
@@ -21,9 +21,9 @@ def test_empty_action_should_do_nothing_and_not_crash():
 def test_get_activity_default():
 
     actor = Actor(size=10)
-    action = ActorAction(name="tested",
-                         triggering_actor=actor,
-                         actorid_field="")
+    action = Action(name="tested",
+                    triggering_actor=actor,
+                    actorid_field="")
 
     # by default, each actor should be in the default state with activity 1
     assert [1.] * 10 == action.get_param("activity", actor.ids).tolist()
@@ -34,7 +34,7 @@ def test_actors_with_zero_activity_should_never_have_positive_timer():
 
     actor = Actor(size=10)
 
-    action = ActorAction(
+    action = Action(
         name="tested",
         triggering_actor=actor,
         # fake generator that assign zero activity to 3 actors
@@ -58,10 +58,10 @@ def test_get_activity_should_be_aligned_for_each_state():
     back_to_normal_prob = ConstantGenerator(value=.3)
 
     actor = Actor(size=10, prefix="ac_", max_length=1)
-    action = ActorAction(name="tested",
-                         triggering_actor=actor,
-                         actorid_field="",
-                         states={
+    action = Action(name="tested",
+                    triggering_actor=actor,
+                    actorid_field="",
+                    states={
                              "excited": {
                                  "activity": excited_call_activity,
                                  "back_to_default_probability":
@@ -116,7 +116,7 @@ def test_scenario_transiting_to_state_should_remain_there():
     # forcing to stay excited
     back_to_normal_prob = ConstantGenerator(value=0)
 
-    action = ActorAction(
+    action = Action(
         name="tested",
         triggering_actor=actor,
         actorid_field="ac_id",
@@ -176,7 +176,7 @@ def test_scenario_transiting_to_state_should_go_back_to_normal():
     # this time we're forcing to stay in the transited state
     back_to_normal_prob = ConstantGenerator(value=1)
 
-    action = ActorAction(
+    action = Action(
         name="tested",
         triggering_actor=actor,
         actorid_field="ac_id",

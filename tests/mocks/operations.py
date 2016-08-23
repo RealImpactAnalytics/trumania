@@ -10,6 +10,6 @@ class FakeOp(operations.Operation):
         self.output = output
         self.logs = logs
 
-    def __call__(self, data):
+    def __call__(self, action_data):
         return self.output, self.logs
 
