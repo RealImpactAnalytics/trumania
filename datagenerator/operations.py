@@ -23,20 +23,15 @@ class Operation(object):
         """
         This method is used to produces logs (e.g. CDRs, mobility, topus...)
 
-
         :param action_data: output of this operation, as produced by transform()
         :return: emitted logs, as a dictionary of {"log_id": some_data_frame}
-
-
-        WARNING: logs_ids must be unique in the pipeline (duplicates would
-        overwrite each other)
         """
 
         return {}
 
-    def __call__(self, data):
+    def __call__(self, action_data):
 
-        output = self.transform(data)
+        output = self.transform(action_data)
         logs = self.emit_logs(output)
 
         return output, logs
@@ -65,8 +60,8 @@ class Chain(Operation):
         # multiple operations to contribute to the same log => to be checked...
         return output, util_functions.merge_dicts([prev_logs, supp_logs])
 
-    def __call__(self, data):
-        init = [(data, {})]
+    def __call__(self, action_data):
+        init = [(action_data, {})]
         return reduce(self._execute_operation, init + self.operations)
 
 

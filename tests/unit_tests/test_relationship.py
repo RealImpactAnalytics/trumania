@@ -62,8 +62,8 @@ def test_one_to_one_relationship_should_find_unique_counterpart():
 
     selected = oneto1.select_one()
 
-    assert selected.sort_values("from")["to"].equals(
-        pd.Series(["ta", "tb", "tc", "td", "te"]))
+    assert selected.sort_values("from")["to"].tolist() == ["ta", "tb", "tc",
+                                                           "td", "te"]
 
 
 def test_one_to_one_relationship_operation_should_find_unique_counterpart():

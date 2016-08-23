@@ -330,9 +330,6 @@ def add_communications(circus, customers, cells, seeder, params):
     logging.info("Adding calls and sms actions ")
 
     # generators for topups and call duration
-    recharge_trigger = DependentTriggerGenerator(
-        value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
-
     voice_duration_generator = NumpyRandomGenerator(
         method="choice", a=range(20, 240), seed=seeder.next())
 
@@ -340,6 +337,11 @@ def add_communications(circus, customers, cells, seeder, params):
     call_timegen = WeekProfiler(clock=circus.clock,
                                 week_profile=[5., 5., 5., 5., 5., 3., 3.],
                                 seed=seeder.next())
+
+    # probability of doing a topup, with high probability when the depended
+    # variable (i.e. the main account value, see below) gets close to 0
+    recharge_trigger = DependentTriggerGenerator(
+        value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
 
     # call activity level, under normal and "excited" states
     normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
