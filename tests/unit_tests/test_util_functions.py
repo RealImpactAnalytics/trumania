@@ -33,10 +33,9 @@ def test_merge_non_overlapping_dict_should_return_all_values():
     assert {"a": 1, "b": 2, "c": 3, "d": 4} == merge_2_dicts(d1, d2)
 
 
-def test_merge_dict_to_itslef_should_return_doubled_values():
+def test_merge_dict_to_itself_should_return_doubled_values():
 
     d1 = {"a": 1, "b": 2}
-
     assert {"a": 2, "b": 4} == merge_2_dicts(d1, d1, lambda a, b: a+b)
 
 

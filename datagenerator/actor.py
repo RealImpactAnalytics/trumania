@@ -14,7 +14,7 @@ class Actor(object):
             id_start, id_start + size)]
         self._attributes = {}
         self.ops = self.ActorOps(self)
-        self.size = len(self.ids)
+        self.size = size
         self.relationships = {}
 
     def create_relationship(self, name, seed):

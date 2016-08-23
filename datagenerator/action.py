@@ -77,11 +77,7 @@ class Action(object):
         :param operations: sequence of operations to be executed at each step
         """
 
-        all_ops = list(ops)
-        if self.auto_reset_timer:
-            all_ops += [self.ops.ResetTimers(self)]
-        all_ops += [self._MaybeBackToDefault(self)]
-
+        all_ops = list(ops) + [self._MaybeBackToDefault(self)]
         self.operation_chain = operations.Chain(*all_ops)
 
     def get_param(self, param_name, ids):
@@ -110,17 +106,27 @@ class Action(object):
         """
         self.timer.loc[ids, "state"] = states
 
-    def who_acts_now(self):
+    def active_inactive_ids(self):
         """
-        :return: the set of actor id which should be active at this clock tick
+        :return: 2 sets of actor ids: the one active at this turn and the others
         """
-        return self.timer[self.timer["remaining"] == 0].index
+        split = self.timer["remaining"].groupby(self.timer["remaining"] == 0)
 
-    def timer_tick(self):
+        def get_group(b):
+            if b in split.groups:
+                return split.groups[b]
+            else:
+                return []
+
+        return get_group(True), get_group(False)
+
+    def timer_tick(self, actor_ids):
+
+        impacted_timers = self.timer.loc[actor_ids]
 
         # not updating actors that keep a negative counter: those are "marked
         #  inactive" already
-        positive_idx = self.timer[self.timer["remaining"] >= 0].index
+        positive_idx = impacted_timers[impacted_timers["remaining"] >= 0].index
         if len(positive_idx) > 0:
             self.timer.loc[positive_idx, "remaining"] -= 1
 
@@ -161,17 +167,24 @@ class Action(object):
 
     def execute(self):
 
-        logging.info(" executing {} action ".format(self.name))
-        ids = self.who_acts_now()
+        logging.info(" executing {} ".format(self.name))
+        active_ids, inactive_ids = self.active_inactive_ids()
 
-        if ids.shape[0] == 0:
+        if len(active_ids) == 0:
             all_logs = None
 
         else:
-            ids_df = pd.DataFrame({self.actorid_field_name: ids}, index=ids)
+            ids_df = pd.DataFrame({self.actorid_field_name: active_ids},
+                                  index=active_ids)
             _, all_logs = self.operation_chain(ids_df)
+            if self.auto_reset_timer:
+                # re-scheduling those actions one more time
+                self.reset_timers(active_ids)
+            else:
+                # this should set the timer to -1 => will stay there ad vitam
+                self.timer_tick(active_ids)
 
-        self.timer_tick()
+        self.timer_tick(inactive_ids)
         return all_logs
 
     class _MaybeBackToDefault(SideEffectOnly):
@@ -221,7 +234,7 @@ class Action(object):
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
                     # active_ids_field should contain NA: which are all the
-                    # actior _NOT_ being forced to trigger
+                    # actor _NOT_ being forced to trigger
 
                     if self.condition_field is None:
                         filtered = action_data
@@ -267,7 +280,7 @@ class Action(object):
                          condition_field):
                 self.action = action
                 self.state_field = state_field
-                self.state=state
+                self.state = state
                 self.actor_id_field = actor_id_field
                 self.condition_field = condition_field
 
