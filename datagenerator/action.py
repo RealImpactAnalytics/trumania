@@ -4,7 +4,7 @@ from datagenerator import operations
 from datagenerator.util_functions import *
 
 
-class ActorAction(object):
+class Action(object):
     def __init__(self, name,
                  triggering_actor, actorid_field,
                  activity=ConstantGenerator(value=1.), states=None,

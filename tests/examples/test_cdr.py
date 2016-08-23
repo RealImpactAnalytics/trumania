@@ -35,7 +35,7 @@ def add_cells(circus, seeder, params):
     # typical human activity
     default_day_profiler = DayProfiler(circus.clock)
 
-    cell_break_down_action = ActorAction(
+    cell_break_down_action = Action(
         name="cell_break_down",
 
         triggering_actor=cells,
@@ -48,7 +48,7 @@ def add_cells(circus, seeder, params):
         activity=ScaledParetoGenerator(m=5, a=1.4, seed=seeder.next())
     )
 
-    cell_repair_action = ActorAction(
+    cell_repair_action = Action(
         name="cell_repair_down",
 
         triggering_actor=cells,
@@ -133,7 +133,7 @@ def add_mobility(circus, customers, cells, seeder, params):
     # Mobility action itself, basically just a random hop from cell to cell,
     # that updates the "CELL" attributes + generates mobility logs
     logging.info(" creating mobility action")
-    mobility_action = ActorAction(
+    mobility_action = Action(
         name="mobility",
 
         triggering_actor=customers,
@@ -235,7 +235,7 @@ def add_topups(circus, customers, seeder, params):
 
     # topup action itself, basically just a selection of a dealer and subsequent
     # computation of the value
-    topup_action = ActorAction(
+    topup_action = Action(
         name="topups",
         triggering_actor=customers,
         actorid_field="A_ID",
@@ -364,7 +364,7 @@ def add_communications(circus, customers, cells, seeder, params):
                                                seed=seeder.next())
 
     # Calls and SMS actions themselves
-    calls = ActorAction(
+    calls = Action(
         name="calls",
 
         triggering_actor=customers,
@@ -380,7 +380,7 @@ def add_communications(circus, customers, cells, seeder, params):
         }
     )
 
-    sms = ActorAction(
+    sms = Action(
         name="sms",
 
         triggering_actor=customers,

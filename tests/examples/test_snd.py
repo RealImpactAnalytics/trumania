@@ -106,7 +106,7 @@ def add_purchase_action(circus, agents, dealers, seeder):
     #  to "come back to normal", instead of sampling a random variable at
     #  each turn => would improve efficiency
 
-    purchase = ActorAction(
+    purchase = Action(
         name="purchases",
         triggering_actor=agents,
         actorid_field="AGENT",
@@ -172,14 +172,14 @@ def add_agent_holidays_action(circus, agents, seeder):
     holiday_end_activity = ScaledParetoGenerator(m=150, a=1.2,
                                                  seed=seeder.next())
 
-    going_on_holidays = ActorAction(
+    going_on_holidays = Action(
         name="agent_start_holidays",
         triggering_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,
         activity=holiday_start_activity)
 
-    returning_from_holidays = ActorAction(
+    returning_from_holidays = Action(
         name="agent_start_holidays",
         triggering_actor=agents,
         actorid_field="AGENT",
