@@ -17,9 +17,9 @@ four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
 
 two_per_from = Relationship(seed=1)
 two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
-                          to_ids=["ya", "yb", "yc", "yd"])
+                           to_ids=["ya", "yb", "yc", "yd"])
 two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
-                          to_ids=["za", "zb", "zc", "zd"])
+                           to_ids=["za", "zb", "zc", "zd"])
 
 
 # bug fix: this was simply crashing previously

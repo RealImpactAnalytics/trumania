@@ -10,8 +10,7 @@ class Actor(object):
         :param id_start:
         :return:
         """
-        self.ids = [prefix + str(x).zfill(max_length) for x in np.arange(
-            id_start, id_start + size)]
+        self.ids = build_ids(size, id_start, prefix, max_length)
         self._attributes = {}
         self.ops = self.ActorOps(self)
         self.size = size

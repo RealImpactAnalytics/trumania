@@ -73,14 +73,14 @@ def test_lookup_values_by_array_should_return_correct_values():
     lookup = dummy_actor.ops.lookup(
         actor_id_field="COUSINS",
         select={
-            "age": "cousin_age",
-            "city": "cousin_city",
+            "age": "cousins_age",
+            "city": "cousins_city",
         }
     )
 
     result, logs = lookup(action_data)
-    expected_cols = ["A", "B", "COUSINS", "NEIGHBOUR", "cousin_age",
-                     "cousin_city"]
+    expected_cols = ["A", "B", "COUSINS", "NEIGHBOUR", "cousins_age",
+                     "cousins_city"]
     assert logs == {}
 
     assert sorted(result.columns) == expected_cols
@@ -92,11 +92,11 @@ def test_lookup_values_by_array_should_return_correct_values():
                [10],
                [100, 98, 76],
                [10, 100]
-           ] == result["cousin_age"].tolist()
+           ] == result["cousins_age"].tolist()
 
     assert [
                ["b", "d", "a", "b"],
                ["a"],
                ["d", "e", "z"],
                ["a", "d"]
-           ] == result["cousin_city"].tolist()
+           ] == result["cousins_city"].tolist()

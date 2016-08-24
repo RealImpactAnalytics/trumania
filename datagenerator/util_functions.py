@@ -4,6 +4,7 @@
 
 from numpy.random import RandomState
 import pandas as pd
+import numpy as np
 import networkx as nx
 from networkx.algorithms import bipartite
 import logging
@@ -77,9 +78,7 @@ def make_random_assign(name1, name2, group1, group2, seed):
     """Assign randomly each member from group1 to a member of group2
 
     """
-    state = RandomState(seed)
-    choices = state.choice(group2, size=len(group1))
-
+    choices = RandomState(seed).choice(group2, size=len(group1))
     return pd.DataFrame({name2: choices, name1: group1})
 
 
@@ -145,4 +144,9 @@ def is_sequence(arg):
             hasattr(arg, "__iter__"))
 
 
-
+def build_ids(size, id_start=0, prefix="id_", max_length=10):
+    """
+    builds a sequencial list of string ids of specified size
+    """
+    return [prefix + str(x).zfill(max_length)
+            for x in np.arange(id_start, id_start + size)]
