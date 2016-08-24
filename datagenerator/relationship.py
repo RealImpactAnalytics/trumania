@@ -94,11 +94,12 @@ class Relationship(object):
 
         # a to b relationship as tuples in "wide format", e.g.
         # [ ("a1", ["b1", "b2"]), ("a2", ["b3", "b4", "b4]), ...]
-        tuples = rows.set_index("to", drop=True).groupby("from").groups.items()
+        grouped = rows.set_index("to", drop=True).groupby("from", sort=False)
 
         empty_rels = [(missing, []) for missing in self.missing_ids(from_ids)]
 
-        return pd.DataFrame(tuples + empty_rels, columns=["from", named_as])
+        return pd.DataFrame(grouped.groups.items() + empty_rels,
+                            columns=["from", named_as])
 
     class RelationshipOps(object):
         def __init__(self, relationship):

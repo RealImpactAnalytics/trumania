@@ -12,7 +12,7 @@ if __name__ == "__main__":
         "time_step": 60,
         "n_cells": 200,
         "n_agents": 500,
-        "n_customers": 25000,
+        "n_subscribers": 25000,
         "average_degree": 20,
         "n_iterations": 200
     }

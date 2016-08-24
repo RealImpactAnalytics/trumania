@@ -91,7 +91,7 @@ def add_cells(circus, seeder, params):
     return cells
 
 
-def add_mobility(circus, customers, cells, seeder, params):
+def add_mobility(circus, subs, cells, seeder, params):
     """
     adds a CELL attribute to the customer actor + a mobility action that
     randomly moves customers from CELL to CELL among their used cells.
@@ -109,12 +109,12 @@ def add_mobility(circus, customers, cells, seeder, params):
     mobility_weight_gen = NumpyRandomGenerator(
         method="exponential", scale=1., seed=seeder.next())
 
-    mobility_rel = customers.create_relationship("POSSIBLE_CELLS",
-                                                 seed=seeder.next())
+    mobility_rel = subs.create_relationship("POSSIBLE_CELLS",
+                                            seed=seeder.next())
 
     logging.info(" creating bipartite graph ")
     mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, cells.ids, 0.4,
+        make_random_bipartite_data(subs.ids, cells.ids, 0.4,
                                    seed=seeder.next()),
         columns=["USER_ID", "CELL"])
 
@@ -128,7 +128,7 @@ def add_mobility(circus, customers, cells, seeder, params):
 
     # Initialize the mobility by allocating one first random cell to each
     # customer among its network
-    customers.create_attribute(name="CELL", init_relationship="POSSIBLE_CELLS")
+    subs.create_attribute(name="CELL", init_relationship="POSSIBLE_CELLS")
 
     # Mobility action itself, basically just a random hop from cell to cell,
     # that updates the "CELL" attributes + generates mobility logs
@@ -136,7 +136,7 @@ def add_mobility(circus, customers, cells, seeder, params):
     mobility_action = Action(
         name="mobility",
 
-        triggering_actor=customers,
+        triggering_actor=subs,
         actorid_field="A_ID",
 
         timer_gen=mobility_time_gen,
@@ -144,16 +144,16 @@ def add_mobility(circus, customers, cells, seeder, params):
 
     logging.info(" adding operations")
     mobility_action.set_operations(
-        customers.ops.lookup(actor_id_field="A_ID",
-                             select={"CELL": "PREV_CELL",
+        subs.ops.lookup(actor_id_field="A_ID",
+                        select={"CELL": "PREV_CELL",
                                      "OPERATOR": "OPERATOR"}),
 
         # selects a destination cell
         mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
         # update the CELL attribute of the customers accordingly
-        customers.ops.overwrite(attribute="CELL",
-                                copy_from_field="NEW_CELL"),
+        subs.ops.overwrite(attribute="CELL",
+                           copy_from_field="NEW_CELL"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
@@ -167,7 +167,7 @@ def add_mobility(circus, customers, cells, seeder, params):
     logging.info(" done")
 
 
-def add_social_network(customers, seeder, params):
+def add_social_network(subs, seeder, params):
     """
     Creates a random relationship from and to customers, to represent the
     social network
@@ -178,12 +178,11 @@ def add_social_network(customers, seeder, params):
     network_weight_gen = ScaledParetoGenerator(m=1., a=1.2, seed=seeder.next())
 
     social_network_values = create_er_social_network(
-        customer_ids=customers.ids,
-        p=params["average_degree"]/ params["n_customers"],
+        customer_ids=subs.ids,
+        p=params["average_degree"]/ params["n_subscribers"],
         seed=seeder.next())
 
-    social_network = customers.create_relationship("FRIENDS",
-                                                   seed=seeder.next())
+    social_network = subs.create_relationship("FRIENDS", seed=seeder.next())
     social_network.add_relations(
         from_ids=social_network_values["A"].values,
         to_ids=social_network_values["B"].values,
@@ -195,7 +194,7 @@ def add_social_network(customers, seeder, params):
         weights=network_weight_gen.generate(social_network_values.shape[0]))
 
 
-def add_topups(circus, customers, seeder, params):
+def add_topups(circus, subs, seeder, params):
     """
     Adds a MAIN_ACCT attribute to the customer to keep track of their finance
     level +  a topup actions to allow buying recharges.
@@ -211,13 +210,11 @@ def add_topups(circus, customers, seeder, params):
     agents = ["AGENT_%s" % (str(i).zfill(3)) for i in range(params["n_agents"])]
 
     agent_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids, agents, 0.3,
-                                   seed=seeder.next()),
+        make_random_bipartite_data(subs.ids, agents, 0.3, seed=seeder.next()),
         columns=["USER_ID", "AGENT"])
 
     logging.info(" creating random agent/shop relationship ")
-    agent_rel = customers.create_relationship("POSSIBLE_SHOPS",
-                                              seed=seeder.next())
+    agent_rel = subs.create_relationship("POSSIBLE_SHOPS", seed=seeder.next())
 
     agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.,
                                             seed=seeder.next())
@@ -231,13 +228,13 @@ def add_topups(circus, customers, seeder, params):
     # not start with no money
     recharge_gen = ConstantGenerator(value=1000.)
     logging.info(" creating random main accounts ")
-    customers.create_attribute(name="MAIN_ACCT", init_values_gen=recharge_gen)
+    subs.create_attribute(name="MAIN_ACCT", init_values_gen=recharge_gen)
 
     # topup action itself, basically just a selection of a dealer and subsequent
     # computation of the value
     topup_action = Action(
         name="topups",
-        triggering_actor=customers,
+        triggering_actor=subs,
         actorid_field="A_ID",
 
         # note that there is timegen specified => the clock is not ticking
@@ -245,7 +242,7 @@ def add_topups(circus, customers, seeder, params):
     )
 
     topup_action.set_operations(
-        customers.ops.lookup(
+        subs.ops.lookup(
             actor_id_field="A_ID",
             select={"MSISDN": "CUSTOMER_NUMBER",
                     "CELL": "CELL",
@@ -260,8 +257,8 @@ def add_topups(circus, customers, seeder, params):
                          named_as="MAIN_ACCT",
                          f=np.add, f_args="series"),
 
-        customers.ops.overwrite(attribute="MAIN_ACCT",
-                                copy_from_field="MAIN_ACCT"),
+        subs.ops.overwrite(attribute="MAIN_ACCT",
+                           copy_from_field="MAIN_ACCT"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
@@ -323,7 +320,7 @@ def compute_call_status(action_data):
     return pd.DataFrame({"result": status})
 
 
-def add_communications(circus, customers, cells, seeder, params):
+def add_communications(circus, subs, cells, seeder):
     """
     Adds Calls and SMS actions, which in turn may trigger topups actions.
     """
@@ -354,8 +351,7 @@ def add_communications(circus, customers, cells, seeder, params):
     excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
                                             seed=seeder.next())
 
-    customers.create_attribute(name="EXCITABILITY",
-                               init_values_gen=excitability_gen)
+    subs.create_attribute(name="EXCITABILITY", init_values_gen=excitability_gen)
 
     # same "basic" trigger, without any value mapper
     flat_trigger = DependentTriggerGenerator(seed=seeder.next())
@@ -367,7 +363,7 @@ def add_communications(circus, customers, cells, seeder, params):
     calls = Action(
         name="calls",
 
-        triggering_actor=customers,
+        triggering_actor=subs,
         actorid_field="A_ID",
 
         timer_gen=call_timegen,
@@ -383,7 +379,7 @@ def add_communications(circus, customers, cells, seeder, params):
     sms = Action(
         name="sms",
 
-        triggering_actor=customers,
+        triggering_actor=subs,
         actorid_field="A_ID",
 
         timer_gen=call_timegen,
@@ -402,23 +398,23 @@ def add_communications(circus, customers, cells, seeder, params):
         circus.clock.ops.timestamp(named_as="DATETIME"),
 
         # selects a B party
-        customers.get_relationship("FRIENDS").ops.select_one(from_field="A_ID",
-                                                             named_as="B_ID",
-                                                             one_to_one=True),
+        subs.get_relationship("FRIENDS").ops.select_one(from_field="A_ID",
+                                                        named_as="B_ID",
+                                                        one_to_one=True),
 
         # some static fields
-        customers.ops.lookup(actor_id_field="A_ID",
-                             select={"MSISDN": "A",
-                                     "CELL": "CELL_A",
-                                     "OPERATOR": "OPERATOR_A",
-                                     "EXCITABILITY": "EXCITABILITY_A",
-                                     "MAIN_ACCT": "MAIN_ACCT_OLD"}),
+        subs.ops.lookup(actor_id_field="A_ID",
+                        select={"MSISDN": "A",
+                                           "CELL": "CELL_A",
+                                           "OPERATOR": "OPERATOR_A",
+                                           "EXCITABILITY": "EXCITABILITY_A",
+                                           "MAIN_ACCT": "MAIN_ACCT_OLD"}),
 
-        customers.ops.lookup(actor_id_field="B_ID",
-                             select={"MSISDN": "B",
-                                     "OPERATOR": "OPERATOR_B",
-                                     "CELL": "CELL_B",
-                                     "EXCITABILITY": "EXCITABILITY_B"}),
+        subs.ops.lookup(actor_id_field="B_ID",
+                        select={"MSISDN": "B",
+                                           "OPERATOR": "OPERATOR_B",
+                                           "CELL": "CELL_B",
+                                           "EXCITABILITY": "EXCITABILITY_B"}),
 
         operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
                          named_as="TYPE",
@@ -450,13 +446,13 @@ def add_communications(circus, customers, cells, seeder, params):
                          named_as="MAIN_ACCT_NEW",
                          f=np.subtract, f_args="series"),
 
-        customers.ops.overwrite(attribute="MAIN_ACCT",
-                                copy_from_field="MAIN_ACCT_NEW"),
+        subs.ops.overwrite(attribute="MAIN_ACCT",
+                           copy_from_field="MAIN_ACCT_NEW"),
     )
 
     # triggers the topup action if the main account is low
     trigger_topups = Chain(
-        # customer with low account are now more likely to topup
+        # subscribers with low account are now more likely to topup
         recharge_trigger.ops.generate(
             observed_field="MAIN_ACCT_NEW",
             named_as="SHOULD_TOP_UP"),
@@ -471,7 +467,7 @@ def add_communications(circus, customers, cells, seeder, params):
         # Trigger to get into "excited" mode because A gave a call or sent an
         #  SMS
         flat_trigger.ops.generate(observed_field="EXCITABILITY_A",
-                                 named_as="A_GETTING_BURSTY"),
+                                  named_as="A_GETTING_BURSTY"),
 
         calls.ops.transit_to_state(actor_id_field="A_ID",
                                    condition_field="A_GETTING_BURSTY",
@@ -557,8 +553,8 @@ def build_cdr_scenario(params):
                       format_for_out="%d%m%Y %H:%M:%S",
                       seed=seeder.next())
 
-    logging.info("building customer actors ")
-    customers = Actor(size=params["n_customers"])
+    logging.info("building subscriber actors ")
+    subs = Actor(size=params["n_subscribers"])
 
     msisdn_gen = MSISDNGenerator(countrycode="0032",
                                  prefix_list=["472", "473", "475", "476",
@@ -566,7 +562,7 @@ def build_cdr_scenario(params):
                                  length=6,
                                  seed=seeder.next())
 
-    customers.create_attribute(name="MSISDN", init_values_gen=msisdn_gen)
+    subs.create_attribute(name="MSISDN", init_values_gen=msisdn_gen)
 
     operator_gen = NumpyRandomGenerator(
         method="choice",
@@ -574,15 +570,15 @@ def build_cdr_scenario(params):
         p=[.8, .05, .1, .05],
         seed=seeder.next())
 
-    customers.create_attribute(name="OPERATOR", init_values_gen=operator_gen)
+    subs.create_attribute(name="OPERATOR", init_values_gen=operator_gen)
 
     flying = Circus(the_clock)
 
     cells = add_cells(flying, seeder, params)
-    add_mobility(flying, customers, cells, seeder, params)
-    add_social_network(customers, seeder, params)
-    add_topups(flying, customers, seeder, params)
-    add_communications(flying, customers, cells, seeder, params)
+    add_mobility(flying, subs, cells, seeder, params)
+    add_social_network(subs, seeder, params)
+    add_topups(flying, subs, seeder, params)
+    add_communications(flying, subs, cells, seeder)
 
     return flying
 
@@ -637,7 +633,7 @@ def test_cdr_scenario():
         "time_step": 60,
         "n_cells": 100,
         "n_agents": 100,
-        "n_customers": 1000,
+        "n_subscribers": 1000,
         "average_degree": 20,
         "n_iterations": 50
     }

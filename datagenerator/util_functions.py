@@ -138,8 +138,11 @@ def setup_logging():
         level=logging.INFO)
 
 
-
-
+# stolen from http://stackoverflow.com/questions/1835018/python-check-if-an-object-is-a-list-or-tuple-but-not-string#answer-1835259
+def is_sequence(arg):
+    return (not hasattr(arg, "strip") and
+            hasattr(arg, "__getitem__") or
+            hasattr(arg, "__iter__"))
 
 
 

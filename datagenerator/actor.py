@@ -3,7 +3,7 @@ from datagenerator.attribute import *
 
 
 class Actor(object):
-    def __init__(self, size, id_start=0, prefix="", max_length=10):
+    def __init__(self, size, id_start=0, prefix="id_", max_length=10):
         """
 
         :param size:
@@ -96,14 +96,24 @@ class Actor(object):
                 self.select_dict = select_dict
 
             def build_output(self, action_data):
+                if action_data.shape[0] == 0:
+                    return pd.DataFrame()
+                elif is_sequence(action_data.iloc[0][self.actor_id_field]):
+                    return self._lookup_by_sequences(action_data)
+                else:
+                    return self._lookup_by_scalars(action_data)
+
+            def _lookup_by_scalars(self, action_data):
+                """
+                looking up, after we know the ids are not sequences of ids
+                """
 
                 output = action_data[[self.actor_id_field]]
-                for attribute, named_as in self.select_dict.items():
+                actor_ids = action_data[self.actor_id_field].unique()
 
-                    actor_ids = action_data[self.actor_id_field].unique()
+                for attribute, named_as in self.select_dict.items():
                     vals = pd.DataFrame(
-                        self.actor.get_attribute_values(attribute, actor_ids),
-                        )
+                        self.actor.get_attribute_values(attribute, actor_ids))
                     vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
@@ -115,10 +125,41 @@ class Actor(object):
                 output.drop(self.actor_id_field, axis=1, inplace=True)
                 return output
 
+            def _lookup_by_sequences(self, action_data):
+
+                # pd.Series containing seq of ids to lookup
+                id_lists = action_data[self.actor_id_field]
+
+                # unique actor ids of the attribute to look up
+                actor_ids = np.unique(reduce(lambda l1, l2: l1 + l2, id_lists))
+
+                output = pd.DataFrame(index=action_data.index)
+                for attribute, named_as in self.select_dict.items():
+                    vals = self.actor.get_attribute_values(attribute, actor_ids)
+
+                    def attributes_of_ids(ids):
+                        "return: list of attribute values for those actor ids"
+                        return vals.loc[ids].tolist()
+
+                    output[named_as] = id_lists.map(attributes_of_ids)
+
+                return output
+
         def lookup(self, actor_id_field, select):
             """
             Looks up some attribute values by joining on the specified field
             of the current data
+
+            :param actor_id_field: field name in the action_data.
+              If the that column contains lists, then it's assumed to contain
+              only list and it's flatten to obtain the list of id to lookup
+              in the attribute. Must be a list of "scalar" values or list of
+              list, not a mix of both.
+
+            :param select: dictionary of (attribute_name -> given_name)
+            specifying which attribute to look up and which name to give to
+            the resulting column
+
             """
             return self.Lookup(self.actor, actor_id_field, select)
 

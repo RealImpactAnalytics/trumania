@@ -54,3 +54,12 @@ def test_merging_many_dictionary_should_yield_expected_result():
     merged = merge_dicts([d1, d2, d3, d4, d5], lambda a, b: a+b)
 
     assert {"a": 110, "b": 220, "c": 30, "z": 990} == merged
+
+
+def test_is_sequence():
+    assert is_sequence([])
+    assert is_sequence([1, 2, 3, 1])
+    assert is_sequence({1, 2, 3, 1})
+    assert not is_sequence(1)
+    assert not is_sequence("hello")
+
