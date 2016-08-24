@@ -8,6 +8,7 @@ import networkx as nx
 from networkx.algorithms import bipartite
 import logging
 
+
 def create_er_social_network(customer_ids, p, seed):
     """
 
@@ -109,7 +110,7 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
             if value_merge_func is None:
                 raise ValueError(
                     "Conflict in merged dictionaries: merge function not "
-                    "provided butkey {} exist in both dictionaries".format(
+                    "provided but key {} exists in both dictionaries".format(
                         key))
 
             return value_merge_func(dict1[key], dict2[key])

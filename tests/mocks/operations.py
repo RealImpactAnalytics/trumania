@@ -13,3 +13,17 @@ class FakeOp(operations.Operation):
     def __call__(self, action_data):
         return self.output, self.logs
 
+
+class MockDropOp(operations.Operation):
+    """
+    simulating an action that drops rows
+    """
+
+    def __init__(self, from_idx, to_idx):
+        self.from_idx = from_idx
+        self.to_idx = to_idx
+
+    def __call__(self, action_data):
+        return action_data.iloc[self.from_idx: self.to_idx, :], {}
+
+

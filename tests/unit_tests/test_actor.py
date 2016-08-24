@@ -1,5 +1,4 @@
 from datagenerator.actor import Actor
-from datagenerator.attribute import *
 
 
 def test_resulting_size_should_be_as_expected():
