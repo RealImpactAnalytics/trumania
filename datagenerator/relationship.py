@@ -43,18 +43,26 @@ class Relationship(object):
         self._table = pd.concat([self._table, new_relations])
         self._table.reset_index(drop=True, inplace=True)
 
+    def get_relations(self, from_ids):
+        if from_ids is None:
+            return self._table
+        else:
+            return self._table[self._table["from"].isin(from_ids)]
+
+    def missing_ids(self, from_ids):
+        "return: the set of ids in from_ids not present in this relationship"
+
+        return set(from_ids) - set(self._table["from"].unique())
+
     def select_one(self, from_ids=None, named_as="to", drop=False):
         """
         Select randomly one "to" for each specified "from" values.
          If drop is True, we the selected relations are removed
         """
 
-        if from_ids is None:
-            candidates = self._table
-        else:
-            candidates = self._table[self._table["from"].isin(from_ids)]
+        rows = self.get_relations(from_ids)
 
-        if candidates.shape[0] == 0:
+        if rows.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
 
         def pick_one(df):
@@ -64,7 +72,7 @@ class Relationship(object):
                 selected_to["selected_index"] = selected_to.index
             return selected_to
 
-        selected = candidates.groupby(by="from", sort=False).apply(pick_one)
+        selected = rows.groupby(by="from", sort=False).apply(pick_one)
         selected["from"] = selected.index.get_level_values(level="from")
         selected.rename(columns={"to": named_as}, inplace=True)
 
@@ -79,6 +87,18 @@ class Relationship(object):
                             self._table["to"].isin(to_ids)]
 
         self._table.drop(lines.index, inplace=True)
+
+    def select_all(self, from_ids, named_as="to"):
+
+        rows = self.get_relations(from_ids)
+
+        # a to b relationship as tuples in "wide format", e.g.
+        # [ ("a1", ["b1", "b2"]), ("a2", ["b3", "b4", "b4]), ...]
+        tuples = rows.set_index("to", drop=True).groupby("from").groups.items()
+
+        empty_rels = [(missing, []) for missing in self.missing_ids(from_ids)]
+
+        return pd.DataFrame(tuples + empty_rels, columns=["from", named_as])
 
     class RelationshipOps(object):
         def __init__(self, relationship):
@@ -131,6 +151,26 @@ class Relationship(object):
             """
             return self.SelectOne(self.relationship, from_field, named_as,
                                   one_to_one, drop)
+
+        class SelectAll(AddColumns):
+            def __init__(self, relationship, from_field, named_as):
+                AddColumns.__init__(self)
+                self.relationship = relationship
+                self.from_field = from_field
+                self.named_as = named_as
+
+            def build_output(self, action_data):
+                from_ids = action_data[self.from_field]
+                selected = self.relationship.select_all(from_ids, self.named_as)
+                selected.set_index("from", drop=True, inplace=True)
+                return selected
+
+        def select_all(self, from_field, named_as):
+            """
+            This simply creates a new action_data field containing all the
+            "to" values of the requested from, as a set.
+            """
+            return self.SelectAll(self.relationship, from_field, named_as)
 
         class Add(SideEffectOnly):
             def __init__(self, relationship, from_field, item_field):

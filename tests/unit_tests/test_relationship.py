@@ -1,6 +1,26 @@
 import pandas as pd
 from datagenerator.relationship import Relationship
 
+oneto1 = Relationship(seed=1)
+oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
+                     to_ids=["ta", "tb", "tc", "td", "te"])
+
+four_to_one = Relationship(seed=1)
+four_to_one.add_relations(from_ids=["a", "b", "c", "d"],
+                          to_ids=["z", "z", "z", "z"])
+
+four_to_two = Relationship(seed=1)
+four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
+                          to_ids=["y", "y", "y", "y"])
+four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
+                          to_ids=["z", "z", "z", "z"])
+
+two_per_from = Relationship(seed=1)
+two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
+                          to_ids=["ya", "yb", "yc", "yd"])
+two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
+                          to_ids=["za", "zb", "zc", "zd"])
+
 
 # bug fix: this was simply crashing previously
 def test_select_one_from_empty_relationship_should_return_void():
@@ -56,23 +76,14 @@ def test_seeded_relationship_should_always_return_same_selection():
 
 def test_one_to_one_relationship_should_find_unique_counterpart():
 
-    oneto1= Relationship(seed=1)
-    oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
-                         to_ids=["ta", "tb", "tc", "td", "te"])
-
     selected = oneto1.select_one()
-
     assert selected.sort_values("from")["to"].tolist() == ["ta", "tb", "tc",
                                                            "td", "te"]
 
 
 def test_one_to_one_relationship_operation_should_find_unique_counterpart():
 
-    oneto1= Relationship(seed=1)
-    oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
-                         to_ids=["ta", "tb", "tc", "td", "te"])
-
-    op = oneto1.ops.select_one("A", "CELL")
+    op = oneto1.ops.select_one(from_field="A", named_as="CELL")
 
     data = pd.DataFrame({"A": ["a", "e", "d"]}).set_index("A", drop=False)
     output, logs = op(data)
@@ -83,15 +94,12 @@ def test_one_to_one_relationship_operation_should_find_unique_counterpart():
     assert {} == logs
     assert output.index.to_series().equals(output["A"])
 
-    # output should correspond to the A column of data, in the correct order
-    assert output["CELL"].values.tolist() == ["ta", "te", "td"]
+    # output should correspond to the A column of data, indexed correctly
+    assert output["CELL"].sort_index().equals(
+        pd.Series(["ta", "td", "te"], index=["a", "d", "e"]))
 
 
 def test_select_one_to_one_should_not_return_duplicates_1():
-
-    four_to_one = Relationship(seed=1)
-    four_to_one.add_relations(from_ids=["a", "b", "c", "d"],
-                              to_ids=["z", "z", "z", "z"])
 
     op = four_to_one.ops.select_one("A", "B", one_to_one=True)
     action_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
@@ -107,12 +115,6 @@ def test_select_one_to_one_should_not_return_duplicates_1():
 
 
 def test_select_one_to_one_should_not_return_duplicates_2():
-
-    four_to_two = Relationship(seed=1)
-    four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
-                              to_ids=["y", "y", "y", "y"])
-    four_to_two.add_relations(from_ids=["a", "b", "c", "d"],
-                              to_ids=["z", "z", "z", "z"])
 
     op = four_to_two.ops.select_one("A", "B", one_to_one=True)
     action_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
@@ -130,10 +132,6 @@ def test_select_one_to_one_should_not_return_duplicates_2():
 def test_select_one_to_one_among_no_data_should_return_nothing():
     #(instead of crashing...)
 
-    four_to_one = Relationship(seed=1)
-    four_to_one.add_relations(from_ids=["a", "b", "c", "d"],
-                              to_ids=["z", "z", "z", "z"])
-
     op = four_to_one.ops.select_one("A", "B", one_to_one=True)
     empty_data = pd.DataFrame(columns=["A", "B"])
 
@@ -145,3 +143,58 @@ def test_select_one_to_one_among_no_data_should_return_nothing():
     assert output.shape[0] == 0
 
 
+def test_missing_ids_should_return_empty_for_nothing_missing():
+    r = oneto1.missing_ids(from_ids=["a", "b"])
+    assert r == set([])
+
+
+def test_missing_ids_should_identify_missing_correctly():
+    r = oneto1.missing_ids(
+        from_ids=["a", "b", "NON_EXISTING_1", "NON_EXISTING_2"])
+    assert r == {"NON_EXISTING_1", "NON_EXISTING_2"}
+
+
+def test_select_all_should_return_all_values_of_requested_ids():
+
+    all_to = two_per_from.select_all(from_ids=["a", "b", "non_existing"])
+
+    # there is no relationship from "non_existing", so we should have an
+    # empty list for it (not an absence of row)
+    expected = pd.DataFrame({
+        "from": ["a", "b", "non_existing"],
+        "to": [["ya", "za"], ["yb", "zb"], []]
+        }
+    )
+    assert all_to.equals(expected)
+
+
+def test_select_all_should_return_lists_even_for_one_to_one():
+
+    all_to = oneto1.select_all(from_ids=["a", "b", "non_existing"])
+
+    expected = pd.DataFrame({
+        "from": ["a", "b", "non_existing"],
+        "to": [["ta"], ["tb"], []]
+        }
+    )
+    assert all_to.equals(expected)
+
+
+def test_select_all_operation():
+
+    op = two_per_from.ops.select_all(from_field="A", named_as="CELLS")
+
+    data = pd.DataFrame({"A": ["a",  "d", "non_existing"]})
+    data = data.set_index("A", drop=False)
+    output, logs = op(data)
+
+    # the transformer should have added the "CELL" column to the df
+    assert output.columns.values.tolist() == ["A", "CELLS"]
+
+    assert {} == logs
+    assert output.index.to_series().equals(output["A"])
+
+    # output should correspond to the A column of data, indexed correctly
+    assert output["CELLS"].sort_index().equals(
+        pd.Series([["ya", "za"], ["yd", "zd"], []],
+                  index=["a", "d", "non_existing"]))
