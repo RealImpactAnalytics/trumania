@@ -84,23 +84,24 @@ class Relationship(object):
         def __init__(self, relationship):
             self.relationship = relationship
 
-        class SelectOne(Operation):
+        class SelectOne(AddColumns):
             """
             Operation that wraps a select_one() call on the relationship
             """
 
             def __init__(self, relationship, from_field, named_as,
                          one_to_one, drop):
+
+                # we force the join to be inner to allow dropping rows
+                AddColumns.__init__(self, join_kind="inner")
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
                 self.one_to_one = one_to_one
                 self.drop = drop
 
-            def transform(self, action_data):
-                """because of the one-to-one, we must have full access to the
-                 dataframe in order to drop row that lead to duplications
-                """
+            # def transform(self, action_data):
+            def build_output(self, action_data):
 
                 selected = self.relationship.select_one(
                     from_ids=action_data[self.from_field],
@@ -108,28 +109,13 @@ class Relationship(object):
                     drop=self.drop)
 
                 if self.one_to_one and selected.shape[0] > 0:
-                    # TODO (?): I guess this skews the distribution in case of a
-                    # lot of collisions => we could filter earlier (but that
-                    # would be slower)
-
                     idx = self.relationship.state.permutation(selected.index)
                     selected = selected.loc[idx]
                     selected.drop_duplicates(subset=self.named_as,
                                              keep="first", inplace=True)
 
-                # saves index as a column to have an explicit column that will
-                # survive the join below
-                action_data["index_backup"] = action_data.index
-
-                merged = pd.merge(left=action_data, right=selected,
-                                  left_on=self.from_field, right_on="from")
-
-                merged.drop("from", axis=1, inplace=True)
-
-                # puts back the index in place, for further processing
-                merged.set_index("index_backup", inplace=True, drop=True)
-
-                return merged
+                selected.set_index("from", drop=True, inplace=True)
+                return selected
 
         def select_one(self, from_field, named_as, one_to_one=False,
                        drop=False):
@@ -175,6 +161,8 @@ class Relationship(object):
 
         def remove(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
+
+
 
 
 # class SimpleMobilityRelationship(WeightedRelationship):

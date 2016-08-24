@@ -50,15 +50,12 @@ class Attribute(object):
         :param ids: actor ids for which the attribute values are desired
         :return: the current attribute values for those actors, as Series
         """
-        r = self._table.loc[ids]["value"]
-        return r
+        return self._table.loc[ids]["value"]
 
     def update(self, ids, values):
         """
-
         :param values:
         :param ids:
         :return:
         """
-
         self._table.loc[ids, "value"] = values
