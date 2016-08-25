@@ -1,5 +1,8 @@
 import pandas as pd
 from datagenerator.relationship import Relationship
+from datagenerator.util_functions import *
+setup_logging()
+
 
 oneto1 = Relationship(seed=1)
 oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
@@ -20,6 +23,24 @@ two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
                            to_ids=["ya", "yb", "yc", "yd"])
 two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
                            to_ids=["za", "zb", "zc", "zd"])
+
+
+four_to_plenty = Relationship(seed=1)
+for i in range(100):
+    four_to_plenty.add_relations(
+        from_ids=["a", "b", "c", "d"],
+        to_ids=["a_%d" % i, "b_%d" % i, "c_%d" % i, "d_%d" % i])
+
+
+def test_missing_ids_should_return_empty_for_nothing_missing():
+    r = oneto1.missing_ids(from_ids=["a", "b"])
+    assert r == set([])
+
+
+def test_missing_ids_should_identify_missing_correctly():
+    r = oneto1.missing_ids(
+        from_ids=["a", "b", "NON_EXISTING_1", "NON_EXISTING_2"])
+    assert r == {"NON_EXISTING_1", "NON_EXISTING_2"}
 
 
 # bug fix: this was simply crashing previously
@@ -147,15 +168,33 @@ def test_select_one_to_one_among_no_data_should_return_nothing():
     assert output.shape[0] == 0
 
 
-def test_missing_ids_should_return_empty_for_nothing_missing():
-    r = oneto1.missing_ids(from_ids=["a", "b"])
-    assert r == set([])
+def test_select_one_from_many_times_same_id_should_yield_different_results():
 
+    op = four_to_plenty.ops.select_one(from_field="DEALER",
+                                       named_as="SIM",
+                                       one_to_one=True)
 
-def test_missing_ids_should_identify_missing_correctly():
-    r = oneto1.missing_ids(
-        from_ids=["a", "b", "NON_EXISTING_1", "NON_EXISTING_2"])
-    assert r == {"NON_EXISTING_1", "NON_EXISTING_2"}
+    # Many customer selected the same dealer and want to get a sim from them.
+    # We expect each of the 2 selected dealer to sell a different SIM to each
+    action_data = pd.DataFrame({
+        "DEALER": ["a", "a", "b", "a", "b", "a", "b", "a", "a", "a"],
+        },
+        index=build_ids(size=10, prefix="c", max_length=2)
+    )
+
+    result, logs = op(action_data)
+
+    assert {} == logs
+    assert ["DEALER", "SIM"] == result.columns.tolist()
+
+    # There could be collisions that reduce the same of the resulting index,
+    # but there should not be only collisions, leading to only "a" and "b"
+    assert result.shape[0] > 3
+
+    g = result.groupby("DEALER")["SIM"]
+
+    assert len(np.unique(g.get_group("a").values)) > 1
+    assert len(np.unique(g.get_group("b").values)) > 1
 
 
 def test_select_all_should_return_all_values_of_requested_ids():

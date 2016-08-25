@@ -40,8 +40,7 @@ class Relationship(object):
                                       "to": to_ids,
                                       "weight": weights})
 
-        self._table = pd.concat([self._table, new_relations])
-        self._table.reset_index(drop=True, inplace=True)
+        self._table = pd.concat([self._table, new_relations], ignore_index=True)
 
     def get_relations(self, from_ids):
         if from_ids is None:
@@ -57,10 +56,21 @@ class Relationship(object):
     def select_one(self, from_ids=None, named_as="to", drop=False):
         """
         Select randomly one "to" for each specified "from" values.
-         If drop is True, we the selected relations are removed
+         If drop is True, we the selected relations are removed.
+
+         from_ids must be a Series with an index that does not have duplicates.
+
+         from_ids values can contain duplicates: if "DEALER_123" is present 5
+         times in it, this will return 5 selections from it in the result,
+         with index aligned with the one of from_ids.
         """
 
-        rows = self.get_relations(from_ids)
+        # selects the rows for the requested from_ids, keeping track of the
+        # index of the original from_ids Series
+        from_df = pd.DataFrame({"from_id": from_ids})
+        from_df["from_index"] = from_df.index
+        rows = pd.merge(left=self._table, right=from_df, left_on="from",
+                        right_on="from_id")
 
         if rows.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
@@ -69,16 +79,25 @@ class Relationship(object):
             selected_to = df.sample(n=1, weights="weight",
                                     random_state=self.state)[["to"]]
             if drop:
+                # This is the index of the relation in the _table. We keep
+                # track of it in case we want to drop any selected relationship
                 selected_to["selected_index"] = selected_to.index
+
             return selected_to
 
-        selected = rows.groupby(by="from", sort=False).apply(pick_one)
-        selected["from"] = selected.index.get_level_values(level="from")
-        selected.rename(columns={"to": named_as}, inplace=True)
+        # picking a "to" for each, potentially duplicated, "from" value
+        rows.drop("from_id", axis=1, inplace=True)
+        grouped = rows.groupby(by=["from", "from_index"], sort=False)
+        selected = grouped.apply(pick_one)
 
         if drop:
             self._table.drop(selected["selected_index"], inplace=True)
             selected.drop("selected_index", axis=1, inplace=True)
+
+        # shaping final results
+        selected["from"] = selected.index.get_level_values(level="from")
+        selected.rename(columns={"to": named_as}, inplace=True)
+        selected.index = selected.index.get_level_values(level="from_index")
 
         return selected
 
@@ -105,16 +124,13 @@ class Relationship(object):
         def __init__(self, relationship):
             self.relationship = relationship
 
-        class SelectOne(Operation):
+        class SelectOne(AddColumns):
             """
-            Operation that wraps a select_one() call on the relationship.
-            We must be an Operation and not an AddColumns since we want to
-            control the way the join is not (not necessarily on index as is done
-            in the AddColumns)
             """
 
             def __init__(self, relationship, from_field, named_as,
                          one_to_one, drop):
+                AddColumns.__init__(self)
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
@@ -122,13 +138,9 @@ class Relationship(object):
                 self.drop = drop
 
             # def transform(self, action_data):
-            def transform(self, action_data):
-
-                from_ids = action_data[[self.from_field]].drop_duplicates()
-                from_ids_vals = from_ids[self.from_field].values
-
+            def build_output(self, action_data):
                 selected = self.relationship.select_one(
-                    from_ids=from_ids_vals,
+                    from_ids=action_data[self.from_field],
                     named_as=self.named_as,
                     drop=self.drop)
 
@@ -138,9 +150,8 @@ class Relationship(object):
                     selected.drop_duplicates(subset=self.named_as,
                                              keep="first", inplace=True)
 
-                selected.set_index("from", drop=True, inplace=True)
-                return pd.merge(left=action_data, right=selected,
-                                left_on=self.from_field, right_index=True)
+                selected.drop("from", axis=1, inplace=True)
+                return selected
 
         def select_one(self, from_field, named_as, one_to_one=False,
                        drop=False):
