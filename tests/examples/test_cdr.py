@@ -82,9 +82,9 @@ def create_subs_and_sims(seeder, params):
     # Finally, adding one more relationship that defines the set of possible
     # shops where we can topup each SIM.
     # TODO: to make this a bit more realistic, we should probably generate
-    # such relationship first from the actor to the shops, and then copy
-    # the information to each SIM, maybe with some fluctuation to account
-    # for the fact that not shop is providing topups of each operator.
+    # such relationship first from the subs to their favourite shops, and then
+    # copy that info to each SIM, maybe with some fluctuations to account
+    # for the fact that not all shops provide topups of all operators.
     agents = build_ids(params["n_agents"], prefix="AGENT_", max_length=3)
 
     agent_df = pd.DataFrame.from_records(
@@ -162,8 +162,11 @@ def add_cells(circus, seeder, params):
 
     cell_break_down_action.set_operations(
         unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
-        cells.ops.overwrite(attribute="HEALTH",
-                            copy_from_field="NEW_HEALTH_LEVEL"),
+
+        cells.get_attribute("HEALTH").ops.overwrite(
+            actor_id_field="CELL_ID",
+            copy_from_field="NEW_HEALTH_LEVEL"),
+
         cell_repair_action.ops.reset_timers(actor_id_field="CELL_ID"),
         circus.clock.ops.timestamp(named_as="TIME"),
 
@@ -173,8 +176,11 @@ def add_cells(circus, seeder, params):
 
     cell_repair_action.set_operations(
         healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
-        cells.ops.overwrite(attribute="HEALTH",
-                            copy_from_field="NEW_HEALTH_LEVEL"),
+
+        cells.get_attribute("HEALTH").ops.overwrite(
+            actor_id_field="CELL_ID",
+            copy_from_field="NEW_HEALTH_LEVEL"),
+
         circus.clock.ops.timestamp(named_as="TIME"),
 
         # note that both actions are contributing to the same "cell_status" log
@@ -246,7 +252,9 @@ def add_mobility(circus, subs, cells, seeder):
         mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
         # update the CELL attribute of the customers accordingly
-        subs.ops.overwrite(attribute="CELL", copy_from_field="NEW_CELL"),
+        subs.get_attribute("CELL").ops.overwrite(
+            actor_id_field="A_ID",
+            copy_from_field="NEW_CELL"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
@@ -323,7 +331,9 @@ def add_topups(circus, sims, recharge_gen):
                          named_as="MAIN_ACCT",
                          f=np.add, f_args="series"),
 
-        sims.ops.overwrite(attribute="MAIN_ACCT", copy_from_field="MAIN_ACCT"),
+        sims.get_attribute("MAIN_ACCT").ops.overwrite(
+            actor_id_field="SIM_ID",
+            copy_from_field="MAIN_ACCT"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
@@ -496,9 +506,9 @@ def add_communications(circus, subs, sims, cells, seeder):
         operations.Apply(source_fields=["MSISDNS_A", "OPERATORS_A", "A_SIMS",
                                         "MAIN_ACCTS_A",
                                         "MSISDNS_B", "OPERATORS_B", "B_SIMS"],
-                         named_as=["MSISDN_A", "OPERATOR_A", "A_SIM",
+                         named_as=["MSISDN_A", "OPERATOR_A", "SIM_A",
                                    "MAIN_ACCT_OLD",
-                                   "MSISDN_B", "OPERATOR_B", "B_SIM"],
+                                   "MSISDN_B", "OPERATOR_B", "SIM_B"],
                          f=select_sims),
 
         # some static fields
@@ -540,9 +550,9 @@ def add_communications(circus, subs, sims, cells, seeder):
                          named_as="MAIN_ACCT_NEW",
                          f=np.subtract, f_args="series"),
 
-        # TODO: bug here: we need a actor_id_field again...
-        sims.ops.overwrite(attribute="MAIN_ACCT",
-                           copy_from_field="MAIN_ACCT_NEW"),
+        sims.get_attribute("MAIN_ACCT").ops.overwrite(
+            actor_id_field="SIM_A",
+            copy_from_field="MAIN_ACCT_NEW"),
     )
 
     # triggers the topup action if the main account is low
@@ -640,7 +650,6 @@ def add_communications(circus, subs, sims, cells, seeder):
     circus.add_actions(calls,
 #                       sms
                        )
-
 
 
 def build_cdr_scenario(params):
