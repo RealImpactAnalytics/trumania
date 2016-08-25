@@ -44,6 +44,15 @@ def test_merging_one_dictionary_should_yield_itself():
     assert d1 == merge_dicts([d1], lambda a, b: a+b)
 
 
+def test_merging_an_empty_list_of_dicts_should_yield_empty_dict():
+    assert {} == merge_dicts([])
+
+
+def test_merging_an_empty_gen_of_dicts_should_yield_empty_dict():
+    emtpy_gen = ({"a": 1} for _ in [])
+    assert {} == merge_dicts(emtpy_gen)
+
+
 def test_merging_many_dictionary_should_yield_expected_result():
     d1 ={"a": 10, "b": 20}
     d2 ={"a": 100, "c": 30}
@@ -52,6 +61,20 @@ def test_merging_many_dictionary_should_yield_expected_result():
     d5 = {"z": -10}
 
     merged = merge_dicts([d1, d2, d3, d4, d5], lambda a, b: a+b)
+
+    assert {"a": 110, "b": 220, "c": 30, "z": 990} == merged
+
+
+def test_merging_many_dictionary_from_gen_should_yield_expected_result():
+    ds = [{"a": 10, "b": 20},
+          {"a": 100, "c": 30},
+          {},
+          {"b": 200, "z": 1000},
+          {"z": -10}]
+
+    dicts_gens = (d for d in ds)
+
+    merged = merge_dicts(dicts_gens, lambda a, b: a+b)
 
     assert {"a": 110, "b": 220, "c": 30, "z": 990} == merged
 

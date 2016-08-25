@@ -127,8 +127,16 @@ def merge_dicts(dicts, merge_func=None):
     :type merge_func: function
     :return: one single dictionary containing all entries received
     """
+    from itertools import tee
 
-    return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dicts)
+    # check if the input list or iterator is empty
+    dict_backup, test = tee(iter(dicts))
+    try:
+        test.next()
+    except StopIteration:
+        return {}
+
+    return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dict_backup)
 
 
 def setup_logging():
