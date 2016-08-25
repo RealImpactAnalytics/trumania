@@ -598,9 +598,9 @@ def add_communications(circus, subs, sims, cells, seeder):
         calls.ops.transit_to_state(actor_id_field="A_ID",
                                    condition_field="A_GETTING_BURSTY",
                                    state="excited"),
-        # sms.ops.transit_to_state(actor_id_field="A_ID",
-        #                          condition_field="A_GETTING_BURSTY",
-        #                          state="excited"),
+        sms.ops.transit_to_state(actor_id_field="A_ID",
+                                 condition_field="A_GETTING_BURSTY",
+                                 state="excited"),
 
         # Trigger to get into "excited" mode because B received a call
         flat_trigger.ops.generate(observed_field="EXCITABILITY_B",
@@ -611,14 +611,14 @@ def add_communications(circus, subs, sims, cells, seeder):
                                    condition_field="B_GETTING_BURSTY",
                                    state="excited"),
 
-        # sms.ops.transit_to_state(actor_id_field="B_ID",
-        #                          condition_field="B_GETTING_BURSTY",
-        #                          state="excited"),
+        sms.ops.transit_to_state(actor_id_field="B_ID",
+                                 condition_field="B_GETTING_BURSTY",
+                                 state="excited"),
         #
-        # # B party need to have their time reset explicitally since they were
-        # # not active at this round. A party will be reset automatically
-        # calls.ops.reset_timers(actor_id_field="B_ID"),
-        # sms.ops.reset_timers(actor_id_field="B_ID"),
+        # B party need to have their time reset explicitally since they were
+        # not active at this round. A party will be reset automatically
+        calls.ops.reset_timers(actor_id_field="B_ID"),
+        sms.ops.reset_timers(actor_id_field="B_ID"),
     )
 
     calls.set_operations(
@@ -727,6 +727,9 @@ def run_cdr_scenario(params):
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))
+
+    for logid, lg in logs.iteritems():
+        logging.info(" {} {} logs".format(len(lg), logid))
 
     logging.info("""\nexecution times: "
      - building the circus: {}

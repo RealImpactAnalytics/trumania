@@ -4,7 +4,7 @@ from datagenerator.util_functions import *
 # better run this outside of PyCharm for consistent measures...
 #
 # python tests/examples/long_cdr.py
-# (or within docker... TODO...)
+
 if __name__ == "__main__":
     setup_logging()
     logging.info("starting a long CDR test ")
@@ -32,6 +32,20 @@ if __name__ == "__main__":
       * 400k logs for 25k users is 16 actions per persons
 
        => a bit more than 5 actions per user per hour
+
+
+New result (25 Aug) after adding multi-sim
+
+       total number of logs: 380270
+2016-08-25 15:11:47,849  71736 topups logs
+2016-08-25 15:11:47,849  86 cell_status logs
+2016-08-25 15:11:47,849  154358 voice_cdr logs
+2016-08-25 15:11:47,850  152642 sms_cdr logs
+2016-08-25 15:11:47,850  1448 mobility_logs logs
+2016-08-25 15:11:47,852
+execution times: "
+     - building the circus: 0 days 00:02:43.163336
+     - running the simulation: 0 days 00:30:58.923819
     """
 
 
