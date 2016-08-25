@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 
-def test_apply_should_delegate_to_dataframe_function_correctly():
+def test_apply_should_delegate_to_single_col_dataframe_function_correctly():
 
     # some function that expect a dataframe as input => must return
     # dataframe with "result" column
@@ -16,12 +16,42 @@ def test_apply_should_delegate_to_dataframe_function_correctly():
                               f=f, f_args="dataframe")
 
     action_data = pd.DataFrame(
-        np.random.rand(10,5), columns=["A", "B", "C", "D", "E"])
+        np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
 
     result = tested.build_output(action_data)
 
     assert result["r"].equals(action_data["A"] + action_data["D"] - action_data[
         "C"])
+
+
+def test_apply_should_delegate_to_multi_col_dataframe_function_correctly():
+
+    # now f returns several columns
+    def f(df):
+        return pd.DataFrame({
+            "r1": df["A"] + df["D"] - df["C"],
+            "r2": df["A"] + df["C"],
+            "r3": df["A"] * df["C"],
+        }
+    )
+
+    tested = operations.Apply(source_fields=["A", "C", "D"],
+                              named_as=["op1", "op2", "op3"],
+                              f=f, f_args="dataframe")
+
+    action_data = pd.DataFrame(
+        np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
+
+    result = tested.transform(action_data)
+    assert result.columns.tolist() == ["A", "B", "C", "D", "E", "op1", "op2",
+                                       "op3"]
+
+    assert result["op1"].equals(
+        action_data["A"] + action_data["D"] - action_data["C"])
+    assert result["op2"].equals(
+        action_data["A"] + action_data["C"])
+    assert result["op3"].equals(
+        action_data["A"] * action_data["C"])
 
 
 def test_apply_should_delegate_to_columns_function_correctly():
@@ -38,7 +68,7 @@ def test_apply_should_delegate_to_columns_function_correctly():
                               f=f, f_args="series")
 
     action_data = pd.DataFrame(
-        np.random.rand(10,5), columns=["A", "B", "C", "D", "E"])
+        np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
 
     result = tested.build_output(action_data)
 

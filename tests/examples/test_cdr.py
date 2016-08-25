@@ -399,6 +399,7 @@ def select_sims(action_data):
     # each operator...
     pass
 
+
 def add_communications(circus, subs, sims, cells, seeder):
     """
     Adds Calls and SMS actions, which in turn may trigger topups actions.
@@ -485,20 +486,15 @@ def add_communications(circus, subs, sims, cells, seeder):
         subs.get_relationship("SIMS").ops.select_all(from_field="A_ID",
                                                      named_as="A_SIMS"),
         sims.ops.lookup(actor_id_field="A_SIMS",
-                        select={
-                            "OPERATOR": "OPERATORS_A",
-                            "MSISDN": "MSISDNS_A",
-                            "MAIN_ACCT": "MAIN_ACCTS_A"
-                        }),
+                        select={"OPERATOR": "OPERATORS_A",
+                                "MSISDN": "MSISDNS_A",
+                                "MAIN_ACCT": "MAIN_ACCTS_A"}),
 
         subs.get_relationship("SIMS").ops.select_all(from_field="B_ID",
                                                      named_as="B_SIMS"),
         sims.ops.lookup(actor_id_field="B_SIMS",
-                        select={
-                            "OPERATOR": "OPERATORS_B",
-                            "MSISDN": "MSISDNS_B",
-                        }),
-
+                        select={"OPERATOR": "OPERATORS_B",
+                                "MSISDN": "MSISDNS_B"}),
 
         # selects the sims and related values based on the best match
         # between the sims of A and B
