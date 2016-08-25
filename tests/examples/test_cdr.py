@@ -134,26 +134,26 @@ def add_cells(circus, seeder, params):
     cell_break_down_action = Action(
         name="cell_break_down",
 
-        triggering_actor=cells,
+        initiating_actor=cells,
         actorid_field="CELL_ID",
 
         timer_gen=default_day_profiler,
 
         # fault activity is very low: most cell tend never to break down (
         # hopefully...)
-        activity=ScaledParetoGenerator(m=5, a=1.4, seed=seeder.next())
+        activity_gen=ScaledParetoGenerator(m=5, a=1.4, seed=seeder.next())
     )
 
     cell_repair_action = Action(
         name="cell_repair_down",
 
-        triggering_actor=cells,
+        initiating_actor=cells,
         actorid_field="CELL_ID",
 
         timer_gen=default_day_profiler,
 
         # repair activity is much higher
-        activity=ScaledParetoGenerator(m=100, a=1.2, seed=seeder.next()),
+        activity_gen=ScaledParetoGenerator(m=100, a=1.2, seed=seeder.next()),
 
         # repair is not re-scheduled at the end of a repair, but only triggered
         # from a "break-down" action
@@ -232,7 +232,7 @@ def add_mobility(circus, subs, cells, seeder):
     mobility_action = Action(
         name="mobility",
 
-        triggering_actor=subs,
+        initiating_actor=subs,
         actorid_field="A_ID",
 
         timer_gen=mobility_time_gen,
@@ -299,7 +299,7 @@ def add_topups(circus, sims, recharge_gen):
     # computation of the value
     topup_action = Action(
         name="topups",
-        triggering_actor=sims,
+        initiating_actor=sims,
         actorid_field="SIM_ID",
 
         # note that there is timegen specified => the clock is not ticking
@@ -378,14 +378,15 @@ def compute_cdr_type(action_data):
 
 
 def compute_call_status(action_data):
-    dropped = action_data["CELL_A_ACCEPTS"] & action_data["CELL_B_ACCEPTS"]
-
-    status = dropped.map({True: "OK", False: "DROPPED"})
+    is_accepted = action_data["CELL_A_ACCEPTS"] & action_data["CELL_B_ACCEPTS"]
+    status = is_accepted.map({True: "OK", False: "DROPPED"})
     return pd.DataFrame({"result": status})
 
 
 def select_sims(action_data):
-    # TODO
+    # select a sim in A and B depending on the fact that they share an operator
+    # TODO this could be enriched, e.g. taking into account price rates between
+    # each operator...
     pass
 
 def add_communications(circus, subs, sims, cells, seeder):
@@ -431,11 +432,11 @@ def add_communications(circus, subs, sims, cells, seeder):
     calls = Action(
         name="calls",
 
-        triggering_actor=subs,
+        initiating_actor=subs,
         actorid_field="A_ID",
 
         timer_gen=call_timegen,
-        activity=normal_call_activity,
+        activity_gen=normal_call_activity,
 
         states={
             "excited": {

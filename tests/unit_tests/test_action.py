@@ -10,7 +10,7 @@ def test_empty_action_should_do_nothing_and_not_crash():
     customers = Actor(size=1000)
     empty_action = Action(
         name="purchase",
-        triggering_actor=customers,
+        initiating_actor=customers,
         actorid_field="AGENT")
 
     logs = empty_action.execute()
@@ -29,7 +29,7 @@ def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0
@@ -49,7 +49,7 @@ def test_active_inactive_ids_should_say_5_actives_for_timer_0():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0
@@ -69,7 +69,7 @@ def test_active_inactive_ids_should_all_actives_for_timer_0():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0
@@ -83,7 +83,7 @@ def test_get_activity_should_be_default_by_default():
 
     actor = Actor(size=10)
     action = Action(name="tested",
-                    triggering_actor=actor,
+                    initiating_actor=actor,
                     actorid_field="")
 
     # by default, each actor should be in the default state with activity 1
@@ -97,9 +97,9 @@ def test_actors_with_zero_activity_should_never_have_positive_timer():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         # fake generator that assign zero activity to 3 actors
-        activity=ConstantsMockGenerator([1,1,1,1,0,1,1, 0,0,1]),
+        activity_gen=ConstantsMockGenerator([1, 1, 1, 1, 0, 1, 1, 0, 0, 1]),
         timer_gen=ConstantProfiler(10),
         actorid_field="")
 
@@ -120,7 +120,7 @@ def test_get_activity_should_be_aligned_for_each_state():
 
     actor = Actor(size=10, prefix="ac_", max_length=1)
     action = Action(name="tested",
-                    triggering_actor=actor,
+                    initiating_actor=actor,
                     actorid_field="",
                     states={
                              "excited": {
@@ -179,7 +179,7 @@ def test_scenario_transiting_to_state_with_0_backprob_should_remain_there():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
         states={
          "excited": {
@@ -239,7 +239,7 @@ def test_scenario_transiting_to_state_with_1_backprob_should_go_back_to_normal()
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
         states={
          "excited": {
@@ -288,7 +288,7 @@ def test_action_autoreset_true_not_dropping_rows_should_reset_all_timers():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0
@@ -329,7 +329,7 @@ def test_action_autoreset_true_and_dropping_rows_should_reset_all_timers():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0
@@ -369,7 +369,7 @@ def test_action_autoreset_false_not_dropping_rows_should_reset_all_timers():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0
@@ -427,7 +427,7 @@ def test_action():
 
     action = Action(
         name="tested",
-        triggering_actor=actor,
+        initiating_actor=actor,
         actorid_field="ac_id",
 
         # forcing the timer of all actors to be initialized to 0

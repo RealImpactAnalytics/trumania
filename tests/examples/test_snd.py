@@ -108,10 +108,10 @@ def add_purchase_action(circus, agents, dealers, seeder):
 
     purchase = Action(
         name="purchases",
-        triggering_actor=agents,
+        initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=timegen,
-        activity=purchase_activity_gen,
+        activity_gen=purchase_activity_gen,
 
         states={
             "on_holiday": {
@@ -174,17 +174,17 @@ def add_agent_holidays_action(circus, agents, seeder):
 
     going_on_holidays = Action(
         name="agent_start_holidays",
-        triggering_actor=agents,
+        initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,
-        activity=holiday_start_activity)
+        activity_gen=holiday_start_activity)
 
     returning_from_holidays = Action(
         name="agent_start_holidays",
-        triggering_actor=agents,
+        initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,
-        activity=holiday_end_activity,
+        activity_gen=holiday_end_activity,
         auto_reset_timer=False)
 
     going_on_holidays.set_operations(

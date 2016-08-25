@@ -29,7 +29,7 @@ def test_add_action_get_action_should_work_as_expected():
     mobility_action = Action(
         name="mobility",
 
-        triggering_actor=customers,
+        initiating_actor=customers,
         actorid_field="A_ID",
 
         timer_gen=mobility_time_gen,
