@@ -85,18 +85,22 @@ def test_one_to_one_relationship_operation_should_find_unique_counterpart():
 
     op = oneto1.ops.select_one(from_field="A", named_as="CELL")
 
-    data = pd.DataFrame({"A": ["a", "e", "d"]}).set_index("A", drop=False)
+    # with several times a lookup from value a
+    data = pd.DataFrame({"A": ["a", "e", "d", "a"]})
     output, logs = op(data)
 
     # the transformer should have added the "CELL" column to the df
     assert output.columns.values.tolist() == ["A", "CELL"]
 
     assert {} == logs
-    assert output.index.to_series().equals(output["A"])
+
+    # no rows should have been dropped
+    assert output.shape[0] == data.shape[0]
 
     # output should correspond to the A column of data, indexed correctly
-    assert output["CELL"].sort_index().equals(
-        pd.Series(["ta", "td", "te"], index=["a", "d", "e"]))
+    # assert output["CELL"].sort_index().equals(
+    #     pd.Series(["ta", "td", "te"], index=["a", "d", "e"]))
+    assert output.sort_values("A")["CELL"].tolist() == ["ta", "ta", "td", "te"]
 
 
 def test_select_one_to_one_should_not_return_duplicates_1():

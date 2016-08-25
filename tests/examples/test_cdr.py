@@ -31,21 +31,19 @@ def create_subs_and_sims(seeder, params):
 
     # subs are empty here but will receive a "CELLS" and "EXCITABILITY"
     # attributes later on
-    subs = Actor(size=params["n_subscribers"], prefix="subs_")
-    number_of_operators = npgen.choice(a=range(1, 5), size=subs.size)
+    subs = Actor(size=params["n_subscribers"], prefix="SUBS_")
 
+    number_of_operators = npgen.choice(a=range(1, 5), size=subs.size)
     operator_ids = build_ids(size=4, prefix="OPERATOR_", max_length=1)
 
     def pick_operators(qty):
         """
         randomly choose a set of unique operators of specified size
         """
-        return npgen.choice(a=operator_ids,
-                            p=[.8, .05, .1, .05],
-                            size=qty,
+        return npgen.choice(a=operator_ids, p=[.8, .05, .1, .05], size=qty,
                             replace=False).tolist()
 
-    # set of operator of each sub
+    # set of operators of each subs
     subs_operators_list = map(pick_operators, number_of_operators)
 
     # Dataframe with 4 columns for the 1rst, 2nd,... operator of each subs.
@@ -53,20 +51,19 @@ def create_subs_and_sims(seeder, params):
     # dataframe contains None, which are just discarded by the stack() below
     subs_operators_df = pd.DataFrame(subs_operators_list, index=subs.ids)
 
-    # same thing vertically: the index contains the sub id (with duplicates)
+    # same info, vertically: the index contains the sub id (with duplicates)
     # and "operator" one of the operators of this subs
     subs_ops_mapping = subs_operators_df.stack()
     subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
-    subs_ops_mapping.columns = ["operator"]
+#    subs_ops_mapping.columns = ["operator"]
 
-    # SIM actor, each with a OPERATOR and MAIN_ACCT attribute
-    # TODO: we could specify communication cost rates as attributes :)
+    # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
     sims = Actor(size=subs_ops_mapping.size, prefix="SIMS_")
-    sims.create_attribute("OPERATOR", init_values=subs_ops_mapping["operator"])
+    sims.create_attribute("OPERATOR", init_values=subs_ops_mapping.values)
     recharge_gen = ConstantGenerator(value=1000.)
     sims.create_attribute(name="MAIN_ACCT", init_values_gen=recharge_gen)
 
-    # keep ing track of the link between actor and sims as a relationship
+    # keeping track of the link between actor and sims as a relationship
     sims_of_subs = subs.create_relationship("SIMS", seed=seeder.next())
     sims_of_subs.add_relations(
         from_ids=subs_ops_mapping.index,
@@ -75,8 +72,7 @@ def create_subs_and_sims(seeder, params):
     msisdn_gen = MSISDNGenerator(countrycode="0032",
                                  prefix_list=["472", "473", "475", "476",
                                               "477", "478", "479"],
-                                 length=6,
-                                 seed=seeder.next())
+                                 length=6, seed=seeder.next())
     sims.create_attribute(name="MSISDN", init_values_gen=msisdn_gen)
 
     # Finally, adding one more relationship that defines the set of possible
@@ -95,13 +91,13 @@ def create_subs_and_sims(seeder, params):
     sims_agents_rel = sims.create_relationship("POSSIBLE_AGENTS",
                                                seed=seeder.next())
 
-    agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.,
-                                            seed=seeder.next())
+    agent_weight_gen = NumpyRandomGenerator(
+        method="exponential", scale=1., seed=seeder.next())
 
-    sims_agents_rel.add_relations(from_ids=agent_df["SIM_ID"],
-                                  to_ids=agent_df["AGENT"],
-                                  weights=agent_weight_gen.generate(
-                                    agent_df.shape[0]))
+    sims_agents_rel.add_relations(
+        from_ids=agent_df["SIM_ID"],
+        to_ids=agent_df["AGENT"],
+        weights=agent_weight_gen.generate(agent_df.shape[0]))
 
     return subs, sims, recharge_gen
 
@@ -260,8 +256,7 @@ def add_mobility(circus, subs, cells, seeder):
 
         # create mobility logs
         operations.FieldLogger(log_id="mobility_logs",
-                               cols=["TIME", "A_ID", "OPERATOR",
-                                     "PREV_CELL", "NEW_CELL", ]),
+                               cols=["TIME", "A_ID", "PREV_CELL", "NEW_CELL"]),
     )
 
     circus.add_action(mobility_action)
@@ -339,7 +334,7 @@ def add_topups(circus, sims, recharge_gen):
 
         operations.FieldLogger(log_id="topups",
                                cols=["TIME", "CUSTOMER_NUMBER", "AGENT",
-                                     "VALUE", "OPERATOR", "CELL",
+                                     "VALUE", "OPERATOR",
                                      "MAIN_ACCT_OLD", "MAIN_ACCT"]),
     )
 
@@ -394,10 +389,41 @@ def compute_call_status(action_data):
 
 
 def select_sims(action_data):
-    # select a sim in A and B depending on the fact that they share an operator
-    # TODO this could be enriched, e.g. taking into account price rates between
-    # each operator...
-    pass
+    """
+    this function expects the following columns in action_data:
+
+    ["MSISDNS_A", "OPERATORS_A", "A_SIMS", "MAIN_ACCTS_A",
+     "MSISDNS_B", "OPERATORS_B", "B_SIMS"]
+
+     => it selects the most appropriate OPERATOR for this call and return the
+     following values:
+
+     "MSISDN_A", "OPERATOR_A", "SIM_A", "MAIN_ACCT_OLD",
+     "MSISDN_B", "OPERATOR_B", "SIM_B"
+    """
+
+    def do_select(row):
+
+        common_operators = set(row["OPERATORS_A"]) & set(row["OPERATORS_B"])
+
+        if len(common_operators) > 0:
+            # A and B have at least an operator in common => using that
+            operator_a = operator_b = list(common_operators)[0]
+            a_idx = row["OPERATORS_A"].index(operator_a)
+            b_idx = row["OPERATORS_B"].index(operator_b)
+
+        else:
+            # otherwise, just use any (we could look at lowest rates here...)
+            a_idx = b_idx = 0
+
+        return pd.Series([
+            row["MSISDNS_A"][a_idx], row["OPERATORS_A"][a_idx],
+            row["A_SIMS"][a_idx], row["MAIN_ACCTS_A"][a_idx],
+            row["MSISDNS_B"][b_idx], row["OPERATORS_B"][b_idx],
+            row["B_SIMS"][b_idx]
+          ])
+
+    return action_data.apply(do_select, axis=1)
 
 
 def add_communications(circus, subs, sims, cells, seeder):
@@ -456,21 +482,21 @@ def add_communications(circus, subs, sims, cells, seeder):
         }
     )
 
-    # sms = Action(
-    #     name="sms",
-    #
-    #     triggering_actor=subs,
-    #     actorid_field="A_ID",
-    #
-    #     timer_gen=call_timegen,
-    #     activity=normal_call_activity,
-    #
-    #     states={
-    #         "excited": {
-    #             "activity": excited_call_activity,
-    #             "back_to_default_probability": back_to_normal_prob}
-    #     }
-    # )
+    sms = Action(
+        name="sms",
+
+        initiating_actor=subs,
+        actorid_field="A_ID",
+
+        timer_gen=call_timegen,
+        activity_gen=normal_call_activity,
+
+        states={
+            "excited": {
+                "activity": excited_call_activity,
+                "back_to_default_probability": back_to_normal_prob}
+        }
+    )
 
     # common logic between Call and SMS: selecting A and B + their related
     # fields
@@ -496,9 +522,8 @@ def add_communications(circus, subs, sims, cells, seeder):
                         select={"OPERATOR": "OPERATORS_B",
                                 "MSISDN": "MSISDNS_B"}),
 
-        # selects the sims and related values based on the best match
+        # A selects the sims and related values based on the best match
         # between the sims of A and B
-        # TODO: Apply needs to be able to return several values
         operations.Apply(source_fields=["MSISDNS_A", "OPERATORS_A", "A_SIMS",
                                         "MAIN_ACCTS_A",
                                         "MSISDNS_B", "OPERATORS_B", "B_SIMS"],
@@ -507,6 +532,13 @@ def add_communications(circus, subs, sims, cells, seeder):
                                    "MSISDN_B", "OPERATOR_B", "SIM_B"],
                          f=select_sims),
 
+        operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
+                         named_as="TYPE",
+                         f=compute_cdr_type),
+    )
+
+    # Both CELL_A and CELL_B might drop the call based on their current HEALTH
+    compute_cell_status = Chain(
         # some static fields
         subs.ops.lookup(actor_id_field="A_ID",
                         select={"CELL": "CELL_A",
@@ -516,13 +548,6 @@ def add_communications(circus, subs, sims, cells, seeder):
                         select={"CELL": "CELL_B",
                                 "EXCITABILITY": "EXCITABILITY_B"}),
 
-        operations.Apply(source_fields=["OPERATOR_A", "OPERATOR_B"],
-                         named_as="TYPE",
-                         f=compute_cdr_type),
-    )
-
-    # Both CELL_A and CELL_B might drop the call based on their current HEALTH
-    compute_cell_status = Chain(
         cells.ops.lookup(actor_id_field="CELL_A",
                          select={"HEALTH": "CELL_A_HEALTH"}),
 
@@ -536,8 +561,7 @@ def add_communications(circus, subs, sims, cells, seeder):
                                   named_as="CELL_B_ACCEPTS"),
 
         operations.Apply(source_fields=["CELL_A_ACCEPTS", "CELL_B_ACCEPTS"],
-                         named_as="STATUS",
-                         f=compute_call_status)
+                         named_as="STATUS", f=compute_call_status)
     )
 
     # update the main account based on the value of this CDR
@@ -553,13 +577,14 @@ def add_communications(circus, subs, sims, cells, seeder):
 
     # triggers the topup action if the main account is low
     trigger_topups = Chain(
-        # subscribers with low account are now more likely to topup
+        # A subscribers with low account are now more likely to topup the
+        # SIM they just used to make a call
         recharge_trigger.ops.generate(
             observed_field="MAIN_ACCT_NEW",
             named_as="SHOULD_TOP_UP"),
 
         circus.get_action("topups").ops.force_act_next(
-            actor_id_field="A_ID",
+            actor_id_field="SIM_A",
             condition_field="SHOULD_TOP_UP"),
     )
 
@@ -620,32 +645,30 @@ def add_communications(circus, subs, sims, cells, seeder):
                                      "TYPE",   "PRODUCT"]),
     )
 
-    # sms.set_operations(
-    #
-    #     compute_ab_fields,
-    #     compute_cell_status,
-    #
-    #     ConstantGenerator(value="SMS").ops.generate(named_as="PRODUCT"),
-    #     operations.Apply(source_fields=["DATETIME", "TYPE"],
-    #                      named_as="VALUE",
-    #                      f=compute_sms_value),
-    #
-    #     update_accounts,
-    #     trigger_topups,
-    #     get_bursty,
-    #
-    #     # final CDRs
-    #     operations.FieldLogger(log_id="sms_cdr",
-    #                            cols=["DATETIME", "A", "B", "STATUS",
-    #                                  "VALUE",
-    #                                  "CELL_A", "OPERATOR_A",
-    #                                  "CELL_B", "OPERATOR_B",
-    #                                  "TYPE", "PRODUCT"]),
-    # )
+    sms.set_operations(
 
-    circus.add_actions(calls,
-#                       sms
-                       )
+        compute_ab_fields,
+        compute_cell_status,
+
+        ConstantGenerator(value="SMS").ops.generate(named_as="PRODUCT"),
+        operations.Apply(source_fields=["DATETIME", "TYPE"],
+                         named_as="VALUE",
+                         f=compute_sms_value),
+
+        update_accounts,
+        trigger_topups,
+        get_bursty,
+
+        # final CDRs
+        operations.FieldLogger(log_id="sms_cdr",
+                               cols=["DATETIME", "MSISDN_A", "MSISDN_B",
+                                     "STATUS", "VALUE",
+                                     "CELL_A", "OPERATOR_A",
+                                     "CELL_B", "OPERATOR_B",
+                                     "TYPE", "PRODUCT"]),
+    )
+
+    circus.add_actions(calls, sms)
 
 
 def build_cdr_scenario(params):
@@ -685,9 +708,9 @@ def run_cdr_scenario(params):
         logging.info(" - some {}:\n{}\n\n".format(logid, lg.head(
             15).to_string()))
 
-    logging.info("users having highest amount of calls: ")
+    logging.info("MSISDNs having highest amount of calls: ")
     voice_cdr = logs["voice_cdr"]
-    top_users = voice_cdr["A"].value_counts().head(10)
+    top_users = voice_cdr["MSISDN_A"].value_counts().head(10)
     logging.info(top_users)
 
     logging.info("some dropped calls: ")
@@ -698,9 +721,9 @@ def run_cdr_scenario(params):
     else:
         logging.info(dropped_calls)
 
-    customers = flying.get_actor_of(action_name="calls").to_dataframe()
-    df = customers[customers["MSISDN"].isin(top_users.index)]
-    logging.info(df)
+    # customers = flying.get_actor_of(action_name="calls").to_dataframe()
+    # df = customers[customers["MSISDN"].isin(top_users.index)]
+    # logging.info(df)
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))

@@ -183,8 +183,8 @@ class Apply(AddColumns):
             raise ValueError("unrecognized f input type: {}".format(f_args))
 
         if f_args == "series":
-            assert len(named_as) == 1, "'series' functions can only return 1 " \
-                                       "column"
+            assert len(self.named_as) == 1, \
+                "'series' functions can only return 1 column"
 
         self.f_input = f_args
 

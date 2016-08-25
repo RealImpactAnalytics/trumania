@@ -237,8 +237,3 @@ def test_cdr_scenario():
         logging.info(
             " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string()))
 
-    # TODO: we could add post-checks here that verify that no calls were
-    # made by agents during their holiday
-    # that's annoying to do though since the timestamp are partially random
-    # => we need to round them to the upper/lower minute
-

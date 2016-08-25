@@ -105,16 +105,16 @@ class Relationship(object):
         def __init__(self, relationship):
             self.relationship = relationship
 
-        class SelectOne(AddColumns):
+        class SelectOne(Operation):
             """
-            Operation that wraps a select_one() call on the relationship
+            Operation that wraps a select_one() call on the relationship.
+            We must be an Operation and not an AddColumns since we want to
+            control the way the join is not (not necessarily on index as is done
+            in the AddColumns)
             """
 
             def __init__(self, relationship, from_field, named_as,
                          one_to_one, drop):
-
-                # we force the join to be inner to allow dropping rows
-                AddColumns.__init__(self, join_kind="inner")
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
@@ -122,10 +122,13 @@ class Relationship(object):
                 self.drop = drop
 
             # def transform(self, action_data):
-            def build_output(self, action_data):
+            def transform(self, action_data):
+
+                from_ids = action_data[[self.from_field]].drop_duplicates()
+                from_ids_vals = from_ids[self.from_field].values
 
                 selected = self.relationship.select_one(
-                    from_ids=action_data[self.from_field],
+                    from_ids=from_ids_vals,
                     named_as=self.named_as,
                     drop=self.drop)
 
@@ -136,7 +139,8 @@ class Relationship(object):
                                              keep="first", inplace=True)
 
                 selected.set_index("from", drop=True, inplace=True)
-                return selected
+                return pd.merge(left=action_data, right=selected,
+                                left_on=self.from_field, right_index=True)
 
         def select_one(self, from_field, named_as, one_to_one=False,
                        drop=False):
@@ -153,18 +157,22 @@ class Relationship(object):
             return self.SelectOne(self.relationship, from_field, named_as,
                                   one_to_one, drop)
 
-        class SelectAll(AddColumns):
+        class SelectAll(Operation):
             def __init__(self, relationship, from_field, named_as):
-                AddColumns.__init__(self)
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
 
-            def build_output(self, action_data):
-                from_ids = action_data[self.from_field]
-                selected = self.relationship.select_all(from_ids, self.named_as)
+            def transform(self, action_data):
+
+                from_ids = action_data[[self.from_field]].drop_duplicates()
+                selected = self.relationship.select_all(
+                    from_ids=from_ids[self.from_field].values,
+                    named_as=self.named_as)
+
                 selected.set_index("from", drop=True, inplace=True)
-                return selected
+                return pd.merge(left=action_data, right=selected,
+                                left_on=self.from_field, right_index=True)
 
         def select_all(self, from_field, named_as):
             """

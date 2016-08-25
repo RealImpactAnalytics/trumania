@@ -32,8 +32,7 @@ def test_apply_should_delegate_to_multi_col_dataframe_function_correctly():
             "r1": df["A"] + df["D"] - df["C"],
             "r2": df["A"] + df["C"],
             "r3": df["A"] * df["C"],
-        }
-    )
+        })
 
     tested = operations.Apply(source_fields=["A", "C", "D"],
                               named_as=["op1", "op2", "op3"],

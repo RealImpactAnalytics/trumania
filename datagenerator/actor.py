@@ -111,8 +111,11 @@ class Actor(object):
                 actor_ids = action_data[self.actor_id_field].unique()
 
                 for attribute, named_as in self.select_dict.items():
-                    vals = pd.DataFrame(
+                    try:
+                        vals = pd.DataFrame(
                         self.actor.get_attribute_values(attribute, actor_ids))
+                    except:
+                        a=1
                     vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
