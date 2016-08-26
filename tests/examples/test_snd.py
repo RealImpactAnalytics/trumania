@@ -130,7 +130,7 @@ def add_purchase_action(circus, agents, dealers, seeder):
             from_field="DEALER",
             named_as="SOLD_SIM",
             one_to_one=True,
-            drop=True),
+            remove_selected=True),
 
         agents.get_relationship("SIM").ops.add(
             from_field="AGENT",

@@ -55,7 +55,6 @@ def create_subs_and_sims(seeder, params):
     # and "operator" one of the operators of this subs
     subs_ops_mapping = subs_operators_df.stack()
     subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
-#    subs_ops_mapping.columns = ["operator"]
 
     # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
     sims = Actor(size=subs_ops_mapping.size, prefix="SIMS_")
