@@ -146,11 +146,7 @@ class Relationship(object):
         """
 
         rows = self.get_relations(from_ids)
-
-        # a to b relationship as tuples in "wide format", e.g.
-        # [ ("a1", ["b1", "b2"]), ("a2", ["b3", "b4", "b4]), ...]
         groups = rows.set_index("to", drop=True).groupby("from", sort=False)
-
         return pd.DataFrame(groups.groups.items(), columns=["from", named_as])
 
     class RelationshipOps(object):
