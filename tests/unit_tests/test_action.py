@@ -471,6 +471,7 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
 
 
 def test_bugfix_collisions_force_act_next():
+    # previously, resetting the timer of reset actors was cancelling the reset
 
     actor = Actor(size=10, prefix="ac_", max_length=1)
 
@@ -509,7 +510,7 @@ def test_bugfix_collisions_force_act_next():
     action.timer_tick(actor.ids)
     assert action.timer.loc[forced]["remaining"].tolist() == [0, 0, 0, 0, 0]
     assert action.timer.loc[not_forced]["remaining"].equals(
-        timer_values[not_forced] -1
+        timer_values[not_forced] - 1
     )
 
 

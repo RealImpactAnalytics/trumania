@@ -43,7 +43,7 @@ def test_select_one_from_empty_rel_should_return_empty_if_not_keep_missing():
     empty_relationship = Relationship(seed=1)
 
     selected = empty_relationship.select_one(from_ids=["non_existing"],
-                                             keep_missing=False)
+                                             discard_missing=True)
     assert selected.shape == (0, 2)
     assert selected.columns.tolist() == ["from", "to"]
 
@@ -52,7 +52,7 @@ def test_select_one_from_empty_rel_should_return_none_if_keep_missing():
     empty_relationship = Relationship(seed=1)
 
     selected = empty_relationship.select_one(from_ids=["non_existing"],
-                                             keep_missing=True)
+                                             discard_missing=False)
     assert selected.shape == (1, 2)
     assert selected.columns.tolist() == ["from", "to"]
     assert selected.iloc[0]["from"] == "non_existing"
@@ -66,19 +66,19 @@ def test_select_one_nonexistingids_should_return_empty_if_not_keep_missing():
                          to_ids=["b", "c", "a", "b"])
 
     result = tested.select_one(["non_existing_id", "neither"],
-                               keep_missing=False)
+                               discard_missing=True)
 
     assert result.shape[0] == 0
     assert result.columns.tolist() == ["from", "to"]
 
 
-def test_select_one_nonexistingids_should_return_none_if_not_keep_missing():
+def test_select_one_nonexistingids_should_return_none_if_keep_missing():
     tested = Relationship(seed=1)
     tested.add_relations(from_ids=["a", "b", "b", "c"],
                          to_ids=["b", "c", "a", "b"])
 
     result = tested.select_one(["non_existing_id", "neither"],
-                               keep_missing=True)
+                               discard_missing=False)
 
     assert result.shape[0] == 2
     assert result.columns.tolist() == ["from", "to"]

@@ -720,10 +720,6 @@ def run_cdr_scenario(params):
     else:
         logging.info(dropped_calls)
 
-    # customers = flying.get_actor_of(action_name="calls").to_dataframe()
-    # df = customers[customers["MSISDN"].isin(top_users.index)]
-    # logging.info(df)
-
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))
 

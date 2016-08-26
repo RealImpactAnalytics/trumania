@@ -45,19 +45,19 @@ class Relationship(object):
         else:
             return self._table[self._table["from"].isin(from_ids)]
 
-    def _maybe_add_nones(self, should_inject_Nones, from_ids, selected):
+    def _maybe_add_nones(self, should_inject_nones, from_ids, selected):
         """
         if should_inject_Nones, this adds (from_id -> None) selection entries
         for any from_id present in the from_ids series but not found in this
         relationship
         """
-        if should_inject_Nones and selected.shape[0] != len(from_ids):
+        if should_inject_nones and selected.shape[0] != len(from_ids):
             missing_index = from_ids.index.difference(selected.index)
             missing_values = pd.DataFrame({
                 "from": from_ids.loc[missing_index],
                 "to": None
                 },
-                index = missing_index
+                index=missing_index
             )
 
             return pd.concat([selected, missing_values])
@@ -65,7 +65,7 @@ class Relationship(object):
             return selected
 
     def select_one(self, from_ids=None, named_as="to", remove_selected=False,
-                   keep_missing=False):
+                   discard_missing=True):
         """
         Select randomly one "to" for each specified "from" values.
          If drop is True, the selected relations are removed.
@@ -120,7 +120,12 @@ class Relationship(object):
             selected = grouped.apply(pick_one)
 
             if remove_selected:
-                self._table.drop(selected["selected_index"], inplace=True)
+                # We ignore errors here since several pop of the same "from"
+                # could happen at the same time, e.g. same dealer trying to
+                # sell the same sell, which would be de-deplucated
+                # downstream, and should not lead this to crash
+                self._table.drop(selected["selected_index"],
+                                 inplace=True, errors="ignore")
                 selected.drop("selected_index", axis=1, inplace=True)
 
             # shaping final results
@@ -128,7 +133,8 @@ class Relationship(object):
             selected.rename(columns={"to": named_as}, inplace=True)
             selected.index = selected.index.get_level_values(level="from_index")
 
-        selected = self._maybe_add_nones(keep_missing, from_ids, selected)
+        selected = self._maybe_add_nones(not discard_missing, from_ids,
+                                         selected)
         return selected
 
     def remove(self, from_ids, to_ids):
@@ -158,7 +164,7 @@ class Relationship(object):
             """
 
             def __init__(self, relationship, from_field, named_as,
-                         one_to_one, remove_selected, keep_missing):
+                         one_to_one, pop, discard_missing):
                 # inner join instead of default left to allow dropping rows
                 # in case of duplicates and one-to-one
                 AddColumns.__init__(self, join_kind="inner")
@@ -166,15 +172,16 @@ class Relationship(object):
                 self.from_field = from_field
                 self.named_as = named_as
                 self.one_to_one = one_to_one
-                self.remove_selected = remove_selected
-                self.keep_missing = keep_missing
+                self.pop = pop
+                self.discard_missing = discard_missing
 
             # def transform(self, action_data):
             def build_output(self, action_data):
                 selected = self.relationship.select_one(
                     from_ids=action_data[self.from_field],
                     named_as=self.named_as,
-                    remove_selected=self.remove_selected)
+                    remove_selected=self.pop,
+                    discard_missing=self.discard_missing)
 
                 if self.one_to_one and selected.shape[0] > 0:
                     idx = self.relationship.state.permutation(selected.index)
@@ -186,7 +193,7 @@ class Relationship(object):
                 return selected
 
         def select_one(self, from_field, named_as, one_to_one=False,
-                       remove_selected=False, keep_missing=False):
+                       pop=False, discard_missing=False):
             """
             :param from_field: field corresponding to the "from" side of the
                 relationship
@@ -198,7 +205,7 @@ class Relationship(object):
                 random choice from a Relationship
             """
             return self.SelectOne(self.relationship, from_field, named_as,
-                                  one_to_one, remove_selected, keep_missing)
+                                  one_to_one, pop, discard_missing)
 
         class SelectAll(Operation):
             def __init__(self, relationship, from_field, named_as):

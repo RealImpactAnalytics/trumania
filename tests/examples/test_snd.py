@@ -15,8 +15,12 @@ from datagenerator.util_functions import *
 # AgentA buys stock to AgentB
 
 params = {
-    "n_agents": 1000,
-    "n_dealers": 100,
+    "n_agents": 5000,
+
+    # very low number of dealer, to have tons of collision and check
+    # behavious in that case
+    "n_dealers": 10,
+
     "average_degree": 20,
     "n_sims": 500000
 }
@@ -56,6 +60,16 @@ def create_dealers_with_sims(seeder):
     sims.add_relations(from_ids=sims_dealer["DEALER"],
                        to_ids=sims_dealer["SIM"])
 
+    # one more dealer with just 3 sims in stock => this one will trigger
+    # lot's of failed sales
+    broken_dealer = pd.DataFrame({
+        "DEALER": "broke_dealer",
+        "SIM": ["SIM_OF_BROKE_DEALER_%d" % s for s in range(3)]
+    })
+
+    sims.add_relations(from_ids=broken_dealer["DEALER"],
+                       to_ids=broken_dealer["SIM"])
+
     return dealers
 
 
@@ -81,6 +95,16 @@ def connect_agent_to_dealer(agents, dealers, seeder):
         from_ids=agent_customer_df["AGENT"],
         to_ids=agent_customer_df["DEALER"],
         weights=agent_weight_gen.generate(agent_customer_df.shape[0]))
+
+    to_broke = pd.DataFrame({
+        "AGENT": agents.ids,
+        "D": "broke_dealer"
+    })
+
+    agent_customer_rel.add_relations(
+        from_ids=to_broke["AGENT"],
+        to_ids=to_broke["D"],
+        weights=4)
 
 
 def add_purchase_action(circus, agents, dealers, seeder):
@@ -129,8 +153,25 @@ def add_purchase_action(circus, agents, dealers, seeder):
         dealers.get_relationship("SIM").ops.select_one(
             from_field="DEALER",
             named_as="SOLD_SIM",
+
+            # each SIM can only be sold once
             one_to_one=True,
-            remove_selected=True),
+
+            # if a SIM is selected, it is removed from the dealer's stock
+            pop=True,
+
+            # if a chosen dealer has empty stock, we still return None SIM
+            discard_missing=True),
+
+        operations.Apply(source_fields="SOLD_SIM",
+                         named_as="FAILED_SALE",
+                         f=pd.isnull, f_args="series"),
+
+        purchase.ops.force_act_next(actor_id_field="AGENT",
+                                    condition_field="FAILED_SALE"),
+
+        # TODO: there is a bug in pop: the sim does not seem to be removed...
+        # TODO: we must remove the rows here that failed
 
         agents.get_relationship("SIM").ops.add(
             from_field="AGENT",
@@ -231,6 +272,23 @@ def test_snd_scenario():
     logs = flying.run(n_iterations=100)
 
     for logid, lg in logs.iteritems():
-        logging.info(
-            " - some {}:\n{}\n\n".format(logid, lg.head(15).to_string()))
+        log_dataframe_sample(" - some {}".format(logid), lg)
+
+    purchases = logs["purchases"]
+    log_dataframe_sample(" - some failed purchases: ",
+                         purchases[purchases["FAILED_SALE"]])
+
+    purchases_from_broke = purchases[purchases["DEALER"] == "broke_dealer"]
+    log_dataframe_sample(" - some purchases from broke dealer: ",
+                         purchases_from_broke)
+
+    all_logs_size = np.sum(df.shape[0] for df in logs.values())
+    logging.info("\ntotal number of logs: {}".format(all_logs_size))
+
+    for logid, lg in logs.iteritems():
+        logging.info(" {} {} logs".format(len(lg), logid))
+
+    # broke dealer had only 3 SIMs to sell
+    assert purchases_from_broke.shape[0] <= 3
+
 
