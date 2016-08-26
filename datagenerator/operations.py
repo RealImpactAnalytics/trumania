@@ -1,8 +1,6 @@
 from __future__ import division
-import pandas as pd
 from abc import ABCMeta, abstractmethod
-import numpy as np
-from datagenerator import util_functions
+from datagenerator.util_functions import *
 
 
 class Operation(object):
@@ -56,9 +54,7 @@ class Chain(Operation):
 
         output, supp_logs = operation(action_data)
         # merging the logs of each operation of this action.
-        # TODO: I guess just adding pd.concat at the end of this would allow
-        # multiple operations to contribute to the same log => to be checked...
-        return output, util_functions.merge_dicts([prev_logs, supp_logs])
+        return output, merge_dicts([prev_logs, supp_logs], df_concat)
 
     def __call__(self, action_data):
         init = [(action_data, {})]

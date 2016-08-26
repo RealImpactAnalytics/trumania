@@ -1,12 +1,5 @@
-import pandas as pd
-from datagenerator.util_functions import merge_dicts
+from datagenerator.util_functions import *
 import logging
-
-
-def df_concat(d1, d2):
-        df = pd.concat([d1, d2])
-        df.reset_index(drop=True, inplace=True)
-        return df
 
 
 class Circus(object):

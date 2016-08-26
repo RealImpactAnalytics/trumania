@@ -119,6 +119,10 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
     return {key: merged_value(key) for key in keys }
 
 
+def df_concat(d1, d2):
+    return pd.concat([d1, d2], ignore_index=True, copy=False)
+
+
 def merge_dicts(dicts, merge_func=None):
     """
     :param dicts: list of dictionnaries to be merged
