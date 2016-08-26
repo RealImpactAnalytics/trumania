@@ -154,37 +154,50 @@ class Apply(AddColumns):
     def __init__(self, source_fields, named_as, f, f_args="dataframe"):
         """
         :param source_fields: input field from the action data
-        :param named_as: name of the resulting field added to the action data
-        :param f: tranforming fonction
+        :param named_as: name of the resulting fields added to the action data
+        :param f: transforming function
         :param f_args: "dataframe" or "columns", depending on the signature
             of f:
 
             - "dataframe": input and output of the function is a dataframe
-            containing one single column named "result"
+             as many columns as there are values in "named_as"
 
             - "columns" input of f is a list of columns and output is 1
-            column (like many numpy built-it function)
+             column (like many numpy built-it function). In that case,
+             "named_as" can obviously only contain one name
         """
+
         AddColumns.__init__(self)
         if type(source_fields) == str:
             self.source_fields = [source_fields]
         else:
             self.source_fields = source_fields
 
-        self.named_as = named_as
+        if type(named_as) == str:
+            self.named_as = [named_as]
+        else:
+            self.named_as = named_as
+
         self.f = f
         if f_args not in ["dataframe", "series"]:
             raise ValueError("unrecognized f input type: {}".format(f_args))
+
+        if f_args == "series":
+            assert len(self.named_as) == 1, \
+                "'series' functions can only return 1 column"
 
         self.f_input = f_args
 
     def build_output(self, action_data):
         if self.f_input == "dataframe":
             result = self.f(action_data[self.source_fields])
-            return result.rename(columns={"result": self.named_as})
+            renamed = result.rename(
+                columns=dict(zip(result.columns, self.named_as)))
+
+            return renamed
         else:
             cols = [action_data[c] for c in self.source_fields]
-            result = pd.DataFrame({self.named_as: self.f(*cols)})
+            result = pd.DataFrame({self.named_as[0]: self.f(*cols)})
             return result
 
 

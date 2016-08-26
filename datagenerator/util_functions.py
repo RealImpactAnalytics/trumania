@@ -4,6 +4,7 @@
 
 from numpy.random import RandomState
 import pandas as pd
+import numpy as np
 import networkx as nx
 from networkx.algorithms import bipartite
 import logging
@@ -77,9 +78,7 @@ def make_random_assign(name1, name2, group1, group2, seed):
     """Assign randomly each member from group1 to a member of group2
 
     """
-    state = RandomState(seed)
-    choices = state.choice(group2, size=len(group1))
-
+    choices = RandomState(seed).choice(group2, size=len(group1))
     return pd.DataFrame({name2: choices, name1: group1})
 
 
@@ -128,8 +127,16 @@ def merge_dicts(dicts, merge_func=None):
     :type merge_func: function
     :return: one single dictionary containing all entries received
     """
+    from itertools import tee
 
-    return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dicts)
+    # check if the input list or iterator is empty
+    dict_backup, test = tee(iter(dicts))
+    try:
+        test.next()
+    except StopIteration:
+        return {}
+
+    return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dict_backup)
 
 
 def setup_logging():
@@ -138,8 +145,16 @@ def setup_logging():
         level=logging.INFO)
 
 
+# stolen from http://stackoverflow.com/questions/1835018/python-check-if-an-object-is-a-list-or-tuple-but-not-string#answer-1835259
+def is_sequence(arg):
+    return (not hasattr(arg, "strip") and
+            hasattr(arg, "__getitem__") or
+            hasattr(arg, "__iter__"))
 
 
-
-
-
+def build_ids(size, id_start=0, prefix="id_", max_length=10):
+    """
+    builds a sequencial list of string ids of specified size
+    """
+    return [prefix + str(x).zfill(max_length)
+            for x in np.arange(id_start, id_start + size)]

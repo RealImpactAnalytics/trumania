@@ -6,20 +6,20 @@ from datagenerator.util_functions import *
 
 class Action(object):
     def __init__(self, name,
-                 triggering_actor, actorid_field,
-                 activity=ConstantGenerator(value=1.), states=None,
+                 initiating_actor, actorid_field,
+                 activity_gen=ConstantGenerator(value=1.), states=None,
                  timer_gen=ConstantProfiler(-1),
                  auto_reset_timer=True):
         """
         :param name: name of this action
 
-        :param triggering_actor: actors from which the operations of this
+        :param initiating_actor: actors from which the operations of this
             action are started
 
         :param actorid_field: when building the action data, a field will be
             automatically inserted containing the actor id, with this name
 
-        :param activity: generator for the default activity levels of the
+        :param activity_gen: generator for the default activity levels of the
             actors for this action. Default: same level for everybody
 
         :param states: dictionary of states providing activity level for
@@ -38,18 +38,18 @@ class Action(object):
         """
 
         self.name = name
-        self.triggering_actor = triggering_actor
+        self.triggering_actor = initiating_actor
         self.actorid_field_name = actorid_field
-        self.size = triggering_actor.size
+        self.size = initiating_actor.size
         self.time_generator = timer_gen
         self.auto_reset_timer = auto_reset_timer
 
         # activity and transition probability parameters, for each state
         self.params = pd.DataFrame({("default", "activity"): 0},
-                                   index=triggering_actor.ids)
+                                   index=initiating_actor.ids)
 
         default_state = {"default": {
-            "activity": activity,
+            "activity": activity_gen,
             "back_to_default_probability": ConstantGenerator(value=1.),
         }}
         for state, state_gens in merge_2_dicts(default_state, states).items():

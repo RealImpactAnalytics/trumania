@@ -13,7 +13,7 @@ def seed_provider(master_seed):
         yield state.randint(1, max_int_32)
 
 
-class Generator():
+class Generator(object):
     """
     Independent parameterized random value generator.
     Abstract class

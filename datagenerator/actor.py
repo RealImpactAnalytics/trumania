@@ -3,15 +3,14 @@ from datagenerator.attribute import *
 
 
 class Actor(object):
-    def __init__(self, size, id_start=0, prefix="", max_length=10):
+    def __init__(self, size, id_start=0, prefix="id_", max_length=10):
         """
 
         :param size:
         :param id_start:
         :return:
         """
-        self.ids = [prefix + str(x).zfill(max_length) for x in np.arange(
-            id_start, id_start + size)]
+        self.ids = build_ids(size, id_start, prefix, max_length)
         self._attributes = {}
         self.ops = self.ActorOps(self)
         self.size = size
@@ -96,14 +95,27 @@ class Actor(object):
                 self.select_dict = select_dict
 
             def build_output(self, action_data):
+                if action_data.shape[0] == 0:
+                    return pd.DataFrame()
+                elif is_sequence(action_data.iloc[0][self.actor_id_field]):
+                    return self._lookup_by_sequences(action_data)
+                else:
+                    return self._lookup_by_scalars(action_data)
+
+            def _lookup_by_scalars(self, action_data):
+                """
+                looking up, after we know the ids are not sequences of ids
+                """
 
                 output = action_data[[self.actor_id_field]]
-                for attribute, named_as in self.select_dict.items():
+                actor_ids = action_data[self.actor_id_field].unique()
 
-                    actor_ids = action_data[self.actor_id_field].unique()
-                    vals = pd.DataFrame(
-                        self.actor.get_attribute_values(attribute, actor_ids),
-                        )
+                for attribute, named_as in self.select_dict.items():
+                    try:
+                        vals = pd.DataFrame(
+                        self.actor.get_attribute_values(attribute, actor_ids))
+                    except:
+                        a=1
                     vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
@@ -115,27 +127,40 @@ class Actor(object):
                 output.drop(self.actor_id_field, axis=1, inplace=True)
                 return output
 
+            def _lookup_by_sequences(self, action_data):
+
+                # pd.Series containing seq of ids to lookup
+                id_lists = action_data[self.actor_id_field]
+
+                # unique actor ids of the attribute to look up
+                actor_ids = np.unique(reduce(lambda l1, l2: l1 + l2, id_lists))
+
+                output = pd.DataFrame(index=action_data.index)
+                for attribute, named_as in self.select_dict.items():
+                    vals = self.actor.get_attribute_values(attribute, actor_ids)
+
+                    def attributes_of_ids(ids):
+                        "return: list of attribute values for those actor ids"
+                        return vals.loc[ids].tolist()
+
+                    output[named_as] = id_lists.map(attributes_of_ids)
+
+                return output
+
         def lookup(self, actor_id_field, select):
             """
             Looks up some attribute values by joining on the specified field
             of the current data
+
+            :param actor_id_field: field name in the action_data.
+              If the that column contains lists, then it's assumed to contain
+              only list and it's flatten to obtain the list of id to lookup
+              in the attribute. Must be a list of "scalar" values or list of
+              list, not a mix of both.
+
+            :param select: dictionary of (attribute_name -> given_name)
+            specifying which attribute to look up and which name to give to
+            the resulting column
+
             """
             return self.Lookup(self.actor, actor_id_field, select)
-
-        class Overwrite(SideEffectOnly):
-            def __init__(self, actor, attribute, copy_from_field):
-                self.actor=actor
-                self.attribute_name = attribute
-                self.copy_from_field = copy_from_field
-
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
-                    attribute = self.actor.get_attribute(self.attribute_name)
-                    attribute.update(ids=action_data.index.values,
-                                     values=action_data[self.copy_from_field])
-
-        def overwrite(self, attribute, copy_from_field):
-            """
-            Overwrite the value of this attribute with values in this field
-            """
-            return self.Overwrite(self.actor, attribute, copy_from_field)
