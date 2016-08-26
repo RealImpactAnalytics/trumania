@@ -16,9 +16,6 @@ class Relationship(object):
         captures the available sellers of each buyers. `select_one` in that
         case could mean "sale", and supplementary properties could be the
         description of the sold items.
-
-        `select_one` and `pop_one` must have the same return signature.
-
     """
 
     def __init__(self, seed):
@@ -65,14 +62,25 @@ class Relationship(object):
          with index aligned with the one of from_ids.
         """
 
-        # selects the rows for the requested from_ids, keeping track of the
-        # index of the original from_ids Series
-        from_df = pd.DataFrame({"from_id": from_ids})
-        from_df["from_index"] = from_df.index
-        rows = pd.merge(left=self._table, right=from_df, left_on="from",
-                        right_on="from_id")
+        # TODO: performance: the logic with from_index below slows down the
+        # lookup => we test for unicity in from_ids first and only apply it
+        # in this case.
 
-        if rows.shape[0] == 0:
+        if from_ids is not None:
+            # selects the relations for the requested from_ids, keeping track of
+            # the index of the original from_ids Series
+            from_df = pd.DataFrame({"from_id": from_ids})
+            from_df["from_index"] = from_df.index
+            relations = pd.merge(left=self.get_relations(from_ids),
+                                 right=from_df,
+                                 left_on="from", right_on="from_id")
+            relations.drop("from_id", axis=1, inplace=True)
+
+        else:
+            relations = self._table.copy()
+            relations["from_index"] = relations["from"]
+
+        if relations.shape[0] == 0:
             return pd.DataFrame(columns=["from", named_as])
 
         def pick_one(df):
@@ -86,8 +94,7 @@ class Relationship(object):
             return selected_to
 
         # picking a "to" for each, potentially duplicated, "from" value
-        rows.drop("from_id", axis=1, inplace=True)
-        grouped = rows.groupby(by=["from", "from_index"], sort=False)
+        grouped = relations.groupby(by=["from", "from_index"], sort=False)
         selected = grouped.apply(pick_one)
 
         if drop:
@@ -113,12 +120,11 @@ class Relationship(object):
 
         # a to b relationship as tuples in "wide format", e.g.
         # [ ("a1", ["b1", "b2"]), ("a2", ["b3", "b4", "b4]), ...]
-        grouped = rows.set_index("to", drop=True).groupby("from", sort=False)
+        groups = rows.set_index("to", drop=True).groupby("from", sort=False)
+        groups = groups.groups.items()
+        groups += [(missing, []) for missing in self.missing_ids(from_ids)]
 
-        empty_rels = [(missing, []) for missing in self.missing_ids(from_ids)]
-
-        return pd.DataFrame(grouped.groups.items() + empty_rels,
-                            columns=["from", named_as])
+        return pd.DataFrame(groups, columns=["from", named_as])
 
     class RelationshipOps(object):
         def __init__(self, relationship):
@@ -130,7 +136,9 @@ class Relationship(object):
 
             def __init__(self, relationship, from_field, named_as,
                          one_to_one, drop):
-                AddColumns.__init__(self)
+                # inner join instead of default left to allow dropping rows
+                # in case of duplicates and one-to-one
+                AddColumns.__init__(self, join_kind="inner")
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
@@ -221,8 +229,6 @@ class Relationship(object):
 
         def remove(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
-
-
 
 
 # class SimpleMobilityRelationship(WeightedRelationship):

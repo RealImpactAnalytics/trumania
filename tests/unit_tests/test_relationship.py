@@ -1,4 +1,3 @@
-import pandas as pd
 from datagenerator.relationship import Relationship
 from datagenerator.util_functions import *
 setup_logging()
@@ -46,8 +45,7 @@ def test_missing_ids_should_identify_missing_correctly():
 # bug fix: this was simply crashing previously
 def test_select_one_from_empty_relationship_should_return_void():
     tested = Relationship(seed=1)
-
-    assert tested.select_one([]).shape[0] == 0
+    assert tested.select_one(pd.Series([])).shape[0] == 0
 
 
 # bug fix: this was simply crashing previously
@@ -126,7 +124,8 @@ def test_one_to_one_relationship_operation_should_find_unique_counterpart():
 
 def test_select_one_to_one_should_not_return_duplicates_1():
 
-    op = four_to_one.ops.select_one("A", "B", one_to_one=True)
+    op = four_to_one.ops.select_one(from_field="A", named_as="B",
+                                    one_to_one=True)
     action_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
     action_data = action_data.set_index("A", drop=False)
 

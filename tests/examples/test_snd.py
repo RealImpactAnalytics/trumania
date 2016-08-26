@@ -2,11 +2,8 @@ from __future__ import division
 
 from datetime import datetime
 
-import datagenerator.operations as operations
-from datagenerator.relationship import *
 from datagenerator.action import *
 from datagenerator.actor import *
-from datagenerator.attribute import *
 from datagenerator.circus import *
 from datagenerator.clock import *
 from datagenerator.util_functions import *
@@ -126,13 +123,13 @@ def add_purchase_action(circus, agents, dealers, seeder):
 
         agents.get_relationship("DEALERS").ops.select_one(
             from_field="AGENT",
-            named_as="DEALER",
-            one_to_one=True,
+            named_as="DEALER"
         ),
 
         dealers.get_relationship("SIM").ops.select_one(
             from_field="DEALER",
             named_as="SOLD_SIM",
+            one_to_one=True,
             drop=True),
 
         agents.get_relationship("SIM").ops.add(
@@ -214,9 +211,9 @@ def add_agent_holidays_action(circus, agents, seeder):
     circus.add_actions(going_on_holidays, returning_from_holidays)
 
 
-def test_cdr_scenario():
+def test_snd_scenario():
 
-    util_functions.setup_logging()
+    setup_logging()
     seeder = seed_provider(master_seed=123456)
 
     the_clock = Clock(datetime(year=2016, month=6, day=8), step_s=60,
