@@ -137,6 +137,18 @@ class AddColumns(Operation):
                         how=self.join_kind)
 
 
+class DropRow(Operation):
+    """
+    Discards any row in the action data where the condition field is false.
+    """
+
+    def __init__(self, condition_field):
+        self.condition_field = condition_field
+
+    def transform(self, action_data):
+        return action_data[~action_data[self.condition_field]]
+
+
 class Apply(AddColumns):
     """
         Custom operation adding one single column computed from a user-provided

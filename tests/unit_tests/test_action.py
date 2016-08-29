@@ -412,8 +412,7 @@ def test_action_autoreset_false_not_dropping_rows_should_reset_all_timers():
     assert action.timer["remaining"].equals(expected_timers)
 
 
-#def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
-def test_action():
+def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
     # in case an action is configured not to perform an auto-reset, after one
     # execution:
     #  - all executed rows should now be at -1 (dropped or not)
@@ -469,6 +468,55 @@ def test_action():
     action.execute()
     expected_timers = pd.Series([-1]*10, index=actor.ids)
     assert action.timer["remaining"].equals(expected_timers)
+
+
+def test_bugfix_collisions_force_act_next():
+    # previously, resetting the timer of reset actors was cancelling the reset
+
+    actor = Actor(size=10, prefix="ac_", max_length=1)
+
+    # 5 actors should trigger in 2 ticks, and 5 more
+    init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
+    timers_gen = ConstantsProfiler(init_timers)
+
+    action = Action(
+        name="tested",
+        initiating_actor=actor,
+        actorid_field="ac_id",
+
+        # forcing the timer of all actors to be initialized to 0
+        timer_gen=timers_gen
+    )
+
+    timer_values = action.timer["remaining"].copy()
+
+    forced = pd.Index(["ac_1", "ac_3", "ac_7", "ac_8", "ac_9"])
+    not_forced = pd.Index(["ac_0", "ac_2", "ac_4", "ac_4", "ac_6"])
+
+    # force_act_next should only impact those ids
+    action.force_act_next(forced)
+    assert action.timer.loc[forced]["remaining"].tolist() == [0, 0, 0, 0, 0]
+    assert action.timer.loc[not_forced]["remaining"].equals(
+        timer_values[not_forced]
+    )
+
+    # resetting the timers should not change the timers of the actors that
+    # are being forced
+    action.reset_timers()
+    assert action.timer.loc[forced]["remaining"].tolist() == [0, 0, 0, 0, 0]
+
+    # ticking the timers should not change the timers of the actors that
+    # are being forced
+    action.timer_tick(actor.ids)
+    assert action.timer.loc[forced]["remaining"].tolist() == [0, 0, 0, 0, 0]
+    assert action.timer.loc[not_forced]["remaining"].equals(
+        timer_values[not_forced] - 1
+    )
+
+
+
+
+
 
 
 

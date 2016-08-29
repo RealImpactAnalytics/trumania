@@ -55,7 +55,6 @@ def create_subs_and_sims(seeder, params):
     # and "operator" one of the operators of this subs
     subs_ops_mapping = subs_operators_df.stack()
     subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
-#    subs_ops_mapping.columns = ["operator"]
 
     # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
     sims = Actor(size=subs_ops_mapping.size, prefix="SIMS_")
@@ -420,8 +419,7 @@ def select_sims(action_data):
             row["MSISDNS_A"][a_idx], row["OPERATORS_A"][a_idx],
             row["A_SIMS"][a_idx], row["MAIN_ACCTS_A"][a_idx],
             row["MSISDNS_B"][b_idx], row["OPERATORS_B"][b_idx],
-            row["B_SIMS"][b_idx]
-          ])
+            row["B_SIMS"][b_idx]])
 
     return action_data.apply(do_select, axis=1)
 
@@ -720,10 +718,6 @@ def run_cdr_scenario(params):
         logging.info(dropped_calls.sample(15).sort_values("DATETIME"))
     else:
         logging.info(dropped_calls)
-
-    # customers = flying.get_actor_of(action_name="calls").to_dataframe()
-    # df = customers[customers["MSISDN"].isin(top_users.index)]
-    # logging.info(df)
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))

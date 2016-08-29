@@ -23,7 +23,6 @@ two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
 two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
                            to_ids=["za", "zb", "zc", "zd"])
 
-
 four_to_plenty = Relationship(seed=1)
 for i in range(100):
     four_to_plenty.add_relations(
@@ -31,30 +30,59 @@ for i in range(100):
         to_ids=["a_%d" % i, "b_%d" % i, "c_%d" % i, "d_%d" % i])
 
 
-def test_missing_ids_should_return_empty_for_nothing_missing():
-    r = oneto1.missing_ids(from_ids=["a", "b"])
-    assert r == set([])
-
-
-def test_missing_ids_should_identify_missing_correctly():
-    r = oneto1.missing_ids(
-        from_ids=["a", "b", "NON_EXISTING_1", "NON_EXISTING_2"])
-    assert r == {"NON_EXISTING_1", "NON_EXISTING_2"}
-
-
 # bug fix: this was simply crashing previously
 def test_select_one_from_empty_relationship_should_return_void():
     tested = Relationship(seed=1)
-    assert tested.select_one(pd.Series([])).shape[0] == 0
+    result = tested.select_one(pd.Series([]))
+    assert result.shape[0] == 0
+    assert result.columns.tolist() == ["from", "to"]
 
 
-# bug fix: this was simply crashing previously
-def test_select_one_from_non_existing_ids_should_return_void():
+def test_select_one_from_empty_rel_should_return_empty_if_not_keep_missing():
+    empty_relationship = Relationship(seed=1)
+
+    selected = empty_relationship.select_one(from_ids=["non_existing"],
+                                             discard_empty=True)
+    assert selected.shape == (0, 2)
+    assert selected.columns.tolist() == ["from", "to"]
+
+
+def test_select_one_from_empty_rel_should_return_none_if_keep_missing():
+    empty_relationship = Relationship(seed=1)
+
+    selected = empty_relationship.select_one(from_ids=["non_existing"],
+                                             discard_empty=False)
+    assert selected.shape == (1, 2)
+    assert selected.columns.tolist() == ["from", "to"]
+    assert selected.iloc[0]["from"] == "non_existing"
+    assert selected.iloc[0]["to"] is None
+
+
+def test_select_one_nonexistingids_should_return_empty_if_not_keep_missing():
     tested = Relationship(seed=1)
     tested.add_relations(from_ids=["a", "b", "b", "c"],
                          to_ids=["b", "c", "a", "b"])
 
-    assert tested.select_one(["non_existing_id", "neither"]).shape[0] == 0
+    result = tested.select_one(["non_existing_id", "neither"],
+                               discard_empty=True)
+
+    assert result.shape[0] == 0
+    assert result.columns.tolist() == ["from", "to"]
+
+
+def test_select_one_nonexistingids_should_return_none_if_keep_missing():
+    tested = Relationship(seed=1)
+    tested.add_relations(from_ids=["a", "b", "b", "c"],
+                         to_ids=["b", "c", "a", "b"])
+
+    result = tested.select_one(["non_existing_id", "neither"],
+                               discard_empty=False)
+
+    assert result.shape[0] == 2
+    assert result.columns.tolist() == ["from", "to"]
+
+    assert sorted(result["from"].tolist()) == ["neither", "non_existing_id"]
+    assert result["to"].tolist() == [None, None]
 
 
 def test_select_one_from_all_ids_should_return_one_line_per_id():
@@ -98,6 +126,41 @@ def test_one_to_one_relationship_should_find_unique_counterpart():
     selected = oneto1.select_one()
     assert selected.sort_values("from")["to"].tolist() == ["ta", "tb", "tc",
                                                            "td", "te"]
+
+
+def test_pop_one_relationship_should_remove_element():
+    # we're removing relations from this one => working on a copy not to
+    # influence other tests
+    oneto1_copy = Relationship(seed=1)
+    oneto1_copy.add_relations(from_ids=["a", "b", "c", "d", "e"],
+                              to_ids=["ta", "tb", "tc", "td", "te"])
+
+    selected = oneto1_copy.select_one(from_ids=["a", "d"], remove_selected=True)
+
+    # unique "to" value should have been taken
+    assert selected.sort_values("from")["to"].tolist() == ["ta", "td"]
+    assert sorted(selected.columns.tolist()) == ["from", "to"]
+
+    # and removed form the relationship
+    assert oneto1_copy._table["from"].sort_values().tolist() == ["b", "c", "e"]
+
+    # selecting the same again should just return nothing
+    selected = oneto1_copy.select_one(from_ids=["a", "d"], remove_selected=True)
+
+    assert selected.shape[0] == 0
+    assert sorted(selected.columns.tolist()) == ["from", "to"]
+
+    # and have no impact on the relationship
+    assert oneto1_copy._table["from"].sort_values().tolist() == ["b", "c", "e"]
+
+    # selecting the same again without discarding empty relationship should
+    # now return a size 2 dataframe with Nones
+    selected = oneto1_copy.select_one(from_ids=["a", "d"], remove_selected=True,
+                                 discard_empty=False)
+    assert selected.shape[0] == 2
+    assert sorted(selected.columns.tolist()) == ["from", "to"]
+    assert selected["to"].tolist() == [None, None]
+    assert sorted(selected["from"].tolist()) == ["a", "d"]
 
 
 def test_one_to_one_relationship_operation_should_find_unique_counterpart():
@@ -173,6 +236,7 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
                                        named_as="SIM",
                                        one_to_one=True)
 
+
     # Many customer selected the same dealer and want to get a sim from them.
     # We expect each of the 2 selected dealer to sell a different SIM to each
     action_data = pd.DataFrame({
@@ -182,6 +246,7 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
     )
 
     result, logs = op(action_data)
+    logging.info("selected")
 
     assert {} == logs
     assert ["DEALER", "SIM"] == result.columns.tolist()
@@ -196,15 +261,24 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
     assert len(np.unique(g.get_group("b").values)) > 1
 
 
+def test_select_all_function_from_empty_relationship_should_return_empty():
+    empty_relationship = Relationship(seed=1)
+
+    selected = empty_relationship.select_all(from_ids=["non_existing"])
+
+    assert selected.shape == (0, 2)
+    assert selected.columns.tolist() == ["from", "to"]
+
+
 def test_select_all_should_return_all_values_of_requested_ids():
 
-    all_to = two_per_from.select_all(from_ids=["a", "b", "non_existing"])
+    all_to = two_per_from.select_all(from_ids=["a", "b"])
 
     # there is no relationship from "non_existing", so we should have an
     # empty list for it (not an absence of row)
     expected = pd.DataFrame({
-        "from": ["a", "b", "non_existing"],
-        "to": [["ya", "za"], ["yb", "zb"], []]
+        "from": ["a", "b"],
+        "to": [["ya", "za"], ["yb", "zb"]]
         }
     )
     assert all_to.equals(expected)
@@ -212,11 +286,11 @@ def test_select_all_should_return_all_values_of_requested_ids():
 
 def test_select_all_should_return_lists_even_for_one_to_one():
 
-    all_to = oneto1.select_all(from_ids=["a", "b", "non_existing"])
+    all_to = oneto1.select_all(from_ids=["a", "b"])
 
     expected = pd.DataFrame({
-        "from": ["a", "b", "non_existing"],
-        "to": [["ta"], ["tb"], []]
+        "from": ["a", "b"],
+        "to": [["ta"], ["tb"]]
         }
     )
     assert all_to.equals(expected)
@@ -226,7 +300,7 @@ def test_select_all_operation():
 
     op = two_per_from.ops.select_all(from_field="A", named_as="CELLS")
 
-    data = pd.DataFrame({"A": ["a",  "d", "non_existing"]})
+    data = pd.DataFrame({"A": ["a",  "d"]})
     data = data.set_index("A", drop=False)
     output, logs = op(data)
 
@@ -238,5 +312,5 @@ def test_select_all_operation():
 
     # output should correspond to the A column of data, indexed correctly
     assert output["CELLS"].sort_index().equals(
-        pd.Series([["ya", "za"], ["yd", "zd"], []],
-                  index=["a", "d", "non_existing"]))
+        pd.Series([["ya", "za"], ["yd", "zd"]],
+                  index=["a", "d"]))

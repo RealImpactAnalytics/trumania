@@ -162,3 +162,11 @@ def build_ids(size, id_start=0, prefix="id_", max_length=10):
     """
     return [prefix + str(x).zfill(max_length)
             for x in np.arange(id_start, id_start + size)]
+
+
+def log_dataframe_sample(msg, df):
+
+    if df.shape[0] == 0:
+        logging.info("{}:  [empty]".format(msg))
+    else:
+        logging.info("{}: \n  {}".format(msg, df.sample(min(df.shape[0], 15))))

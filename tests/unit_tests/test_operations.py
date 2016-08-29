@@ -1,7 +1,6 @@
 import datagenerator.operations as operations
 import tests.mocks.operations as mockops
-import pandas as pd
-import numpy as np
+from datagenerator.util_functions import *
 
 
 def test_apply_should_delegate_to_single_col_dataframe_function_correctly():
@@ -141,4 +140,55 @@ def test_chain_of_3_operation_should_return_merged_logs():
     assert all_logs["cdrs1"].equals(cdrs1)
     assert all_logs["cdrs2"].equals(cdrs2)
     assert all_logs["cdrs3"].equals(cdrs3)
+
+
+def test_drop_when_condition_is_all_false_should_have_no_impact():
+
+    cdrs = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
+    cdrs["all_nos"] = False
+
+    rem = operations.DropRow(condition_field="all_nos")
+    action_data, all_logs = rem(cdrs)
+
+    # all rows should still be there
+    assert action_data.shape == (12, 4)
+    assert action_data.columns.tolist() == ["A", "B", "duration", "all_nos"]
+    assert action_data["A"].equals(cdrs["A"])
+    assert action_data["B"].equals(cdrs["B"])
+    assert action_data["duration"].equals(cdrs["duration"])
+
+
+def test_drop_when_condition_is_all_true_should_remove_everything():
+
+    cdrs = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
+    cdrs["all_yes"] = True
+
+    rem = operations.DropRow(condition_field="all_yes")
+    action_data, all_logs = rem(cdrs)
+
+    # all rows should still be there
+    assert action_data.shape == (0, 4)
+    assert action_data.columns.tolist() == ["A", "B", "duration", "all_yes"]
+    assert action_data["A"].equals(pd.Series())
+    assert action_data["B"].equals(pd.Series())
+    assert action_data["duration"].equals(pd.Series())
+
+
+def test_drop_should_remove_the_rows_where_condition_is_true_():
+    cdrs = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
+    cdrs.index = build_ids(12, prefix="ix_", max_length=2)
+    cdrs["cond"] = ([True] * 3 + [False] * 3) * 2
+
+    rem = operations.DropRow(condition_field="cond")
+    action_data, all_logs = rem(cdrs)
+
+    kept_index = ["ix_03", "ix_04", "ix_05", "ix_09", "ix_10", "ix_11"]
+
+    # 6 rows should have been removed
+    assert action_data.shape == (6, 4)
+    assert action_data.columns.tolist() == ["A", "B", "duration", "cond"]
+    assert action_data["A"].equals(cdrs.loc[kept_index]["A"])
+    assert action_data["B"].equals(cdrs.loc[kept_index]["B"])
+    assert action_data["duration"].equals(cdrs.loc[kept_index]["duration"])
+
 

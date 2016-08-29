@@ -43,6 +43,7 @@ class Action(object):
         self.size = initiating_actor.size
         self.time_generator = timer_gen
         self.auto_reset_timer = auto_reset_timer
+        self.forced_to_act_next = pd.Series()
 
         # activity and transition probability parameters, for each state
         self.params = pd.DataFrame({("default", "activity"): 0},
@@ -122,6 +123,7 @@ class Action(object):
 
     def timer_tick(self, actor_ids):
 
+        actor_ids = pd.Index(actor_ids).difference(self.forced_to_act_next)
         impacted_timers = self.timer.loc[actor_ids]
 
         # not updating actors that keep a negative counter: those are "marked
@@ -131,13 +133,8 @@ class Action(object):
             self.timer.loc[positive_idx, "remaining"] -= 1
 
     def force_act_next(self, ids):
-        # TODO: minor collision bug here: in case an actor id is forced to act
-        # next AND has been active during the current clock tick, then
-        # the reset_elapsed_timers is going to reset the clock anyhow.
-        # THis is hopefully rare enough so that we can care about that later...
-
-        if len(ids) > 0:
-            self.timer.loc[ids, "remaining"] = 0
+        self.forced_to_act_next = pd.Index(ids).union(self.forced_to_act_next)
+        self.timer.loc[ids, "remaining"] = 0
 
     def reset_timers(self, ids=None):
         """
@@ -154,10 +151,14 @@ class Action(object):
 
         if ids is None:
             ids = self.timer.index
+        else:
+            ids = pd.Index(ids)
+
+        ids = ids.difference(self.forced_to_act_next)
 
         if len(ids) > 0:
-            activity = self.get_param("activity", ids)
 
+            activity = self.get_param("activity", ids)
             new_timer = self.time_generator.generate(weights=activity)
 
             # replacing any generated timer with -1 for fully inactive actors
@@ -171,6 +172,7 @@ class Action(object):
         active_ids, inactive_ids = self.active_inactive_ids()
 
         if len(active_ids) == 0:
+            # skips execution altogether if no actor has a timer at 0 right now
             all_logs = None
 
         else:
@@ -183,6 +185,8 @@ class Action(object):
             else:
                 # this should set the timer to -1 => will stay there ad vitam
                 self.timer_tick(active_ids)
+
+        self.forced_to_act_next = pd.Series()
 
         self.timer_tick(inactive_ids)
         return all_logs
@@ -314,4 +318,6 @@ class Action(object):
 
             return self.TransitToState(self.action, actor_id_field,
                                        state_field, state, condition_field)
+
+
 
