@@ -61,13 +61,11 @@ class Relationship(object):
         if should_inject_nones and selected.shape[0] != len(from_ids):
             missing_index = from_ids.index.difference(selected.index)
             missing_values = pd.DataFrame({
-                "from": from_ids.loc[missing_index],
-                "to": None
-                },
-                index=missing_index
-            )
+                    "from": from_ids.loc[missing_index],
+                    "to": None},
+                index=missing_index)
 
-            return pd.concat([selected, missing_values])
+            return pd.concat([selected, missing_values], copy=False)
         else:
             return selected
 
@@ -108,7 +106,7 @@ class Relationship(object):
         ###
         # actual selection of a "to" side
         if relations.shape[0] == 0:
-            selected = pd.DataFrame(columns=["from", named_as])
+            selected = pd.DataFrame(columns=["from", "to"])
 
         else:
             def pick_one(df):
@@ -116,15 +114,13 @@ class Relationship(object):
                                  random_state=self.state)[["to", "table_index"]]
 
             # picking a "to" for each, potentially duplicated, "from" value
-
             grouped = relations.groupby(by=["from", "from_index"], sort=False)
-
             selected = grouped.apply(pick_one)
 
             if remove_selected:
                 # We ignore errors here since several pop of the same "from"
                 # could happen at the same time, e.g. same dealer trying to
-                # sell the same sell, which would be de-deplucated
+                # sell the same sell, which would be de-duplicated
                 # downstream, and should not lead this to crash
                 self._table.drop(selected["table_index"], inplace=True,
                                  errors="ignore")
@@ -134,8 +130,7 @@ class Relationship(object):
             selected["from"] = selected.index.get_level_values(level="from")
             selected.index = selected.index.get_level_values(level="from_index")
 
-        selected = self._maybe_add_nones(not discard_empty, from_ids,
-                                         selected)
+        selected = self._maybe_add_nones(not discard_empty, from_ids, selected)
         selected.rename(columns={"to": named_as}, inplace=True)
 
         return selected

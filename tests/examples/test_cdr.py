@@ -415,15 +415,11 @@ def select_sims(action_data):
             # otherwise, just use any (we could look at lowest rates here...)
             a_idx = b_idx = 0
 
-        try:
-            return pd.Series([
+        return pd.Series([
             row["MSISDNS_A"][a_idx], row["OPERATORS_A"][a_idx],
             row["A_SIMS"][a_idx], row["MAIN_ACCTS_A"][a_idx],
             row["MSISDNS_B"][b_idx], row["OPERATORS_B"][b_idx],
-            row["B_SIMS"][b_idx]
-          ])
-        except:
-            a = 1
+            row["B_SIMS"][b_idx]])
 
     return action_data.apply(do_select, axis=1)
 

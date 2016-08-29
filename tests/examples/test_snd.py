@@ -147,8 +147,7 @@ def add_purchase_action(circus, agents, dealers, seeder):
 
         agents.get_relationship("DEALERS").ops.select_one(
             from_field="AGENT",
-            named_as="DEALER"
-        ),
+            named_as="DEALER"),
 
         dealers.get_relationship("SIM").ops.select_one(
             from_field="DEALER",
@@ -160,24 +159,30 @@ def add_purchase_action(circus, agents, dealers, seeder):
             # if a SIM is selected, it is removed from the dealer's stock
             pop=True,
 
-            # if a chosen dealer has empty stock, we still return None SIM
-            discard_empty=True),
+            # If a chosen dealer has empty stock, we don't want to drop the
+            # row in action_data, but keep it with a None sold SIM,
+            # which indicates the sale failed
+            discard_empty=False),
 
         operations.Apply(source_fields="SOLD_SIM",
                          named_as="FAILED_SALE",
                          f=pd.isnull, f_args="series"),
 
+        # any agent who failed to buy a SIM will try again at next round
+        # (we could do that probabilistically as well, just add a trigger...)
         purchase.ops.force_act_next(actor_id_field="AGENT",
                                     condition_field="FAILED_SALE"),
 
-        # TODO: we must remove the rows here that failed
+        # not specifying the logged columns => by defaults, log everything
+        # ALso, we log the sale before dropping to failed sales, to keep
+        operations.FieldLogger(log_id="purchases"),
+
+        # only successful sales actually add a SIM to agents
+        operations.DropRow(condition_field="FAILED_SALE"),
 
         agents.get_relationship("SIM").ops.add(
             from_field="AGENT",
             item_field="SOLD_SIM"),
-
-        # not specifying the logged columns => by defaults, log everything
-        operations.FieldLogger(log_id="purchases"),
     )
 
     circus.add_action(purchase)
@@ -277,9 +282,9 @@ def test_snd_scenario():
     log_dataframe_sample(" - some failed purchases: ",
                          purchases[purchases["FAILED_SALE"]])
 
-    purchases_from_broke = purchases[purchases["DEALER"] == "broke_dealer"]
+    sales_of_broke = purchases[purchases["DEALER"] == "broke_dealer"]
     log_dataframe_sample(" - some purchases from broke dealer: ",
-                         purchases_from_broke)
+                         sales_of_broke)
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))
@@ -287,7 +292,8 @@ def test_snd_scenario():
     for logid, lg in logs.iteritems():
         logging.info(" {} {} logs".format(len(lg), logid))
 
-    # broke dealer had only 3 SIMs to sell
-    assert purchases_from_broke.shape[0] <= 3
+    # broke dealer should have maximum 3 successful sales
+    ok_sales_of_broke = sales_of_broke[~sales_of_broke["FAILED_SALE"]]
+    assert ok_sales_of_broke.shape[0] <= 3
 
 
