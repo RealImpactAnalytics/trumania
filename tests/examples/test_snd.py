@@ -161,7 +161,7 @@ def add_purchase_action(circus, agents, dealers, seeder):
             pop=True,
 
             # if a chosen dealer has empty stock, we still return None SIM
-            discard_missing=True),
+            discard_empty=True),
 
         operations.Apply(source_fields="SOLD_SIM",
                          named_as="FAILED_SALE",
@@ -170,7 +170,6 @@ def add_purchase_action(circus, agents, dealers, seeder):
         purchase.ops.force_act_next(actor_id_field="AGENT",
                                     condition_field="FAILED_SALE"),
 
-        # TODO: there is a bug in pop: the sim does not seem to be removed...
         # TODO: we must remove the rows here that failed
 
         agents.get_relationship("SIM").ops.add(

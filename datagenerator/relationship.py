@@ -37,7 +37,14 @@ class Relationship(object):
                                       "to": to_ids,
                                       "weight": weights})
 
-        self._table = pd.concat([self._table, new_relations], ignore_index=True)
+        self._table = pd.concat([self._table, new_relations],
+                                ignore_index=True, copy=False)
+        self._table.reset_index(inplace=True, drop=True)
+
+        # we sometimes want to keep track of the index of some rows when
+        # accessed within a group-by operation => copying the info in a separate
+        # column is the only way I found...
+        self._table["table_index"] = self._table.index
 
     def get_relations(self, from_ids):
         if from_ids is None:
@@ -65,7 +72,7 @@ class Relationship(object):
             return selected
 
     def select_one(self, from_ids=None, named_as="to", remove_selected=False,
-                   discard_missing=True):
+                   discard_empty=True):
         """
         Select randomly one "to" for each specified "from" values.
          If drop is True, the selected relations are removed.
@@ -105,18 +112,13 @@ class Relationship(object):
 
         else:
             def pick_one(df):
-                selected_to = df.sample(n=1, weights="weight",
-                                        random_state=self.state)[["to"]]
-                if remove_selected:
-                    # This is the index of the relation in the _table. We keep
-                    # track of it in case we want to drop any selected
-                    # relationship
-                    selected_to["selected_index"] = selected_to.index
-
-                return selected_to
+                return df.sample(n=1, weights="weight",
+                                 random_state=self.state)[["to", "table_index"]]
 
             # picking a "to" for each, potentially duplicated, "from" value
+
             grouped = relations.groupby(by=["from", "from_index"], sort=False)
+
             selected = grouped.apply(pick_one)
 
             if remove_selected:
@@ -124,17 +126,18 @@ class Relationship(object):
                 # could happen at the same time, e.g. same dealer trying to
                 # sell the same sell, which would be de-deplucated
                 # downstream, and should not lead this to crash
-                self._table.drop(selected["selected_index"],
-                                 inplace=True, errors="ignore")
-                selected.drop("selected_index", axis=1, inplace=True)
+                self._table.drop(selected["table_index"], inplace=True,
+                                 errors="ignore")
+            selected.drop("table_index", axis=1, inplace=True)
 
             # shaping final results
             selected["from"] = selected.index.get_level_values(level="from")
-            selected.rename(columns={"to": named_as}, inplace=True)
             selected.index = selected.index.get_level_values(level="from_index")
 
-        selected = self._maybe_add_nones(not discard_missing, from_ids,
+        selected = self._maybe_add_nones(not discard_empty, from_ids,
                                          selected)
+        selected.rename(columns={"to": named_as}, inplace=True)
+
         return selected
 
     def remove(self, from_ids, to_ids):
@@ -181,7 +184,7 @@ class Relationship(object):
                     from_ids=action_data[self.from_field],
                     named_as=self.named_as,
                     remove_selected=self.pop,
-                    discard_missing=self.discard_missing)
+                    discard_empty=self.discard_missing)
 
                 if self.one_to_one and selected.shape[0] > 0:
                     idx = self.relationship.state.permutation(selected.index)
@@ -193,7 +196,7 @@ class Relationship(object):
                 return selected
 
         def select_one(self, from_field, named_as, one_to_one=False,
-                       pop=False, discard_missing=False):
+                       pop=False, discard_empty=False):
             """
             :param from_field: field corresponding to the "from" side of the
                 relationship
@@ -205,7 +208,7 @@ class Relationship(object):
                 random choice from a Relationship
             """
             return self.SelectOne(self.relationship, from_field, named_as,
-                                  one_to_one, pop, discard_missing)
+                                  one_to_one, pop, discard_empty)
 
         class SelectAll(Operation):
             def __init__(self, relationship, from_field, named_as):
