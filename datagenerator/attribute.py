@@ -12,7 +12,7 @@ class Attribute(object):
                  # if initializing with value, must provide ids and one of the
                  # init values
                  init_values=None,
-                 init_values_gen=None,
+                 init_gen=None,
 
                  # otherwise, we can also initialise randomly from a
                  # relationship (in which case the ids are extracted from the
@@ -26,13 +26,13 @@ class Attribute(object):
         self.ops = self.AttributeOps(self)
 
         if init_relationship is None:
-            if not ((init_values is None) ^ (init_values_gen is None)):
+            if not ((init_values is None) ^ (init_gen is None)):
                 raise ValueError("if init_relationship is not provided, "
                                  "you must also provide init_values or "
                                  "init_values_gen")
 
             elif init_values is None:
-                init_values = init_values_gen.generate(size=actor.size)
+                init_values = init_gen.generate(size=actor.size)
 
             self._table = pd.DataFrame({"value": init_values}, index=actor.ids)
 

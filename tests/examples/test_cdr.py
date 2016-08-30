@@ -60,7 +60,7 @@ def create_subs_and_sims(seeder, params):
     sims = Actor(size=subs_ops_mapping.size, prefix="SIMS_")
     sims.create_attribute("OPERATOR", init_values=subs_ops_mapping.values)
     recharge_gen = ConstantGenerator(value=1000.)
-    sims.create_attribute(name="MAIN_ACCT", init_values_gen=recharge_gen)
+    sims.create_attribute(name="MAIN_ACCT", init_gen=recharge_gen)
 
     # keeping track of the link between actor and sims as a relationship
     sims_of_subs = subs.create_relationship("SIMS", seed=seeder.next())
@@ -72,7 +72,7 @@ def create_subs_and_sims(seeder, params):
                                  prefix_list=["472", "473", "475", "476",
                                               "477", "478", "479"],
                                  length=6, seed=seeder.next())
-    sims.create_attribute(name="MSISDN", init_values_gen=msisdn_gen)
+    sims.create_attribute(name="MSISDN", init_gen=msisdn_gen)
 
     # Finally, adding one more relationship that defines the set of possible
     # shops where we can topup each SIM.
@@ -120,7 +120,7 @@ def add_cells(circus, seeder, params):
     unhealthy_level_gen = NumpyRandomGenerator(method="beta", a=1, b=999,
                                                seed=seeder.next())
 
-    cells.create_attribute(name="HEALTH", init_values_gen=healthy_level_gen)
+    cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
     # same profiler for breakdown and repair: they are both related to
     # typical human activity
@@ -136,7 +136,7 @@ def add_cells(circus, seeder, params):
 
         # fault activity is very low: most cell tend never to break down (
         # hopefully...)
-        activity_gen=ScaledParetoGenerator(m=5, a=1.4, seed=seeder.next())
+        activity_gen=ParetoGenerator(xmin=5, a=1.4, seed=seeder.next())
     )
 
     cell_repair_action = Action(
@@ -148,7 +148,7 @@ def add_cells(circus, seeder, params):
         timer_gen=default_day_profiler,
 
         # repair activity is much higher
-        activity_gen=ScaledParetoGenerator(m=100, a=1.2, seed=seeder.next()),
+        activity_gen=ParetoGenerator(xmin=100, a=1.2, seed=seeder.next()),
 
         # repair is not re-scheduled at the end of a repair, but only triggered
         # from a "break-down" action
@@ -270,7 +270,7 @@ def add_social_network(subs, seeder, params):
     logging.info("Creating the social network ")
 
     # create a random A to B symmetric relationship
-    network_weight_gen = ScaledParetoGenerator(m=1., a=1.2, seed=seeder.next())
+    network_weight_gen = ParetoGenerator(xmin=1., a=1.2, seed=seeder.next())
 
     social_network_values = create_er_social_network(
         customer_ids=subs.ids,
@@ -445,17 +445,17 @@ def add_communications(circus, subs, sims, cells, seeder):
         value_mapper=logistic(a=-0.01, b=10.), seed=seeder.next())
 
     # call activity level, under normal and "excited" states
-    normal_call_activity = ScaledParetoGenerator(m=10, a=1.2,
-                                                 seed=seeder.next())
-    excited_call_activity = ScaledParetoGenerator(m=100, a=1.1,
-                                                  seed=seeder.next())
+    normal_call_activity = ParetoGenerator(xmin=10, a=1.2,
+                                           seed=seeder.next())
+    excited_call_activity = ParetoGenerator(xmin=100, a=1.1,
+                                            seed=seeder.next())
 
     # after a call or SMS, excitability is the probability of getting into
     # "excited" mode (i.e., having a shorted expected delay until next call
     excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
                                             seed=seeder.next())
 
-    subs.create_attribute(name="EXCITABILITY", init_values_gen=excitability_gen)
+    subs.create_attribute(name="EXCITABILITY", init_gen=excitability_gen)
 
     # same "basic" trigger, without any value mapper
     flat_trigger = DependentTriggerGenerator(seed=seeder.next())

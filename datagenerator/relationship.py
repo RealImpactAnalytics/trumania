@@ -19,14 +19,6 @@ class Relationship(object):
     """
 
     def __init__(self, seed):
-        """
-
-        :param r1: string, name for first element
-        :param r2: string, name for second element
-        :param chooser:
-        :return:
-        """
-
         self.state = RandomState(seed)
         self._table = pd.DataFrame(columns=["from", "to", "weight"])
         self.ops = self.RelationshipOps(self)
@@ -39,7 +31,6 @@ class Relationship(object):
 
         self._table = pd.concat([self._table, new_relations],
                                 ignore_index=True, copy=False)
-        self._table.reset_index(inplace=True, drop=True)
 
         # we sometimes want to keep track of the index of some rows when
         # accessed within a group-by operation => copying the info in a separate
@@ -70,7 +61,9 @@ class Relationship(object):
             return selected
 
     def select_one(self, from_ids=None, named_as="to", remove_selected=False,
-                   discard_empty=True):
+                   discard_empty=True, one_to_one=False):
+        # TODO: the implementation of select_many is cleaner and probably
+        # faster => refactor to make them one single thingy
         """
         Select randomly one "to" for each specified "from" values.
          If drop is True, the selected relations are removed.
@@ -133,13 +126,70 @@ class Relationship(object):
         selected = self._maybe_add_nones(not discard_empty, from_ids, selected)
         selected.rename(columns={"to": named_as}, inplace=True)
 
+        if one_to_one and selected.shape[0] > 0:
+            idx = self.state.permutation(selected.index)
+            selected = selected.loc[idx]
+            selected.drop_duplicates(subset=named_as, keep="first",
+                                     inplace=True)
+
         return selected
 
-    def remove(self, from_ids, to_ids):
-        lines = self._table[self._table["from"].isin(from_ids) &
-                            self._table["to"].isin(to_ids)]
+    def select_many(self, from_ids, named_as, quantities, remove_selected,
+                    discard_empty):
+        """
+        This is functional similar to a select_one that returns list, although
+        the implementation is much different. Here we optimize for sampling
+        large contiguous chunks among the "to" parts of a relationship.
 
-        self._table.drop(lines.index, inplace=True)
+        Also, one-to-one is always assumed: there is never overlap between
+        the returned chunks
+        """
+        req = pd.DataFrame({"from": from_ids, "qties": quantities})
+
+        # gathers all requests to the same "from" together, keeping track of
+        # the index in the original "from_ids" to be able to merge it later
+        def gather(df):
+            return pd.Series({"quantities": df["qties"].tolist(),
+                              "from_index": df.index.tolist()})
+
+        all_reqs = req.groupby("from", sort=False).apply(gather)
+
+        relations = self.get_relations(from_ids).groupby(by="from", sort=False)
+        relations = relations.apply(lambda r: pd.Series({"tos": r["to"].tolist()}))
+
+        # here we have the requested size and the available "tos" for each
+        # requested "from"
+        all_infos = pd.merge(left=all_reqs, right=relations,
+                             left_index=True, right_index=True)
+
+        def make_selections(info_row):
+            # caps to available relationships select everything at once
+            available_tos = len(info_row["tos"])
+
+            # TODO: we should randomize this capping s.t. the same ones do not
+            # risk to get capped every time...
+            qties = cap_to_total(info_row["quantities"], available_tos)
+            one_sel = self.state.choice(info_row["tos"], size=np.sum(qties),
+                                        replace=False)
+
+            # splits the results into several
+            to_idx = np.cumsum(qties).tolist()
+            from_idx = [0] + to_idx[:-1]
+            selections = [one_sel[lb:ub] for lb, ub in zip(from_idx, to_idx)]
+
+            # shapes everything into wide and sparse format => easy to stack
+            selection_ser = pd.Series(selections, index=info_row["from_index"])
+            return selection_ser
+
+        selected = pd.DataFrame(all_infos.apply(make_selections, axis=1))
+        selected = pd.DataFrame(selected.stack(dropna=True))
+        selected.index = selected.index.droplevel(level=0)
+        selected.columns = [named_as]
+
+        # TODO: remove_selected
+        # TODO: discard_empty + add test for empty
+
+        return selected
 
     def select_all(self, from_ids, named_as="to"):
         """
@@ -153,6 +203,12 @@ class Relationship(object):
         groups = rows.set_index("to", drop=True).groupby("from", sort=False)
         return pd.DataFrame(groups.groups.items(), columns=["from", named_as])
 
+    def remove(self, from_ids, to_ids):
+        lines = self._table[self._table["from"].isin(from_ids) &
+                            self._table["to"].isin(to_ids)]
+
+        self._table.drop(lines.index, inplace=True)
+
     class RelationshipOps(object):
         def __init__(self, relationship):
             self.relationship = relationship
@@ -163,9 +219,11 @@ class Relationship(object):
 
             def __init__(self, relationship, from_field, named_as,
                          one_to_one, pop, discard_missing):
+
                 # inner join instead of default left to allow dropping rows
                 # in case of duplicates and one-to-one
                 AddColumns.__init__(self, join_kind="inner")
+
                 self.relationship = relationship
                 self.from_field = from_field
                 self.named_as = named_as
@@ -179,13 +237,8 @@ class Relationship(object):
                     from_ids=action_data[self.from_field],
                     named_as=self.named_as,
                     remove_selected=self.pop,
+                    one_to_one=self.one_to_one,
                     discard_empty=self.discard_missing)
-
-                if self.one_to_one and selected.shape[0] > 0:
-                    idx = self.relationship.state.permutation(selected.index)
-                    selected = selected.loc[idx]
-                    selected.drop_duplicates(subset=self.named_as,
-                                             keep="first", inplace=True)
 
                 selected.drop("from", axis=1, inplace=True)
                 return selected
@@ -229,6 +282,40 @@ class Relationship(object):
             """
             return self.SelectAll(self.relationship, from_field, named_as)
 
+        class SelectMany(AddColumns):
+            """
+            """
+
+            def __init__(self, relationship, from_field, named_as,
+                         quantity_field, pop, discard_missing):
+
+                # inner join instead of default left to allow dropping rows
+                # in case of duplicates and one-to-one
+                AddColumns.__init__(self, join_kind="inner")
+
+                self.relationship = relationship
+                self.discard_missing = discard_missing
+                self.from_field = from_field
+                self.named_as = named_as
+                self.quantity_field = quantity_field
+                self.pop = pop
+
+            # def transform(self, action_data):
+            def build_output(self, action_data):
+                selected = self.relationship.select_many(
+                    from_ids=action_data[self.from_field],
+                    named_as=self.named_as,
+                    quantities=action_data[self.quantity_field],
+                    remove_selected=self.pop,
+                    discard_empty=self.discard_missing)
+
+                return selected
+
+        def select_many(self, from_field, named_as, quantity_field, pop=False,
+                        discard_missing=True):
+            return self.SelectMany(self.relationship, from_field, named_as,
+                                   quantity_field, pop, discard_missing)
+
         class Add(SideEffectOnly):
             def __init__(self, relationship, from_field, item_field):
                 self.relationship = relationship
@@ -243,6 +330,35 @@ class Relationship(object):
 
         def add(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
+
+        class AddGrouped(SideEffectOnly):
+            def __init__(self, relationship, from_field, grouped_items_field):
+                self.relationship = relationship
+                self.from_field = from_field
+                self.grouped_items_field = grouped_items_field
+
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
+
+                    all_dfs = (
+                        pd.DataFrame({"from": r[1][self.from_field],
+                                      "to": r[1][self.grouped_items_field]})
+                        for r in action_data.iterrows())
+
+                    verticalized = pd.concat(all_dfs, ignore_index=True,
+                                             copy=False)
+
+                    self.relationship.add_relations(
+                        from_ids=verticalized["from"],
+                        to_ids=verticalized["to"])
+
+        def add_grouped(self, from_field, grouped_items_field):
+            """
+            this is similar to add, execept that the "to" field should here
+            contain lists of "to" values instead of single ones
+            """
+            return self.AddGrouped(self.relationship, from_field,
+                                  grouped_items_field)
 
         class Remove(SideEffectOnly):
             def __init__(self, relationship, from_field, item_field):
