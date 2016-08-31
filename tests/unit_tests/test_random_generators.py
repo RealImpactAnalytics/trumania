@@ -44,3 +44,17 @@ def test_depend_trigger_should_trigger_given_constant_value():
     # because the fake_mapper returns fake values, we should always have the
     # following triggers, no matter what the internal uniform distro provided
     assert triggers.tolist() == [True, True, False, False, True, False]
+
+
+def test_sequencial_generator_should_create_unique_values():
+
+    tested = SequencialGenerator(start=10, prefix="test_p_", max_length=10)
+
+    sizes = [100, 200, 300, 400, 500]
+    sets = [set(tested.generate(size)) for size in sizes]
+
+    # generated values should be unique within each set
+    all_values = reduce(lambda s1, s2: s1 | s2,  sets)
+
+    assert len(all_values) == np.sum(sizes)
+
