@@ -62,8 +62,11 @@ class Relationship(object):
 
     def select_one(self, from_ids=None, named_as="to", remove_selected=False,
                    discard_empty=True, one_to_one=False):
+
         # TODO: the implementation of select_many is cleaner and probably
-        # faster => refactor to make them one single thingy
+        # faster => refactor to make them one single thingy, select_one being
+        # just a special case of select_many...
+
         """
         Select randomly one "to" for each specified "from" values.
          If drop is True, the selected relations are removed.
@@ -154,40 +157,55 @@ class Relationship(object):
 
         all_reqs = req.groupby("from", sort=False).apply(gather)
 
+        # potential relations in "horizontal" format, just kepts a their index
+        # in the original table for now
         relations = self.get_relations(from_ids).groupby(by="from", sort=False)
-        relations = relations.apply(lambda r: pd.Series({"tos": r["to"].tolist()}))
+        relations = relations.apply(lambda r: pd.Series({
+            "table_indices": r["table_index"].tolist()
+        }))
 
-        # here we have the requested size and the available "tos" for each
-        # requested "from"
+        # => requested size and the available "tos" for each requested "from"
         all_infos = pd.merge(left=all_reqs, right=relations,
                              left_index=True, right_index=True)
 
         def make_selections(info_row):
-            # caps to available relationships select everything at once
-            available_tos = len(info_row["tos"])
 
-            # TODO: we should randomize this capping s.t. the same ones do not
-            # risk to get capped every time...
+            available_tos = len(info_row["table_indices"])
+
+            # TODO: we should randomize the capping below s.t. the same
+            # ones do not risk to get capped every time...
+
             qties = cap_to_total(info_row["quantities"], available_tos)
-            one_sel = self.state.choice(info_row["tos"], size=np.sum(qties),
-                                        replace=False)
+            t_idx = self.state.choice(a=info_row["table_indices"], replace=False,
+                                      size=np.sum(qties)).tolist()
 
-            # splits the results into several
+            # splits the results into several selections: one for each time
+            # this "from" was requested
             to_idx = np.cumsum(qties).tolist()
             from_idx = [0] + to_idx[:-1]
-            selections = [one_sel[lb:ub] for lb, ub in zip(from_idx, to_idx)]
+            selected_tidx = [t_idx[lb:ub] for lb, ub in zip(from_idx, to_idx)]
 
-            # shapes everything into wide and sparse format => easy to stack
-            selection_ser = pd.Series(selections, index=info_row["from_index"])
+            # creating this Series in an apply() will create columns named along
+            # info_row["from_index"] => the stack() right after adds them into the
+            # row index, besides each "from"
+            selection_ser = pd.Series(selected_tidx, index=info_row["from_index"])
             return selection_ser
 
-        selected = pd.DataFrame(all_infos.apply(make_selections, axis=1))
-        selected = pd.DataFrame(selected.stack(dropna=True))
+        # Df with multi-index index (from, from_index) and 1 column with the set of idx
+        # in the relationship table of the chosen "t"os
+        selected_tidx = pd.DataFrame(all_infos.apply(make_selections, axis=1))
+        selected_tidx = pd.DataFrame(selected_tidx.stack(dropna=True))
+
+        selected = selected_tidx.applymap(
+            lambda ids: self._table.ix[ids]["to"].values)
         selected.index = selected.index.droplevel(level=0)
         selected.columns = [named_as]
 
-        # TODO: remove_selected
-        # TODO: discard_empty + add test for empty
+        if remove_selected:
+            all_removed_idx = reduce(lambda l1, l2: l1 + l2, selected_tidx.iloc[:, 0])
+            self._table.drop(all_removed_idx, axis=0, inplace=True)
+
+        selected = self._maybe_add_nones(not discard_empty, from_ids, selected)
 
         return selected
 

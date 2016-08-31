@@ -236,7 +236,6 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
                                        named_as="SIM",
                                        one_to_one=True)
 
-
     # Many customer selected the same dealer and want to get a sim from them.
     # We expect each of the 2 selected dealer to sell a different SIM to each
     action_data = pd.DataFrame({
@@ -320,6 +319,8 @@ def test_select_many_should_return_subsets_of_relationships():
 
     action_data_index = build_ids(5, prefix="cl_", max_length=1)
 
+    # cheating with the seed for the second part of the test
+    four_to_plenty.state = np.random.RandomState(18)
     selection = four_to_plenty.select_many(
         from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
         named_as="selected_sets",
@@ -330,7 +331,6 @@ def test_select_many_should_return_subsets_of_relationships():
     # this index is expected among other things since it allows a direct
     # merge into the initial request
     assert sorted(selection.index.tolist()) == action_data_index
-
     assert selection.columns.tolist() == ["selected_sets"]
 
     # no capping should have occured: four_to_plenty has largely enough
@@ -339,6 +339,45 @@ def test_select_many_should_return_subsets_of_relationships():
     # every chosen elemnt should be persent at most once
     s = reduce(lambda s1, s2: set(s1) | set(s2), selection["selected_sets"])
     assert len(s) == np.sum([4, 5, 6, 7, 8])
+
+    # selecting the same thing => should return the same result since
+    # remove_selected is False and the relationship is seeded
+    four_to_plenty.state = np.random.RandomState(18)
+    selection_again = four_to_plenty.select_many(
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        named_as="selected_sets",
+        quantities=[4, 5, 6, 7, 8],
+        remove_selected=False,
+        discard_empty=False)
+
+    assert selection.sort_index().index.equals(selection_again.sort_index().index)
+    for idx in selection.index:
+        assert selection.ix[idx]["selected_sets"].tolist() == selection_again.ix[idx]["selected_sets"].tolist()
+
+
+def test_select_many_with_drop_should_remove_elements():
+
+    action_data_index = build_ids(5, prefix="cl_", max_length=1)
+
+    # makes a copy since we're going to drop some elements
+    four_to_plenty_copy = Relationship(seed=1)
+    for i in range(100):
+        four_to_plenty_copy.add_relations(
+            from_ids=["a", "b", "c", "d"],
+            to_ids=["a_%d" % i, "b_%d" % i, "c_%d" % i, "d_%d" % i])
+
+    selection = four_to_plenty.select_many(
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        named_as="selected_sets",
+        quantities=[4, 5, 6, 7, 8],
+        remove_selected=True,
+        discard_empty=False)
+
+    # makes sure all selected values have been removed
+    for from_id in selection.index:
+        for to_id in selection.ix[from_id]["selected_sets"].tolist():
+            rels = four_to_plenty_copy.get_relations(from_ids=[from_id])
+            assert to_id not in rels["to"]
 
 
 def test_select_many_operation_should_join_subsets_of_relationships():
