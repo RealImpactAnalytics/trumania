@@ -70,16 +70,19 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
     assignments = state.rand(len(group1),len(group2))
     assignments = assignments/assignments.sum(axis=1,keepdims=True)
     data = pd.DataFrame(assignments,index=group1,columns=group2).stack().reset_index(level=[0,1])
-    data.rename(columns={"level_0":name1,"level_1":name2,0:"weight"},inplace=True)
+    data.rename(columns={"level_0": name1,
+                         "level_1": name2,
+                         0: "weight"},
+                inplace=True)
     return data
 
 
-def make_random_assign(name1, name2, group1, group2, seed):
+def make_random_assign(owned, owners, seed):
     """Assign randomly each member from group1 to a member of group2
 
     """
-    choices = RandomState(seed).choice(group2, size=len(group1))
-    return pd.DataFrame({name2: choices, name1: group1})
+    choices = RandomState(seed).choice(owners, size=len(owned))
+    return pd.DataFrame({"from": choices, "to": owned})
 
 
 def merge_2_dicts(dict1, dict2, value_merge_func=None):
@@ -170,3 +173,21 @@ def log_dataframe_sample(msg, df):
         logging.info("{}:  [empty]".format(msg))
     else:
         logging.info("{}: \n  {}".format(msg, df.sample(min(df.shape[0], 15))))
+
+
+def cap_to_total(values, target_total):
+    """
+    return a copy of values with the largest values possible s.t.:
+       - all return values are <= the original ones
+       - their sum is == total
+       -
+    """
+
+    excedent = np.sum(values) - target_total
+    if excedent <= 0:
+        return values
+    elif values[-1] >= excedent:
+        return values[:-1] + [values[-1] - excedent]
+    else:
+        return cap_to_total(values[:-1], target_total) + [0]
+

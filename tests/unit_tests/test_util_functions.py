@@ -86,3 +86,48 @@ def test_is_sequence():
     assert not is_sequence(1)
     assert not is_sequence("hello")
 
+
+def test_make_random_assign_shoud_assign_each_element_only_once():
+
+    dealers = build_ids(size=10, prefix="DEALER_", max_length=2)
+    sims = build_ids(size=1000, prefix="SIM_", max_length=4)
+
+    assignment = make_random_assign(owned=sims, owners=dealers, seed=10)
+
+    # all sims should have been assigned
+    assert assignment.shape == (1000, 2)
+
+    # all SIM should have been given
+    assert set(assignment["to"].unique().tolist()) == set(sims)
+
+    # all owners should be part of the dealers
+    assert set(assignment["from"].unique().tolist()) <= set(dealers)
+
+
+def test_cap_to_total_should_leave_untouched_values_below_target():
+    assert [10, 20, 30] == cap_to_total([10, 20, 30], target_total=100)
+
+
+def test_cap_to_total_should_leave_untouched_equal_to_target():
+    assert [50, 40, 20] == cap_to_total([50, 40, 20], target_total=110)
+
+
+def test_cap_to_total_should_lower_last_correctly():
+    assert [50, 40, 5] == cap_to_total([50, 40, 20], target_total=95)
+
+
+def test_cap_to_total_should_zero_last_correctly():
+    assert [50, 40, 0] == cap_to_total([50, 40, 20], target_total=90)
+
+
+def test_cap_to_total_should_zero_several_correctly():
+    assert [38, 0, 0] == cap_to_total([50, 40, 20], target_total=38)
+
+
+
+
+
+
+
+
+

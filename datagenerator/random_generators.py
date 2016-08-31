@@ -1,4 +1,3 @@
-from util_functions import *
 from datagenerator.operations import *
 
 
@@ -89,17 +88,50 @@ class NumpyRandomGenerator(Generator):
         return self.numpy_method(**all_params)
 
 
-class ScaledParetoGenerator(Generator):
-    def __init__(self, m, seed=None, **numpy_parameters):
+class ParetoGenerator(Generator):
+    """
+    Builds a pareto having xmin as lower bound for the sampled values and a
+     as power parameter, i.e.:
+
+     p(x|a) = (x/xmin)^a  if x >= xmin
+            = 0           otherwise
+
+     The higher the value of a, the closer pareto gets to dirac's delta.
+
+    force_int allows to round each value to integers (handy to generate
+     counts distributed as a power law)
+    """
+    def __init__(self, xmin, seed=None, force_int=False, **np_params):
         Generator.__init__(self)
 
-        self.stock_pareto = NumpyRandomGenerator(method="pareto", seed=seed,
-                                                 **numpy_parameters)
-        self.m = m
+        self.force_int = force_int
+        self.xmin = xmin
+        self.lomax = NumpyRandomGenerator(method="pareto", seed=seed,
+                                          **np_params)
 
     def generate(self, size):
-        stock_obs = self.stock_pareto.generate(size)
-        return (stock_obs + 1) * self.m
+        values = (self.lomax.generate(size) + 1) * self.xmin
+
+        if self.force_int:
+            values = [int(v) for v in values]
+
+        return values
+
+
+class SequencialGenerator(Generator):
+    """
+    Generator of sequencial unique values
+    """
+    def __init__(self, start=0, prefix="id_", max_length=10):
+        Generator.__init__(self)
+        self.counter=start
+        self.prefix = prefix
+        self.max_length = max_length
+
+    def generate(self, size):
+        values = build_ids(size, self.counter, self.prefix, self.max_length)
+        self.counter += size
+        return values
 
 
 class MSISDNGenerator(Generator):

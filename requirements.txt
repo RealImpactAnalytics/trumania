@@ -2,3 +2,4 @@ networkx
 pandas
 numpy
 teamcity-messages
+pytest

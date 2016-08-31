@@ -17,16 +17,19 @@ from datagenerator.util_functions import *
 params = {
     "n_agents": 5000,
 
-    # very low number of dealer, to have tons of collision and check
-    # behavious in that case
+    # very low number of dealer, to have tons of collision and validate the
+    # one-to-one behaviour in that case
     "n_dealers": 10,
+    "n_distributors": 3,
 
-    "average_degree": 20,
-    "n_sims": 500000
+    "average_agent_degree": 20,
+
+    "n_init_sims_dealer": 1000,
+    "n_init_sims_distributor": 500000
 }
 
 
-def create_agents_with_sims(seeder):
+def create_agents(seeder):
     """
     Create the AGENT actor (i.e. customer) together with its "SIM" labeled
     stock, to keep track of which SIMs are own by which agent
@@ -42,23 +45,20 @@ def create_agents_with_sims(seeder):
     return agents
 
 
-def create_dealers_with_sims(seeder):
+def create_dealers_and_sims_stock(seeder):
     """
-    Create the DEALER actor together with its "SIM" labeled stock, to keep
-     track of which SIMs are available at which agents
+    Create the DEALER actor together with their init SIM stock
     """
     logging.info("Creating dealer and their SIM stock  ")
 
     dealers = Actor(size=params["n_dealers"], prefix="DEALER_", max_length=3)
 
+    # SIM relationship to maintain some stock
     sims = dealers.create_relationship(name="SIM", seed=seeder.next())
-    sim_ids = ["SIM_%s" % (str(i).zfill(6)) for i in range(params["n_sims"])]
-    sims_dealer = make_random_assign("SIM", "DEALER",
-                                     sim_ids, dealers.ids,
+    sim_ids = build_ids(size=params["n_init_sims_dealer"], prefix="SIM_")
+    sims_dealer = make_random_assign(owned=sim_ids, owners=dealers.ids,
                                      seed=seeder.next())
-
-    sims.add_relations(from_ids=sims_dealer["DEALER"],
-                       to_ids=sims_dealer["SIM"])
+    sims.add_relations(from_ids=sims_dealer["from"], to_ids=sims_dealer["to"])
 
     # one more dealer with just 3 sims in stock => this one will trigger
     # lot's of failed sales
@@ -73,13 +73,33 @@ def create_dealers_with_sims(seeder):
     return dealers
 
 
+def create_distributors_with_sims(seeder):
+    """
+    Distributors are similar to dealers, just with much more sims, and the
+    actions to buy SIM from them is "by bulks" (though the action is not
+    created here)
+    """
+    logging.info("Creating distributors and their SIM stock  ")
+
+    distributors = Actor(size=params["n_distributors"], prefix="DISTRIBUTOR_",
+                         max_length=1)
+
+    sims = distributors.create_relationship(name="SIM", seed=seeder.next())
+    sim_ids = build_ids(size=params["n_init_sims_distributor"], prefix="SIM_")
+    sims_dist = make_random_assign(owned=sim_ids, owners=distributors.ids,
+                                   seed=seeder.next())
+    sims.add_relations(from_ids=sims_dist["from"], to_ids=sims_dist["to"])
+
+    return distributors
+
+
 def connect_agent_to_dealer(agents, dealers, seeder):
     """
-    Creates a random relationship from agents to dealers
+    Relationship from agents to dealers
     """
     logging.info("Randomly connecting agents to dealer ")
 
-    deg_prob = params["average_degree"] / params["n_agents"] * params["n_dealers"]
+    deg_prob = params["average_agent_degree"] / params["n_agents"] * params["n_dealers"]
 
     agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.)
 
@@ -96,18 +116,94 @@ def connect_agent_to_dealer(agents, dealers, seeder):
         to_ids=agent_customer_df["DEALER"],
         weights=agent_weight_gen.generate(agent_customer_df.shape[0]))
 
-    to_broke = pd.DataFrame({
-        "AGENT": agents.ids,
-        "D": "broke_dealer"
-    })
-
+    # every agent is also connected to the "broke dealer", to make sure this
+    # one gets out of stock quickly
     agent_customer_rel.add_relations(
-        from_ids=to_broke["AGENT"],
-        to_ids=to_broke["D"],
+        from_ids=agents.ids,
+        to_ids="broke_dealer",
         weights=4)
 
 
-def add_purchase_action(circus, agents, dealers, seeder):
+def connect_dealers_to_distributors(dealers, distributors, seeder):
+
+    # let's be simple: each dealer has only one provider
+    distributor_rel = dealers.create_relationship("DISTRIBUTOR",
+                                                  seed=seeder.next())
+
+    state = np.random.RandomState(seeder.next())
+    assigned = state.choice(a=distributors.ids, size=dealers.size, replace=True)
+
+    distributor_rel.add_relations(from_ids=dealers.ids, to_ids=assigned)
+
+    # We're also adding a "bulk buy size" attribute to each dealer that defines
+    # how many SIM are bought at one from the distributor.
+    bulk_gen = ParetoGenerator(xmin=500, a=1.5, force_int=True,
+                               seed=seeder.next())
+
+    dealers.create_attribute("BULK_BUY_SIZE", init_gen=bulk_gen)
+
+
+def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
+    """
+    Adds a SIM purchase action from agents to dealer, with impact on stock of
+    both actors
+    """
+    logging.info("Creating purchase action")
+
+    timegen = WeekProfiler(clock=circus.clock,
+                           week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                           seed=seeder.next())
+
+    purchase_activity_gen = ConstantGenerator(value=100)
+
+    build_purchases = Action(
+        name="bulk_purchases",
+        initiating_actor=dealers,
+        actorid_field="DEALER_ID",
+        timer_gen=timegen,
+        activity_gen=purchase_activity_gen)
+
+    build_purchases.set_operations(
+        circus.clock.ops.timestamp(named_as="DATETIME"),
+
+        dealers.get_relationship("DISTRIBUTOR").ops.select_one(
+            from_field="DEALER_ID",
+            named_as="DISTRIBUTOR"),
+
+        dealers.ops.lookup(actor_id_field="DEALER_ID",
+                           select={"BULK_BUY_SIZE": "BULK_BUY_SIZE"}),
+
+        distributors.get_relationship("SIM").ops.select_many(
+            from_field="DISTRIBUTOR",
+            named_as="SIM_BULK",
+            quantity_field="BULK_BUY_SIZE",
+
+            # if a SIM is selected, it is removed from the dealer's stock
+            pop=True
+
+            # (not modeling out-of-stock provider to keep the example simple...
+        ),
+
+        dealers.get_relationship("SIM").ops.add_grouped(
+            from_field="DEALER_ID",
+            grouped_items_field="SIM_BULK"),
+
+        # not modeling money transfer to keep the example simple...
+
+        # just logging the number of sims instead of the sims themselves...
+        operations.Apply(source_fields="SIM_BULK",
+                         named_as="NUMBER_OF_SIMS",
+                         f=lambda s: s.map(len), f_args="series"),
+
+        operations.FieldLogger(log_id="bulk_purchases",
+                               cols=["DEALER_ID", "DISTRIBUTOR",
+                                     "NUMBER_OF_SIMS"]),
+    )
+
+    circus.add_action(build_purchases)
+
+
+def add_agent_purchase_action(circus, agents, dealers, seeder):
     """
     Adds a SIM purchase action from agents to dealer, with impact on stock of
     both actors
@@ -204,15 +300,15 @@ def add_agent_holidays_action(circus, agents, seeder):
                                     week_profile=[1, 1, 1, 1, 1, 1, 1],
                                     seed=seeder.next())
 
-    # TODO: we'd obviously have to adapt those weitgh to longer periods
+    # TODO: we'd obviously have to adapt those weight to longer periods
     # thought this interface is not very intuitive
     # => create a method where can can specify the expected value of the
     # inter-event interval, and convert that into an activity
-    holiday_start_activity = ScaledParetoGenerator(m=.25, a=1.2,
-                                                   seed=seeder.next())
+    holiday_start_activity = ParetoGenerator(xmin=.25, a=1.2,
+                                             seed=seeder.next())
 
-    holiday_end_activity = ScaledParetoGenerator(m=150, a=1.2,
-                                                 seed=seeder.next())
+    holiday_end_activity = ParetoGenerator(xmin=150, a=1.2,
+                                           seed=seeder.next())
 
     going_on_holidays = Action(
         name="agent_start_holidays",
@@ -266,11 +362,14 @@ def test_snd_scenario():
 
     flying = Circus(the_clock)
 
-    agents = create_agents_with_sims(seeder)
-    dealers = create_dealers_with_sims(seeder)
+    distributors = create_distributors_with_sims(seeder)
+    dealers = create_dealers_and_sims_stock(seeder)
+    agents = create_agents(seeder)
     connect_agent_to_dealer(agents, dealers, seeder)
+    connect_dealers_to_distributors(dealers, distributors, seeder)
 
-    add_purchase_action(flying, agents, dealers, seeder)
+    add_agent_purchase_action(flying, agents, dealers, seeder)
+    add_dealer_bulk_purchase_action(flying, dealers, distributors, seeder)
     add_agent_holidays_action(flying, agents, seeder)
 
     logs = flying.run(n_iterations=100)

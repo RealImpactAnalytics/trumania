@@ -236,7 +236,6 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
                                        named_as="SIM",
                                        one_to_one=True)
 
-
     # Many customer selected the same dealer and want to get a sim from them.
     # We expect each of the 2 selected dealer to sell a different SIM to each
     action_data = pd.DataFrame({
@@ -300,9 +299,9 @@ def test_select_all_operation():
 
     op = two_per_from.ops.select_all(from_field="A", named_as="CELLS")
 
-    data = pd.DataFrame({"A": ["a",  "d"]})
-    data = data.set_index("A", drop=False)
-    output, logs = op(data)
+    action_data = pd.DataFrame({"A": ["a",  "d"]})
+    action_data = action_data.set_index("A", drop=False)
+    output, logs = op(action_data)
 
     # the transformer should have added the "CELL" column to the df
     assert output.columns.values.tolist() == ["A", "CELLS"]
@@ -314,3 +313,146 @@ def test_select_all_operation():
     assert output["CELLS"].sort_index().equals(
         pd.Series([["ya", "za"], ["yd", "zd"]],
                   index=["a", "d"]))
+
+
+def test_select_many_should_return_subsets_of_relationships():
+
+    action_data_index = build_ids(5, prefix="cl_", max_length=1)
+
+    # cheating with the seed for the second part of the test
+    four_to_plenty.state = np.random.RandomState(18)
+    selection = four_to_plenty.select_many(
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        named_as="selected_sets",
+        quantities=[4, 5, 6, 7, 8],
+        remove_selected=False,
+        discard_empty=False)
+
+    # this index is expected among other things since it allows a direct
+    # merge into the initial request
+    assert sorted(selection.index.tolist()) == action_data_index
+    assert selection.columns.tolist() == ["selected_sets"]
+
+    # no capping should have occured: four_to_plenty has largely enough
+    selection["selected_sets"].apply(len).tolist() == [4, 5, 6, 7, 8]
+
+    # every chosen elemnt should be persent at most once
+    s = reduce(lambda s1, s2: set(s1) | set(s2), selection["selected_sets"])
+    assert len(s) == np.sum([4, 5, 6, 7, 8])
+
+    # selecting the same thing => should return the same result since
+    # remove_selected is False and the relationship is seeded
+    four_to_plenty.state = np.random.RandomState(18)
+    selection_again = four_to_plenty.select_many(
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        named_as="selected_sets",
+        quantities=[4, 5, 6, 7, 8],
+        remove_selected=False,
+        discard_empty=False)
+
+    assert selection.sort_index().index.equals(selection_again.sort_index().index)
+    for idx in selection.index:
+        assert selection.ix[idx]["selected_sets"].tolist() == selection_again.ix[idx]["selected_sets"].tolist()
+
+
+def test_select_many_with_drop_should_remove_elements():
+
+    action_data_index = build_ids(5, prefix="cl_", max_length=1)
+
+    # makes a copy since we're going to drop some elements
+    four_to_plenty_copy = Relationship(seed=1)
+    for i in range(100):
+        four_to_plenty_copy.add_relations(
+            from_ids=["a", "b", "c", "d"],
+            to_ids=["a_%d" % i, "b_%d" % i, "c_%d" % i, "d_%d" % i])
+
+    selection = four_to_plenty.select_many(
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        named_as="selected_sets",
+        quantities=[4, 5, 6, 7, 8],
+        remove_selected=True,
+        discard_empty=False)
+
+    # makes sure all selected values have been removed
+    for from_id in selection.index:
+        for to_id in selection.ix[from_id]["selected_sets"].tolist():
+            rels = four_to_plenty_copy.get_relations(from_ids=[from_id])
+            assert to_id not in rels["to"]
+
+
+def test_select_many_operation_should_join_subsets_of_relationships():
+    # same test as above, but from the operation
+
+    action_data = pd.DataFrame({
+            "let": ["a", "b", "c", "b", "a"],
+            "how_many": [4, 5, 6, 7, 8]
+        },
+        index=build_ids(5, prefix="wh_", max_length=2)
+    )
+
+    select_op = four_to_plenty.ops.select_many(
+        from_field="let",
+        named_as="found",
+        pop=False,
+        quantity_field="how_many",
+        discard_missing=False,
+    )
+
+    selection, logs = select_op(action_data)
+
+    # this index is expected among other things since it allows a direct
+    # merge into the initial request
+    assert selection.sort_index().index.equals(action_data.sort_index().index)
+
+    assert selection.columns.tolist() == ["how_many", "let", "found"]
+
+    # no capping should have occurred: four_to_plenty has largely enough
+    selection["found"].apply(len).tolist() == [4, 5, 6, 7, 8]
+
+    # every chosen elemnt should be persent at most once
+    s = reduce(lambda s1, s2: set(s1) | set(s2), selection["found"])
+    assert len(s) == np.sum([4, 5, 6, 7, 8])
+
+    # all relationships in wh00 must come from a
+    a_tos = four_to_plenty.get_relations(["a"])["to"]
+    for f in selection.loc["wh_00", "found"]:
+        assert f in a_tos.values
+    for f in selection.loc["wh_04", "found"]:
+        assert f in a_tos.values
+
+    b_tos = four_to_plenty.get_relations(["b"])["to"]
+    for f in selection.loc["wh_01", "found"]:
+        assert f in b_tos.values
+    for f in selection.loc["wh_03", "found"]:
+        assert f in b_tos.values
+
+    c_tos = four_to_plenty.get_relations(["c"])["to"]
+    for f in selection.loc["wh_02", "found"]:
+        assert f in c_tos.values
+
+
+def test_add_grouped():
+    action_data = pd.DataFrame({"boxes": ["b1", "b2"],
+                                "fruits": [["f11", "f12", "f13", "f14"],
+                                           ["f21", "f22", "f23", "f24"]],
+
+                                })
+
+    rel = Relationship(seed=1)
+
+    ag = rel.ops.add_grouped(from_field="boxes", grouped_items_field="fruits")
+
+    ag(action_data)
+
+    # we should have 4 relationships from b1 and from b2
+    assert rel.get_relations(from_ids=["b1"])["from"].tolist() == [
+        "b1", "b1", "b1", "b1"]
+
+    assert rel.get_relations(from_ids=["b2"])["from"].tolist() == [
+        "b2", "b2", "b2", "b2"]
+
+    # pointing to each of the values above
+    assert rel.get_relations(from_ids=["b1"])["to"].tolist() == [
+        "f11", "f12", "f13", "f14"]
+    assert rel.get_relations(from_ids=["b2"])["to"].tolist() == [
+        "f21", "f22", "f23", "f24"]
