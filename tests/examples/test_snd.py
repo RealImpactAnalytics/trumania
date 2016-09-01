@@ -165,6 +165,8 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
     )
 
     restocking.set_operations(
+        circus.clock.ops.timestamp(named_as="DATETIME"),
+
         distributors.ops.lookup(
             actor_id_field="DISTRIBUTOR_ID",
             select={"SIMS_TO_RESTOCK": "SIMS_TO_RESTOCK"}),
@@ -181,6 +183,10 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
         distributors.get_attribute("SIMS_TO_RESTOCK").ops.subtract(
             actor_id_field="DISTRIBUTOR_ID",
             subtracted_value_field="SIMS_TO_RESTOCK"),
+
+        operations.FieldLogger(log_id="distributor_restock",
+                               cols=["DATETIME", "DISTRIBUTOR_ID", "SIMS_TO_RESTOCK"]),
+
     )
 
     circus.add_action(restocking)
