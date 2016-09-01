@@ -61,6 +61,18 @@ class Attribute(object):
         """
         self._table.loc[ids, "value"] = values
 
+    def add(self, ids, added_values):
+        """
+        This only makes sense for attributes that support a + operation (e.g. numerical values or list)
+        : this simply performs a += operation
+        """
+        assert len(ids) == len(added_values)
+
+        # putting together any add to the same attribute id
+        to_add = pd.Series(added_values, index=ids).groupby(level=0).agg(sum)
+
+        self._table.loc[ids, "value"] = self._table.loc[to_add.index, "value"] + to_add
+
     class AttributeOps(object):
         def __init__(self, attribute):
             self.attribute = attribute
@@ -90,3 +102,29 @@ class Attribute(object):
             """
             return self.Overwrite(self.attribute, actor_id_field,
                                   copy_from_field)
+
+        class Add(SideEffectOnly):
+            def __init__(self, attribute, actor_id_field,
+                         added_value_field, subtract):
+                self.attribute = attribute
+                self.added_value_field = added_value_field
+                self.actor_id_field = actor_id_field
+                self.subtract = subtract
+
+            def side_effect(self, action_data):
+                if action_data.shape[0] > 0:
+
+                    values = action_data[self.added_value_field].values
+                    if self.subtract:
+                        values = -values
+
+                    self.attribute.add(
+                        ids=action_data[self.actor_id_field].values,
+                        added_values=values)
+
+        def add(self, actor_id_field, added_value_field):
+            return self.Add(self.attribute, actor_id_field, added_value_field, subtract=False)
+
+        def subtract(self, actor_id_field, subtracted_value_field):
+            return self.Add(self.attribute, actor_id_field, subtracted_value_field, subtract=True)
+

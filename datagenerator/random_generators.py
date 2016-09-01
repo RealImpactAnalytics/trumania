@@ -1,4 +1,5 @@
 from datagenerator.operations import *
+from itertools import islice
 
 
 def seed_provider(master_seed):
@@ -42,17 +43,33 @@ class Generator(object):
             Operation that produces one single column generated randomly.
             """
 
-            def __init__(self, generator, named_as):
+            def __init__(self, generator, named_as, quantity_field):
                 AddColumns.__init__(self)
                 self.generator = generator
                 self.named_as = named_as
+                self.quantity_field = quantity_field
 
             def build_output(self, action_data):
-                values = self.generator.generate(size=action_data.shape[0])
-                return pd.DataFrame({self.named_as: values}, index=action_data.index)
 
-        def generate(self, named_as):
-            return self.RandomValues(self.generator, named_as=named_as)
+                # if quantity_field is not specified, we assume 1 and return
+                # the "bare" result (i.e. not in a list of 1 element)
+                if self.quantity_field is None:
+                    values = self.generator.generate(size=action_data.shape[0])
+
+                # otherwise, provides a columns with list of generated values
+                else:
+                    qties = action_data[self.quantity_field]
+
+                    # slices groups of generated values of appropriate size
+                    flat_vals = iter(self.generator.generate(size=qties.sum()))
+                    values = [list(islice(flat_vals, size)) for size in qties]
+
+                return pd.DataFrame({self.named_as: values},
+                                     index=action_data.index)
+
+        def generate(self, named_as, quantity_field=None):
+            return self.RandomValues(self.generator, named_as=named_as,
+                                     quantity_field=quantity_field)
 
 
 class ConstantGenerator(Generator):
