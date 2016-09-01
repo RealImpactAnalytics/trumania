@@ -76,3 +76,21 @@ def test_overwrite_attribute():
     # before modification
     ages = age_attr.get_values(["u_0", "u_4", "u_9"]).tolist()
     assert ages == [30, 34, 23]
+
+
+def test_added_and_read_values_in_attribute_should_be_equal():
+    actor = Actor(size=5, prefix="abc", max_length=1)
+    tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
+
+    tested.add(["abc1", "abc3"], [22, 44])
+
+    assert tested.get_values(["abc0", "abc1", "abc2", "abc3", "abc4"]).tolist() == [10, 20+22, 30, 40+44, 50]
+
+def test_adding_several_times_to_the_same_from_should_pile_up():
+    actor = Actor(size=5, prefix="abc", max_length=1)
+    tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
+
+    tested.add(["abc1", "abc3", "abc1"], [22, 44, 10])
+
+    assert tested.get_values(["abc0", "abc1", "abc2", "abc3", "abc4"]).tolist() == [10, 20+22+10, 30, 40+44, 50]
+

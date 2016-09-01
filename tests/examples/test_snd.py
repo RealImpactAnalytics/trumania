@@ -85,12 +85,18 @@ def create_distributors_with_sims(seeder):
                          max_length=1)
 
     sims = distributors.create_relationship(name="SIM", seed=seeder.next())
-    sim_ids = build_ids(size=params["n_init_sims_distributor"], prefix="SIM_")
+
+    sim_generator = SequencialGenerator(prefix="SIM_", max_length=30)
+    sim_ids = sim_generator.generate(params["n_init_sims_distributor"])
     sims_dist = make_random_assign(owned=sim_ids, owners=distributors.ids,
                                    seed=seeder.next())
     sims.add_relations(from_ids=sims_dist["from"], to_ids=sims_dist["to"])
 
-    return distributors
+    # this tells to the "restock" action of the distributor how many
+    # sim should be re-generated to replenish the stocks
+    distributors.create_attribute("SIMS_TO_RESTOCK", init_values=0)
+
+    return distributors, sim_generator
 
 
 def connect_agent_to_dealer(agents, dealers, seeder):
@@ -141,6 +147,49 @@ def connect_dealers_to_distributors(dealers, distributors, seeder):
                                seed=seeder.next())
 
     dealers.create_attribute("BULK_BUY_SIZE", init_gen=bulk_gen)
+
+
+def add_distributor_recharge_action(circus, distributors, sim_generator):
+    """
+    adds an action that increases the stock the distributor. This is triggered externaly by
+    the bulk purchase action below
+    """
+
+    restocking = Action(
+        name="distributor_restock",
+        initiating_actor=distributors,
+        actorid_field="DISTRIBUTOR_ID",
+
+        # here again: no activity gen nor time profile here since the action
+        # is triggered externally
+    )
+
+    restocking.set_operations(
+        circus.clock.ops.timestamp(named_as="DATETIME"),
+
+        distributors.ops.lookup(
+            actor_id_field="DISTRIBUTOR_ID",
+            select={"SIMS_TO_RESTOCK": "SIMS_TO_RESTOCK"}),
+
+        sim_generator.ops.generate(
+            named_as="NEW_SIMS_IDS",
+            quantity_field="SIMS_TO_RESTOCK",),
+
+        distributors.get_relationship("SIM").ops.add_grouped(
+            from_field="DISTRIBUTOR_ID",
+            grouped_items_field="NEW_SIMS_IDS"),
+
+        # back to zero
+        distributors.get_attribute("SIMS_TO_RESTOCK").ops.subtract(
+            actor_id_field="DISTRIBUTOR_ID",
+            subtracted_value_field="SIMS_TO_RESTOCK"),
+
+        operations.FieldLogger(log_id="distributor_restock",
+                               cols=["DATETIME", "DISTRIBUTOR_ID", "SIMS_TO_RESTOCK"]),
+
+    )
+
+    circus.add_action(restocking)
 
 
 def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
@@ -194,6 +243,15 @@ def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
         operations.Apply(source_fields="SIM_BULK",
                          named_as="NUMBER_OF_SIMS",
                          f=lambda s: s.map(len), f_args="series"),
+
+
+        # finally, triggering some re-stocking by the distributor
+        distributors.get_attribute("SIMS_TO_RESTOCK").ops.add(
+            actor_id_field="DISTRIBUTOR",
+            added_value_field="NUMBER_OF_SIMS"),
+
+        circus.get_action("distributor_restock").ops.force_act_next(
+            actor_id_field="DISTRIBUTOR"),
 
         operations.FieldLogger(log_id="bulk_purchases",
                                cols=["DEALER_ID", "DISTRIBUTOR",
@@ -362,7 +420,8 @@ def test_snd_scenario():
 
     flying = Circus(the_clock)
 
-    distributors = create_distributors_with_sims(seeder)
+    distributors, sim_generator = create_distributors_with_sims(seeder)
+    add_distributor_recharge_action(flying, distributors, sim_generator)
     dealers = create_dealers_and_sims_stock(seeder)
     agents = create_agents(seeder)
     connect_agent_to_dealer(agents, dealers, seeder)
