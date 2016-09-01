@@ -369,7 +369,7 @@ def add_agent_holidays_action(circus, agents, seeder):
         activity_gen=holiday_start_activity)
 
     returning_from_holidays = circus.create_action(
-        name="agent_start_holidays",
+        name="agent_stops_holidays",
         initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,

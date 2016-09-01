@@ -28,26 +28,24 @@ class Circus(object):
         self.clock = clock
         self.__actions = []
 
-    def add_item(self, name, item):
-        """Add an Item object to the list of items
-
-        :type name: str
-        :param name: the name to reference the Item
-        :type item: Item object
-        :param item: the Item object to add
-        :return: None
-        """
-        if self.__items.has_key(name):
-            raise Exception("Already having items named %s" % name)
-        self.__items[name] = item
-
     def create_action(self, name, **action_params):
-        action = Action(name=name, **action_params)
-        self.__actions.append(action)
-        return action
+        existing = self.get_action(name)
+
+        if existing is None:
+            action = Action(name=name, **action_params)
+            self.__actions.append(action)
+            return action
+        else:
+            raise ValueError("Cannot add action {}: another action with "
+                             "identical name is already in the circus".format(name))
 
     def get_action(self, action_name):
-        return filter(lambda a: a.name == action_name, self.__actions)[0]
+        found = filter(lambda a: a.name == action_name, self.__actions)
+        if len(found) == 0:
+            logging.warn("action not found: {}".format(action_name))
+            return None
+        else:
+            return found[0]
 
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
