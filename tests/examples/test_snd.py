@@ -2,7 +2,6 @@ from __future__ import division
 
 from datetime import datetime
 
-from datagenerator.action import *
 from datagenerator.actor import *
 from datagenerator.circus import *
 from datagenerator.clock import *
@@ -155,7 +154,7 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
     the bulk purchase action below
     """
 
-    restocking = Action(
+    restocking = circus.create_action(
         name="distributor_restock",
         initiating_actor=distributors,
         actorid_field="DISTRIBUTOR_ID",
@@ -189,8 +188,6 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
 
     )
 
-    circus.add_action(restocking)
-
 
 def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
     """
@@ -205,7 +202,7 @@ def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
 
     purchase_activity_gen = ConstantGenerator(value=100)
 
-    build_purchases = Action(
+    build_purchases = circus.create_action(
         name="bulk_purchases",
         initiating_actor=dealers,
         actorid_field="DEALER_ID",
@@ -258,8 +255,6 @@ def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
                                      "NUMBER_OF_SIMS"]),
     )
 
-    circus.add_action(build_purchases)
-
 
 def add_agent_purchase_action(circus, agents, dealers, seeder):
     """
@@ -281,7 +276,7 @@ def add_agent_purchase_action(circus, agents, dealers, seeder):
     #  to "come back to normal", instead of sampling a random variable at
     #  each turn => would improve efficiency
 
-    purchase = Action(
+    purchase = circus.create_action(
         name="purchases",
         initiating_actor=agents,
         actorid_field="AGENT",
@@ -339,8 +334,6 @@ def add_agent_purchase_action(circus, agents, dealers, seeder):
             item_field="SOLD_SIM"),
     )
 
-    circus.add_action(purchase)
-
 
 def add_agent_holidays_action(circus, agents, seeder):
     """
@@ -368,14 +361,14 @@ def add_agent_holidays_action(circus, agents, seeder):
     holiday_end_activity = ParetoGenerator(xmin=150, a=1.2,
                                            seed=seeder.next())
 
-    going_on_holidays = Action(
+    going_on_holidays = circus.create_action(
         name="agent_start_holidays",
         initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,
         activity_gen=holiday_start_activity)
 
-    returning_from_holidays = Action(
+    returning_from_holidays = circus.create_action(
         name="agent_start_holidays",
         initiating_actor=agents,
         actorid_field="AGENT",
@@ -406,8 +399,6 @@ def add_agent_holidays_action(circus, agents, seeder):
         ConstantGenerator(value="returning").ops.generate(named_as="STATES"),
         operations.FieldLogger(log_id="holidays"),
     )
-
-    circus.add_actions(going_on_holidays, returning_from_holidays)
 
 
 def test_snd_scenario():

@@ -11,7 +11,7 @@ from datagenerator.random_generators import *
 from datagenerator.relationship import *
 
 
-def test_add_action_get_action_should_work_as_expected():
+def test_create_action_get_action_should_work_as_expected():
 
     customers = Actor(100)
 
@@ -26,7 +26,7 @@ def test_add_action_get_action_should_work_as_expected():
         index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
     mobility_time_gen = DayProfiler(the_clock, mov_prof, seed=1)
 
-    mobility_action = Action(
+    mobility_action = flying.create_action(
         name="mobility",
 
         initiating_actor=customers,
@@ -36,7 +36,6 @@ def test_add_action_get_action_should_work_as_expected():
     )
 
     # add and get action by name should work as expected
-    flying.add_action(mobility_action)
     result = flying.get_action("mobility")
 
     assert result.name == "mobility"

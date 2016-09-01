@@ -1,4 +1,4 @@
-from datagenerator.util_functions import *
+from datagenerator.action import *
 import logging
 
 
@@ -41,26 +41,10 @@ class Circus(object):
             raise Exception("Already having items named %s" % name)
         self.__items[name] = item
 
-    def add_action(self, action):
-        """Add an action to perform
-
-        :type action: Action
-        :param action: the action to execute
-        :type supp_fields: dict
-        :param supp_fields: dictionary of additional fields to complete for the action logs
-        Currently, the dictionary can have 2 entries:
-        - "timestamp": {True, False} if a timestamp needs to be added
-        - "join": [list of tuples with ("field to join on",
-                                        object to join on (Actor or Item),
-                                        "object field to join on",
-                                        "field name in output table")]
-        :return:
-        """
+    def create_action(self, name, **action_params):
+        action = Action(name=name, **action_params)
         self.__actions.append(action)
-
-    def add_actions(self, *actions):
-        for action in actions:
-            self.add_action(action)
+        return action
 
     def get_action(self, action_name):
         return filter(lambda a: a.name == action_name, self.__actions)[0]
@@ -70,9 +54,7 @@ class Circus(object):
 
     def one_step(self, round_number):
         """
-        Performs one round of actions
-
-        :return:
+        Performs one round of all actions
         """
 
         logging.info("step : {}".format(round_number))
