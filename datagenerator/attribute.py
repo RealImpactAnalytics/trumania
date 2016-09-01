@@ -71,7 +71,7 @@ class Attribute(object):
         # putting together any add to the same attribute id
         to_add = pd.Series(added_values, index=ids).groupby(level=0).agg(sum)
 
-        self._table.loc[ids, "value"] = self._table.loc[to_add.index, "value"] + to_add
+        self._table.loc[to_add.index, "value"] = self._table.loc[to_add.index, "value"] + to_add
 
     class AttributeOps(object):
         def __init__(self, attribute):
