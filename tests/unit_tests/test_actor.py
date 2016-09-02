@@ -102,6 +102,128 @@ def test_lookup_values_by_array_should_return_correct_values():
            ] == result["cousins_city"].tolist()
 
 
+def test_insert_actor_value_for_existing_actors_should_update_all_values():
+
+    # copy of dummy actor that will be updated
+    tested_actor = Actor(size=10, max_length=1, prefix="a_")
+    ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
+    tested_actor.create_attribute("age", init_values=ages)
+    city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
+    tested_actor.create_attribute("city", init_values=city)
+
+    current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
+    assert current.tolist() == [10, 39, 23]
+
+    update = pd.DataFrame({
+            "age": [139, 123],
+            "city": ["city_7", "city_9"]
+            },
+        index=["a_7", "a_9"])
+
+    tested_actor.update(update)
+
+    # we should have the same number of actors
+    assert tested_actor.ids.shape[0] == 10
+
+    updated_age = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
+    updated_city = tested_actor.get_attribute_values("city", ["a_0", "a_7", "a_9"])
+
+    assert updated_age.tolist() == [10, 139, 123]
+    assert updated_city.tolist() == ["a", "city_7", "city_9"]
+
+
+def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_values():
+
+    # copy of dummy actor that will be updated
+    tested_actor = Actor(size=10, max_length=1, prefix="a_")
+    ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
+    tested_actor.create_attribute("age", init_values=ages)
+    city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
+    tested_actor.create_attribute("city", init_values=city)
+
+    current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
+    assert current.tolist() == [10, 39, 23]
+
+    update = pd.DataFrame({
+            "age": [139, 123, 54, 25],
+            "city": ["city_7", "city_9", "city_11", "city_10"]
+            },
+        index=["a_7", "a_9", "a_11", "a_10"])
+
+    tested_actor.update(update)
+
+    # we should have 2 new actors
+    assert tested_actor.ids.shape[0] == 12
+
+    updated_age = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+    updated_city = tested_actor.get_attribute_values("city", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+
+    assert updated_age.tolist() == [10, 139, 123, 25, 54]
+    assert updated_city.tolist() == ["a", "city_7", "city_9", "city_10", "city_11"]
+
+
+def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
+    # same as test above but triggered as an Operation on action data
+
+    # copy of dummy actor that will be updated
+    tested_actor = Actor(size=10, max_length=1, prefix="a_")
+    ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
+    tested_actor.create_attribute("age", init_values=ages)
+    city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
+    tested_actor.create_attribute("city", init_values=city)
+
+    action_data = pd.DataFrame({
+            "the_new_age": [139, 123, 1, 2],
+            "location": ["city_7", "city_9", "city_11", "city_10"],
+            "updated_actors": ["a_7", "a_9", "a_11", "a_10"]
+            },
+        index=["d_1", "d_2", "d_4", "d_3"])
+
+    update_op = tested_actor.ops.update(
+        actor_id_field="updated_actors",
+        copy_attributes_from_fields={
+            "age": "the_new_age",
+            "city": "location"
+        }
+    )
+
+    action_data_2, logs = update_op(action_data)
+
+    # there should be no impact on the action data
+    assert action_data_2.shape == (4, 3)
+    assert sorted(action_data_2.columns.tolist()) == ["location", "the_new_age", "updated_actors"]
+
+    # we should have 2 new actors
+    assert tested_actor.ids.shape[0] == 12
+
+    updated_age = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+    updated_city = tested_actor.get_attribute_values("city", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+
+    assert updated_age.tolist() == [10, 139, 123, 2, 1]
+    assert updated_city.tolist() == ["a", "city_7", "city_9", "city_10", "city_11"]
+
+
+def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible():
+
+    # empty actor
+    a = Actor(size=0)
+    assert a.ids.shape[0] == 0
+
+    # empty attributes
+    a.create_attribute("att1")
+    a.create_attribute("att2")
+
+    dynamically_created = pd.DataFrame({
+            "att1": [1,2,3],
+            "att2": [11,12,13],
+        }, index=["ac1", "ac2", "ac3"]
+    )
+
+    a.update(dynamically_created)
+
+    assert a.ids.tolist() == ["ac1", "ac2", "ac3"]
+    assert a.get_attribute_values("att1", ["ac1", "ac2", "ac3"]).tolist() == [1,2,3]
+    assert a.get_attribute_values("att2", ["ac1", "ac2", "ac3"]).tolist() == [11,12,13]
 
 
 

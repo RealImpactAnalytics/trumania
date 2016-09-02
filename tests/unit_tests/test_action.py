@@ -36,7 +36,8 @@ def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
         timer_gen=timers_gen,
         auto_reset_timer=True
     )
-    assert ([], actor.ids) == action.active_inactive_ids()
+
+    assert ([], actor.ids.tolist()) == action.active_inactive_ids()
 
 
 def test_active_inactive_ids_should_say_5_actives_for_timer_0():
@@ -56,7 +57,7 @@ def test_active_inactive_ids_should_say_5_actives_for_timer_0():
         timer_gen=timers_gen,
         auto_reset_timer=True
     )
-    assert (actor.ids[:5], actor.ids[5:]) == action.active_inactive_ids()
+    assert (actor.ids[:5].tolist(), actor.ids[5:].tolist()) == action.active_inactive_ids()
 
 
 def test_active_inactive_ids_should_all_actives_for_timer_0():
@@ -76,7 +77,7 @@ def test_active_inactive_ids_should_all_actives_for_timer_0():
         timer_gen=timers_gen,
         auto_reset_timer=True
     )
-    assert (actor.ids, []) == action.active_inactive_ids()
+    assert (actor.ids.tolist(), []) == action.active_inactive_ids()
 
 
 def test_get_activity_should_be_default_by_default():
@@ -167,7 +168,7 @@ def test_scenario_transiting_to_state_with_0_backprob_should_remain_there():
     # here we are saying that some action on actors 5 to 9 is triggering a
     # state change on actors 0 to 4
     active_ids_gens = ConstantsMockGenerator(
-        values=[np.nan] * 5 + actor.ids[:5])
+        values=[np.nan] * 5 + actor.ids[:5].tolist())
 
     excited_state_gens = ConstantsMockGenerator(
         values=[np.nan] * 5 + ["excited"] * 5)
@@ -227,7 +228,7 @@ def test_scenario_transiting_to_state_with_1_backprob_should_go_back_to_normal()
 
     # this one is slightly tricky: actors
     active_ids_gens = ConstantsMockGenerator(
-        values=[np.nan] * 5 + actor.ids[:5])
+        values=[np.nan] * 5 + actor.ids[:5].tolist())
 
     excited_state_gens = ConstantsMockGenerator(
         values=[np.nan] * 5 + ["excited"] * 5)

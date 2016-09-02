@@ -18,13 +18,22 @@ def test_updated_and_read_values_in_attribute_should_be_equal():
     actor = Actor(size=5, prefix="abc", max_length=1)
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
-    tested.update(["abc1", "abc3"], [22, 44])
+    tested.update(pd.Series([22, 44], index=["abc1", "abc3"]))
 
     # value of a should untouched
     assert tested.get_values(["abc0"]).tolist() == [10]
 
     # arbitrary order should not be impacted
     assert tested.get_values(["abc0", "abc3", "abc1"]).tolist() == [10, 44, 22]
+
+
+def test_updating_non_existing_actor_ids_should_add_them():
+    actor = Actor(size=5, prefix="abc", max_length=1)
+    tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
+
+    tested.update(pd.Series([22, 1000, 44], index=["abc1", "not_yet_there", "abc3"]))
+
+    assert tested.get_values(["not_yet_there", "abc0", "abc3", "abc4"]).tolist() == [1000, 10, 44, 50]
 
 
 def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
@@ -65,7 +74,7 @@ def test_overwrite_attribute():
         index=["cust_1", "cust_2"]
     )
 
-    update = age_attr.ops.overwrite(
+    update = age_attr.ops.update(
         actor_id_field="A_ID",
         copy_from_field="new_ages"
     )

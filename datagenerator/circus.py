@@ -1,4 +1,4 @@
-from datagenerator.util_functions import *
+from datagenerator.action import *
 import logging
 
 
@@ -28,51 +28,31 @@ class Circus(object):
         self.clock = clock
         self.__actions = []
 
-    def add_item(self, name, item):
-        """Add an Item object to the list of items
+    def create_action(self, name, **action_params):
+        existing = self.get_action(name)
 
-        :type name: str
-        :param name: the name to reference the Item
-        :type item: Item object
-        :param item: the Item object to add
-        :return: None
-        """
-        if self.__items.has_key(name):
-            raise Exception("Already having items named %s" % name)
-        self.__items[name] = item
-
-    def add_action(self, action):
-        """Add an action to perform
-
-        :type action: Action
-        :param action: the action to execute
-        :type supp_fields: dict
-        :param supp_fields: dictionary of additional fields to complete for the action logs
-        Currently, the dictionary can have 2 entries:
-        - "timestamp": {True, False} if a timestamp needs to be added
-        - "join": [list of tuples with ("field to join on",
-                                        object to join on (Actor or Item),
-                                        "object field to join on",
-                                        "field name in output table")]
-        :return:
-        """
-        self.__actions.append(action)
-
-    def add_actions(self, *actions):
-        for action in actions:
-            self.add_action(action)
+        if existing is None:
+            action = Action(name=name, **action_params)
+            self.__actions.append(action)
+            return action
+        else:
+            raise ValueError("Cannot add action {}: another action with "
+                             "identical name is already in the circus".format(name))
 
     def get_action(self, action_name):
-        return filter(lambda a: a.name == action_name, self.__actions)[0]
+        found = filter(lambda a: a.name == action_name, self.__actions)
+        if len(found) == 0:
+            logging.warn("action not found: {}".format(action_name))
+            return None
+        else:
+            return found[0]
 
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
 
     def one_step(self, round_number):
         """
-        Performs one round of actions
-
-        :return:
+        Performs one round of all actions
         """
 
         logging.info("step : {}".format(round_number))

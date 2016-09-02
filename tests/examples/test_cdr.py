@@ -126,7 +126,7 @@ def add_cells(circus, seeder, params):
     # typical human activity
     default_day_profiler = DayProfiler(circus.clock)
 
-    cell_break_down_action = Action(
+    cell_break_down_action = circus.create_action(
         name="cell_break_down",
 
         initiating_actor=cells,
@@ -139,7 +139,7 @@ def add_cells(circus, seeder, params):
         activity_gen=ParetoGenerator(xmin=5, a=1.4, seed=seeder.next())
     )
 
-    cell_repair_action = Action(
+    cell_repair_action = circus.create_action(
         name="cell_repair_down",
 
         initiating_actor=cells,
@@ -158,7 +158,7 @@ def add_cells(circus, seeder, params):
     cell_break_down_action.set_operations(
         unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
-        cells.get_attribute("HEALTH").ops.overwrite(
+        cells.get_attribute("HEALTH").ops.update(
             actor_id_field="CELL_ID",
             copy_from_field="NEW_HEALTH_LEVEL"),
 
@@ -172,7 +172,7 @@ def add_cells(circus, seeder, params):
     cell_repair_action.set_operations(
         healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
-        cells.get_attribute("HEALTH").ops.overwrite(
+        cells.get_attribute("HEALTH").ops.update(
             actor_id_field="CELL_ID",
             copy_from_field="NEW_HEALTH_LEVEL"),
 
@@ -182,8 +182,6 @@ def add_cells(circus, seeder, params):
         operations.FieldLogger(log_id="cell_status",
                                cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
     )
-
-    circus.add_actions(cell_break_down_action, cell_repair_action)
 
     return cells
 
@@ -230,7 +228,7 @@ def add_mobility(circus, subs, cells, seeder):
     # Mobility action itself, basically just a random hop from cell to cell,
     # that updates the "CELL" attributes + generates mobility logs
     logging.info(" creating mobility action")
-    mobility_action = Action(
+    mobility_action = circus.create_action(
         name="mobility",
 
         initiating_actor=subs,
@@ -247,7 +245,7 @@ def add_mobility(circus, subs, cells, seeder):
         mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
         # update the CELL attribute of the customers accordingly
-        subs.get_attribute("CELL").ops.overwrite(
+        subs.get_attribute("CELL").ops.update(
             actor_id_field="A_ID",
             copy_from_field="NEW_CELL"),
 
@@ -258,7 +256,6 @@ def add_mobility(circus, subs, cells, seeder):
                                cols=["TIME", "A_ID", "PREV_CELL", "NEW_CELL"]),
     )
 
-    circus.add_action(mobility_action)
     logging.info(" done")
 
 
@@ -299,7 +296,7 @@ def add_topups(circus, sims, recharge_gen):
 
     # topup action itself, basically just a selection of an agent and subsequent
     # computation of the value
-    topup_action = Action(
+    topup_action = circus.create_action(
         name="topups",
         initiating_actor=sims,
         actorid_field="SIM_ID",
@@ -325,7 +322,7 @@ def add_topups(circus, sims, recharge_gen):
                          named_as="MAIN_ACCT",
                          f=np.add, f_args="series"),
 
-        sims.get_attribute("MAIN_ACCT").ops.overwrite(
+        sims.get_attribute("MAIN_ACCT").ops.update(
             actor_id_field="SIM_ID",
             copy_from_field="MAIN_ACCT"),
 
@@ -336,8 +333,6 @@ def add_topups(circus, sims, recharge_gen):
                                      "VALUE", "OPERATOR",
                                      "MAIN_ACCT_OLD", "MAIN_ACCT"]),
     )
-
-    circus.add_action(topup_action)
 
 
 def compute_call_value(action_data):
@@ -464,7 +459,7 @@ def add_communications(circus, subs, sims, cells, seeder):
                                                seed=seeder.next())
 
     # Calls and SMS actions themselves
-    calls = Action(
+    calls = circus.create_action(
         name="calls",
 
         initiating_actor=subs,
@@ -480,7 +475,7 @@ def add_communications(circus, subs, sims, cells, seeder):
         }
     )
 
-    sms = Action(
+    sms = circus.create_action(
         name="sms",
 
         initiating_actor=subs,
@@ -568,7 +563,7 @@ def add_communications(circus, subs, sims, cells, seeder):
                          named_as="MAIN_ACCT_NEW",
                          f=np.subtract, f_args="series"),
 
-        sims.get_attribute("MAIN_ACCT").ops.overwrite(
+        sims.get_attribute("MAIN_ACCT").ops.update(
             actor_id_field="SIM_A",
             copy_from_field="MAIN_ACCT_NEW"),
     )
@@ -665,8 +660,6 @@ def add_communications(circus, subs, sims, cells, seeder):
                                      "CELL_B", "OPERATOR_B",
                                      "TYPE", "PRODUCT"]),
     )
-
-    circus.add_actions(calls, sms)
 
 
 def build_cdr_scenario(params):

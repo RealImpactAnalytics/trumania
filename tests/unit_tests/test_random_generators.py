@@ -96,5 +96,20 @@ def test_random_generator_should_provide_correct_amount_of_list_of_values():
     assert result["rand"].apply(len).tolist() == [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
 
+def test_faker_generator_should_delegate_to_faker_correct():
+
+    tested_name = FakerGenerator(seed=1234, method="name")
+    some_names = tested_name.generate(10)
+    assert len(some_names) == 10
+
+    tested_text = FakerGenerator(seed=1234, method="text")
+    some_text = tested_text.generate(20)
+    assert len(some_text) == 20
+
+    tested_address = FakerGenerator(seed=1234, method="address")
+    some_addresses = tested_address.generate(30)
+    assert len(some_addresses) == 30
+
+
 
 

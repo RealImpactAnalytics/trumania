@@ -1,24 +1,25 @@
-from datagenerator.random_generators import *
 from datagenerator.attribute import *
+import logging
 
 
 class Actor(object):
     def __init__(self, size, id_start=0, prefix="id_", max_length=10):
         """
-
         :param size:
         :param id_start:
         :return:
         """
-        self.ids = build_ids(size, id_start, prefix, max_length)
-        self._attributes = {}
-        self.ops = self.ActorOps(self)
+        self.ids = pd.Index(build_ids(size, id_start, prefix, max_length))
         self.size = size
+
+        self._attributes = {}
         self.relationships = {}
+
+        self.ops = self.ActorOps(self)
 
     def create_relationship(self, name, seed):
         """
-        creates an empty relation ship from this actor
+        creates an empty relationship from this actor
         """
 
         if name is self.relationships:
@@ -42,8 +43,10 @@ class Actor(object):
         """
         :return: the values of this attribute, as a Series
         """
-
         return self.get_attribute(attribute_name).get_values(ids)
+
+    def attribute_names(self):
+        return self._attributes.keys()
 
     def check_attributes(self, ids, field, condition, threshold):
         """
@@ -69,8 +72,37 @@ class Actor(object):
             return attr == threshold
         raise Exception("Unknown condition : %s" % condition)
 
-    def attribute_names(self):
-        return self._attributes.keys()
+    def update(self, attribute_df):
+        """
+        Adds or updates actors with the provided attribute ids and values
+
+         :param attribute_df: must be a dataframe whose index contain the id
+         of the inserted actors. There must be as many
+         columns as there are attributes currently defined in this actor.
+
+        If the actors for the specified ids already exist, their values are
+        updated, otherwise the actors are created.
+        """
+
+        if set(self.attribute_names()) != set(attribute_df.columns.tolist()):
+            # TODO: in case of update only, we could accept that.
+            # ALso, for insert, we could also accept and just insert NA's
+            # This method is currently just aimed at adding "full" actors though...
+            raise ValueError("""must provide values for all attributes:
+                    - actor attributes: {}
+                    - provided attributes: {}
+            """.format(self.attribute_names(), attribute_df.columns))
+
+        values_dedup = attribute_df[~attribute_df.index.duplicated(keep="last")]
+        if attribute_df.shape[0] != values_dedup.shape[0]:
+            logging.warn("inserted actors contain duplicate ids => some will "
+                         "be discarded so that all actor ids are unique")
+
+        new_ids = values_dedup.index.difference(self.ids)
+        self.ids = self.ids | new_ids
+
+        for att_name, values in values_dedup.iteritems():
+            self.get_attribute(att_name).update(values)
 
     def to_dataframe(self):
         """
@@ -111,11 +143,8 @@ class Actor(object):
                 actor_ids = action_data[self.actor_id_field].unique()
 
                 for attribute, named_as in self.select_dict.items():
-                    try:
-                        vals = pd.DataFrame(
-                        self.actor.get_attribute_values(attribute, actor_ids))
-                    except:
-                        a=1
+                    vals = pd.DataFrame(
+                    self.actor.get_attribute_values(attribute, actor_ids))
                     vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
@@ -164,3 +193,37 @@ class Actor(object):
 
             """
             return self.Lookup(self.actor, actor_id_field, select)
+
+        class Update(SideEffectOnly):
+            def __init__(self, actor, actor_id_field, copy_attributes_from_fields):
+                self.actor = actor
+                self.actor_id_field = actor_id_field
+                self.copy_attribute_from_fields = copy_attributes_from_fields
+
+            def side_effect(self, action_data):
+                update_df = pd.DataFrame(
+                    {attribute: action_data[field].values
+                     for attribute, field in self.copy_attribute_from_fields.items()},
+                    index=action_data[self.actor_id_field]
+                )
+                self.actor.update(update_df)
+
+        def update(self, actor_id_field, copy_attributes_from_fields):
+            """
+
+            Adds or update actors and their attributes.
+
+            Note that the index of action_data, i.e. the ids of the _triggering_
+            actors, is irrelevant during this operation.
+
+            :param actor_id_field: ids of the updated or created actors
+            :param copy_attributes_from_fields: dictionary of
+                (attribute name -> action data field name)
+             that describes which column in the actor data dataframe to use
+               to update which attribute.
+            :return:
+
+            """
+            return self.Update(self.actor, actor_id_field,
+                               copy_attributes_from_fields)
+

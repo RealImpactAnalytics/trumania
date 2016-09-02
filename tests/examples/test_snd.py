@@ -2,7 +2,6 @@ from __future__ import division
 
 from datetime import datetime
 
-from datagenerator.action import *
 from datagenerator.actor import *
 from datagenerator.circus import *
 from datagenerator.clock import *
@@ -38,6 +37,9 @@ def create_agents(seeder):
 
     agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
     agents.create_relationship(name="SIM", seed=seeder.next())
+
+    agents.create_attribute(name="AGENT_NAME",
+                            init_gen=FakerGenerator(seed=seeder.next(), method="name"))
 
     # note: the SIM multi-attribute is not initialized with any SIM: agents
     # start with no SIM
@@ -155,7 +157,7 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
     the bulk purchase action below
     """
 
-    restocking = Action(
+    restocking = circus.create_action(
         name="distributor_restock",
         initiating_actor=distributors,
         actorid_field="DISTRIBUTOR_ID",
@@ -189,10 +191,8 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
 
     )
 
-    circus.add_action(restocking)
 
-
-def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
+def add_dealer_bulk_sim_purchase_action(circus, dealers, distributors, seeder):
     """
     Adds a SIM purchase action from agents to dealer, with impact on stock of
     both actors
@@ -205,7 +205,7 @@ def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
 
     purchase_activity_gen = ConstantGenerator(value=100)
 
-    build_purchases = Action(
+    build_purchases = circus.create_action(
         name="bulk_purchases",
         initiating_actor=dealers,
         actorid_field="DEALER_ID",
@@ -258,10 +258,8 @@ def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
                                      "NUMBER_OF_SIMS"]),
     )
 
-    circus.add_action(build_purchases)
 
-
-def add_agent_purchase_action(circus, agents, dealers, seeder):
+def add_agent_sim_purchase_action(circus, agents, dealers, seeder):
     """
     Adds a SIM purchase action from agents to dealer, with impact on stock of
     both actors
@@ -281,7 +279,7 @@ def add_agent_purchase_action(circus, agents, dealers, seeder):
     #  to "come back to normal", instead of sampling a random variable at
     #  each turn => would improve efficiency
 
-    purchase = Action(
+    purchase = circus.create_action(
         name="purchases",
         initiating_actor=agents,
         actorid_field="AGENT",
@@ -339,8 +337,6 @@ def add_agent_purchase_action(circus, agents, dealers, seeder):
             item_field="SOLD_SIM"),
     )
 
-    circus.add_action(purchase)
-
 
 def add_agent_holidays_action(circus, agents, seeder):
     """
@@ -368,15 +364,15 @@ def add_agent_holidays_action(circus, agents, seeder):
     holiday_end_activity = ParetoGenerator(xmin=150, a=1.2,
                                            seed=seeder.next())
 
-    going_on_holidays = Action(
+    going_on_holidays = circus.create_action(
         name="agent_start_holidays",
         initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,
         activity_gen=holiday_start_activity)
 
-    returning_from_holidays = Action(
-        name="agent_start_holidays",
+    returning_from_holidays = circus.create_action(
+        name="agent_stops_holidays",
         initiating_actor=agents,
         actorid_field="AGENT",
         timer_gen=holiday_time_gen,
@@ -407,7 +403,65 @@ def add_agent_holidays_action(circus, agents, seeder):
         operations.FieldLogger(log_id="holidays"),
     )
 
-    circus.add_actions(going_on_holidays, returning_from_holidays)
+
+def add_agent_reviews_actions(circus, agents, seeder):
+    """
+    This illustrates the dynamic creation of new actors: reviews are modeled as "actor"
+     (even though they are mostly inactive data container) that are created dynamically
+     and linked to agents.
+
+    I guess most of the time reviews would be modeled as logs instead of actors, but
+     let's just ignore that for illustration purposes... ^^
+    """
+
+    timegen = WeekProfiler(clock=circus.clock,
+                           week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                           seed=seeder.next())
+
+    review_activity_gen = NumpyRandomGenerator(
+        method="choice", a=range(1, 4), seed=seeder.next())
+
+    # the system starts with no reviews
+    review_actor = Actor(size=0)
+    review_actor.create_attribute("DATE")
+    review_actor.create_attribute("TEXT")
+    review_actor.create_attribute("AGENT_ID")
+    review_actor.create_attribute("AGENT_NAME")
+
+    reviews = circus.create_action(
+        name="agent_reviews",
+        initiating_actor=agents,
+        actorid_field="AGENT",
+        timer_gen=timegen,
+        activity_gen=review_activity_gen,
+    )
+
+    review_id_gen = SequencialGenerator(start=0, prefix="REVIEW_ID")
+    text_id_gen = FakerGenerator(method="text", seed=seeder.next())
+
+    reviews.set_operations(
+        circus.clock.ops.timestamp(named_as="DATETIME"),
+
+        agents.ops.lookup(actor_id_field="AGENT",
+                          select={"AGENT_NAME": "AGENT_NAME"}),
+
+        review_id_gen.ops.generate(named_as="REVIEW_ID"),
+
+        text_id_gen.ops.generate(named_as="REVIEW_TEXT"),
+
+        review_actor.ops.update(
+            actor_id_field="REVIEW_ID",
+            copy_attributes_from_fields={
+                "DATE": "DATETIME",
+                "TEXT": "REVIEW_TEXT",
+                "AGENT_ID": "AGENT",
+                "AGENT_NAME": "AGENT_NAME",
+            }
+        ),
+
+        # actually, here we're modelling review both as actors and logs..
+        operations.FieldLogger(log_id="reviews")
+    )
 
 
 def test_snd_scenario():
@@ -427,9 +481,10 @@ def test_snd_scenario():
     connect_agent_to_dealer(agents, dealers, seeder)
     connect_dealers_to_distributors(dealers, distributors, seeder)
 
-    add_agent_purchase_action(flying, agents, dealers, seeder)
-    add_dealer_bulk_purchase_action(flying, dealers, distributors, seeder)
+    add_agent_sim_purchase_action(flying, agents, dealers, seeder)
+    add_dealer_bulk_sim_purchase_action(flying, dealers, distributors, seeder)
     add_agent_holidays_action(flying, agents, seeder)
+    add_agent_reviews_actions(flying, agents, seeder)
 
     logs = flying.run(n_iterations=100)
 
