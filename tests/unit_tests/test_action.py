@@ -1,8 +1,8 @@
-from datagenerator.actor import Actor
-from datagenerator.action import Action
-from datagenerator.clock import *
-from tests.mocks.random_generators import *
+from datagenerator.core.action import Action
+from datagenerator.core.actor import Actor
 from tests.mocks.operations import *
+from tests.mocks.random_generators import *
+from datagenerator.components.time_patterns.profilers import *
 
 
 def test_empty_action_should_do_nothing_and_not_crash():

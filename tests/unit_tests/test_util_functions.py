@@ -1,4 +1,4 @@
-from datagenerator.util_functions import *
+from datagenerator.core.util_functions import *
 
 
 def test_merge_two_empty_dict_should_return_empty_dict():

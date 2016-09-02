@@ -10,24 +10,6 @@ from networkx.algorithms import bipartite
 import logging
 
 
-def create_er_social_network(customer_ids, p, seed):
-    """
-
-    :type customer_ids: list
-    :param customer_ids: list of IDs as defined in the data
-    :type p: float
-    :param p: probability of existence of 1 edge
-    :type seed: int
-    :param seed: seed for random generator
-    :rtype: Pandas DataFrame, with two columns (A and B)
-    :return: all edges in the graph
-    """
-
-    return pd.DataFrame.from_records([(customer_ids[e[0]],customer_ids[e[1]])
-                                     for e in nx.fast_gnp_random_graph(len(customer_ids), p, seed).edges()],
-                                     columns=["A", "B"])
-
-
 def make_random_bipartite_data(group1, group2, p, seed):
     """
 

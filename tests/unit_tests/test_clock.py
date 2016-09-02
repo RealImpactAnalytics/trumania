@@ -1,5 +1,6 @@
-from datagenerator import clock
 from datetime import datetime
+
+from datagenerator.core import clock
 
 
 def test_default_clock_should_have_0_day_and_week_index():

@@ -1,5 +1,4 @@
-from datagenerator.random_generators import *
-from itertools import *
+from datagenerator.core.random_generators import *
 
 
 def test_constant_generator_should_produce_constant_values():

@@ -1,6 +1,7 @@
-from datagenerator.attribute import Attribute
-from datagenerator.actor import Actor
 import pandas as pd
+
+from datagenerator.core.actor import Actor
+from datagenerator.core.attribute import Attribute
 
 
 def test_set_and_read_values_in_attribute_should_be_equal():

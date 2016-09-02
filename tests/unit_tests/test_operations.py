@@ -1,6 +1,7 @@
-import datagenerator.operations as operations
+import datagenerator.core as operations
 import tests.mocks.operations as mockops
-from datagenerator.util_functions import *
+from datagenerator.core.util_functions import *
+from datagenerator.core import operations
 
 
 def test_apply_should_delegate_to_single_col_dataframe_function_correctly():

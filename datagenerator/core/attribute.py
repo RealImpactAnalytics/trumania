@@ -1,4 +1,4 @@
-from datagenerator.relationship import *
+from datagenerator.core.relationship import *
 
 
 class Attribute(object):

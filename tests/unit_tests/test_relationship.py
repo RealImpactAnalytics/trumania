@@ -1,5 +1,6 @@
-from datagenerator.relationship import Relationship
-from datagenerator.util_functions import *
+from datagenerator.core.relationship import Relationship
+from datagenerator.core.util_functions import *
+
 setup_logging()
 
 

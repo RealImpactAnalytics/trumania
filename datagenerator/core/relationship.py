@@ -1,5 +1,6 @@
-from datagenerator.operations import *
 from numpy.random import RandomState
+
+from datagenerator.core.operations import *
 
 
 class Relationship(object):

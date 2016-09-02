@@ -1,5 +1,6 @@
-from datagenerator.actor import Actor
 import pandas as pd
+
+from datagenerator.core.actor import Actor
 
 dummy_actor = Actor(size=10, max_length=1)
 

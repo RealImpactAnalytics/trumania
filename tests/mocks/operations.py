@@ -1,4 +1,4 @@
-from datagenerator import operations
+from datagenerator.core import operations
 
 
 class FakeOp(operations.Operation):

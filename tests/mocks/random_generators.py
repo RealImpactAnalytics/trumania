@@ -1,5 +1,4 @@
-from datagenerator.random_generators import *
-
+from datagenerator.core.random_generators import *
 
 class ConstantsMockGenerator(Generator):
     """

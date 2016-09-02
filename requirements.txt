@@ -3,3 +3,4 @@ pandas
 numpy
 teamcity-messages
 pytest
+fake-factory

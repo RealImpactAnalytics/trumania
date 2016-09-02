@@ -1,5 +1,6 @@
-from datagenerator.attribute import *
 import logging
+
+from datagenerator.core.attribute import *
 
 
 class Actor(object):

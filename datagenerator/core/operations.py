@@ -1,6 +1,8 @@
 from __future__ import division
+
 from abc import ABCMeta, abstractmethod
-from datagenerator.util_functions import *
+
+from datagenerator.core.util_functions import *
 
 
 class Operation(object):
