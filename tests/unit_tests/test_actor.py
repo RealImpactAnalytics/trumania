@@ -1,8 +1,10 @@
 import pandas as pd
+import path
+import os
 
 from datagenerator.core.actor import Actor
 
-dummy_actor = Actor(size=10, max_length=1)
+dummy_actor = Actor(size=10, max_length=1, prefix="id_")
 
 ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
 dummy_actor.create_attribute("age", init_values=ages)
@@ -225,6 +227,29 @@ def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible(
     assert a.ids.tolist() == ["ac1", "ac2", "ac3"]
     assert a.get_attribute_values("att1", ["ac1", "ac2", "ac3"]).tolist() == [1,2,3]
     assert a.get_attribute_values("att2", ["ac1", "ac2", "ac3"]).tolist() == [11,12,13]
+
+
+def test_io_round_trip():
+
+    with path.tempdir() as p:
+
+        actor_path = os.path.join(p, "test_location")
+        dummy_actor.save_to(actor_path)
+        retrieved = Actor.load_from(actor_path)
+
+        assert dummy_actor.size == retrieved.size
+        assert dummy_actor.ids.tolist() == retrieved.ids.tolist()
+        ids = dummy_actor.ids.tolist()
+
+        for att_name in dummy_actor.attribute_names():
+            assert dummy_actor.get_attribute_values(att_name, ids).equals(
+                retrieved.get_attribute_values(att_name, ids)
+            )
+
+        for rel_name in dummy_actor.relationship_names():
+            assert dummy_actor.get_relationship(rel_name)._table.equals(
+                retrieved.get_relationship(rel_name)._table
+            )
 
 
 
