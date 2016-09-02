@@ -203,5 +203,28 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     assert updated_city.tolist() == ["a", "city_7", "city_9", "city_10", "city_11"]
 
 
+def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible():
+
+    # empty actor
+    a = Actor(size=0)
+    assert a.ids.shape[0] == 0
+
+    # empty attributes
+    a.create_attribute("att1")
+    a.create_attribute("att2")
+
+    dynamically_created = pd.DataFrame({
+            "att1": [1,2,3],
+            "att2": [11,12,13],
+        }, index=["ac1", "ac2", "ac3"]
+    )
+
+    a.update(dynamically_created)
+
+    assert a.ids.tolist() == ["ac1", "ac2", "ac3"]
+    assert a.get_attribute_values("att1", ["ac1", "ac2", "ac3"]).tolist() == [1,2,3]
+    assert a.get_attribute_values("att2", ["ac1", "ac2", "ac3"]).tolist() == [11,12,13]
+
+
 
 

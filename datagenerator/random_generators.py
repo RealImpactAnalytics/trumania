@@ -1,5 +1,6 @@
 from datagenerator.operations import *
 from itertools import islice
+from faker import Faker
 
 
 def seed_provider(master_seed):
@@ -149,6 +150,22 @@ class SequencialGenerator(Generator):
         values = build_ids(size, self.counter, self.prefix, self.max_length)
         self.counter += size
         return values
+
+
+class FakerGenerator(Generator):
+    """
+    Generator wrapping Faker factory
+    """
+
+    def __init__(self, seed, method):
+        Generator.__init__(self)
+        fake = Faker()
+        fake.seed(seed)
+
+        self.method = getattr(fake, method)
+
+    def generate(self, size):
+        return [self.method() for _ in range(size)]
 
 
 class MSISDNGenerator(Generator):

@@ -25,7 +25,10 @@ class Attribute(object):
         """
         self.ops = self.AttributeOps(self)
 
-        if init_relationship is None:
+        if actor.size == 0:
+            self._table = pd.DataFrame(columns=["value"])
+
+        elif init_relationship is None:
             if not ((init_values is None) ^ (init_gen is None)):
                 raise ValueError("if init_relationship is not provided, "
                                  "you must also provide init_values or "

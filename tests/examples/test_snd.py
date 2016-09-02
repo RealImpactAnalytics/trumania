@@ -38,6 +38,9 @@ def create_agents(seeder):
     agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
     agents.create_relationship(name="SIM", seed=seeder.next())
 
+    agents.create_attribute(name="AGENT_NAME",
+                            init_gen=FakerGenerator(seed=1234, method="name"))
+
     # note: the SIM multi-attribute is not initialized with any SIM: agents
     # start with no SIM
 
@@ -189,7 +192,7 @@ def add_distributor_recharge_action(circus, distributors, sim_generator):
     )
 
 
-def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
+def add_dealer_bulk_sim_purchase_action(circus, dealers, distributors, seeder):
     """
     Adds a SIM purchase action from agents to dealer, with impact on stock of
     both actors
@@ -256,7 +259,7 @@ def add_dealer_bulk_purchase_action(circus, dealers, distributors, seeder):
     )
 
 
-def add_agent_purchase_action(circus, agents, dealers, seeder):
+def add_agent_sim_purchase_action(circus, agents, dealers, seeder):
     """
     Adds a SIM purchase action from agents to dealer, with impact on stock of
     both actors
@@ -418,8 +421,8 @@ def test_snd_scenario():
     connect_agent_to_dealer(agents, dealers, seeder)
     connect_dealers_to_distributors(dealers, distributors, seeder)
 
-    add_agent_purchase_action(flying, agents, dealers, seeder)
-    add_dealer_bulk_purchase_action(flying, dealers, distributors, seeder)
+    add_agent_sim_purchase_action(flying, agents, dealers, seeder)
+    add_dealer_bulk_sim_purchase_action(flying, dealers, distributors, seeder)
     add_agent_holidays_action(flying, agents, seeder)
 
     logs = flying.run(n_iterations=100)
