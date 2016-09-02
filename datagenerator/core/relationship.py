@@ -1,6 +1,5 @@
-from numpy.random import RandomState
-
 from datagenerator.core.operations import *
+import pandas as pd
 
 
 class Relationship(object):
@@ -20,8 +19,11 @@ class Relationship(object):
     """
 
     def __init__(self, seed):
-        self.state = RandomState(seed)
-        self._table = pd.DataFrame(columns=["from", "to", "weight"])
+        self.seed = seed
+        self.state = RandomState(self.seed)
+        self._table = pd.DataFrame(
+            columns=["from", "to", "weight", "table_index"]
+            )
         self.ops = self.RelationshipOps(self)
 
     def add_relations(self, from_ids, to_ids, weights=1):
@@ -32,6 +34,8 @@ class Relationship(object):
 
         self._table = pd.concat([self._table, new_relations],
                                 ignore_index=True, copy=False)
+
+        self._table["weight"] = self._table["weight"].astype(float)
 
         # we sometimes want to keep track of the index of some rows when
         # accessed within a group-by operation => copying the info in a separate
@@ -227,6 +231,41 @@ class Relationship(object):
                             self._table["to"].isin(to_ids)]
 
         self._table.drop(lines.index, inplace=True)
+
+    ######################
+    ## IO
+
+    def save_to(self, file_path):
+
+        # creating a vertical dataframe to store the inner table
+        saved_df = pd.DataFrame(self._table.stack())
+
+        # we also want to save the seed => added an index level to separate
+        # self._table from self.seed in the end result
+        saved_df["param"] = "table"
+        saved_df = saved_df.set_index("param", append=True)
+        saved_df.index = saved_df.index.reorder_levels([2, 0, 1])
+
+        # then finally added the seed
+        saved_df.loc[("seed", 0, 0)] = self.seed
+        saved_df.to_csv(file_path)
+
+    @staticmethod
+    def load_from(file_path):
+        saved_df = pd.read_csv(file_path, index_col=[0, 1, 2])
+        seed = int(saved_df.loc[("seed")].values[0][0])
+
+        table = saved_df.loc[("table", slice(None), slice(None))].unstack()
+        table.columns = table .columns.droplevel(level=0)
+        table.columns.name = None
+        table.index.name = None
+        table["weight"] = table["weight"].astype(float)
+        table["table_index"] = table["table_index"].astype(int)
+
+        rel = Relationship(seed)
+        rel._table = table
+
+        return rel
 
     class RelationshipOps(object):
         def __init__(self, relationship):

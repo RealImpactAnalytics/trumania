@@ -5,7 +5,7 @@
 from numpy.random import RandomState
 import pandas as pd
 import numpy as np
-import networkx as nx
+import os
 from networkx.algorithms import bipartite
 import logging
 
@@ -173,3 +173,5 @@ def cap_to_total(values, target_total):
     else:
         return cap_to_total(values[:-1], target_total) + [0]
 
+def path_of_current_file():
+    return os.path.dirname(os.path.realpath(__file__))

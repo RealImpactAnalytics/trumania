@@ -96,7 +96,7 @@ def select_sims(action_data):
     return action_data.apply(do_select, axis=1)
 
 
-class CdrScenario(WithErdosRenyi, WithRandomGeo, Circus):
+class CdrScenario(WithErdosRenyi, WithRandomGeo, Circ1us):
     """
         Main CDR calls, sms, topus, mobility,... scenario
     """

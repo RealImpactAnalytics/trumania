@@ -1,4 +1,6 @@
 import pandas as pd
+import path
+import os
 
 from datagenerator.core.actor import Actor
 from datagenerator.core.attribute import Attribute
@@ -96,6 +98,7 @@ def test_added_and_read_values_in_attribute_should_be_equal():
 
     assert tested.get_values(["abc0", "abc1", "abc2", "abc3", "abc4"]).tolist() == [10, 20+22, 30, 40+44, 50]
 
+
 def test_adding_several_times_to_the_same_from_should_pile_up():
     actor = Actor(size=5, prefix="abc", max_length=1)
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
@@ -103,4 +106,20 @@ def test_adding_several_times_to_the_same_from_should_pile_up():
     tested.add(["abc1", "abc3", "abc1"], [22, 44, 10])
 
     assert tested.get_values(["abc0", "abc1", "abc2", "abc3", "abc4"]).tolist() == [10, 20+22+10, 30, 40+44, 50]
+
+
+def test_io_round_trip():
+
+    with path.tempdir() as root_dir:
+
+        actor = Actor(size=5, prefix="abc", max_length=1)
+        orig = Attribute(actor, init_values=[10, 20, 30, 40, 50])
+
+        full_path = os.path.join(root_dir, "attribute.csv")
+
+        orig.save_to(full_path)
+        retrieved = Attribute.load_from(full_path)
+
+        assert orig._table.equals(retrieved._table)
+
 

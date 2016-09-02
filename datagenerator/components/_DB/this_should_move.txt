@@ -1,0 +1,6 @@
+
+Ideally, we would have a central shared storage somewhere where all model
+object would be stored and retrieve
+
+But for the purpose of this illustration, we just store binary object in the git
+repo...

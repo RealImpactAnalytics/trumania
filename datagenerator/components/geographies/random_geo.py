@@ -2,6 +2,7 @@ from datagenerator.core.circus import Circus
 from datagenerator.core.actor import Actor
 from datagenerator.core.random_generators import *
 
+import pandas as pd
 
 class WithRandomGeo(Circus):
     """
@@ -20,6 +21,10 @@ class WithRandomGeo(Circus):
 
         cells.create_attribute("latitude", init_gen=latitude_generator)
         cells.create_attribute("longitude", init_gen=longitude_generator)
+
+        df = pd.DataFrame()
+
+        df.to_pickle()
 
         return cells
 
