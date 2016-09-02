@@ -158,7 +158,7 @@ def add_cells(circus, seeder, params):
     cell_break_down_action.set_operations(
         unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
-        cells.get_attribute("HEALTH").ops.overwrite(
+        cells.get_attribute("HEALTH").ops.update(
             actor_id_field="CELL_ID",
             copy_from_field="NEW_HEALTH_LEVEL"),
 
@@ -172,7 +172,7 @@ def add_cells(circus, seeder, params):
     cell_repair_action.set_operations(
         healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
-        cells.get_attribute("HEALTH").ops.overwrite(
+        cells.get_attribute("HEALTH").ops.update(
             actor_id_field="CELL_ID",
             copy_from_field="NEW_HEALTH_LEVEL"),
 
@@ -245,7 +245,7 @@ def add_mobility(circus, subs, cells, seeder):
         mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
         # update the CELL attribute of the customers accordingly
-        subs.get_attribute("CELL").ops.overwrite(
+        subs.get_attribute("CELL").ops.update(
             actor_id_field="A_ID",
             copy_from_field="NEW_CELL"),
 
@@ -322,7 +322,7 @@ def add_topups(circus, sims, recharge_gen):
                          named_as="MAIN_ACCT",
                          f=np.add, f_args="series"),
 
-        sims.get_attribute("MAIN_ACCT").ops.overwrite(
+        sims.get_attribute("MAIN_ACCT").ops.update(
             actor_id_field="SIM_ID",
             copy_from_field="MAIN_ACCT"),
 
@@ -563,7 +563,7 @@ def add_communications(circus, subs, sims, cells, seeder):
                          named_as="MAIN_ACCT_NEW",
                          f=np.subtract, f_args="series"),
 
-        sims.get_attribute("MAIN_ACCT").ops.overwrite(
+        sims.get_attribute("MAIN_ACCT").ops.update(
             actor_id_field="SIM_A",
             copy_from_field="MAIN_ACCT_NEW"),
     )

@@ -53,13 +53,13 @@ class Attribute(object):
         """
         return self._table.loc[ids]["value"]
 
-    def update(self, ids, values):
+    def update(self, series):
         """
-        :param values:
-        :param ids:
-        :return:
+        updates or adds values of this attributes from the values of the provided
+        series, using its index as actor id
         """
-        self._table.loc[ids, "value"] = values
+        self._table = self._table.reindex(self._table.index | series.index)
+        self._table.loc[series.index, "value"] = series.values
 
     def add(self, ids, added_values):
         """
@@ -77,7 +77,7 @@ class Attribute(object):
         def __init__(self, attribute):
             self.attribute = attribute
 
-        class Overwrite(SideEffectOnly):
+        class Update(SideEffectOnly):
             def __init__(self, attribute, actor_id_field,
                          copy_from_field):
                 self.attribute = attribute
@@ -86,11 +86,12 @@ class Attribute(object):
 
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
-                    self.attribute.update(
-                        ids=action_data[self.actor_id_field].values,
-                        values=action_data[self.copy_from_field].values)
+                    update_series = pd.Series(
+                        data=action_data[self.copy_from_field].values,
+                        index=action_data[self.actor_id_field].values)
+                    self.attribute.update(update_series)
 
-        def overwrite(self, actor_id_field, copy_from_field):
+        def update(self, actor_id_field, copy_from_field):
             """
             Overwrite the value of this attribute with values in this field
 
@@ -100,8 +101,8 @@ class Attribute(object):
                 containing the new values of the attribute
             :return:
             """
-            return self.Overwrite(self.attribute, actor_id_field,
-                                  copy_from_field)
+            return self.Update(self.attribute, actor_id_field,
+                               copy_from_field)
 
         class Add(SideEffectOnly):
             def __init__(self, attribute, actor_id_field,
