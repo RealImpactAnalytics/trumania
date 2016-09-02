@@ -39,7 +39,7 @@ def create_agents(seeder):
     agents.create_relationship(name="SIM", seed=seeder.next())
 
     agents.create_attribute(name="AGENT_NAME",
-                            init_gen=FakerGenerator(seed=1234, method="name"))
+                            init_gen=FakerGenerator(seed=seeder.next(), method="name"))
 
     # note: the SIM multi-attribute is not initialized with any SIM: agents
     # start with no SIM
@@ -404,6 +404,66 @@ def add_agent_holidays_action(circus, agents, seeder):
     )
 
 
+def add_agent_reviews_actions(circus, agents, seeder):
+    """
+    This illustrates the dynamic creation of new actors: reviews are modeled as "actor"
+     (even though they are mostly inactive data container) that are created dynamically
+     and linked to agents.
+
+    I guess most of the time reviews would be modeled as logs instead of actors, but
+     let's just ignore that for illustration purposes... ^^
+    """
+
+    timegen = WeekProfiler(clock=circus.clock,
+                           week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                           seed=seeder.next())
+
+    review_activity_gen = NumpyRandomGenerator(
+        method="choice", a=range(1, 4), seed=seeder.next())
+
+    # the system starts with no reviews
+    review_actor = Actor(size=0)
+    review_actor.create_attribute("DATE")
+    review_actor.create_attribute("TEXT")
+    review_actor.create_attribute("AGENT_ID")
+    review_actor.create_attribute("AGENT_NAME")
+
+    reviews = circus.create_action(
+        name="agent_reviews",
+        initiating_actor=agents,
+        actorid_field="AGENT",
+        timer_gen=timegen,
+        activity_gen=review_activity_gen,
+    )
+
+    review_id_gen = SequencialGenerator(start=0, prefix="REVIEW_ID")
+    text_id_gen = FakerGenerator(method="text", seed=seeder.next())
+
+    reviews.set_operations(
+        circus.clock.ops.timestamp(named_as="DATETIME"),
+
+        agents.ops.lookup(actor_id_field="AGENT",
+                          select={"AGENT_NAME": "AGENT_NAME"}),
+
+        review_id_gen.ops.generate(named_as="REVIEW_ID"),
+
+        text_id_gen.ops.generate(named_as="REVIEW_TEXT"),
+
+        review_actor.ops.update(
+            actor_id_field="REVIEW_ID",
+            copy_attributes_from_fields={
+                "DATE": "DATETIME",
+                "TEXT": "REVIEW_TEXT",
+                "AGENT_ID": "AGENT",
+                "AGENT_NAME": "AGENT_NAME",
+            }
+        ),
+
+        # actually, here we're modelling review both as actors and logs..
+        operations.FieldLogger(log_id="reviews")
+    )
+
+
 def test_snd_scenario():
 
     setup_logging()
@@ -424,6 +484,7 @@ def test_snd_scenario():
     add_agent_sim_purchase_action(flying, agents, dealers, seeder)
     add_dealer_bulk_sim_purchase_action(flying, dealers, distributors, seeder)
     add_agent_holidays_action(flying, agents, seeder)
+    add_agent_reviews_actions(flying, agents, seeder)
 
     logs = flying.run(n_iterations=100)
 

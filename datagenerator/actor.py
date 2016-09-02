@@ -88,7 +88,10 @@ class Actor(object):
             # TODO: in case of update only, we could accept that.
             # ALso, for insert, we could also accept and just insert NA's
             # This method is currently just aimed at adding "full" actors though...
-            raise ValueError("must provide values for all attributes")
+            raise ValueError("""must provide values for all attributes:
+                    - actor attributes: {}
+                    - provided attributes: {}
+            """.format(self.attribute_names(), attribute_df.columns))
 
         values_dedup = attribute_df[~attribute_df.index.duplicated(keep="last")]
         if attribute_df.shape[0] != values_dedup.shape[0]:
