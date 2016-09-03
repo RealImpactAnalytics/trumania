@@ -1,10 +1,10 @@
-import pandas as pd
 import path
-import os
+from datagenerator.core.random_generators import *
 
 from datagenerator.core.actor import Actor
 
-dummy_actor = Actor(size=10, max_length=1, prefix="id_")
+dummy_actor = Actor(size=10,
+                    ids_gen=SequencialGenerator(max_length=1, prefix="id_"))
 
 ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
 dummy_actor.create_attribute("age", init_values=ages)
@@ -108,7 +108,10 @@ def test_lookup_values_by_array_should_return_correct_values():
 def test_insert_actor_value_for_existing_actors_should_update_all_values():
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(size=10, max_length=1, prefix="a_")
+    tested_actor = Actor(
+        size=10,
+        ids_gen=SequencialGenerator(max_length=1, prefix="a_")
+    )
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
@@ -138,7 +141,8 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
 def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_values():
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(size=10, max_length=1, prefix="a_")
+    tested_actor = Actor(size=10,
+        ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
@@ -169,7 +173,8 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     # same as test above but triggered as an Operation on action data
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(size=10, max_length=1, prefix="a_")
+    tested_actor = Actor(size=10,
+        ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]

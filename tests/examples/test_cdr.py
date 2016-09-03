@@ -7,9 +7,8 @@ from datagenerator.components.geographies.uganda import *
 
 from datetime import datetime
 
-# couple of utily methods called in Apply of this scenario
 
-
+# couple of utility methods called in Apply of this scenario
 def compute_call_value(action_data):
     """
         Computes the value of a call based on duration, onnet/offnet and time
@@ -141,7 +140,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         # subs are empty here but will receive a "CELLS" and "EXCITABILITY"
         # attributes later on
-        subs = Actor(size=self.params["n_subscribers"], prefix="SUBS_")
+        subs = Actor(size=self.params["n_subscribers"],
+                     ids_gen=SequencialGenerator(prefix="SUBS_"))
 
         number_of_operators = npgen.choice(a=range(1, 5), size=subs.size)
         operator_ids = build_ids(size=4, prefix="OPERATOR_", max_length=1)
@@ -167,7 +167,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
 
         # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
-        sims = Actor(size=subs_ops_mapping.size, prefix="SIMS_")
+        sims = Actor(size=subs_ops_mapping.size,
+                     ids_gen=SequencialGenerator(prefix="SIMS_"))
         sims.create_attribute("OPERATOR", init_values=subs_ops_mapping.values)
         recharge_gen = ConstantGenerator(value=1000.)
         sims.create_attribute(name="MAIN_ACCT", init_gen=recharge_gen)

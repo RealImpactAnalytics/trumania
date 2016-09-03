@@ -1,16 +1,16 @@
 from __future__ import division
-from datagenerator.core.clock import Clock
 from datagenerator.core.actor import Actor
 from datagenerator.core.circus import Circus
 from datagenerator.components.time_patterns.profilers import DayProfiler
 from datetime import datetime, timedelta
 import pytest
-import pandas as pd
+from datagenerator.core.random_generators import *
 
 
 def test_create_action_get_action_should_work_as_expected():
 
-    customers = Actor(100)
+    customers = Actor(size=100,
+                      ids_gen=SequencialGenerator(prefix="a"))
 
     flying = Circus(master_seed=1, start=datetime(year=2016, month=6, day=8),
                     step_s=60, format_for_out="%d%m%Y %H:%M:%S")
@@ -50,13 +50,16 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
     flying = Circus(master_seed=1, start=datetime(year=2016, month=6, day=8),
                     step_s=60, format_for_out="%d%m%Y %H:%M:%S")
 
+    customers = Actor(size=100,
+                      ids_gen=SequencialGenerator(prefix="a"))
+
     flying.create_action(name="the_action",
-                               initiating_actor=Actor(100),
+                               initiating_actor=customers,
                                actorid_field="actor_id")
 
     with pytest.raises(ValueError):
         flying.create_action(name="the_action",
-                               initiating_actor=Actor(100),
+                               initiating_actor=customers,
                                actorid_field="actor_id")
 
 

@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     seeder = seed_provider(12345)
 
-    cells = Actor(prefix="CELL_", size=200)
+    cells = Actor(ids_gen=SequencialGenerator(prefix="CELL_"), size=200)
     latitude_generator = FakerGenerator(method="latitude",
                                         seed=seeder.next())
     cells.create_attribute("latitude", init_gen=latitude_generator)

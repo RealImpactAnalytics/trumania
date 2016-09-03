@@ -3,15 +3,33 @@ from datagenerator.core.relationship import *
 
 
 class Actor(object):
-    def __init__(self, size, id_start=0, prefix="id_", max_length=10):
+    def __init__(self, ids_gen=None, size=None, ids=None):
         """
-        :param size:
-        :param id_start:
+        :param ids_gen: generator for the actor ids
+        :param size: number of ids to generate (only relevant if is ids_gen
+        is specified
+        :param ids: if neither ids_gen nore size is specified, we can
+          also specify the ids explicitally
         :return:
         """
-        self.ids = pd.Index(build_ids(size, id_start, prefix, max_length))
-        self.size = size
+        if ids is not None:
+            if ids_gen is not None or size is not None:
+                raise ValueError("cannot specify ids_gen nor size if ids is "
+                                 "provided")
+            self.ids = pd.Index(ids)
+            self.size = len(ids)
+        else:
+            if size == 0:
+                self.ids = pd.Index([])
 
+            elif ids_gen is not None or size is not None:
+                self.ids = pd.Index(ids_gen.generate(size=size))
+
+            else:
+                raise ValueError("must specify ids_gen and size if ids is not "
+                                 "provided")
+
+            self.size = size
         self.attributes = {}
         self.relationships = {}
 

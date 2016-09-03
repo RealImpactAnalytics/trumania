@@ -3,11 +3,13 @@ from datagenerator.core.actor import Actor
 from tests.mocks.operations import *
 from tests.mocks.random_generators import *
 from datagenerator.components.time_patterns.profilers import *
+from datagenerator.core.random_generators import *
 
 
 def test_empty_action_should_do_nothing_and_not_crash():
 
-    customers = Actor(size=1000)
+    customers = Actor(size=1000,
+                      ids_gen=SequencialGenerator(prefix="a"))
     empty_action = Action(
         name="purchase",
         initiating_actor=customers,
@@ -21,7 +23,8 @@ def test_empty_action_should_do_nothing_and_not_crash():
 
 def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
@@ -42,7 +45,8 @@ def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
 
 def test_active_inactive_ids_should_say_5_actives_for_timer_0():
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([0] * 5 + [1] * 5, index=actor.ids)
@@ -62,7 +66,8 @@ def test_active_inactive_ids_should_say_5_actives_for_timer_0():
 
 def test_active_inactive_ids_should_all_actives_for_timer_0():
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([0] * 10, index=actor.ids)
@@ -82,7 +87,8 @@ def test_active_inactive_ids_should_all_actives_for_timer_0():
 
 def test_get_activity_should_be_default_by_default():
 
-    actor = Actor(size=10)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
     action = Action(name="tested",
                     initiating_actor=actor,
                     actorid_field="")
@@ -94,7 +100,8 @@ def test_get_activity_should_be_default_by_default():
 
 def test_actors_with_zero_activity_should_never_have_positive_timer():
 
-    actor = Actor(size=10)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     action = Action(
         name="tested",
@@ -119,7 +126,8 @@ def test_get_activity_should_be_aligned_for_each_state():
     excited_call_activity = ConstantGenerator(value=10)
     back_to_normal_prob = ConstantGenerator(value=.3)
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
     action = Action(name="tested",
                     initiating_actor=actor,
                     actorid_field="",
@@ -163,7 +171,8 @@ def test_scenario_transiting_to_state_with_0_backprob_should_remain_there():
     still be in that starte
     """
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # here we are saying that some action on actors 5 to 9 is triggering a
     # state change on actors 0 to 4
@@ -224,7 +233,8 @@ def test_scenario_transiting_to_state_with_1_backprob_should_go_back_to_normal()
     at the end of the execution
     """
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # this one is slightly tricky: actors
     active_ids_gens = ConstantsMockGenerator(
@@ -281,7 +291,8 @@ def test_action_autoreset_true_not_dropping_rows_should_reset_all_timers():
     #  - all executed rows should have a timer back to some positive value
     #  - all non executed rows should have gone down one tick
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
@@ -322,7 +333,8 @@ def test_action_autoreset_true_and_dropping_rows_should_reset_all_timers():
     # positive value
     #  - all non executed rows should have gone down one tick
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
@@ -362,7 +374,8 @@ def test_action_autoreset_false_not_dropping_rows_should_reset_all_timers():
     #  - all executed rows should now be at -1
     #  - all non executed rows should have gone down one tick
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
@@ -419,7 +432,8 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
     #  - all executed rows should now be at -1 (dropped or not)
     #  - all non executed rows should have gone down one tick
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
@@ -474,7 +488,8 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
 def test_bugfix_collisions_force_act_next():
     # previously, resetting the timer of reset actors was cancelling the reset
 
-    actor = Actor(size=10, prefix="ac_", max_length=1)
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)

@@ -59,8 +59,10 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating distributors and their SIM stock  ")
 
-        distributors = Actor(size=params["n_distributors"], prefix="DISTRIBUTOR_",
-                             max_length=1)
+        distributors = Actor(size=params["n_distributors"],
+                             ids_gen=SequencialGenerator(
+                                 prefix="DISTRIBUTOR_",
+                                 max_length=1))
 
         sims = distributors.create_relationship(name="SIM", seed=self.seeder.next())
 
@@ -121,7 +123,10 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating dealer and their SIM stock  ")
 
-        dealers = Actor(size=params["n_dealers"], prefix="DEALER_", max_length=3)
+        dealers = Actor(size=params["n_dealers"],
+                        ids_gen=SequencialGenerator(
+                            prefix="DEALER_",
+                            max_length=3))
 
         # SIM relationship to maintain some stock
         sims = dealers.create_relationship(name="SIM", seed=self.seeder.next())
@@ -149,7 +154,10 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating agents ")
 
-        agents = Actor(size=params["n_agents"], prefix="AGENT_", max_length=3)
+        agents = Actor(size=params["n_agents"],
+                       ids_gen=SequencialGenerator(
+                           prefix="AGENT_",
+                           max_length=3))
         agents.create_relationship(name="SIM", seed=self.seeder.next())
 
         agents.create_attribute(name="AGENT_NAME",
