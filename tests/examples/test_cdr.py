@@ -1,10 +1,9 @@
 from __future__ import division
 from numpy.random import *
 
-from datagenerator.core.circus import *
-from datagenerator.components.time_patterns.profilers import *
 from datagenerator.components.social_networks.erdos_renyi import *
 from datagenerator.components.geographies.random_geo import *
+from datagenerator.components.geographies.uganda import *
 
 from datetime import datetime
 
@@ -96,7 +95,7 @@ def select_sims(action_data):
     return action_data.apply(do_select, axis=1)
 
 
-class CdrScenario(WithErdosRenyi, WithRandomGeo, Circ1us):
+class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
     """
         Main CDR calls, sms, topus, mobility,... scenario
     """
@@ -111,8 +110,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, Circ1us):
                         format_for_out="%d%m%Y %H:%M:%S")
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
-        cells = self.add_cells()
-        
+        cells = self.add_uganda_geography()
         self.add_mobility(subs, cells)
         self.add_er_social_network_relationship(
             subs,
@@ -211,90 +209,6 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, Circ1us):
             weights=agent_weight_gen.generate(agent_df.shape[0]))
 
         return subs, sims, recharge_gen
-
-    def add_cells(self):
-        """
-        Creates the CELL actors + the actions to let them randomly break down and
-        get back up
-        """
-        logging.info("Adding cells ")
-
-        cells = self.create_random_cells(n_cells=self.params["n_cells"])
-
-        # the cell "health" is its probability of accepting a call. By default
-        # let's says it's one expected failure every 1000 calls
-        healthy_level_gen = NumpyRandomGenerator(method="beta", a=999, b=1,
-                                                 seed=self.seeder.next())
-
-        # tendency is inversed in case of broken cell: it's probability of
-        # accepting a call is much lower
-        unhealthy_level_gen = NumpyRandomGenerator(method="beta", a=1, b=999,
-                                                   seed=self.seeder.next())
-
-        cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
-
-        # same profiler for breakdown and repair: they are both related to
-        # typical human activity
-        default_day_profiler = DayProfiler(self.clock)
-
-        cell_break_down_action = self.create_action(
-            name="cell_break_down",
-
-            initiating_actor=cells,
-            actorid_field="CELL_ID",
-
-            timer_gen=default_day_profiler,
-
-            # fault activity is very low: most cell tend never to break down (
-            # hopefully...)
-            activity_gen=ParetoGenerator(xmin=5, a=1.4, seed=self.seeder.next())
-        )
-
-        cell_repair_action = self.create_action(
-            name="cell_repair_down",
-
-            initiating_actor=cells,
-            actorid_field="CELL_ID",
-
-            timer_gen=default_day_profiler,
-
-            # repair activity is much higher
-            activity_gen=ParetoGenerator(xmin=100, a=1.2, seed=self.seeder.next()),
-
-            # repair is not re-scheduled at the end of a repair, but only triggered
-            # from a "break-down" action
-            auto_reset_timer=False
-        )
-
-        cell_break_down_action.set_operations(
-            unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
-
-            cells.get_attribute("HEALTH").ops.update(
-                actor_id_field="CELL_ID",
-                copy_from_field="NEW_HEALTH_LEVEL"),
-
-            cell_repair_action.ops.reset_timers(actor_id_field="CELL_ID"),
-            self.clock.ops.timestamp(named_as="TIME"),
-
-            operations.FieldLogger(log_id="cell_status",
-                                   cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
-        )
-
-        cell_repair_action.set_operations(
-            healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
-
-            cells.get_attribute("HEALTH").ops.update(
-                actor_id_field="CELL_ID",
-                copy_from_field="NEW_HEALTH_LEVEL"),
-
-            self.clock.ops.timestamp(named_as="TIME"),
-
-            # note that both actions are contributing to the same "cell_status" log
-            operations.FieldLogger(log_id="cell_status",
-                                   cols=["TIME", "CELL_ID", "NEW_HEALTH_LEVEL"]),
-        )
-
-        return cells
 
     def add_mobility(self, subs, cells):
         """

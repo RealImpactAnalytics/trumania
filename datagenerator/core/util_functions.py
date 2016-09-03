@@ -174,10 +174,6 @@ def cap_to_total(values, target_total):
         return cap_to_total(values[:-1], target_total) + [0]
 
 
-def path_of_current_file():
-    return os.path.dirname(os.path.realpath(__file__))
-
-
 def ensure_non_existing_dir(path):
     """
     makes sure the specified directory does not exist, potentially deleting
@@ -192,12 +188,6 @@ def ensure_non_existing_dir(path):
 
     else:
         for f in os.listdir(path):
-
             full_path = os.path.join(path, f)
-            if os.path.isdir(full_path):
-                ensure_non_existing_dir(full_path)
-                os.rmdir(full_path)
-            else:
-                os.remove(full_path)
-
+            ensure_non_existing_dir(full_path)
         os.rmdir(path)

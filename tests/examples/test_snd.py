@@ -33,7 +33,7 @@ params = {
 }
 
 
-class SndScenario(RandomGeo, Circus):
+class SndScenario(WithRandomGeo, Circus):
 
     def __init__(self):
         Circus.__init__(self, master_seed=1234, start=datetime(year=2016, month=6, day=8),

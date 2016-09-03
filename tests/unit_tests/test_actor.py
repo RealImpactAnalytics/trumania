@@ -239,6 +239,7 @@ def test_io_round_trip():
 
         assert dummy_actor.size == retrieved.size
         assert dummy_actor.ids.tolist() == retrieved.ids.tolist()
+
         ids = dummy_actor.ids.tolist()
 
         for att_name in dummy_actor.attribute_names():
