@@ -1,12 +1,17 @@
 """
 This is just the provider of the IO methods save and re
 
-TODO: we should store this elsewhere than in the git repo...
+
 
 A namespace defines a place where to put objects that belong together
 (typically, from the same scenario or component)
 
 """
+
+# TODO: we should store this elsewhere than in the git repo...
+
+# TODO: would be cool to also be able to store empirical probability
+# distribution here...
 
 from datagenerator.core.actor import Actor
 from datagenerator.core.util_functions import *

@@ -109,7 +109,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                         format_for_out="%d%m%Y %H:%M:%S")
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
-        cells = self.add_uganda_geography()
+        cells, cities = self.add_uganda_geography()
         self.add_mobility(subs, cells)
         self.add_er_social_network_relationship(
             subs,

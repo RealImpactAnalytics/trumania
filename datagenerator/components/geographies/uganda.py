@@ -25,6 +25,7 @@ class WithUganda(Circus):
         """
         seeder = seed_provider(12345)
         uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
+        uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
 
         unhealthy_level_gen = build_unhealthy_level_gen(seeder.next())
         healthy_level_gen = build_healthy_level_gen(seeder.next())
@@ -96,7 +97,7 @@ class WithUganda(Circus):
                                          "NEW_HEALTH_LEVEL"]),
         )
 
-        return uganda_cells
+        return uganda_cells, uganda_cities
 
 
 if __name__ == "__main__":
@@ -128,12 +129,23 @@ if __name__ == "__main__":
 
     cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
-    # city_gen = FakerGenerator(method="city", seed=seeder.next())
-    # cities = Actor(prefix="CITY_", size=200)
-    #
-    #
+    city_gen = FakerGenerator(method="city", seed=seeder.next())
+    cities = Actor(size=200, ids_gen=city_gen)
+
+    cell_city_rel = cities.create_relationship("CELLS", seed=seeder.next())
+
+    cell_city_df = make_random_assign(cells.ids, cities.ids, seeder.next())
+    cell_city_rel.add_relations(
+        from_ids=cell_city_df["from"],
+        to_ids=cell_city_df["to"],
+    )
+
+    pop_gen = ParetoGenerator(xmin=10000, a=1.4, seed=seeder.next())
+    cities.create_attribute("population", init_gen=pop_gen)
+
     db.remove_namespace("uganda")
     db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
+    db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
 
 
 

@@ -60,8 +60,7 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
 
 
 def make_random_assign(owned, owners, seed):
-    """Assign randomly each member from group1 to a member of group2
-
+    """Assign randomly each member from owner to a member of own
     """
     choices = RandomState(seed).choice(owners, size=len(owned))
     return pd.DataFrame({"from": choices, "to": owned})
