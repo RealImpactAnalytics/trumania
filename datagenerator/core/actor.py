@@ -154,16 +154,19 @@ class Actor(object):
         self.ids.to_series().to_csv(ids_path, index=False)
 
         attribute_dir = os.path.join(actor_dir, "attributes")
-        os.mkdir(attribute_dir)
-        for name, attr in self.attributes.iteritems():
-            file_path = os.path.join(attribute_dir, name + ".csv")
-            attr.save_to(file_path)
 
-        relationships_dir = os.path.join(actor_dir, "relationships")
-        os.mkdir(relationships_dir)
-        for name, rel in self.relationships.iteritems():
-            file_path = os.path.join(relationships_dir, name + ".csv")
-            rel.save_to(file_path)
+        if len(self.attributes) > 0:
+            os.mkdir(attribute_dir)
+            for name, attr in self.attributes.iteritems():
+                file_path = os.path.join(attribute_dir, name + ".csv")
+                attr.save_to(file_path)
+
+        if len(self.relationships) > 0:
+            relationships_dir = os.path.join(actor_dir, "relationships")
+            os.mkdir(relationships_dir)
+            for name, rel in self.relationships.iteritems():
+                file_path = os.path.join(relationships_dir, name + ".csv")
+                rel.save_to(file_path)
 
     @staticmethod
     def load_from(actor_dir):
@@ -172,18 +175,24 @@ class Actor(object):
         ids = pd.read_csv(ids_path, index_col=0, names=[]).index
 
         attribute_dir = os.path.join(actor_dir, "attributes")
-        attributes = {
-            filename[:-4]:
-                Attribute.load_from(os.path.join(attribute_dir, filename))
-            for filename in os.listdir(attribute_dir)
-        }
+        if os.path.exists(attribute_dir):
+            attributes = {
+                filename[:-4]:
+                    Attribute.load_from(os.path.join(attribute_dir, filename))
+                for filename in os.listdir(attribute_dir)
+            }
+        else:
+            attributes = {}
 
         relationships_dir = os.path.join(actor_dir, "relationships")
-        relationships = {
-            filename[:-4]:
-            Relationship.load_from(os.path.join(relationships_dir, filename))
-            for filename in os.listdir(relationships_dir)
-        }
+        if os.path.exists(relationships_dir):
+            relationships = {
+                filename[:-4]:
+                Relationship.load_from(os.path.join(relationships_dir, filename))
+                for filename in os.listdir(relationships_dir)
+            }
+        else:
+            relationships = {}
 
         actor = Actor(size=0)
         actor.attributes = attributes
