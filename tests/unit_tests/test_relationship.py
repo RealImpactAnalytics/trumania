@@ -1,5 +1,8 @@
-from datagenerator.relationship import Relationship
-from datagenerator.util_functions import *
+from datagenerator.core.relationship import Relationship
+from datagenerator.core.util_functions import *
+import path
+import os
+
 setup_logging()
 
 
@@ -23,7 +26,7 @@ two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
 two_per_from.add_relations(from_ids=["a", "b", "c", "d"],
                            to_ids=["za", "zb", "zc", "zd"])
 
-four_to_plenty = Relationship(seed=1)
+four_to_plenty = Relationship(seed=123456)
 for i in range(100):
     four_to_plenty.add_relations(
         from_ids=["a", "b", "c", "d"],
@@ -456,3 +459,19 @@ def test_add_grouped():
         "f11", "f12", "f13", "f14"]
     assert rel.get_relations(from_ids=["b2"])["to"].tolist() == [
         "f21", "f22", "f23", "f24"]
+
+
+def test_io_round_trip():
+
+    with path.tempdir() as p:
+        full_path = os.path.join(p, "relationship.csv")
+        four_to_plenty.save_to(full_path)
+
+        retrieved = Relationship.load_from(full_path)
+
+        assert four_to_plenty.seed == retrieved.seed
+        assert four_to_plenty._table.index.equals(retrieved._table.index)
+        assert four_to_plenty._table.columns.equals(retrieved._table.columns)
+        assert four_to_plenty._table.equals(retrieved._table)
+
+

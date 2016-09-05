@@ -1,18 +1,36 @@
-from datagenerator.attribute import *
-import logging
+from datagenerator.core.attribute import *
+from datagenerator.core.relationship import *
 
 
 class Actor(object):
-    def __init__(self, size, id_start=0, prefix="id_", max_length=10):
+    def __init__(self, ids_gen=None, size=None, ids=None):
         """
-        :param size:
-        :param id_start:
+        :param ids_gen: generator for the actor ids
+        :param size: number of ids to generate (only relevant if is ids_gen
+        is specified
+        :param ids: if neither ids_gen nore size is specified, we can
+          also specify the ids explicitally
         :return:
         """
-        self.ids = pd.Index(build_ids(size, id_start, prefix, max_length))
-        self.size = size
+        if ids is not None:
+            if ids_gen is not None or size is not None:
+                raise ValueError("cannot specify ids_gen nor size if ids is "
+                                 "provided")
+            self.ids = pd.Index(ids)
+            self.size = len(ids)
+        else:
+            if size == 0:
+                self.ids = pd.Index([])
 
-        self._attributes = {}
+            elif ids_gen is not None or size is not None:
+                self.ids = pd.Index(ids_gen.generate(size=size))
+
+            else:
+                raise ValueError("must specify ids_gen and size if ids is not "
+                                 "provided")
+
+            self.size = size
+        self.attributes = {}
         self.relationships = {}
 
         self.ops = self.ActorOps(self)
@@ -33,11 +51,11 @@ class Actor(object):
         return self.relationships[name]
 
     def create_attribute(self, name, **kwargs):
-        self._attributes[name] = Attribute(actor=self, **kwargs)
-        return self._attributes[name]
+        self.attributes[name] = Attribute(actor=self, **kwargs)
+        return self.attributes[name]
 
     def get_attribute(self, attribute_name):
-        return self._attributes[attribute_name]
+        return self.attributes[attribute_name]
 
     def get_attribute_values(self, attribute_name, ids):
         """
@@ -46,7 +64,10 @@ class Actor(object):
         return self.get_attribute(attribute_name).get_values(ids)
 
     def attribute_names(self):
-        return self._attributes.keys()
+        return self.attributes.keys()
+
+    def relationship_names(self):
+        return self.relationships.keys()
 
     def check_attributes(self, ids, field, condition, threshold):
         """
@@ -114,6 +135,72 @@ class Actor(object):
             df[name] = self.get_attribute_values(name, self.ids)
 
         return df
+
+    #######
+    # IO
+
+    def save_to(self, actor_dir):
+        """
+        Saves this actor and all its attribute and relationships to the
+        specified folder.
+
+        If the folder already exists, it is deleted first
+        """
+
+        ensure_non_existing_dir(actor_dir)
+        os.makedirs(actor_dir)
+
+        ids_path = os.path.join(actor_dir, "ids.csv")
+        self.ids.to_series().to_csv(ids_path, index=False)
+
+        attribute_dir = os.path.join(actor_dir, "attributes")
+
+        if len(self.attributes) > 0:
+            os.mkdir(attribute_dir)
+            for name, attr in self.attributes.iteritems():
+                file_path = os.path.join(attribute_dir, name + ".csv")
+                attr.save_to(file_path)
+
+        if len(self.relationships) > 0:
+            relationships_dir = os.path.join(actor_dir, "relationships")
+            os.mkdir(relationships_dir)
+            for name, rel in self.relationships.iteritems():
+                file_path = os.path.join(relationships_dir, name + ".csv")
+                rel.save_to(file_path)
+
+    @staticmethod
+    def load_from(actor_dir):
+
+        ids_path = os.path.join(actor_dir, "ids.csv")
+        ids = pd.read_csv(ids_path, index_col=0, names=[]).index
+
+        attribute_dir = os.path.join(actor_dir, "attributes")
+        if os.path.exists(attribute_dir):
+            attributes = {
+                filename[:-4]:
+                    Attribute.load_from(os.path.join(attribute_dir, filename))
+                for filename in os.listdir(attribute_dir)
+            }
+        else:
+            attributes = {}
+
+        relationships_dir = os.path.join(actor_dir, "relationships")
+        if os.path.exists(relationships_dir):
+            relationships = {
+                filename[:-4]:
+                Relationship.load_from(os.path.join(relationships_dir, filename))
+                for filename in os.listdir(relationships_dir)
+            }
+        else:
+            relationships = {}
+
+        actor = Actor(size=0)
+        actor.attributes = attributes
+        actor.relationships = relationships
+        actor.ids = ids
+        actor.size = len(ids)
+
+        return actor
 
     class ActorOps(object):
         def __init__(self, actor):

@@ -1,6 +1,8 @@
-from datagenerator.operations import *
 from itertools import islice
+
 from faker import Faker
+
+from datagenerator.core.operations import *
 
 
 def seed_provider(master_seed):

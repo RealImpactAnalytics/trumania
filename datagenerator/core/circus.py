@@ -1,5 +1,6 @@
-from datagenerator.action import *
 import logging
+
+from datagenerator.core.action import *
 
 
 class Circus(object):
@@ -16,7 +17,7 @@ class Circus(object):
 
     """
 
-    def __init__(self, clock):
+    def __init__(self, master_seed, **clock_params):
         """Create a new Circus object
 
         :type clock: Clock object
@@ -24,8 +25,8 @@ class Circus(object):
         :rtype: Circus
         :return: a new Circus object, with the clock, is created
         """
-        self.__items = {}
-        self.clock = clock
+        self.seeder = seed_provider(master_seed=master_seed)
+        self.clock = Clock(seed=self.seeder.next(), **clock_params)
         self.__actions = []
 
     def create_action(self, name, **action_params):

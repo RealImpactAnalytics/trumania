@@ -1,4 +1,4 @@
-from datagenerator.relationship import *
+from datagenerator.core.operations import *
 
 
 class Attribute(object):
@@ -75,6 +75,29 @@ class Attribute(object):
         to_add = pd.Series(added_values, index=ids).groupby(level=0).agg(sum)
 
         self._table.loc[to_add.index, "value"] = self._table.loc[to_add.index, "value"] + to_add
+
+    ############
+    # IO
+    def save_to(self, file_path):
+        self._table.to_csv(file_path)
+
+    @staticmethod
+    def load_from(file_path):
+        table = pd.read_csv(file_path, index_col=0)
+
+        # we're basically hacking our own constructor, feeding it fake data
+        # so it's initialized correctly.
+        #
+        # Don't do that outside this class!
+        class FakeActor(object):
+            def __init__(self):
+                self.size = table.shape[0]
+                self.ids = table.index
+
+        return Attribute(actor=FakeActor(), init_values=table["value"])
+
+    ############
+    # operations
 
     class AttributeOps(object):
         def __init__(self, attribute):

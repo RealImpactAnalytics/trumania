@@ -1,7 +1,8 @@
-from datagenerator.clock import *
-from datagenerator.random_generators import *
-from datagenerator import operations
-from datagenerator.util_functions import *
+from datagenerator.core.clock import *
+from datagenerator.core.random_generators import *
+from datagenerator.core.util_functions import *
+from datagenerator.components.time_patterns.profilers import  *
+from datagenerator.core import operations
 
 
 class Action(object):

@@ -1,5 +1,4 @@
 from test_cdr import run_cdr_scenario
-from datagenerator.util_functions import *
 
 # better run this outside of PyCharm for consistent measures...
 #

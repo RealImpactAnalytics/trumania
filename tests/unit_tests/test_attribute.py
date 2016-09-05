@@ -1,10 +1,15 @@
-from datagenerator.attribute import Attribute
-from datagenerator.actor import Actor
-import pandas as pd
+import path
+from datagenerator.core.random_generators import *
+
+from datagenerator.core.actor import Actor
+from datagenerator.core.attribute import Attribute
 
 
 def test_set_and_read_values_in_attribute_should_be_equal():
-    actor = Actor(size=5, prefix="abc", max_length=1)
+
+    actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
     assert tested.get_values(["abc0"]).tolist() == [10]
@@ -15,7 +20,8 @@ def test_set_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updated_and_read_values_in_attribute_should_be_equal():
-    actor = Actor(size=5, prefix="abc", max_length=1)
+    actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
     tested.update(pd.Series([22, 44], index=["abc1", "abc3"]))
@@ -28,7 +34,8 @@ def test_updated_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updating_non_existing_actor_ids_should_add_them():
-    actor = Actor(size=5, prefix="abc", max_length=1)
+    actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
     tested.update(pd.Series([22, 1000, 44], index=["abc1", "not_yet_there", "abc3"]))
@@ -38,7 +45,8 @@ def test_updating_non_existing_actor_ids_should_add_them():
 
 def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
-    actor = Actor(size=5, prefix="abc", max_length=1)
+    actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     oneto1= actor.create_relationship("rel", seed=1234)
     oneto1.add_relations(from_ids=["abc0", "abc1", "abc2", "abc3", "abc4"],
                          to_ids=["ta", "tb", "tc", "td", "te"])
@@ -53,7 +61,8 @@ def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
 def test_overwrite_attribute():
 
-    actor = Actor(size=10, max_length=1, prefix="u_")
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="u_", max_length=1))
 
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     age_attr = actor.create_attribute("age", init_values=ages)
@@ -88,18 +97,38 @@ def test_overwrite_attribute():
 
 
 def test_added_and_read_values_in_attribute_should_be_equal():
-    actor = Actor(size=5, prefix="abc", max_length=1)
+    actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
     tested.add(["abc1", "abc3"], [22, 44])
 
     assert tested.get_values(["abc0", "abc1", "abc2", "abc3", "abc4"]).tolist() == [10, 20+22, 30, 40+44, 50]
 
+
 def test_adding_several_times_to_the_same_from_should_pile_up():
-    actor = Actor(size=5, prefix="abc", max_length=1)
+    actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
     tested.add(["abc1", "abc3", "abc1"], [22, 44, 10])
 
     assert tested.get_values(["abc0", "abc1", "abc2", "abc3", "abc4"]).tolist() == [10, 20+22+10, 30, 40+44, 50]
+
+
+def test_io_round_trip():
+
+    with path.tempdir() as root_dir:
+
+        actor = Actor(size=5,
+                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+        orig = Attribute(actor, init_values=[10, 20, 30, 40, 50])
+
+        full_path = os.path.join(root_dir, "attribute.csv")
+
+        orig.save_to(full_path)
+        retrieved = Attribute.load_from(full_path)
+
+        assert orig._table.equals(retrieved._table)
+
 

@@ -5,27 +5,9 @@
 from numpy.random import RandomState
 import pandas as pd
 import numpy as np
-import networkx as nx
+import os
 from networkx.algorithms import bipartite
 import logging
-
-
-def create_er_social_network(customer_ids, p, seed):
-    """
-
-    :type customer_ids: list
-    :param customer_ids: list of IDs as defined in the data
-    :type p: float
-    :param p: probability of existence of 1 edge
-    :type seed: int
-    :param seed: seed for random generator
-    :rtype: Pandas DataFrame, with two columns (A and B)
-    :return: all edges in the graph
-    """
-
-    return pd.DataFrame.from_records([(customer_ids[e[0]],customer_ids[e[1]])
-                                     for e in nx.fast_gnp_random_graph(len(customer_ids), p, seed).edges()],
-                                     columns=["A", "B"])
 
 
 def make_random_bipartite_data(group1, group2, p, seed):
@@ -78,8 +60,7 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
 
 
 def make_random_assign(owned, owners, seed):
-    """Assign randomly each member from group1 to a member of group2
-
+    """Assign randomly each member from owner to a member of own
     """
     choices = RandomState(seed).choice(owners, size=len(owned))
     return pd.DataFrame({"from": choices, "to": owned})
@@ -191,3 +172,21 @@ def cap_to_total(values, target_total):
     else:
         return cap_to_total(values[:-1], target_total) + [0]
 
+
+def ensure_non_existing_dir(path):
+    """
+    makes sure the specified directory does not exist, potentially deleting
+    any file or folder it contains
+    """
+
+    if not os.path.exists(path):
+        return
+
+    if os.path.isfile(path):
+        os.remove(path)
+
+    else:
+        for f in os.listdir(path):
+            full_path = os.path.join(path, f)
+            ensure_non_existing_dir(full_path)
+        os.rmdir(path)
