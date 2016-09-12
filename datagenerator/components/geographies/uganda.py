@@ -35,7 +35,7 @@ class WithUganda(Circus):
 
         # same profiler for breakdown and repair: they are both related to
         # typical human activity
-        default_day_profiler = DayProfiler(self.clock)
+        default_day_profiler = DailyTimerGenerator(self.clock)
 
         cell_break_down_action = self.create_action(
             name="cell_break_down",

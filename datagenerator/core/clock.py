@@ -3,15 +3,13 @@ from __future__ import division
 import itertools
 from datetime import timedelta
 
-
-from datagenerator.core.operations import *
+from datagenerator.core.random_generators import *
 
 
 class Clock(object):
     """
     A Clock is the central object managing the evolution of time of the whole circus.
     It's generating timestamps on demand, and provides information for TimeProfiler objects.
-
     """
 
     def __init__(self, start, step_s, format_for_out, seed):
@@ -118,7 +116,7 @@ class Clock(object):
             return self.Timestamp(self.clock, named_as)
 
 
-class TimeProfiler(object):
+class TimerGenerator(DependentGenerator):
     """A TimeProfiler contains an activity profile over a defined time range.
     It's mostly a super class, normally only its child classes should be used.
 
@@ -129,30 +127,6 @@ class TimeProfiler(object):
     This allows to quickly produce random waiting times until the next event for the users
 
     """
-
-    # TODO: this concept seems now a specific case of the DependentGenerator
-    # and is actually a first use case for a probability
-    # given distribution, where the pdf changes depending on an external value
-    # (here, the day or week index)
-    #
-    # it also shares the generate(self, observations) signature, although
-    # here the observation is the same value for all actors
-    #
-    # also, we already have another factor influencing the timer generation:
-    # the state of the actorAction (e.g bursty vs normal)
-
-    # => this all could be merged into one 3D joint distribution
-    # (time_index, state, timer_value), for which we systematically marginalize
-    # the time_index and state based on observations and generate timer_values
-    # according to the result :)
-    #
-    # => to be merged with the states of the ActorAction => this will also
-    # simplify the calling API, allowing something like
-    #    timer=DayTimerTrigger(...specify the states activity here )
-    #
-    # (to be refined...)
-    #
-
     def __init__(self, clock, profile, seed=None):
         """
         This should not be used, only child classes
@@ -167,6 +141,7 @@ class TimeProfiler(object):
         :param seed: seed for random number generator, default None
         :return: A new TimeProfiler is created
         """
+        DependentGenerator.__init__(self)
         self._state = RandomState(seed)
 
         totalweight = profile.sum()
@@ -211,16 +186,17 @@ class TimeProfiler(object):
                                   ignore_index=True)
         self._profile.loc[self._profile.index[-1], "next_prob"] = old_end_prob
 
-    def generate(self, weights):
-        """Generate random waiting times, based on activity levels in weights. The higher the weights, the shorter the
-        waiting times will be
+    def generate(self, observations):
+        """Generate random waiting times, based on some observed activity
+        levels. The higher the level of activity, the shorter the waiting
+        times will be
 
-        :type weights: Pandas Series
-        :param weights: contains an array of floats
+        :type observations: Pandas Series
+        :param observations: contains an array of floats
         :return: Pandas Series
         """
         if sum(np.isnan(self._profile["next_prob"])) > 0:
             raise Exception("Time profiler is not initialised!")
-        p = self._state.rand(len(weights.index)) / weights.values
+        p = self._state.rand(len(observations.index)) / observations.values
         return pd.Series(self._profile["next_prob"].searchsorted(p),
-                         index=weights.index)
+                         index=observations.index)

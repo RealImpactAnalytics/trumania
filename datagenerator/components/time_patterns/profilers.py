@@ -1,7 +1,7 @@
 from datagenerator.core.clock import *
 
 
-class WeekProfiler(TimeProfiler):
+class WeeklyTimerGenerator(TimerGenerator):
     """WeekProfiler is a TimeProfiler on a period of a week.
         This imposes that the last time bin in the profile
         of the constructor needs to be equal to 6 days, 23h, 59m and 59s.
@@ -34,7 +34,7 @@ class WeekProfiler(TimeProfiler):
             index=[timedelta(days=d, hours=23, minutes=59, seconds=59)
                    for d in range(7)])
 
-        TimeProfiler.__init__(self, clock, profile, seed)
+        TimerGenerator.__init__(self, clock, profile, seed)
 
         # Initialisation of the profiler
         # It sets the first bin of the cdf to the current timestamp of the clock
@@ -46,7 +46,7 @@ class WeekProfiler(TimeProfiler):
         self._profile["next_prob"] = self._profile["weight"].cumsum()
 
 
-class DayProfiler(TimeProfiler):
+class DailyTimerGenerator(TimerGenerator):
     """DayProfiler is a TimeProfiler on a period of a day. This imposes that the last time bin in the profile
     of the constructor needs to be equal to 23h, 59m and 59s.
 
@@ -82,7 +82,7 @@ class DayProfiler(TimeProfiler):
             index=[timedelta(hours=h, minutes=59, seconds=59)
                    for h in range(24)])
 
-        TimeProfiler.__init__(self, clock, profile, seed)
+        TimerGenerator.__init__(self, clock, profile, seed)
 
         # Initialisation of the profiler
         # It sets the first bin of the cdf to the current timestamp of the clock
@@ -92,43 +92,3 @@ class DayProfiler(TimeProfiler):
              self._profile.iloc[0:start]],
             ignore_index=True)
         self._profile["next_prob"] = self._profile["weight"].cumsum()
-
-
-class ConstantProfiler(object):
-    """ConstantProfiler is a TimeProfiler that always returns the same value.
-    It's a bit stupid but handy.
-
-    """
-
-    def __init__(self, return_value):
-        """
-
-        :type return_value: int
-        :param step: value to return
-        :return:
-        """
-        self._val = return_value
-
-    def get_profile(self):
-        """Returns the profile, for debugging mostly
-
-        :rtype: NoneType
-        :return: None
-        """
-        return None
-
-    def increment(self):
-        """Doesn't do anything since it's a constant profiler.
-
-        :return: None
-        """
-        pass
-
-    def generate(self, weights):
-        """Generate constant values of the same size as weights. To have the same signature as other profilers.
-
-        :type weights: Pandas Series
-        :param weights: contains an array of floats
-        :return: Pandas Series
-        """
-        return pd.Series(self._val, index=weights.index)

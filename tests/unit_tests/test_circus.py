@@ -1,7 +1,7 @@
 from __future__ import division
 from datagenerator.core.actor import Actor
 from datagenerator.core.circus import Circus
-from datagenerator.components.time_patterns.profilers import DayProfiler
+from datagenerator.components.time_patterns.profilers import DailyTimerGenerator
 from datetime import datetime, timedelta
 import pytest
 from datagenerator.core.random_generators import *
@@ -19,7 +19,7 @@ def test_create_action_get_action_should_work_as_expected():
         [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1., 1., 1.,
          5., 10., 5., 1., 1., 1., 1.],
         index=[timedelta(hours=h, minutes=59, seconds=59) for h in range(24)])
-    mobility_time_gen = DayProfiler(flying.clock, mov_prof, seed=1)
+    mobility_time_gen = DailyTimerGenerator(flying.clock, mov_prof, seed=1)
 
     mobility_action = flying.create_action(
         name="mobility",

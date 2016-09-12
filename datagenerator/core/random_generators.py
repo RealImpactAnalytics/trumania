@@ -1,5 +1,4 @@
 from itertools import islice
-
 from faker import Faker
 
 from datagenerator.core.operations import *
@@ -282,6 +281,21 @@ class DependentGenerator(object):
             """
             return self.RandomValuesFromField(self.generator, named_as,
                                               observed_field)
+
+
+class ConstantDependentGenerator(ConstantGenerator, DependentGenerator):
+    """
+    Dependent generator ignoring the observation and producing a constant
+    value.
+    """
+
+    def __init__(self, value):
+        ConstantGenerator.__init__(self, value=value)
+        DependentGenerator.__init__(self)
+
+    def generate(self, observations):
+        vals = ConstantGenerator.generate(self, size=len(observations))
+        return pd.Series(vals, index=observations.index)
 
 
 class DependentTrigger(object):

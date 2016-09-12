@@ -223,9 +223,9 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating purchase action")
 
-        timegen = WeekProfiler(clock=self.clock,
-                               week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                               seed=self.seeder.next())
+        timegen = WeeklyTimerGenerator(clock=self.clock,
+                                       week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                                       seed=self.seeder.next())
 
         purchase_activity_gen = ConstantGenerator(value=100)
 
@@ -289,9 +289,9 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating purchase action")
 
-        timegen = WeekProfiler(clock=self.clock,
-                               week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                               seed=self.seeder.next())
+        timegen = WeeklyTimerGenerator(clock=self.clock,
+                                       week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                                       seed=self.seeder.next())
 
         purchase_activity_gen = NumpyRandomGenerator(
             method="choice", a=range(1, 4), seed=self.seeder.next())
@@ -372,9 +372,9 @@ class SndScenario(WithRandomGeo, Circus):
         # until next typical holidays :)
         # We could call this YearProfile though the internal mechanics would be
         # different than week and day profiler
-        holiday_time_gen = WeekProfiler(clock=self.clock,
-                                        week_profile=[1, 1, 1, 1, 1, 1, 1],
-                                        seed=self.seeder.next())
+        holiday_time_gen = WeeklyTimerGenerator(clock=self.clock,
+                                                week_profile=[1, 1, 1, 1, 1, 1, 1],
+                                                seed=self.seeder.next())
 
         # TODO: we'd obviously have to adapt those weight to longer periods
         # thought this interface is not very intuitive
@@ -435,9 +435,9 @@ class SndScenario(WithRandomGeo, Circus):
          let's just ignore that for illustration purposes... ^^
         """
 
-        timegen = WeekProfiler(clock=self.clock,
-                               week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                               seed=self.seeder.next())
+        timegen = WeeklyTimerGenerator(clock=self.clock,
+                                       week_profile=[5., 5., 5., 5., 5., 3., 3.],
+                                       seed=self.seeder.next())
 
         review_activity_gen = NumpyRandomGenerator(
             method="choice", a=range(1, 4), seed=self.seeder.next())

@@ -9,7 +9,7 @@ class Action(object):
     def __init__(self, name,
                  initiating_actor, actorid_field,
                  activity_gen=ConstantGenerator(value=1.), states=None,
-                 timer_gen=ConstantProfiler(-1),
+                 timer_gen=ConstantDependentGenerator(value=-1),
                  auto_reset_timer=True):
         """
         :param name: name of this action
@@ -160,7 +160,7 @@ class Action(object):
         if len(ids) > 0:
 
             activity = self.get_param("activity", ids)
-            new_timer = self.time_generator.generate(weights=activity)
+            new_timer = self.time_generator.generate(observations=activity)
 
             # replacing any generated timer with -1 for fully inactive actors
             new_timer = new_timer.where(cond=activity, other=-1)

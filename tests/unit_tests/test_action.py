@@ -28,7 +28,7 @@ def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -50,7 +50,7 @@ def test_active_inactive_ids_should_say_5_actives_for_timer_0():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([0] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -71,7 +71,7 @@ def test_active_inactive_ids_should_all_actives_for_timer_0():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([0] * 10, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -108,7 +108,7 @@ def test_actors_with_zero_activity_should_never_have_positive_timer():
         initiating_actor=actor,
         # fake generator that assign zero activity to 3 actors
         activity_gen=ConstantsMockGenerator([1, 1, 1, 1, 0, 1, 1, 0, 0, 1]),
-        timer_gen=ConstantProfiler(10),
+        timer_gen=ConstantDependentGenerator(value=10),
         actorid_field="")
 
     action.reset_timers()
@@ -198,7 +198,7 @@ def test_scenario_transiting_to_state_with_0_backprob_should_remain_there():
         },
 
         # forcing the timer of all actors to be initialized to 0
-        timer_gen=ConstantProfiler(0)
+        timer_gen=ConstantDependentGenerator(value=0)
     )
 
     action.set_operations(
@@ -259,7 +259,7 @@ def test_scenario_transiting_to_state_with_1_backprob_should_go_back_to_normal()
         },
 
         # forcing the timer of all actors to be initialized to 0
-        timer_gen=ConstantProfiler(0)
+        timer_gen=ConstantDependentGenerator(value=0)
     )
 
     action.set_operations(
@@ -296,7 +296,7 @@ def test_action_autoreset_true_not_dropping_rows_should_reset_all_timers():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -338,7 +338,7 @@ def test_action_autoreset_true_and_dropping_rows_should_reset_all_timers():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -379,7 +379,7 @@ def test_action_autoreset_false_not_dropping_rows_should_reset_all_timers():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -437,7 +437,7 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",
@@ -493,7 +493,7 @@ def test_bugfix_collisions_force_act_next():
 
     # 5 actors should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=actor.ids)
-    timers_gen = ConstantsProfiler(init_timers)
+    timers_gen = MockTimerGenerator(init_timers)
 
     action = Action(
         name="tested",

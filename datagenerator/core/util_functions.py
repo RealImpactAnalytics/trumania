@@ -100,7 +100,7 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
 
     keys = set(dict1.keys()) | set(dict2.keys())
 
-    return {key: merged_value(key) for key in keys }
+    return {key: merged_value(key) for key in keys}
 
 
 def df_concat(d1, d2):
