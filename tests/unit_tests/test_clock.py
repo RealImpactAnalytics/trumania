@@ -1,89 +1,47 @@
-from datetime import datetime
-
-from datagenerator.core import clock
+from datagenerator.components.time_patterns.profilers import *
 
 
-def test_default_clock_should_have_0_day_and_week_index():
+def test_init_cyclictimergenerator():
+    """
+    from a
 
-    # this is a monday
-    start = datetime(year=2016, month=8, day=15)
-    tested = clock.Clock(start, step_s=60, format_for_out="%d%m%Y %H:%M:%S",
-                         seed=123)
+    """
 
-    # without any increment, the clock should be at index 0
-    assert 0 == tested.get_day_index()
-    assert 0 == tested.get_week_index()
+    # say we have a clock at 5.45pm on 10th June
+    clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
 
+                  # time steps by 15min
+                  step_s=900,
 
-def test_default_clock_should_have_n_day_and_week_index_with_different_start():
+                  seed=1234)
 
-    # this is a wednesday
-    start = datetime(year=2016, month=8, day=17, hour=18, minute=21)
-    tested = clock.Clock(start, step_s=60, format_for_out="%d%m%Y %H:%M:%S",
-                         seed=123)
+    # 1 to 12 then 12 to 1, from midnight to midnight
+    timer_gen = CyclicTimerGenerator(
+        clock=clock,
 
-    # the index have been initialized correctly
-    assert 21 + 18*60 == tested.get_day_index()
-    assert 21 + 18*60 + 2 * 24 * 60 == tested.get_week_index()
+        profile=range(1, 13) + range(12, 0, -1),
+        profile_time_steps="1H",
+        start_date=pd.Timestamp("1 January 2014 00:00:00"),
+        seed=1234
+    )
 
+    # after the initialization, the 1h time delta of the profile should have
+    # been aligned to the 15min of the clock
+    assert timer_gen.profile.index.shape[0] == 24*4
 
-def test_clock_should_have_day_and_week_index_n_after_n_increments():
-
-    # this is a monday
-    start = datetime(year=2016, month=8, day=15)
-    tested = clock.Clock(start, step_s=60, format_for_out="%d%m%Y %H:%M:%S",
-                         seed=123)
-
-    # progressing by 45 minutes:
-    for i in range(45):
-        tested.increment()
-
-    # both index should now be at 45 steps (of 1 minute), from 0
-    assert 45 == tested.get_day_index()
-    assert 45 == tested.get_week_index()
-
-    # incrementing again
-    for i in range(45):
-        tested.increment()
-
-    # both index should now be at 90 steps (of 1 minute), from 0
-    assert 2*45 == tested.get_day_index()
-    assert 2*45 == tested.get_week_index()
+    # the first index should be shifted to the time of the clock
+    assert timer_gen.profile.index[0] == pd.Timestamp("10 June 2016 5:45pm")
 
 
-def test_large_number_of_increment_should_go_around_the_next_day():
+def test_DefaultDailyTimerGenerator_should_be_initialized_correctly():
 
-    # this is a monday
-    start = datetime(year=2016, month=8, day=15)
+    clock = Clock(start=pd.Timestamp("12 Sept 2016"),
 
-    tested = clock.Clock(start, step_s=60, format_for_out="%d%m%Y %H:%M:%S",
-                         seed=123)
+                  # time steps by 15min
+                  step_s=60,
 
-    # progressing by 25 hours:
-    for i in range(25*60):
-        tested.increment()
+                  seed=1234)
 
-    # day index should be back to 60 minutes
-    assert 60 == tested.get_day_index()
+    daily = DefaultDailyTimerGenerator(clock=clock, seed=1234)
 
-    # week index should be at the second day
-    assert 25*60 == tested.get_week_index()
-
-
-def test_very_large_number_of_increment_should_go_around_the_next_week():
-
-    # this is a monday
-    start = datetime(year=2016, month=8, day=15)
-
-    tested = clock.Clock(start, step_s=60, format_for_out="%d%m%Y %H:%M:%S",
-                         seed=123)
-
-    # progressing by 9 days and 3 hours:
-    for i in range(24*9*60 + 3*60):
-        tested.increment()
-
-    # day index should be back to 180 minutes
-    assert 3*60 == tested.get_day_index()
-
-    # week index should at 2 days and 3 hours
-    assert 2*24*60 + 3*60 == tested.get_week_index()
+    assert daily.profile.index[0] == pd.Timestamp("12 Sept 2016")

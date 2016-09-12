@@ -124,8 +124,75 @@ def test_cap_to_total_should_zero_several_correctly():
     assert [38, 0, 0] == cap_to_total([50, 40, 20], target_total=38)
 
 
+def test_latest_date_before_should_return_input_if_within_range():
+
+    starting_date = pd.Timestamp("6 June 2016")
+    upper_bound = pd.Timestamp("8 June 2016")
+    time_step = pd.Timedelta("7D")
+
+    result = latest_date_before(starting_date, upper_bound, time_step)
+
+    assert result == starting_date
 
 
+def test_latest_date_before_should_return_input_if_start_equals_ub():
+
+    starting_date = pd.Timestamp("8 June 2016")
+    upper_bound = pd.Timestamp("8 June 2016")
+    time_step = pd.Timedelta("7D")
+
+    result = latest_date_before(starting_date, upper_bound, time_step)
+
+    assert result == starting_date
+
+
+def test_latest_date_before_should_shift_backward_ne_week_input_as_required():
+
+    starting_date = pd.Timestamp("10 June 2016")
+    expected_date = pd.Timestamp("3 June 2016")
+    upper_bound = pd.Timestamp("8 June 2016")
+    time_step = pd.Timedelta("7D")
+
+    result = latest_date_before(starting_date, upper_bound, time_step)
+
+    assert result == expected_date
+
+
+def test_latest_date_before_should_shift_backward_n_weeks_input_as_required():
+
+    starting_date = pd.Timestamp("10 June 2016")
+    expected_date = pd.Timestamp("25 March 2016")
+    upper_bound = pd.Timestamp("31 March 2016")
+    time_step = pd.Timedelta("7D")
+
+    result = latest_date_before(starting_date, upper_bound, time_step)
+
+    assert result == expected_date
+
+
+def test_latest_date_before_should_shift_forward_n_weeks_input_as_required():
+
+    starting_date = pd.Timestamp("10 June 2016")
+    expected_date = pd.Timestamp("27 January 2017")
+    upper_bound = pd.Timestamp("29 January 2017")
+    time_step = pd.Timedelta("7D")
+
+    result = latest_date_before(starting_date, upper_bound, time_step)
+
+    assert result == expected_date
+
+
+def test_latest_date_before_should_shift_forward_until_upper_bound():
+
+    # here the upper bound IS the expected date => makes sure we go up to
+    # thsi ons
+    starting_date = pd.Timestamp("10 June 2016")
+    upper_bound = pd.Timestamp("24 June 2016")
+    time_step = pd.Timedelta("7D")
+
+    result = latest_date_before(starting_date, upper_bound, time_step)
+
+    assert result == upper_bound
 
 
 

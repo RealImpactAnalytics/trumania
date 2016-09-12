@@ -3,10 +3,10 @@ This is just an illustration of how to define a persistent model component
 """
 from datagenerator.core.actor import *
 from datagenerator.core import operations
-from datagenerator.core.random_generators import *
 from datagenerator.components import db
 from datagenerator.core.circus import Circus
 from datagenerator.components.time_patterns.profilers import *
+import logging
 
 
 def build_unhealthy_level_gen(seed):
@@ -23,6 +23,7 @@ class WithUganda(Circus):
         """
         Loads the cells definition from Uganda + adds 2 actions to control
         """
+        logging.info(" adding Uganda Geography")
         seeder = seed_provider(12345)
         uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
         uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
@@ -35,8 +36,9 @@ class WithUganda(Circus):
 
         # same profiler for breakdown and repair: they are both related to
         # typical human activity
-        default_day_profiler = DailyTimerGenerator(self.clock)
-
+        default_day_profiler = DefaultDailyTimerGenerator(self.clock,
+                                                          seed=seeder.next())
+        logging.info(" adding Uganda Geography6")
         cell_break_down_action = self.create_action(
             name="cell_break_down",
 
