@@ -194,7 +194,7 @@ def ensure_non_existing_dir(path):
 
 def latest_date_before(starting_date, upper_bound, time_step):
     """
-    Looks for the earliest result_date s.t
+    Looks for the latest result_date s.t
 
         result_date = starting_date + n * time_step     for any integer n
         result_date <= upper_bound
