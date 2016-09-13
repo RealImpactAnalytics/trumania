@@ -17,8 +17,20 @@ params = {
     "n_pos": 1000,
 
     # low initial number of SIM per POS to trigger bulk recharges
-    "n_init_sim_per_pos": 100
+    "n_init_sim_per_pos": 100,
+
+    "sim_price": 10,
 }
+
+
+params.update({
+    "n_sites": 50,
+    "n_customers": 500,
+    "n_pos": 100,
+
+    # low initial number of SIM per POS to trigger bulk recharges
+    "n_init_sim_per_pos": 10
+})
 
 
 class SND(Circus):
@@ -36,7 +48,7 @@ class SND(Circus):
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self)
         self.pos = snd_pos.create_pos(self, params, sim_id_gen)
-        snd_customers.add_purchase_sim_action(self)
+        snd_customers.add_purchase_sim_action(self, params)
 
 
 if __name__ == "__main__":
@@ -57,6 +69,12 @@ if __name__ == "__main__":
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("total number of logs: {}".format(all_logs_size))
+
+    for logid, log_df in logs.iteritems():
+        first_ts = log_df["TIME"].apply(pd.Timestamp).min().isoformat()
+        last_ts = log_df["TIME"].apply(pd.Timestamp).max().isoformat()
+        logging.info(" {} {} logs from {} to {}".format(
+            len(log_df), logid, first_ts, last_ts))
 
     logging.info("""execution times: "
      - building the circus: {}

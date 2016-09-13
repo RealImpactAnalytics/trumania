@@ -94,15 +94,15 @@ def add_mobility_action(circus):
     )
 
 
-def add_purchase_sim_action(circus):
+def add_purchase_sim_action(circus, params):
 
     purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
                                                     circus.seeder.next())
 
-    # TODO: should we take into account the fact that the customer already
-    # has 1 or 2,.. SIMs ?
+    # between 1 to 6 SIM bought per year per customer
     purchase_activity_gen = NumpyRandomGenerator(
-        method="choice", a=range(1, 4),
+#        method="choice", a=np.arange(1, 6) / 360.,
+        method="choice", a=np.arange(1, 6),
         seed=circus.seeder.next())
 
     purchase_action = circus.create_action(
@@ -128,6 +128,26 @@ def add_purchase_sim_action(circus):
             # anything => we could add a re-try mechanism here
             discard_empty=True
         ),
+
+
+        circus.pos.get_relationship("SIMS").ops.select_one(
+            from_field="POS",
+            named_as="SIM",
+
+            pop=True,
+            discard_empty=True
+        ),
+
+        circus.sites.get_relationship("CELLS").ops.select_one(
+            from_field="SITE",
+            named_as="CELL",
+        ),
+
+        SequencialGenerator(prefix="SIM_TX_")\
+            .ops.generate(named_as="TX_ID"),
+
+        ConstantGenerator(value=params["sim_price"])\
+            .ops.generate(named_as="VALUE"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
