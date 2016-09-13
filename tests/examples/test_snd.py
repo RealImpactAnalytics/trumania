@@ -36,8 +36,9 @@ params = {
 class SndScenario(WithRandomGeo, Circus):
 
     def __init__(self):
-        Circus.__init__(self, master_seed=1234, start=datetime(year=2016, month=6, day=8),
-                        step_s=60, format_for_out="%d%m%Y %H:%M:%S")
+        Circus.__init__(self, master_seed=1234,
+                        start=pd.Timestamp("8 June 2016"),
+                        step_s=60)
 
         distributors, sim_generator = self.create_distributors_with_sims()
         self.add_distributor_recharge_action(distributors, sim_generator)
@@ -64,7 +65,8 @@ class SndScenario(WithRandomGeo, Circus):
                                  prefix="DISTRIBUTOR_",
                                  max_length=1))
 
-        sims = distributors.create_relationship(name="SIM", seed=self.seeder.next())
+        sims = distributors.create_relationship(name="SIM",
+                                                seed=self.seeder.next())
 
         sim_generator = SequencialGenerator(prefix="SIM_", max_length=30)
         sim_ids = sim_generator.generate(params["n_init_sims_distributor"])
@@ -80,8 +82,8 @@ class SndScenario(WithRandomGeo, Circus):
 
     def add_distributor_recharge_action(self, distributors, sim_generator):
         """
-        adds an action that increases the stock the distributor. This is triggered externaly by
-        the bulk purchase action below
+        adds an action that increases the stock the distributor.
+        This is triggered externaly by the bulk purchase action below
         """
 
         restocking = self.create_action(
@@ -161,7 +163,8 @@ class SndScenario(WithRandomGeo, Circus):
         agents.create_relationship(name="SIM", seed=self.seeder.next())
 
         agents.create_attribute(name="AGENT_NAME",
-                                init_gen=FakerGenerator(seed=self.seeder.next(), method="name"))
+                                init_gen=FakerGenerator(seed=self.seeder.next(),
+                                                        method="name"))
 
         # note: the SIM multi-attribute is not initialized with any SIM: agents
         # start with no SIM
@@ -221,11 +224,10 @@ class SndScenario(WithRandomGeo, Circus):
         Adds a SIM purchase action from agents to dealer, with impact on stock of
         both actors
         """
-        logging.info("Creating purchase action")
+        logging.info("Creating bulk purchase action")
 
-        timegen = WeekProfiler(clock=self.clock,
-                               week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                               seed=self.seeder.next())
+        timegen = HighWeekDaysTimerGenerator(clock=self.clock,
+                                             seed=self.seeder.next())
 
         purchase_activity_gen = ConstantGenerator(value=100)
 
@@ -289,9 +291,8 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating purchase action")
 
-        timegen = WeekProfiler(clock=self.clock,
-                               week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                               seed=self.seeder.next())
+        timegen = HighWeekDaysTimerGenerator(clock=self.clock,
+                                             seed=self.seeder.next())
 
         purchase_activity_gen = NumpyRandomGenerator(
             method="choice", a=range(1, 4), seed=self.seeder.next())
@@ -372,9 +373,8 @@ class SndScenario(WithRandomGeo, Circus):
         # until next typical holidays :)
         # We could call this YearProfile though the internal mechanics would be
         # different than week and day profiler
-        holiday_time_gen = WeekProfiler(clock=self.clock,
-                                        week_profile=[1, 1, 1, 1, 1, 1, 1],
-                                        seed=self.seeder.next())
+        holiday_time_gen = HighWeekDaysTimerGenerator(clock=self.clock,
+                                                      seed=self.seeder.next())
 
         # TODO: we'd obviously have to adapt those weight to longer periods
         # thought this interface is not very intuitive
@@ -435,9 +435,8 @@ class SndScenario(WithRandomGeo, Circus):
          let's just ignore that for illustration purposes... ^^
         """
 
-        timegen = WeekProfiler(clock=self.clock,
-                               week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                               seed=self.seeder.next())
+        timegen = HighWeekDaysTimerGenerator(clock=self.clock,
+                                             seed=self.seeder.next())
 
         review_activity_gen = NumpyRandomGenerator(
             method="choice", a=range(1, 4), seed=self.seeder.next())

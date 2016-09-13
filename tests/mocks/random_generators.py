@@ -1,5 +1,6 @@
 from datagenerator.core.random_generators import *
 
+
 class ConstantsMockGenerator(Generator):
     """
     For test only: a (non random) Generator returning pre-defined values
@@ -13,7 +14,7 @@ class ConstantsMockGenerator(Generator):
         return self.values
 
 
-class ConstantsProfiler(Generator):
+class MockTimerGenerator(Generator):
     """
     For test only: a (non random) Profiler returning pre-defined values
     """
@@ -21,6 +22,6 @@ class ConstantsProfiler(Generator):
         Generator.__init__(self)
         self.values_series = values_series
 
-    def generate(self, weights):
+    def generate(self, observations):
         # (value is ignored)
-        return self.values_series[weights.index]
+        return self.values_series[observations.index]

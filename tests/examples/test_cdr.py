@@ -104,9 +104,9 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         logging.info("building subscriber actors ")
 
-        Circus.__init__(self, master_seed=123456, start=datetime(year=2016, month=6, day=8),
-                        step_s=self.params["time_step"],
-                        format_for_out="%d%m%Y %H:%M:%S")
+        Circus.__init__(self, master_seed=123456,
+                        start=pd.Timestamp("8 June 2016"),
+                        step_s=self.params["time_step"])
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
         cells, cities = self.add_uganda_geography()
@@ -222,7 +222,12 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # of the day
         mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1.,
                     1., 1., 5., 10., 5., 1., 1., 1., 1.]
-        mobility_time_gen = DayProfiler(self.clock, mov_prof, seed=self.seeder.next())
+        mobility_time_gen = CyclicTimerGenerator(
+            clock=self.clock,
+            profile=mov_prof,
+            profile_time_steps="1H",
+            start_date=pd.Timestamp("12 September 2016 00:00.00"),
+            seed=self.seeder.next())
 
         # Mobility network, i.e. choice of cells per user, i.e. these are the
         # weighted "used cells" (as in "most used cells) for each user
@@ -342,9 +347,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
             method="choice", a=range(20, 240), seed=self.seeder.next())
 
         # call and sms timer generator, depending on the day of the week
-        call_timegen = WeekProfiler(clock=self.clock,
-                                    week_profile=[5., 5., 5., 5., 5., 3., 3.],
-                                    seed=self.seeder.next())
+        call_timegen = HighWeekDaysTimerGenerator(clock=self.clock,
+                                                  seed=self.seeder.next())
 
         # probability of doing a topup, with high probability when the depended
         # variable (i.e. the main account value, see below) gets close to 0
@@ -574,18 +578,9 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         )
 
 
-def test_cdr_scenario():
-
+def run_cdr_scenario(params):
     setup_logging()
     logging.info("test_cdr_scenario")
-
-    params = {
-        "time_step": 60,
-        "n_cells": 100,
-        "n_agents": 100,
-        "n_subscribers": 1000,
-        "average_degree": 20,
-    }
 
     scenario = CdrScenario(params)
 
@@ -595,7 +590,7 @@ def test_cdr_scenario():
     built_time = pd.Timestamp(datetime.now())
 
     # running it
-    logs = scenario.run(n_iterations=50)
+    logs = scenario.run(params["n_iterations"])
     execution_time = pd.Timestamp(datetime.now())
 
     for logid, lg in logs.iteritems():
@@ -627,3 +622,15 @@ def test_cdr_scenario():
     """.format(built_time - start_time, execution_time - built_time))
 
 
+def test_cdr_scenario():
+
+    params = {
+        "time_step": 60,
+        "n_cells": 100,
+        "n_agents": 100,
+        "n_subscribers": 1000,
+        "average_degree": 20,
+        "n_iterations": 50
+    }
+
+    run_cdr_scenario(params)

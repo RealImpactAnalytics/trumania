@@ -100,7 +100,7 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
 
     keys = set(dict1.keys()) | set(dict2.keys())
 
-    return {key: merged_value(key) for key in keys }
+    return {key: merged_value(key) for key in keys}
 
 
 def df_concat(d1, d2):
@@ -190,3 +190,27 @@ def ensure_non_existing_dir(path):
             full_path = os.path.join(path, f)
             ensure_non_existing_dir(full_path)
         os.rmdir(path)
+
+
+def latest_date_before(starting_date, upper_bound, time_step):
+    """
+    Looks for the latest result_date s.t
+
+        result_date = starting_date + n * time_step     for any integer n
+        result_date <= upper_bound
+
+    :type starting_date: pd.Timestamp
+    :type upper_bound: pd.Timestamp
+    :type time_step: pd.Timedelta
+    :return: pd.Timestamp
+    """
+
+    result = starting_date
+
+    while result > upper_bound:
+        result -= time_step
+
+    while upper_bound - result >= time_step:
+        result += time_step
+
+    return result
