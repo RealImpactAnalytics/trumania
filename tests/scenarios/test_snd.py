@@ -70,7 +70,7 @@ class SndScenario(WithRandomGeo, Circus):
 
         sim_generator = SequencialGenerator(prefix="SIM_", max_length=30)
         sim_ids = sim_generator.generate(params["n_init_sims_distributor"])
-        sims_dist = make_random_assign(owned=sim_ids, owners=distributors.ids,
+        sims_dist = make_random_assign(to_ids=sim_ids, from_ids=distributors.ids,
                                        seed=self.seeder.next())
         sims.add_relations(from_ids=sims_dist["from"], to_ids=sims_dist["to"])
 
@@ -82,7 +82,7 @@ class SndScenario(WithRandomGeo, Circus):
 
     def add_distributor_recharge_action(self, distributors, sim_generator):
         """
-        adds an action that increases the stock the distributor.
+        adds an action that increases the stock of distributor.
         This is triggered externaly by the bulk purchase action below
         """
 
@@ -116,7 +116,8 @@ class SndScenario(WithRandomGeo, Circus):
                 subtracted_value_field="SIMS_TO_RESTOCK"),
 
             operations.FieldLogger(log_id="distributor_restock",
-                                   cols=["DATETIME", "DISTRIBUTOR_ID", "SIMS_TO_RESTOCK"]),
+                                   cols=["DATETIME", "DISTRIBUTOR_ID",
+                                         "SIMS_TO_RESTOCK"]),
         )
 
     def create_dealers_and_sims_stock(self):
@@ -133,7 +134,7 @@ class SndScenario(WithRandomGeo, Circus):
         # SIM relationship to maintain some stock
         sims = dealers.create_relationship(name="SIM", seed=self.seeder.next())
         sim_ids = build_ids(size=params["n_init_sims_dealer"], prefix="SIM_")
-        sims_dealer = make_random_assign(owned=sim_ids, owners=dealers.ids,
+        sims_dealer = make_random_assign(to_ids=sim_ids, from_ids=dealers.ids,
                                          seed=self.seeder.next())
         sims.add_relations(from_ids=sims_dealer["from"], to_ids=sims_dealer["to"])
 
@@ -345,7 +346,7 @@ class SndScenario(WithRandomGeo, Circus):
                              f=pd.isnull, f_args="series"),
 
             # any agent who failed to buy a SIM will try again at next round
-            # (we could do that probabilistically as well, just add a trigger...)
+            # (we could do that probabilistically as well, just add a trigger..)
             purchase.ops.force_act_next(actor_id_field="AGENT",
                                         condition_field="FAILED_SALE"),
 

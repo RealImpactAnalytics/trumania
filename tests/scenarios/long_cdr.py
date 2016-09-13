@@ -3,7 +3,7 @@ from datagenerator.core.util_functions import *
 
 # better run this outside of PyCharm for consistent measures...
 #
-# python tests/examples/long_cdr.py
+# python tests/scenarios/long_cdr.py
 
 if __name__ == "__main__":
     setup_logging()

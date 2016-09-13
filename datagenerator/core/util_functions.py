@@ -59,11 +59,11 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
     return data
 
 
-def make_random_assign(owned, owners, seed):
+def make_random_assign(to_ids, from_ids, seed):
     """Assign randomly each member from owner to a member of own
     """
-    choices = RandomState(seed).choice(owners, size=len(owned))
-    return pd.DataFrame({"from": choices, "to": owned})
+    chosen_froms = RandomState(seed).choice(from_ids, size=len(to_ids))
+    return pd.DataFrame({"from": chosen_froms, "to": to_ids})
 
 
 def merge_2_dicts(dict1, dict2, value_merge_func=None):

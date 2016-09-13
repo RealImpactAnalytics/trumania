@@ -15,7 +15,7 @@ class WithRandomGeo(Circus):
         Creation of a basic actor for cells, with latitude and longitude
         """
 
-        cells = Actor(prefix="CELL_", size=n_cells)
+        cells = Actor(size=n_cells)
 
         latitude_generator = FakerGenerator(method="latitude", seed=self.seeder.next())
         longitude_generator = FakerGenerator(method="longitude", seed=self.seeder.next())

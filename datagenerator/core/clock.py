@@ -12,7 +12,7 @@ class Clock(object):
     It's generating timestamps on demand, and provides information for TimeProfiler objects.
     """
 
-    def __init__(self, start, step_s, seed, output_format="%d%m%Y %H:%M:%S"):
+    def __init__(self, start, step_s, seed, output_format="%Y%m%d %H:%M:%S"):
         """Create a Clock object.
 
         :type start: pd.Timestamp

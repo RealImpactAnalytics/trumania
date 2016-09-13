@@ -22,7 +22,7 @@ class Actor(object):
             if size == 0:
                 self.ids = pd.Index([])
 
-            elif ids_gen is not None or size is not None:
+            elif ids_gen is not None and size is not None:
                 self.ids = pd.Index(ids_gen.generate(size=size))
 
             else:
