@@ -586,7 +586,6 @@ def run_cdr_scenario(params):
     start_time = pd.Timestamp(datetime.now())
 
     scenario = CdrScenario(params)
-
     built_time = pd.Timestamp(datetime.now())
 
     # running it

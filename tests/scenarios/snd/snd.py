@@ -4,6 +4,7 @@ from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
 import pandas as pd
 
+from datetime import datetime
 import snd_customers
 import snd_sites
 import snd_pos
@@ -41,10 +42,13 @@ class SND(Circus):
 if __name__ == "__main__":
 
     setup_logging()
-    
+    start_ts = pd.Timestamp(datetime.now())
+
     circus = SND()
+    built_ts = pd.Timestamp(datetime.now())
 
     logs = circus.run(n_iterations=10)
+    execution_ts = pd.Timestamp(datetime.now())
 
     for logid, log_df in logs.iteritems():
         logging.info(" - some {}:\n{}\n\n".format(
@@ -52,6 +56,12 @@ if __name__ == "__main__":
             log_df.head(15).to_string()))
 
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
-    logging.info("\ntotal number of logs: {}".format(all_logs_size))
+    logging.info("total number of logs: {}".format(all_logs_size))
+
+    logging.info("""execution times: "
+     - building the circus: {}
+     - running the simulation: {}
+    """.format(built_ts - start_ts, execution_ts - built_ts))
+
 
 
