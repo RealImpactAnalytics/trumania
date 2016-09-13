@@ -2,7 +2,6 @@ from __future__ import division
 from datagenerator.core.actor import Actor
 from datagenerator.core.circus import Circus
 from datagenerator.components.time_patterns.profilers import *
-from datetime import datetime, timedelta
 import pytest
 from datagenerator.core.random_generators import *
 

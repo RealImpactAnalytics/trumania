@@ -82,7 +82,7 @@ class SndScenario(WithRandomGeo, Circus):
 
     def add_distributor_recharge_action(self, distributors, sim_generator):
         """
-        adds an action that increases the stock the distributor.
+        adds an action that increases the stock of distributor.
         This is triggered externaly by the bulk purchase action below
         """
 
@@ -116,7 +116,8 @@ class SndScenario(WithRandomGeo, Circus):
                 subtracted_value_field="SIMS_TO_RESTOCK"),
 
             operations.FieldLogger(log_id="distributor_restock",
-                                   cols=["DATETIME", "DISTRIBUTOR_ID", "SIMS_TO_RESTOCK"]),
+                                   cols=["DATETIME", "DISTRIBUTOR_ID",
+                                         "SIMS_TO_RESTOCK"]),
         )
 
     def create_dealers_and_sims_stock(self):
@@ -345,7 +346,7 @@ class SndScenario(WithRandomGeo, Circus):
                              f=pd.isnull, f_args="series"),
 
             # any agent who failed to buy a SIM will try again at next round
-            # (we could do that probabilistically as well, just add a trigger...)
+            # (we could do that probabilistically as well, just add a trigger..)
             purchase.ops.force_act_next(actor_id_field="AGENT",
                                         condition_field="FAILED_SALE"),
 
