@@ -18,6 +18,7 @@ def create_customers(circus, params):
         "POSSIBLE_SITES",
         seed=circus.seeder.next())
 
+    # TODO: make sure the number of sites per customer is "reasonable"
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(customers.ids,
                                    circus.sites.ids,
@@ -33,7 +34,7 @@ def create_customers(circus, params):
         to_ids=mobility_df["SID"],
         weights=mobility_weight_gen.generate(mobility_df.shape[0]))
 
-    # Initialize the mobility by allocating one first random cell to each
+    # Initialize the mobility by allocating one first random site to each
     # customer among its network
     customers.create_attribute(name="CURRENT_SITE",
                                     init_relationship="POSSIBLE_SITES")
