@@ -92,7 +92,7 @@ def test_make_random_assign_shoud_assign_each_element_only_once():
     dealers = build_ids(size=10, prefix="DEALER_", max_length=2)
     sims = build_ids(size=1000, prefix="SIM_", max_length=4)
 
-    assignment = make_random_assign(to_ids=sims, form_ids=dealers, seed=10)
+    assignment = make_random_assign(to_ids=sims, from_ids=dealers, seed=10)
 
     # all sims should have been assigned
     assert assignment.shape == (1000, 2)

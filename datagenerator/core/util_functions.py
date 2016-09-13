@@ -59,10 +59,10 @@ def assign_random_proportions(name1,name2,group1,group2,seed):
     return data
 
 
-def make_random_assign(to_ids, form_ids, seed):
+def make_random_assign(to_ids, from_ids, seed):
     """Assign randomly each member from owner to a member of own
     """
-    chosen_froms = RandomState(seed).choice(form_ids, size=len(to_ids))
+    chosen_froms = RandomState(seed).choice(from_ids, size=len(to_ids))
     return pd.DataFrame({"from": chosen_froms, "to": to_ids})
 
 

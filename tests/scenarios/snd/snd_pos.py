@@ -39,7 +39,7 @@ def create_pos(circus, params, sim_id_gen):
 
     sims_dealer = make_random_assign(
         to_ids=sim_ids,
-        form_ids=pos.ids,
+        from_ids=pos.ids,
         seed=circus.seeder.next())
 
     pos_sims.add_relations(
