@@ -3,6 +3,7 @@ from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
 from numpy.random import *
 
+import snd_constants
 
 def create_pos(circus, params, sim_id_gen):
 
@@ -23,6 +24,16 @@ def create_pos(circus, params, sim_id_gen):
                              size=pos.size,
                              replace=True)
     pos.create_attribute("SITE", init_values=pos_sites)
+
+    # TODO: Add POS coordinates based on SITE coordinates
+    pos.create_attribute("LATITUDE", init_gen=ConstantGenerator(0.0))
+    pos.create_attribute("LONGITUDE", init_gen=ConstantGenerator(0.0))
+
+    name_gen = NumpyRandomGenerator(method="choice",
+                                    seed=circus.seeder.next(),
+                                    a=snd_constants.POS_NAMES)
+
+    pos.create_attribute("NAME", init_gen=name_gen)
 
     logging.info("recording the list POS per site in site relationship")
     pos_rel = circus.sites.create_relationship("POS",

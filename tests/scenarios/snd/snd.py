@@ -8,6 +8,7 @@ from datetime import datetime
 import snd_customers
 import snd_sites
 import snd_pos
+import snd_field_agents
 
 import logging
 
@@ -15,6 +16,7 @@ params = {
     "n_sites": 500,
     "n_customers": 5000,
     "n_pos": 1000,
+    "n_field_agents": 50,
 
     # low initial number of SIM per POS to trigger bulk recharges
     "n_init_sim_per_pos": 100,
@@ -27,6 +29,7 @@ params.update({
     "n_sites": 50,
     "n_customers": 500,
     "n_pos": 100,
+    "n_field_agents": 50,
 
     # low initial number of SIM per POS to trigger bulk recharges
     "n_init_sim_per_pos": 10
@@ -49,6 +52,10 @@ class SND(Circus):
         snd_customers.add_mobility_action(self)
         self.pos = snd_pos.create_pos(self, params, sim_id_gen)
         snd_customers.add_purchase_sim_action(self, params)
+
+        self.field_agents = snd_field_agents.create_field_agents(self, params)
+        snd_field_agents.add_mobility_action(self)
+        snd_field_agents.add_survey_action(self)
 
 
 if __name__ == "__main__":

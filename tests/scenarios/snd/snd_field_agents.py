@@ -1,0 +1,160 @@
+import logging
+from datagenerator.core.circus import *
+from datagenerator.core.actor import *
+from datagenerator.core.util_functions import *
+import pandas as pd
+
+
+def create_field_agents(circus, params):
+
+    logging.info(" adding field agents")
+
+    field_agents = Actor(size=params["n_field_agents"],
+                         ids_gen=SequencialGenerator(prefix="FA_"))
+
+    logging.info(" adding mobility relationships to field agents")
+
+    mobility_rel = field_agents.create_relationship(
+        "POSSIBLE_SITES",
+        seed=circus.seeder.next())
+
+    # TODO: make sure the number of sites per field agent is "reasonable"
+    mobility_df = pd.DataFrame.from_records(
+        make_random_bipartite_data(field_agents.ids,
+                                   circus.sites.ids,
+                                   0.4,
+                                   seed=circus.seeder.next()),
+        columns=["FA_ID", "SID"])
+
+    mobility_weight_gen = NumpyRandomGenerator(
+        method="exponential", scale=1., seed=circus.seeder.next())
+
+    mobility_rel.add_relations(
+        from_ids=mobility_df["FA_ID"],
+        to_ids=mobility_df["SID"],
+        weights=mobility_weight_gen.generate(mobility_df.shape[0]))
+
+    # Initialize the mobility by allocating one first random site to each
+    # field agent among its network
+    field_agents.create_attribute(name="CURRENT_SITE",
+                                  init_relationship="POSSIBLE_SITES")
+
+    return field_agents
+
+
+def add_mobility_action(circus):
+
+    logging.info(" creating mobility action")
+
+    # TODO: post-generation check: is the actual move set realistic?
+    # Field agents are active during the work hours
+    mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 1., 5., 5., 5., 5., 5., 5.,
+                5., 5., 1., 1., 1., 1., 1., 1., 1.]
+    mobility_time_gen = CyclicTimerGenerator(
+        clock=circus.clock,
+        profile=mov_prof,
+        profile_time_steps="1H",
+        start_date=pd.Timestamp("12 September 2016 00:00.00"),
+        seed=circus.seeder.next())
+
+    mobility_action = circus.create_action(
+        name="field_agent_mobility",
+
+        initiating_actor=circus.field_agents,
+        actorid_field="FA_ID",
+
+        timer_gen=mobility_time_gen,
+    )
+
+    logging.info(" adding operations")
+
+    mobility_action.set_operations(
+        circus.field_agents.ops.lookup(
+            actor_id_field="FA_ID",
+            select={"CURRENT_SITE": "PREV_SITE"}),
+
+        # selects a destination site (or maybe the same as current... ^^)
+
+        circus.field_agents \
+            .get_relationship("POSSIBLE_SITES") \
+            .ops.select_one(from_field="FA_ID", named_as="NEW_SITE"),
+
+        # update the SITE attribute of the field agents accordingly
+        circus.field_agents \
+            .get_attribute("CURRENT_SITE") \
+            .ops.update(
+                actor_id_field="FA_ID",
+                copy_from_field="NEW_SITE"),
+
+        circus.clock.ops.timestamp(named_as="TIME"),
+
+        # create mobility logs
+        operations.FieldLogger(log_id="field_agent_mobility_logs",
+                               cols=["TIME", "FA_ID", "PREV_SITE",
+                                     "NEW_SITE"]),
+    )
+
+
+def add_survey_action(circus):
+
+    # Surveys only happen during week days
+    survey_timer_gen = \
+        CyclicTimerGenerator(
+            clock=circus.clock,
+            profile=[5., 5., 5., 5., 5., 0., 0.],
+            profile_time_steps="1D",
+            start_date=pd.Timestamp("6 June 2016 00:00:00"),  # Monday
+            seed=circus.seeder.next())
+
+    # Between 10 and 100 surveys per week
+    survey_activity_gen = NumpyRandomGenerator(
+        method="choice", a=np.arange(10, 100),
+        seed=circus.seeder.next())
+
+    survey_action = circus.create_action(
+        name="pos_surveys",
+        initiating_actor=circus.field_agents,
+        actorid_field="FA_ID",
+        timer_gen=survey_timer_gen,
+        activity_gen=survey_activity_gen
+    )
+
+    survey_action.set_operations(
+
+        circus.field_agents.ops.lookup(
+            actor_id_field="FA_ID",
+            select={"CURRENT_SITE": "SITE"}
+        ),
+
+        # TODO: We should select a POS irrespectively of the relationship weight
+        circus.sites.get_relationship("POS").ops.select_one(
+            from_field="SITE",
+            named_as="POS_ID",
+
+            # a field agent in a location without a POS won't serve any
+            # anything => we could add a re-try mechanism here
+            discard_empty=True
+        ),
+
+
+        circus.pos.ops.lookup(
+            actor_id_field="POS_ID",
+            select={
+                "LATITUDE": "POS_LATITUDE",
+                "LONGITUDE": "POS_LONGITUDE",
+                "NAME": "POS_NAME",
+            }
+        ),
+
+        circus.clock.ops.timestamp(named_as="TIME"),
+
+        # TODO: Restricts fields to output
+        # Can't seem to make it work now, due to a framework bug ?
+        FieldLogger(log_id="pos_surveys",
+                    # cols=["FA_ID", "POS_ID", "POS_NAME",
+                    #      "POS_LATITUDE", "POS_LONGITUDE", "TIME"]
+                    )
+    )
+
+
+

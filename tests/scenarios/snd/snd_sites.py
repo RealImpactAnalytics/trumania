@@ -15,6 +15,15 @@ def create_sites(circus, params):
     cells_of_site_rel = sites.create_relationship("CELLS",
                                               seed=circus.seeder.next())
 
+    latitude_generator = FakerGenerator(method="latitude",
+                                        seed=circus.seeder.next())
+    longitude_generator = FakerGenerator(method="longitude",
+                                         seed=circus.seeder.next())
+
+    sites.create_attribute("LATITUDE", init_gen=latitude_generator)
+    sites.create_attribute("LONGITUDE", init_gen=longitude_generator)
+
+
     # between 1 and 9 cells per site
     logging.info("populating CELLS of SITES ")
 
