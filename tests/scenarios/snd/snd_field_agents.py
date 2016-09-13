@@ -132,7 +132,6 @@ def add_survey_action(circus):
             named_as="POS_ID",
 
             # a field agent in a location without a POS won't serve any
-            # anything => we could add a re-try mechanism here
             discard_empty=True
         ),
 
