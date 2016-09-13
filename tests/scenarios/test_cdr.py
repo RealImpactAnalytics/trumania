@@ -582,10 +582,10 @@ def run_cdr_scenario(params):
     setup_logging()
     logging.info("test_cdr_scenario")
 
-    scenario = CdrScenario(params)
-
     # building the circus
     start_time = pd.Timestamp(datetime.now())
+
+    scenario = CdrScenario(params)
 
     built_time = pd.Timestamp(datetime.now())
 

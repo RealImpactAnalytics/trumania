@@ -4,9 +4,9 @@ from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
 import pandas as pd
 
-from snd_customers import *
-from snd_sites import *
-from snd_pos import *
+import snd_customers
+import snd_sites
+import snd_pos
 
 import logging
 
@@ -14,6 +14,9 @@ params = {
     "n_sites": 500,
     "n_customers": 5000,
     "n_pos": 1000,
+
+    # low initial number of SIM per POS to trigger bulk recharges
+    "n_init_sim_per_pos": 100
 }
 
 
@@ -26,15 +29,19 @@ class SND(Circus):
             start=pd.Timestamp("13 Sept 2016 12:00"),
             step_s=300)
 
-        self.sites = create_sites(self, params)
-        self.customers = create_customers(self, params)
-        add_mobility(self)
-        self.pos = create_pos(self, params)
+        sim_id_gen = SequencialGenerator(prefix="SIM_")
+
+        self.sites = snd_sites.create_sites(self, params)
+        self.customers = snd_customers.create_customers(self, params)
+        snd_customers.add_mobility_action(self)
+        self.pos = snd_pos.create_pos(self, params, sim_id_gen)
+        snd_customers.add_purchase_sim_action(self)
 
 
 if __name__ == "__main__":
 
     setup_logging()
+    
     circus = SND()
 
     logs = circus.run(n_iterations=10)
@@ -43,4 +50,8 @@ if __name__ == "__main__":
         logging.info(" - some {}:\n{}\n\n".format(
             logid,
             log_df.head(15).to_string()))
+
+    all_logs_size = np.sum(df.shape[0] for df in logs.values())
+    logging.info("\ntotal number of logs: {}".format(all_logs_size))
+
 

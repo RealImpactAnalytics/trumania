@@ -41,7 +41,7 @@ def create_customers(circus, params):
     return customers
 
 
-def add_mobility(circus):
+def add_mobility_action(circus):
 
     logging.info(" creating mobility action")
 
@@ -91,3 +91,51 @@ def add_mobility(circus):
                                cols=["TIME", "CUST_ID", "PREV_SITE",
                                      "NEW_SITE"]),
     )
+
+
+def add_purchase_sim_action(circus):
+
+    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
+                                                    circus.seeder.next())
+
+    # TODO: should we take into account the fact that the customer already
+    # has 1 or 2,.. SIMs ?
+    purchase_activity_gen = NumpyRandomGenerator(
+        method="choice", a=range(1, 4),
+        seed=circus.seeder.next())
+
+    purchase_action = circus.create_action(
+        name="sim_purchases_to_pos",
+        initiating_actor=circus.customers,
+        actorid_field="CUST_ID",
+        timer_gen=purchase_timer_gen,
+        activity_gen=purchase_activity_gen
+    )
+
+    purchase_action.set_operations(
+
+        circus.customers.ops.lookup(
+            actor_id_field="CUST_ID",
+            select={"CURRENT_SITE": "SITE"}
+        ),
+
+        circus.sites.get_relationship("POS").ops.select_one(
+            from_field="SITE",
+            named_as="POS",
+
+            # TODO: this means customer in a location without POS do not buy
+            # anything => we could add a re-try mechanism here
+            discard_empty=True
+        ),
+
+        circus.clock.ops.timestamp(named_as="TIME"),
+
+        FieldLogger(log_id="sim_purchases_to_pos")
+    )
+
+
+
+
+
+
+
