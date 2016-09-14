@@ -4,6 +4,7 @@ from numpy.random import *
 from datagenerator.components.social_networks.erdos_renyi import *
 from datagenerator.components.geographies.random_geo import *
 from datagenerator.components.geographies.uganda import *
+from datagenerator.core import operations
 
 from datetime import datetime
 
@@ -353,7 +354,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # probability of doing a topup, with high probability when the depended
         # variable (i.e. the main account value, see below) gets close to 0
         recharge_trigger = DependentTriggerGenerator(
-            value_mapper=logistic(a=-0.01, b=10.), seed=self.seeder.next())
+            value_mapper=operations.logistic(k=-0.01, x0=1000),
+            seed=self.seeder.next())
 
         # call activity level, under normal and "excited" states
         normal_call_activity = ParetoGenerator(xmin=10, a=1.2,
