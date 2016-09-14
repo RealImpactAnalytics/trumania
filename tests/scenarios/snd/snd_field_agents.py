@@ -147,11 +147,9 @@ def add_survey_action(circus):
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        # TODO: Restricts fields to output
-        # Can't seem to make it work now, due to a framework bug ?
         FieldLogger(log_id="pos_surveys",
-                    # cols=["FA_ID", "POS_ID", "POS_NAME",
-                    #      "POS_LATITUDE", "POS_LONGITUDE", "TIME"]
+                    cols=["FA_ID", "POS_ID", "POS_NAME",
+                          "POS_LATITUDE", "POS_LONGITUDE", "TIME"]
                     )
     )
 
