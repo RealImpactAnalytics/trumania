@@ -66,7 +66,8 @@ class Relationship(object):
             return selected
 
     def select_one(self, from_ids=None, named_as="to", remove_selected=False,
-                   discard_empty=True, one_to_one=False):
+                   discard_empty=True, one_to_one=False,
+                   overridden_to_weights=None):
 
         # TODO: the implementation of select_many is cleaner and probably
         # faster => refactor to make them one single thingy, select_one being
@@ -113,6 +114,12 @@ class Relationship(object):
             def pick_one(df):
                 return df.sample(n=1, weights="weight",
                                  random_state=self.state)[["to", "table_index"]]
+
+            # overriding weights if requested. It's ok to override "weight"
+            # since relations is a copy already
+            if overridden_to_weights is not None:
+                relations["weight"] = relations["to"].map(
+                    overridden_to_weights).values
 
             # picking a "to" for each, potentially duplicated, "from" value
             grouped = relations.groupby(by=["from", "from_index"], sort=False)
@@ -276,7 +283,7 @@ class Relationship(object):
             """
 
             def __init__(self, relationship, from_field, named_as,
-                         one_to_one, pop, discard_missing):
+                         one_to_one, pop, discard_missing, weight):
 
                 # inner join instead of default left to allow dropping rows
                 # in case of duplicates and one-to-one
@@ -288,6 +295,7 @@ class Relationship(object):
                 self.one_to_one = one_to_one
                 self.pop = pop
                 self.discard_missing = discard_missing
+                self.weight = weight
 
             # def transform(self, action_data):
             def build_output(self, action_data):
@@ -296,25 +304,40 @@ class Relationship(object):
                     named_as=self.named_as,
                     remove_selected=self.pop,
                     one_to_one=self.one_to_one,
-                    discard_empty=self.discard_missing)
+                    discard_empty=self.discard_missing,
+                    overridden_to_weights=self.weight)
 
                 selected.drop("from", axis=1, inplace=True)
                 return selected
 
         def select_one(self, from_field, named_as, one_to_one=False,
-                       pop=False, discard_empty=False):
+                       pop=False, discard_empty=False, weight=None):
             """
             :param from_field: field corresponding to the "from" side of the
                 relationship
+
             :param named_as: field name assigned to the selected "to" side
                 of the relationship
+
             :param one_to_one: boolean indicating that any "to" value will be
                 selected at most once
+
+            :param pop: if True, the selected relation is removed
+
+            :param discard_empty: if False, any non-existing "from" in the
+                relationship yields a None in the resulting selection. If
+                true, that row is removed from the action data.
+
+            :param weight: weight to use for the "to" side of the
+                relationship. Must be a Series whose index are the "to" values.
+                Typical usage would be to plug an attribute of the "to" actor
+                here.
+
             :return: this operation adds a single column corresponding to a
                 random choice from a Relationship
             """
             return self.SelectOne(self.relationship, from_field, named_as,
-                                  one_to_one, pop, discard_empty)
+                                  one_to_one, pop, discard_empty, weight)
 
         class SelectAll(Operation):
             def __init__(self, relationship, from_field, named_as):
