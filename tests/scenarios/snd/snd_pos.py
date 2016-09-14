@@ -48,7 +48,7 @@ def _create_attractiveness(circus, pos):
                         axis=1)
         base = base.mask(base > 50, 50).mask(base < -50, -50)
         return pd.DataFrame(base, columns=["result"])
-    
+
     attractiveness_evolution.set_operations(
         pos.ops.lookup(
             actor_id_field="POS_ID",
@@ -80,10 +80,49 @@ def _create_attractiveness(circus, pos):
             copy_from_field="NEW_ATTRACTIVENESS"
         ),
 
-        circus.clock.ops.timestamp(named_as="TIME"),
 
-        # TODO: remove this (just there for debugs)
+        # TODO: remove this (currently there just for debugs)
+        circus.clock.ops.timestamp(named_as="TIME"),
         FieldLogger(log_id="att_updates")
+    )
+
+    delta_updater = NumpyRandomGenerator(method="choice", a=[-1, 0, 1],
+                                         seed=circus.seeder.next())
+
+    # random walk around of the attractiveness delta, once per week
+    attractiveness_delta_evolution = circus.create_action(
+        name="attractiveness_delta_evolution",
+        initiating_actor=pos,
+        actorid_field="POS_ID",
+
+        # exactly one attractiveness evolution per day
+        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week)
+        #timer_gen=ConstantDependentGenerator(value=1)
+    )
+
+    attractiveness_delta_evolution.set_operations(
+        pos.ops.lookup(
+            actor_id_field="POS_ID",
+            select={"ATTRACT_DELTA": "ATTRACT_DELTA"}
+        ),
+
+        delta_updater.ops.generate(named_as="DELTA_UPDATE"),
+
+        operations.Apply(
+            source_fields=["ATTRACT_DELTA", "DELTA_UPDATE"],
+            named_as="NEW_ATTRACT_DELTA",
+            f=np.add, f_args="series"
+        ),
+
+        pos.get_attribute("ATTRACT_DELTA").ops.update(
+            actor_id_field="POS_ID",
+            copy_from_field="NEW_ATTRACT_DELTA"
+        ),
+
+        # TODO: remove this (currently there just for debugs)
+        circus.clock.ops.timestamp(named_as="TIME"),
+        FieldLogger(log_id="att_delta_updates")
+
     )
 
 
