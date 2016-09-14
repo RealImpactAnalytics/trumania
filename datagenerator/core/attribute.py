@@ -49,12 +49,15 @@ class Attribute(object):
                            .set_index("from", drop=True)
                            .rename(columns={"to": "value"}))
 
-    def get_values(self, ids):
+    def get_values(self, ids=None):
         """
         :param ids: actor ids for which the attribute values are desired
         :return: the current attribute values for those actors, as Series
         """
-        return self._table.loc[ids]["value"]
+        if ids is None:
+            return self._table["value"]
+        else:
+            return self._table.loc[ids]["value"]
 
     def update(self, series):
         """

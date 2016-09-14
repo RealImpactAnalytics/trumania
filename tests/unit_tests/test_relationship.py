@@ -131,6 +131,50 @@ def test_one_to_one_relationship_should_find_unique_counterpart():
                                                            "td", "te"]
 
 
+def test_weighted_relationship_should_take_weights_into_account():
+
+    # a,b and c are all connected to x,y and z, but the weight is 0
+    # everywhere except to y
+    one_to_three_weighted = Relationship(seed=1234)
+    one_to_three_weighted.add_relations(
+        from_ids=["a"]*3 + ["b"]*3 + ["c"]*3,
+        to_ids=["x", "y", "z"]*3,
+        weights=[0, 1, 0]*3
+    )
+
+    selected = one_to_three_weighted.select_one()
+
+    # => with those weights, only x should should be selected
+    assert selected["to"].tolist() == ["y", "y", "y"]
+    assert selected["from"].tolist() == ["a", "b", "c"]
+
+
+def test_weighted_relationship_should_take_overridden_weights_into_account():
+
+    # a,b and c are all connected to x,y and z, but the weight is 0
+    # everywhere except to y
+    one_to_three_weighted = Relationship(seed=1234)
+    one_to_three_weighted.add_relations(
+        from_ids=["a"]*3 + ["b"]*3 + ["c"]*3,
+        to_ids=["x", "y", "z"]*3,
+        weights=[0, 1, 0]*3
+    )
+
+    # if we override the weight, we can only specify one value per "to" value
+    overridden_to_weights = pd.Series(
+        data=[0, 0, 1],
+        index=["x", "y", "z"]
+    )
+    selected = one_to_three_weighted.select_one(
+        overridden_to_weights=overridden_to_weights
+    )
+
+    # the initial weights should have been discarded and the one provided as
+    # input should have been joined and used as expected
+    assert selected["to"].tolist() == ["z", "z", "z"]
+    assert selected["from"].tolist() == ["a", "b", "c"]
+
+
 def test_pop_one_relationship_should_remove_element():
     # we're removing relations from this one => working on a copy not to
     # influence other tests

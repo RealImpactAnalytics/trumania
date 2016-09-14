@@ -39,9 +39,8 @@ def create_pos(circus, params, sim_id_gen):
     pos_rel = circus.sites.create_relationship("POS",
                                                seed=circus.seeder.next())
     pos_rel.add_relations(
-        from_ids=pos.get_attribute_values("SITE", pos.ids),
-        to_ids=pos.ids,
-        weights=pos.get_attribute_values("ATTRACTIVENESS", pos.ids))
+        from_ids=pos.get_attribute_values("SITE"),
+        to_ids=pos.ids)
 
     logging.info("generating POS initial SIM stock")
     pos_sims = pos.create_relationship("SIMS", seed=circus.seeder.next())
