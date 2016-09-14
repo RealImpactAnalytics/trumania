@@ -326,7 +326,7 @@ class Relationship(object):
 
             :param discard_empty: if False, any non-existing "from" in the
                 relationship yields a None in the resulting selection. If
-                true, that row is removed from the action data.
+                true, that row is removed from the action_data.
 
             :param weight: weight to use for the "to" side of the
                 relationship. Must be a Series whose index are the "to" values.
