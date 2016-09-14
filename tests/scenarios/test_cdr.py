@@ -1,5 +1,4 @@
 from __future__ import division
-from numpy.random import *
 
 from datagenerator.components.social_networks.erdos_renyi import *
 from datagenerator.components.geographies.random_geo import *

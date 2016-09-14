@@ -38,6 +38,9 @@ class Clock(object):
         self.__state = RandomState(seed)
         self.ops = self.ClockOps(self)
 
+        # number of clock ticks in one day
+        self.ticks_per_day = 24 * 60 * 60 / step_s
+
         self.__increment_listeners = []
 
     def register_increment_listener(self, listener):

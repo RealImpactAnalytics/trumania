@@ -231,7 +231,7 @@ def copy_if(action_data):
     return copied.rename(columns={source_field: "result"})
 
 
-def logistic(k, x0):
+def logistic(k, x0=0):
     """
 
     Returns a function, usable in an Apply operation, that transforms the
@@ -250,7 +250,7 @@ def logistic(k, x0):
     """
 
     def _logistic(x):
-        the_exp = np.minimum(-k * (x - x0), 10.)
+        the_exp = np.minimum(-k * (x - x0), 10)
         return 1 / (1 + np.exp(the_exp))
 
     return _logistic

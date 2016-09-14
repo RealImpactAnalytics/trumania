@@ -157,8 +157,3 @@ def add_purchase_sim_action(circus, params):
     )
 
 
-
-
-
-
-

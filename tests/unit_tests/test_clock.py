@@ -1,11 +1,17 @@
 from datagenerator.components.time_patterns.profilers import *
 
 
-def test_init_cyclictimergenerator():
-    """
-    from a
+def test_clock_tick_per_day():
 
-    """
+    clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
+                  step_s=900,
+                  seed=1234)
+
+    # time steps is 900 s, i.e 15 min
+    assert clock.ticks_per_day == 24*4
+
+
+def test_init_cyclictimergenerator():
 
     # say we have a clock at 5.45pm on 10th June
     clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
