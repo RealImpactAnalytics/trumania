@@ -215,7 +215,7 @@ class Actor(object):
 
             def build_output(self, action_data):
                 if action_data.shape[0] == 0:
-                    return pd.DataFrame()
+                    return pd.DataFrame(columns=self.select_dict.values())
                 elif is_sequence(action_data.iloc[0][self.actor_id_field]):
                     return self._lookup_by_sequences(action_data)
                 else:
