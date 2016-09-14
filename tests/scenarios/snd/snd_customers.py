@@ -57,7 +57,7 @@ def add_mobility_action(circus):
         seed=circus.seeder.next())
 
     mobility_action = circus.create_action(
-        name="mobility",
+        name="customer_mobility",
 
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
@@ -88,7 +88,7 @@ def add_mobility_action(circus):
         circus.clock.ops.timestamp(named_as="TIME"),
 
         # create mobility logs
-        operations.FieldLogger(log_id="mobility_logs",
+        operations.FieldLogger(log_id="customer_mobility_logs",
                                cols=["TIME", "CUST_ID", "PREV_SITE",
                                      "NEW_SITE"]),
     )

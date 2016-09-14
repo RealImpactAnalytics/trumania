@@ -17,6 +17,42 @@ class HighWeekDaysTimerGenerator(CyclicTimerGenerator):
                                       seed=seed)
 
 
+class WorkHoursTimerGenerator(CyclicTimerGenerator):
+    """
+    Basic CyclicTimerGenerator with a one week period that allocates uniform
+    probabilities to work hours.
+
+    Work hours happen during week days (Monday to Friday),
+    and between start_hour and end_hour, both included
+
+    """
+    def __init__(self, clock, seed, start_hour=9, end_hour=17):
+
+        assert start_hour >= 0
+        assert end_hour < 24
+        assert start_hour <= end_hour
+
+        # if start_hour = 0, before_work is empty
+        before_work = [0.] * start_hour
+        during_work = [1.] * (end_hour-start_hour+1)
+        # if end_hour = 23, after_work is empty
+        after_work = [0.] * (23-end_hour)
+
+        # the sum of before_work, during_work and after_work is always 24
+        week_day_profile = before_work + during_work + after_work
+        weekend_day_profile = [0.] * 24
+
+        week_profile = week_day_profile * 5 + weekend_day_profile * 2
+
+        start_date = pd.Timestamp("6 June 2016 00:00:00")
+        CyclicTimerGenerator.__init__(self,
+                                      clock=clock,
+                                      profile=week_profile,
+                                      profile_time_steps="1h",
+                                      start_date=start_date,
+                                      seed=seed)
+
+
 class DefaultDailyTimerGenerator(CyclicTimerGenerator):
     """
     Basic CyclicTimerGenerator with a one dat period with hourly weights
