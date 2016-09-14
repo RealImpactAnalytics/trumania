@@ -7,18 +7,15 @@ import snd_constants
 
 
 def _create_attractiveness(circus, pos):
-    """
-
-    """
 
     logging.info("generating pos attractiveness values and evolutions")
 
     # "base" attractiveness, in [-50, 50]
-    attractiveness_gen = NumpyRandomGenerator(
+    attractiveness_base_gen = NumpyRandomGenerator(
         method="choice",
         a=range(-50, 50),
         seed=circus.seeder.next())
-    pos.create_attribute("ATTRACT_BASE", init_gen=attractiveness_gen)
+    pos.create_attribute("ATTRACT_BASE", init_gen=attractiveness_base_gen)
 
     # attractiveness scaled into [0,1]. This is the one influencing the choice
     # of customers
@@ -51,6 +48,7 @@ def _create_attractiveness(circus, pos):
                         axis=1)
         base = base.mask(base > 50, 50).mask(base < -50, -50)
         return pd.DataFrame(base, columns=["result"])
+    
     attractiveness_evolution.set_operations(
         pos.ops.lookup(
             actor_id_field="POS_ID",
