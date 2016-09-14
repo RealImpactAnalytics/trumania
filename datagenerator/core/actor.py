@@ -57,7 +57,7 @@ class Actor(object):
     def get_attribute(self, attribute_name):
         return self.attributes[attribute_name]
 
-    def get_attribute_values(self, attribute_name, ids):
+    def get_attribute_values(self, attribute_name, ids=None):
         """
         :return: the values of this attribute, as a Series
         """

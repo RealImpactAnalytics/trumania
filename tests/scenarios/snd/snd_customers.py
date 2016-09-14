@@ -124,6 +124,8 @@ def add_purchase_sim_action(circus, params):
             from_field="SITE",
             named_as="POS",
 
+            weight=circus.pos.get_attribute_values("ATTRACTIVENESS"),
+
             # TODO: this means customer in a location without POS do not buy
             # anything => we could add a re-try mechanism here
             discard_empty=True
