@@ -47,15 +47,9 @@ def add_mobility_action(circus):
     logging.info(" creating mobility action")
 
     # TODO: post-generation check: is the actual move set realistic?
-    # Field agents are active during the work hours
-    mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 1., 5., 5., 5., 5., 5., 5.,
-                5., 5., 1., 1., 1., 1., 1., 1., 1.]
-    mobility_time_gen = CyclicTimerGenerator(
-        clock=circus.clock,
-        profile=mov_prof,
-        profile_time_steps="1H",
-        start_date=pd.Timestamp("12 September 2016 00:00.00"),
-        seed=circus.seeder.next())
+    # Field agents move only during the work hours
+    mobility_time_gen = WorkHoursTimerGenerator(clock=circus.clock,
+                                                seed=circus.seeder.next())
 
     mobility_action = circus.create_action(
         name="field_agent_mobility",
@@ -97,14 +91,9 @@ def add_mobility_action(circus):
 
 def add_survey_action(circus):
 
-    # Surveys only happen during week days
-    survey_timer_gen = \
-        CyclicTimerGenerator(
-            clock=circus.clock,
-            profile=[5., 5., 5., 5., 5., 0., 0.],
-            profile_time_steps="1D",
-            start_date=pd.Timestamp("6 June 2016 00:00:00"),  # Monday
-            seed=circus.seeder.next())
+    # Surveys only happen during work hours
+    survey_timer_gen = WorkHoursTimerGenerator(clock=circus.clock,
+                                               seed=circus.seeder.next())
 
     # Between 10 and 100 surveys per week
     survey_activity_gen = NumpyRandomGenerator(
