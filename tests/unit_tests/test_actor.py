@@ -71,6 +71,26 @@ def test_lookup_values_by_scalar_should_return_correct_values():
     assert ["b", "d", "a", "b"] == result["neighbour_city"].tolist()
 
 
+def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all_columns():
+
+    lookup = dummy_actor.ops.lookup(
+        actor_id_field="NEIGHBOUR",
+        select={
+            "age": "neighbour_age",
+            "city": "neighbour_city",
+        }
+    )
+
+    empty_action_data = pd.DataFrame(columns=["A", "B", "COUSINS", "NEIGHBOUR"])
+
+    result, logs = lookup(empty_action_data)
+    expected_cols = ["A", "B", "COUSINS", "NEIGHBOUR", "neighbour_age",
+                     "neighbour_city"]
+    assert logs == {}
+    assert sorted(result.columns) == expected_cols
+    assert result.shape[0] == 0
+
+
 def test_lookup_values_by_array_should_return_correct_values():
 
     lookup = dummy_actor.ops.lookup(
