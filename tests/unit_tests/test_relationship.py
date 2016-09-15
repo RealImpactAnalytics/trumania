@@ -48,6 +48,30 @@ def test_get_relations_from_non_existing_ids_should_have_correct_columns():
     assert relations.columns.tolist() == ["from", "table_index", "to", "weight"]
 
 
+def test_get_neighbourhood_size_of_known_ids_should_return_correct_value():
+
+    onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "c", "d"])
+    assert onetoone_size.equals(pd.Series([1,1,1], index=["b", "c", "d"]))
+
+    fourtoone_size = four_to_one.get_neighbourhood_size(from_ids=["b", "c", "d"])
+    assert fourtoone_size.equals(pd.Series([1,1,1], index=["b", "c", "d"]))
+
+    four_to2size = four_to_two.get_neighbourhood_size(from_ids=["b", "c", "d"])
+    assert four_to2size.equals(pd.Series([2,2,2], index=["b", "c", "d"]))
+
+    four_to100size = four_to_plenty.get_neighbourhood_size(from_ids=["b", "c"])
+    assert four_to100size.equals(pd.Series([100, 100], index=["b", "c"]))
+
+
+def test_get_neighbourhood_size_of_unknown_ids_should_return_0():
+
+    onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "c",
+                                                            "non_existing"])
+
+    assert onetoone_size.index.tolist() == ["b", "c", "non_existing"]
+    assert onetoone_size[["b", "c", "non_existing"]].tolist() == [1,1,0]
+
+
 # bug fix: this was simply crashing previously
 def test_select_one_from_empty_relationship_should_return_void():
     tested = Relationship(seed=1)

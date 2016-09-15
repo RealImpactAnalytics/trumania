@@ -48,6 +48,17 @@ class Relationship(object):
         else:
             return self._table[self._table["from"].isin(from_ids)]
 
+    def get_neighbourhood_size(self, from_ids):
+        """
+        return a series indexed by "from" containing the number of "tos" for
+        each requested from
+        """
+
+        counts = self.get_relations(from_ids)[["from", "to"]]\
+            .groupby("from").count()["to"]
+
+        return counts.reindex(from_ids).fillna(0)
+
     def _maybe_add_nones(self, should_inject_nones, from_ids, selected):
         """
         if should_inject_Nones, this adds (from_id -> None) selection entries
