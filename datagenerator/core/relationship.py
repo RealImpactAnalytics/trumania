@@ -157,7 +157,11 @@ class Relationship(object):
         large contiguous chunks among the "to" parts of a relationship.
 
         Also, one-to-one is always assumed: there is never overlap between
-        the returned chunks
+        the returned chunks.
+
+        The result is a dataframe with an index aligned with the one of from_ids
+        (each "from" value could be present several times, so we cannot use
+        that as index)
         """
         req = pd.DataFrame({"from": from_ids, "qties": quantities})
 
@@ -169,7 +173,7 @@ class Relationship(object):
 
         all_reqs = req.groupby("from", sort=False).apply(gather)
 
-        # potential relations in "horizontal" format, just kepts a their index
+        # potential relations in "horizontal" format, just kept with their index
         # in the original table for now
         relations = self.get_relations(from_ids).groupby(by="from", sort=False)
         relations = relations.apply(lambda r: pd.Series({
@@ -208,16 +212,32 @@ class Relationship(object):
         selected_tidx = pd.DataFrame(all_infos.apply(make_selections, axis=1))
         selected_tidx = pd.DataFrame(selected_tidx.stack(dropna=True))
 
-        selected = selected_tidx.applymap(
-            lambda ids: self._table.ix[ids]["to"].values)
-        selected.index = selected.index.droplevel(level=0)
-        selected.columns = [named_as]
+        # this typically happens if none of the requested "froms" are present
+        # in the relationship
+        if selected_tidx.shape[0] == 0:
+            selected = pd.DataFrame(columns=[named_as])
 
-        if remove_selected:
-            all_removed_idx = reduce(lambda l1, l2: l1 + l2, selected_tidx.iloc[:, 0])
-            self._table.drop(all_removed_idx, axis=0, inplace=True)
+        else:
+            selected = selected_tidx.applymap(
+                lambda ids: self._table.ix[ids]["to"].values)
+            selected.index = selected.index.droplevel(level=0)
+            selected.columns = [named_as]
 
-        selected = self._maybe_add_nones(not discard_empty, from_ids, selected)
+            # "pop" option: any selected relation is now removed
+            if remove_selected:
+                all_removed_idx = reduce(lambda l1, l2: l1 + l2,
+                                         selected_tidx.iloc[:, 0])
+                self._table.drop(all_removed_idx, axis=0, inplace=True)
+
+        # "discard_empty" option: return empty result (instead of nothing) for
+        # any non existing (i.e. empty) "from" relation
+        if not discard_empty and selected.shape[0] != len(from_ids):
+            missing_index = from_ids.index.difference(selected.index)
+            missing_values = pd.DataFrame(
+                {named_as: pd.Series([[] * missing_index.shape[0]],
+                                     index=missing_index)})
+
+            selected = pd.concat([selected, missing_values], copy=False)
 
         return selected
 
