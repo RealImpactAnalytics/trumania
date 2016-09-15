@@ -95,7 +95,7 @@ def _create_attractiveness(circus, pos):
         initiating_actor=pos,
         actorid_field="POS_ID",
 
-        # exactly one attractiveness evolution per day
+        # exactly one attractiveness evolution per week
         timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week)
         #timer_gen=ConstantDependentGenerator(value=1)
     )
