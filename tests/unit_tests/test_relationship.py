@@ -51,16 +51,25 @@ def test_get_relations_from_non_existing_ids_should_have_correct_columns():
 def test_get_neighbourhood_size_of_known_ids_should_return_correct_value():
 
     onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "c", "d"])
-    assert onetoone_size.equals(pd.Series([1,1,1], index=["b", "c", "d"]))
+    assert onetoone_size.equals(pd.Series([1, 1, 1], index=["b", "c", "d"]))
 
     fourtoone_size = four_to_one.get_neighbourhood_size(from_ids=["b", "c", "d"])
-    assert fourtoone_size.equals(pd.Series([1,1,1], index=["b", "c", "d"]))
+    assert fourtoone_size.equals(pd.Series([1, 1, 1], index=["b", "c", "d"]))
 
     four_to2size = four_to_two.get_neighbourhood_size(from_ids=["b", "c", "d"])
-    assert four_to2size.equals(pd.Series([2,2,2], index=["b", "c", "d"]))
+    assert four_to2size.equals(pd.Series([2, 2, 2], index=["b", "c", "d"]))
 
     four_to100size = four_to_plenty.get_neighbourhood_size(from_ids=["b", "c"])
     assert four_to100size.equals(pd.Series([100, 100], index=["b", "c"]))
+
+
+def test_get_neighbourhood_size_of_duplicated_ids_should_return_one_per_value():
+
+    onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "b", "b"])
+    assert onetoone_size.equals(pd.Series([1], index=["b"]))
+
+    fourtoone_size = four_to_one.get_neighbourhood_size(from_ids=["c", "c"])
+    assert fourtoone_size.equals(pd.Series([1], index=["c"]))
 
 
 def test_get_neighbourhood_size_of_unknown_ids_should_return_0():
@@ -69,7 +78,26 @@ def test_get_neighbourhood_size_of_unknown_ids_should_return_0():
                                                             "non_existing"])
 
     assert onetoone_size.index.tolist() == ["b", "c", "non_existing"]
-    assert onetoone_size[["b", "c", "non_existing"]].tolist() == [1,1,0]
+    assert onetoone_size[["b", "c", "non_existing"]].tolist() == [1, 1, 0]
+
+
+def test_get_neihgbourhood_size_operation_should_add_expected_column():
+
+    op = four_to_plenty.ops.get_neighbourhood_size(
+        from_field="A", named_as="A_NGH_SIZE")
+
+    # with several times a lookup from value a
+    data = pd.DataFrame({"A": ["a", "non_existing", "d", "a"]})
+    output, logs = op(data)
+
+    # the transformer should have added the "CELL" column to the df
+    assert output.columns.values.tolist() == ["A", "A_NGH_SIZE"]
+
+    assert {} == logs
+
+    # no rows should have been dropped
+    assert output.shape[0] == data.shape[0]
+    assert output["A_NGH_SIZE"].tolist() == [100, 0, 100, 100]
 
 
 # bug fix: this was simply crashing previously

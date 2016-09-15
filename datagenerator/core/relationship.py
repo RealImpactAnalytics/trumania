@@ -51,13 +51,14 @@ class Relationship(object):
     def get_neighbourhood_size(self, from_ids):
         """
         return a series indexed by "from" containing the number of "tos" for
-        each requested from
+        each requested from.
         """
+        unique_froms = np.unique(from_ids)
 
-        counts = self.get_relations(from_ids)[["from", "to"]]\
+        counts = self.get_relations(unique_froms)[["from", "to"]]\
             .groupby("from").count()["to"]
 
-        return counts.reindex(from_ids).fillna(0)
+        return counts.reindex(np.unique(unique_froms)).fillna(0)
 
     def _maybe_add_nones(self, should_inject_nones, from_ids, selected):
         """
@@ -308,6 +309,26 @@ class Relationship(object):
     class RelationshipOps(object):
         def __init__(self, relationship):
             self.relationship = relationship
+
+        class AddNeighbourhoodSize(AddColumns):
+            def __init__(self, relationship, from_field, named_as):
+                AddColumns.__init__(self)
+
+                self.relationship = relationship
+                self.from_field = from_field
+                self.named_as = named_as
+
+            def build_output(self, action_data):
+
+                requested_froms = action_data[self.from_field]
+                sizes = self.relationship.get_neighbourhood_size(
+                    from_ids=requested_froms)
+
+                return pd.DataFrame({self.named_as: requested_froms.map(sizes)})
+
+        def get_neighbourhood_size(self, from_field, named_as):
+            return self.AddNeighbourhoodSize(self.relationship, from_field,
+                                             named_as)
 
         class SelectOne(AddColumns):
             """

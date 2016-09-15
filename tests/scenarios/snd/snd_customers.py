@@ -117,7 +117,10 @@ def add_purchase_sim_action(circus, params):
     # => chances of not restocking < (1-.0.5)**20 ~= .35
     # => we can expect about 30% or so of POS to run out of stock regularly
     pos_bulk_purchase_trigger = DependentTriggerGenerator(
-        value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
+        #value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
+
+        # TODO: use the parameters above (these are just high values to get logs)
+        value_to_proba_mapper=operations.logistic(k=-.5, x0=1000, L=1)
     )
 
     purchase_action.set_operations(
@@ -153,14 +156,26 @@ def add_purchase_sim_action(circus, params):
         ConstantGenerator(value=params["sim_price"])\
             .ops.generate(named_as="VALUE"),
 
-        # TODO: make this probabilistic from the stock level...
-        # => use pos_bulk_purchase_trigger and stock size (in relationship)
-        circus.get_action("pos_to_dealer_sim_bulk_purchases").ops\
-            .force_act_next(actor_id_field="POS"),
-
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        FieldLogger(log_id="sim_purchases_to_pos")
+        FieldLogger(log_id="sim_purchases_to_pos"),
+
+
+        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+            from_field="POS",
+            named_as="CURRENT_POS_STOCK"
+        ),
+
+        pos_bulk_purchase_trigger.ops.generate(
+            named_as="SHOULD_RESTOCK",
+            observed_field="CURRENT_POS_STOCK"
+        ),
+
+        # => use pos_bulk_purchase_trigger and stock size (in relationship)
+        circus.get_action("pos_to_dealer_sim_bulk_purchases").ops \
+            .force_act_next(
+            actor_id_field="POS",
+            condition_field="SHOULD_RESTOCK"),
     )
 
 

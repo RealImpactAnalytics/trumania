@@ -81,7 +81,6 @@ def _create_attractiveness(circus, pos):
             copy_from_field="NEW_ATTRACTIVENESS"
         ),
 
-
         # TODO: remove this (currently there just for debugs)
         circus.clock.ops.timestamp(named_as="TIME"),
         FieldLogger(log_id="att_updates")
@@ -96,8 +95,7 @@ def _create_attractiveness(circus, pos):
         initiating_actor=pos,
         actorid_field="POS_ID",
 
-        # exactly one attractiveness evolution per week
-        #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week),
+        #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week)
         # TODO: remove this: just increasing speed to force some logs
         timer_gen=ConstantDependentGenerator(value=10)
     )
@@ -228,10 +226,18 @@ def add_sim_bulk_purchase_action(circus):
             discard_missing=True
         ),
 
+        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+            from_field="POS_ID",
+            named_as="OLD_POS_STOCK"),
+
         # and adding them to the POS
         circus.pos.get_relationship("SIMS").ops.add_grouped(
             from_field="POS_ID",
             grouped_items_field="BOUGHT_SIM_BULK"),
+
+        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+            from_field="POS_ID",
+            named_as="NEW_POS_STOCK"),
 
         # just logging the number of sims instead of the sims themselves...
         operations.Apply(source_fields="BOUGHT_SIM_BULK",
@@ -240,6 +246,7 @@ def add_sim_bulk_purchase_action(circus):
 
         operations.FieldLogger(log_id="pos_to_dealer_sim_bulk_purchases",
                                cols=["TIME",  "POS_ID", "DEALER",
+                                     "OLD_POS_STOCK", "NEW_POS_STOCK",
                                      "NUMBER_OF_SIMS"]
                                ),
     )
