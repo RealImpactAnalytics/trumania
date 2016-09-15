@@ -5,18 +5,134 @@ from numpy.random import *
 
 import snd_constants
 
+
+def _create_attractiveness(circus, pos):
+
+    logging.info("generating pos attractiveness values and evolutions")
+
+    # "base" attractiveness, in [-50, 50]
+    attractiveness_base_gen = NumpyRandomGenerator(
+        method="choice",
+        a=range(-50, 50),
+        seed=circus.seeder.next())
+    pos.create_attribute("ATTRACT_BASE", init_gen=attractiveness_base_gen)
+
+    # attractiveness scaled into [0,1]. This is the one influencing the choice
+    # of customers
+    attractiveness_smoother = operations.logistic(k=.15)
+    ac = attractiveness_smoother(pos.get_attribute_values("ATTRACT_BASE"))
+    pos.create_attribute("ATTRACTIVENESS", init_values=ac)
+
+    # evolution steps of the base attractiveness
+    attractiveness_delta_gen = NumpyRandomGenerator(
+        method="choice",
+        a=[-2, -1, 0, 1, 2],
+        p=[.1, .25, .3, .25, .1],
+        seed=circus.seeder.next())
+
+    pos.create_attribute("ATTRACT_DELTA", init_gen=attractiveness_delta_gen)
+
+    # once per day the attractiveness of each POS evolves according to the delta
+    attractiveness_evolution = circus.create_action(
+        name="attractiveness_evolution",
+        initiating_actor=pos,
+        actorid_field="POS_ID",
+
+        # exactly one attractiveness evolution per day
+        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
+        #timer_gen=ConstantDependentGenerator(value=1)
+    )
+
+    def update_attract_base(df):
+        base = df.apply(lambda row: row["ATTRACT_BASE"] + row["ATTRACT_DELTA"],
+                        axis=1)
+        base = base.mask(base > 50, 50).mask(base < -50, -50)
+        return pd.DataFrame(base, columns=["result"])
+
+    attractiveness_evolution.set_operations(
+        pos.ops.lookup(
+            actor_id_field="POS_ID",
+            select={
+                "ATTRACT_BASE": "ATTRACT_BASE",
+                "ATTRACT_DELTA": "ATTRACT_DELTA",
+            }
+        ),
+
+        operations.Apply(
+            source_fields=["ATTRACT_BASE", "ATTRACT_DELTA"],
+            named_as="NEW_ATTRACT_BASE",
+            f=update_attract_base,
+        ),
+
+        pos.get_attribute("ATTRACT_BASE").ops.update(
+            actor_id_field="POS_ID",
+            copy_from_field="NEW_ATTRACT_BASE"
+        ),
+
+        operations.Apply(
+            source_fields=["ATTRACT_BASE"],
+            named_as="NEW_ATTRACTIVENESS",
+            f=attractiveness_smoother, f_args="series"
+        ),
+
+        pos.get_attribute("ATTRACTIVENESS").ops.update(
+            actor_id_field="POS_ID",
+            copy_from_field="NEW_ATTRACTIVENESS"
+        ),
+
+
+        # TODO: remove this (currently there just for debugs)
+        circus.clock.ops.timestamp(named_as="TIME"),
+        FieldLogger(log_id="att_updates")
+    )
+
+    delta_updater = NumpyRandomGenerator(method="choice", a=[-1, 0, 1],
+                                         seed=circus.seeder.next())
+
+    # random walk around of the attractiveness delta, once per week
+    attractiveness_delta_evolution = circus.create_action(
+        name="attractiveness_delta_evolution",
+        initiating_actor=pos,
+        actorid_field="POS_ID",
+
+        # exactly one attractiveness evolution per week
+        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week)
+        #timer_gen=ConstantDependentGenerator(value=1)
+    )
+
+    attractiveness_delta_evolution.set_operations(
+        pos.ops.lookup(
+            actor_id_field="POS_ID",
+            select={"ATTRACT_DELTA": "ATTRACT_DELTA"}
+        ),
+
+        delta_updater.ops.generate(named_as="DELTA_UPDATE"),
+
+        operations.Apply(
+            source_fields=["ATTRACT_DELTA", "DELTA_UPDATE"],
+            named_as="NEW_ATTRACT_DELTA",
+            f=np.add, f_args="series"
+        ),
+
+        pos.get_attribute("ATTRACT_DELTA").ops.update(
+            actor_id_field="POS_ID",
+            copy_from_field="NEW_ATTRACT_DELTA"
+        ),
+
+        # TODO: remove this (currently there just for debugs)
+        circus.clock.ops.timestamp(named_as="TIME"),
+        FieldLogger(log_id="att_delta_updates")
+
+    )
+
+
 def create_pos(circus, params, sim_id_gen):
 
     logging.info("creating POS")
     pos = Actor(size=params["n_pos"],
                 ids_gen=SequencialGenerator(prefix="POS_"))
 
-    # TODO we need 2 info for attractiveness: a real number in [-inf, +inf],
-    # and its sigmoid transform into [0,1]
-    logging.info("generating pos attractiveness")
-    attract_gen = NumpyRandomGenerator(method="uniform", low=0.0, high=1.0,
-                                       seed=circus.seeder.next())
-    pos.create_attribute("ATTRACTIVENESS", init_gen=attract_gen)
+    _create_attractiveness(circus, pos)
 
     logging.info("assigning a site to each POS")
     state = RandomState(circus.seeder.next())

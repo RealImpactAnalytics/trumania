@@ -25,14 +25,11 @@ params = {
 }
 
 
+#
 params.update({
     "n_sites": 50,
     "n_customers": 500,
     "n_pos": 100,
-    "n_field_agents": 50,
-
-    # low initial number of SIM per POS to trigger bulk recharges
-    "n_init_sim_per_pos": 10
 })
 
 

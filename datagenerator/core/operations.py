@@ -231,25 +231,26 @@ def copy_if(action_data):
     return copied.rename(columns={source_field: "result"})
 
 
-def logistic(a, b):
+def logistic(k, x0=0):
     """
 
     Returns a function, usable in an Apply operation, that transforms the
     specified field with a sigmoid with the provided parameters
-    _logistic
+
+    :param k: the steepness of the curve
+    :param x0: the x-value of the sigmoid's midpoint
+
+    https://en.wikipedia.org/wiki/Logistic_function
 
     usage:
 
         Apply(source_fields=["some_source_field"],
               named_as="some_result_field",
-              f=sigmoid(a=-0.01, b=10.)
+              f=sigmoid(k=-0.01, x0=1000)
     """
 
     def _logistic(x):
-        """
-        returns the value of the logistic function 1/(1+e^-(ax+b))
-        """
-        the_exp = np.minimum(-(a * x + b), 10.)
+        the_exp = np.minimum(-k * (x - x0), 10)
         return 1 / (1 + np.exp(the_exp))
 
     return _logistic
