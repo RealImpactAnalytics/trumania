@@ -112,9 +112,9 @@ def add_purchase_sim_action(circus, params):
         timer_gen=purchase_timer_gen,
         activity_gen=purchase_activity_gen)
 
-    # above a stock of 20, probability of re-stocking is close to 0
+    # Above a stock of 20, probability of re-stocking is close to 0
     # below it, it quickly rises to 5%
-    # => chances of not restocking < (1-.0.5)**20 ~= .35
+    # => chances getting out of stock < (1-.0.05)**20 ~= .35
     # => we can expect about 30% or so of POS to run out of stock regularly
     pos_bulk_purchase_trigger = DependentTriggerGenerator(
         #value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
