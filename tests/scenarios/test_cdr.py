@@ -353,7 +353,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # probability of doing a topup, with high probability when the depended
         # variable (i.e. the main account value, see below) gets close to 0
         recharge_trigger = DependentTriggerGenerator(
-            value_mapper=operations.logistic(k=-0.01, x0=1000),
+            value_to_proba_mapper=operations.logistic(k=-0.01, x0=1000),
             seed=self.seeder.next())
 
         # call activity level, under normal and "excited" states

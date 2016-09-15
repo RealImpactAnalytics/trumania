@@ -36,7 +36,7 @@ def test_depend_trigger_should_trigger_given_constant_value():
     def fake_mapper(x):
         return [1,1,0,0,1,0]
 
-    g = DependentTriggerGenerator(value_mapper=fake_mapper)
+    g = DependentTriggerGenerator(value_to_proba_mapper=fake_mapper)
 
     triggers = g.generate(observations=pd.Series([10, 20, 30, 0, 1, 2]))
 

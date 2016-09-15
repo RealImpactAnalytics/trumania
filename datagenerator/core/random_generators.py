@@ -308,19 +308,19 @@ class DependentTrigger(object):
 
     """
 
-    def __init__(self, value_mapper=identity, seed=None):
+    def __init__(self, value_to_proba_mapper=identity, seed=None):
 
         # random baseline to compare to each the activation
         self.base_line = NumpyRandomGenerator(method="uniform",
                                               low=0.0, high=1.0,
                                               seed=seed)
-        self.value_mapper = value_mapper
+        self.value_to_proba_mapper = value_to_proba_mapper
 
     def generate(self, observations):
-        probs = self.base_line.generate(size=observations.shape[0])
-        triggers = self.value_mapper(observations)
+        draws = self.base_line.generate(size=observations.shape[0])
+        triggers_proba = self.value_to_proba_mapper(observations)
 
-        return probs < triggers
+        return draws < triggers_proba
 
 
 class DependentTriggerGenerator(DependentTrigger, DependentGenerator):
@@ -331,7 +331,7 @@ class DependentTriggerGenerator(DependentTrigger, DependentGenerator):
         DependentTrigger: to specify that the the generation actually
         produces booleans with a value_mapper
     """
-    def __init__(self, value_mapper=identity, seed=None):
-        DependentTrigger.__init__(self, value_mapper, seed)
+    def __init__(self, value_to_proba_mapper=identity, seed=None):
+        DependentTrigger.__init__(self, value_to_proba_mapper, seed)
         DependentGenerator.__init__(self)
 

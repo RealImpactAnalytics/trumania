@@ -33,6 +33,73 @@ for i in range(100):
         to_ids=["a_%d" % i, "b_%d" % i, "c_%d" % i, "d_%d" % i])
 
 
+def test_get_relations_from_specified_ids_should_be_as_expected():
+    relations = oneto1.get_relations(from_ids=["b", "c", "non_existing", "e"])
+
+    assert relations.sort_values("from")["from"].tolist() == ["b", "c", "e"]
+    assert relations.sort_values("from")["to"].tolist() == ["tb", "tc", "te"]
+
+
+def test_get_relations_from_non_existing_ids_should_have_correct_columns():
+
+    relations = oneto1.get_relations(from_ids=["non_existing", "neither"])
+
+    assert relations.shape[0] == 0
+    assert relations.columns.tolist() == ["from", "table_index", "to", "weight"]
+
+
+def test_get_neighbourhood_size_of_known_ids_should_return_correct_value():
+
+    onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "c", "d"])
+    assert onetoone_size.equals(pd.Series([1, 1, 1], index=["b", "c", "d"]))
+
+    fourtoone_size = four_to_one.get_neighbourhood_size(from_ids=["b", "c", "d"])
+    assert fourtoone_size.equals(pd.Series([1, 1, 1], index=["b", "c", "d"]))
+
+    four_to2size = four_to_two.get_neighbourhood_size(from_ids=["b", "c", "d"])
+    assert four_to2size.equals(pd.Series([2, 2, 2], index=["b", "c", "d"]))
+
+    four_to100size = four_to_plenty.get_neighbourhood_size(from_ids=["b", "c"])
+    assert four_to100size.equals(pd.Series([100, 100], index=["b", "c"]))
+
+
+def test_get_neighbourhood_size_of_duplicated_ids_should_return_one_per_value():
+
+    onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "b", "b"])
+    assert onetoone_size.equals(pd.Series([1], index=["b"]))
+
+    fourtoone_size = four_to_one.get_neighbourhood_size(from_ids=["c", "c"])
+    assert fourtoone_size.equals(pd.Series([1], index=["c"]))
+
+
+def test_get_neighbourhood_size_of_unknown_ids_should_return_0():
+
+    onetoone_size = oneto1.get_neighbourhood_size(from_ids=["b", "c",
+                                                            "non_existing"])
+
+    assert onetoone_size.index.tolist() == ["b", "c", "non_existing"]
+    assert onetoone_size[["b", "c", "non_existing"]].tolist() == [1, 1, 0]
+
+
+def test_get_neihgbourhood_size_operation_should_add_expected_column():
+
+    op = four_to_plenty.ops.get_neighbourhood_size(
+        from_field="A", named_as="A_NGH_SIZE")
+
+    # with several times a lookup from value a
+    data = pd.DataFrame({"A": ["a", "non_existing", "d", "a"]})
+    output, logs = op(data)
+
+    # the transformer should have added the "CELL" column to the df
+    assert output.columns.values.tolist() == ["A", "A_NGH_SIZE"]
+
+    assert {} == logs
+
+    # no rows should have been dropped
+    assert output.shape[0] == data.shape[0]
+    assert output["A_NGH_SIZE"].tolist() == [100, 0, 100, 100]
+
+
 # bug fix: this was simply crashing previously
 def test_select_one_from_empty_relationship_should_return_void():
     tested = Relationship(seed=1)
@@ -425,6 +492,99 @@ def test_select_many_with_drop_should_remove_elements():
         for to_id in selection.ix[from_id]["selected_sets"].tolist():
             rels = four_to_plenty_copy.get_relations(from_ids=[from_id])
             assert to_id not in rels["to"]
+
+
+def test_select_many_several_times_with_pop_should_empty_all_data():
+
+    rel = Relationship(seed=1234)
+    froms = ["id1"] * 2500 + ["id2"] * 1500 + ["id3"] * 500
+    tos = np.random.choice(a=range(10), size=len(froms))
+    rel.add_relations(from_ids=froms, to_ids=tos)
+
+    assert rel._table.shape[0] == 2500 + 1500 + 500
+
+    # we'll be selecting 1000 values from all 3 ids, 3 times
+
+    # first selection: we should be able to get some values out, though id3
+    # should already be exhausted
+    selection1 = rel.select_many(
+        from_ids=pd.Series(["id1", "id2", "id3"],
+                           index=["f1", "f2", "f3"]),
+        named_as="the_selection",
+        quantities=[1000, 1000, 1000],
+        remove_selected=True,
+        discard_empty=False
+    )
+
+    assert selection1.columns.tolist() == ["the_selection"]
+    assert sorted(selection1.index.tolist()) == ["f1", "f2", "f3"]
+
+    # only 500 could be obtained from "id3":
+    selection_sizes1 = selection1["the_selection"].map(len)
+    assert selection_sizes1[["f1", "f2", "f3"]].tolist() == [1000, 1000, 500]
+
+    # remove_selected => size of the relationship should have decreased
+    assert rel._table.shape[0] == 1500 + 500 + 0
+
+    # second selection: similar story for id2 as for id3, plus now id3 should
+    # just return an empty list (since discard_empty is False)
+    selection2 = rel.select_many(
+        from_ids=pd.Series(["id1", "id2", "id3"],
+                           index=["f1", "f2", "f3"]),
+        named_as="the_selection",
+        quantities=[1000, 1000, 1000],
+        remove_selected=True,
+        discard_empty=False
+    )
+
+    assert selection2.columns.tolist() == ["the_selection"]
+    assert sorted(selection2.index.tolist()) == ["f1", "f2", "f3"]
+
+    # only 500 could be obtained from "id2" and nothing from "id2":
+    selection_sizes2 = selection2["the_selection"].map(len)
+    assert selection_sizes2[["f1", "f2", "f3"]].tolist() == [1000, 500, 0]
+
+    # remove_selected => size of the relationship should have decreased
+    assert rel._table.shape[0] == 500 + 0 + 0
+
+    # third selection: should be very simlar to above
+    selection3 = rel.select_many(
+        from_ids=pd.Series(["id1", "id2", "id3"],
+                           index=["f1", "f2", "f3"]),
+        named_as="the_selection",
+        quantities=[1000, 1000, 1000],
+        remove_selected=True,
+        discard_empty=False
+    )
+
+    assert selection3.columns.tolist() == ["the_selection"]
+    assert sorted(selection3.index.tolist()) == ["f1", "f2", "f3"]
+
+    selection_sizes3 = selection3["the_selection"].map(len)
+    assert selection_sizes3[["f1", "f2", "f3"]].tolist() == [500, 0, 0]
+
+    # the relationship should now be empty
+    assert rel._table.shape[0] == 0 + 0 + 0
+
+    # one last time: selection from a fully empty relationship
+    # third selection: should be very simlar to above
+    selection4 = rel.select_many(
+        from_ids=pd.Series(["id1", "id2", "id3"],
+                           index=["f1", "f2", "f3"]),
+        named_as="the_selection",
+        quantities=[1000, 1000, 1000],
+        remove_selected=True,
+        discard_empty=False
+    )
+
+    assert selection4.columns.tolist() == ["the_selection"]
+    assert sorted(selection4.index.tolist()) == ["f1", "f2", "f3"]
+
+    selection_sizes4 = selection4["the_selection"].map(len)
+    assert selection_sizes4[["f1", "f2", "f3"]].tolist() == [0, 0, 0]
+
+    # relationship should still be empty
+    assert rel._table.shape[0] == 0
 
 
 def test_select_many_operation_should_join_subsets_of_relationships():

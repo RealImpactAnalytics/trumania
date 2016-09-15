@@ -62,8 +62,7 @@ def add_mobility_action(circus):
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
 
-        timer_gen=mobility_time_gen,
-    )
+        timer_gen=mobility_time_gen,)
 
     logging.info(" adding operations")
 
@@ -101,6 +100,7 @@ def add_purchase_sim_action(circus, params):
 
     # between 1 to 6 SIM bought per year per customer
     purchase_activity_gen = NumpyRandomGenerator(
+        # TODO: put this back to 1/360 (just faster now for forcing data...)
 #        method="choice", a=np.arange(1, 6) / 360.,
         method="choice", a=np.arange(1, 6),
         seed=circus.seeder.next())
@@ -110,15 +110,24 @@ def add_purchase_sim_action(circus, params):
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
         timer_gen=purchase_timer_gen,
-        activity_gen=purchase_activity_gen
+        activity_gen=purchase_activity_gen)
+
+    # Above a stock of 20, probability of re-stocking is close to 0
+    # below it, it quickly rises to 5%
+    # => chances getting out of stock < (1-.0.05)**20 ~= .35
+    # => we can expect about 30% or so of POS to run out of stock regularly
+    pos_bulk_purchase_trigger = DependentTriggerGenerator(
+        #value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
+
+        # TODO: use the parameters above (these are just high values to get logs)
+        value_to_proba_mapper=operations.logistic(k=-.5, x0=1000, L=1)
     )
 
     purchase_action.set_operations(
 
         circus.customers.ops.lookup(
             actor_id_field="CUST_ID",
-            select={"CURRENT_SITE": "SITE"}
-        ),
+            select={"CURRENT_SITE": "SITE"}),
 
         circus.sites.get_relationship("POS").ops.select_one(
             from_field="SITE",
@@ -128,22 +137,18 @@ def add_purchase_sim_action(circus, params):
 
             # TODO: this means customer in a location without POS do not buy
             # anything => we could add a re-try mechanism here
-            discard_empty=True
-        ),
-
+            discard_empty=True),
 
         circus.pos.get_relationship("SIMS").ops.select_one(
             from_field="POS",
             named_as="SIM",
 
             pop=True,
-            discard_empty=True
-        ),
+            discard_empty=True),
 
         circus.sites.get_relationship("CELLS").ops.select_one(
             from_field="SITE",
-            named_as="CELL",
-        ),
+            named_as="CELL",),
 
         SequencialGenerator(prefix="SIM_TX_")\
             .ops.generate(named_as="TX_ID"),
@@ -153,7 +158,24 @@ def add_purchase_sim_action(circus, params):
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        FieldLogger(log_id="sim_purchases_to_pos")
+        FieldLogger(log_id="sim_purchases_to_pos"),
+
+
+        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+            from_field="POS",
+            named_as="CURRENT_POS_STOCK"
+        ),
+
+        pos_bulk_purchase_trigger.ops.generate(
+            named_as="SHOULD_RESTOCK",
+            observed_field="CURRENT_POS_STOCK"
+        ),
+
+        # => use pos_bulk_purchase_trigger and stock size (in relationship)
+        circus.get_action("pos_to_dealer_sim_bulk_purchases").ops \
+            .force_act_next(
+            actor_id_field="POS",
+            condition_field="SHOULD_RESTOCK"),
     )
 
 
