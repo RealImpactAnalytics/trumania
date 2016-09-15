@@ -65,7 +65,7 @@ class SND(Circus):
         self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen)
 
         self.pos = snd_pos.create_pos(self, params, sim_id_gen)
-        snd_pos.add_sim_bulk_purchase_action(self, params)
+        snd_pos.add_sim_bulk_purchase_action(self)
         snd_customers.add_purchase_sim_action(self, params)
 
         self.field_agents = snd_field_agents.create_field_agents(self, params)
@@ -102,6 +102,4 @@ if __name__ == "__main__":
      - building the circus: {}
      - running the simulation: {}
     """.format(built_ts - start_ts, execution_ts - built_ts))
-
-
 

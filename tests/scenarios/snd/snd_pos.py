@@ -40,7 +40,6 @@ def _create_attractiveness(circus, pos):
 
         # exactly one attractiveness evolution per day
         #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
-
         # TODO: remove this: just increasing speed to force some logs
         timer_gen=ConstantDependentGenerator(value=5)
     )
@@ -194,7 +193,7 @@ def create_pos(circus, params, sim_id_gen):
     return pos
 
 
-def add_sim_bulk_purchase_action(circus, params):
+def add_sim_bulk_purchase_action(circus):
 
     build_purchases = circus.create_action(
         name="pos_to_dealer_sim_bulk_purchases",

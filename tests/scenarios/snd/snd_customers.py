@@ -62,8 +62,7 @@ def add_mobility_action(circus):
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
 
-        timer_gen=mobility_time_gen,
-    )
+        timer_gen=mobility_time_gen,)
 
     logging.info(" adding operations")
 
@@ -111,15 +110,21 @@ def add_purchase_sim_action(circus, params):
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
         timer_gen=purchase_timer_gen,
-        activity_gen=purchase_activity_gen
+        activity_gen=purchase_activity_gen)
+
+    # above a stock of 20, probability of re-stocking is close to 0
+    # below it, it quickly rises to 5%
+    # => chances of not restocking < (1-.0.5)**20 ~= .35
+    # => we can expect about 30% or so of POS to run out of stock regularly
+    pos_bulk_purchase_trigger = DependentTriggerGenerator(
+        value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
     )
 
     purchase_action.set_operations(
 
         circus.customers.ops.lookup(
             actor_id_field="CUST_ID",
-            select={"CURRENT_SITE": "SITE"}
-        ),
+            select={"CURRENT_SITE": "SITE"}),
 
         circus.sites.get_relationship("POS").ops.select_one(
             from_field="SITE",
@@ -129,22 +134,18 @@ def add_purchase_sim_action(circus, params):
 
             # TODO: this means customer in a location without POS do not buy
             # anything => we could add a re-try mechanism here
-            discard_empty=True
-        ),
-
+            discard_empty=True),
 
         circus.pos.get_relationship("SIMS").ops.select_one(
             from_field="POS",
             named_as="SIM",
 
             pop=True,
-            discard_empty=True
-        ),
+            discard_empty=True),
 
         circus.sites.get_relationship("CELLS").ops.select_one(
             from_field="SITE",
-            named_as="CELL",
-        ),
+            named_as="CELL",),
 
         SequencialGenerator(prefix="SIM_TX_")\
             .ops.generate(named_as="TX_ID"),
@@ -153,6 +154,7 @@ def add_purchase_sim_action(circus, params):
             .ops.generate(named_as="VALUE"),
 
         # TODO: make this probabilistic from the stock level...
+        # => use pos_bulk_purchase_trigger and stock size (in relationship)
         circus.get_action("pos_to_dealer_sim_bulk_purchases").ops\
             .force_act_next(actor_id_field="POS"),
 
