@@ -101,6 +101,7 @@ def add_purchase_sim_action(circus, params):
 
     # between 1 to 6 SIM bought per year per customer
     purchase_activity_gen = NumpyRandomGenerator(
+        # TODO: put this back to 1/360 (just faster now for forcing data...)
 #        method="choice", a=np.arange(1, 6) / 360.,
         method="choice", a=np.arange(1, 6),
         seed=circus.seeder.next())
@@ -150,6 +151,10 @@ def add_purchase_sim_action(circus, params):
 
         ConstantGenerator(value=params["sim_price"])\
             .ops.generate(named_as="VALUE"),
+
+        # TODO: make this probabilistic from the stock level...
+        circus.get_action("pos_to_dealer_sim_bulk_purchases").ops\
+            .force_act_next(actor_id_field="POS"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 

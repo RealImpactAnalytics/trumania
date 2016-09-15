@@ -1,3 +1,9 @@
+"""
+SND scenario, based on
+
+https://realimpactanalytics.atlassian.net/wiki/pages/viewpage.action?spaceKey=SD&title=Tech+Design+%3A+Lab+Data+Generator
+"""
+
 
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
@@ -8,6 +14,7 @@ from datetime import datetime
 import snd_customers
 import snd_sites
 import snd_pos
+import snd_dealer
 import snd_field_agents
 
 import logging
@@ -15,21 +22,27 @@ import logging
 params = {
     "n_sites": 500,
     "n_customers": 5000,
-    "n_pos": 1000,
     "n_field_agents": 50,
 
-    # low initial number of SIM per POS to trigger bulk recharges
+    "n_pos": 1000,
     "n_init_sim_per_pos": 100,
 
+    "n_dealers": 100,
+    "n_init_sim_per_dealer": 1000,
+
     "sim_price": 10,
+
+    "n_iterations": 200
 }
 
 
-#
+# to be removed: temporary downscaling of the scenario to accelerate tests
 params.update({
     "n_sites": 50,
     "n_customers": 500,
     "n_pos": 100,
+    "n_dealers": 100,
+    "n_iterations": 20
 })
 
 
@@ -42,12 +55,17 @@ class SND(Circus):
             start=pd.Timestamp("13 Sept 2016 12:00"),
             step_s=300)
 
+        # using one central sim_id generator to guarantee unicity of ids
         sim_id_gen = SequencialGenerator(prefix="SIM_")
 
         self.sites = snd_sites.create_sites(self, params)
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self)
+
+        self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen)
+
         self.pos = snd_pos.create_pos(self, params, sim_id_gen)
+        snd_pos.add_sim_bulk_purchase_action(self, params)
         snd_customers.add_purchase_sim_action(self, params)
 
         self.field_agents = snd_field_agents.create_field_agents(self, params)
@@ -63,7 +81,7 @@ if __name__ == "__main__":
     circus = SND()
     built_ts = pd.Timestamp(datetime.now())
 
-    logs = circus.run(n_iterations=10)
+    logs = circus.run(n_iterations=params["n_iterations"])
     execution_ts = pd.Timestamp(datetime.now())
 
     for logid, log_df in logs.iteritems():

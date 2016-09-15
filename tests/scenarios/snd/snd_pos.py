@@ -39,8 +39,10 @@ def _create_attractiveness(circus, pos):
         actorid_field="POS_ID",
 
         # exactly one attractiveness evolution per day
-        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
-        #timer_gen=ConstantDependentGenerator(value=1)
+        #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
+
+        # TODO: remove this: just increasing speed to force some logs
+        timer_gen=ConstantDependentGenerator(value=5)
     )
 
     def update_attract_base(df):
@@ -96,8 +98,9 @@ def _create_attractiveness(circus, pos):
         actorid_field="POS_ID",
 
         # exactly one attractiveness evolution per week
-        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week)
-        #timer_gen=ConstantDependentGenerator(value=1)
+        #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week),
+        # TODO: remove this: just increasing speed to force some logs
+        timer_gen=ConstantDependentGenerator(value=10)
     )
 
     attractiveness_delta_evolution.set_operations(
@@ -163,12 +166,81 @@ def create_pos(circus, params, sim_id_gen):
     sim_ids = sim_id_gen.generate(size=params["n_init_sim_per_pos"] * pos.size)
 
     sims_dealer = make_random_assign(
-        to_ids=sim_ids,
-        from_ids=pos.ids,
+        set1=sim_ids,
+        set2=pos.ids,
         seed=circus.seeder.next())
 
     pos_sims.add_relations(
         from_ids=sims_dealer["from"],
         to_ids=sims_dealer["to"])
 
+    logging.info("assigning a dealer to each POS")
+    dealer_of_pos = make_random_assign(
+        set1=circus.dealers.ids,
+        set2=pos.ids,
+        seed=circus.seeder.next())
+
+    dealer_rel = pos.create_relationship("DEALER", seed=circus.seeder.next())
+    dealer_rel.add_relations(
+        from_ids=dealer_of_pos["from"],
+        to_ids=dealer_of_pos["to"])
+
+    logging.info("generating size of sim bulk purchase for each pos")
+    sim_bulk_gen = ParetoGenerator(xmin=500, a=1.5, force_int=True,
+                                   seed=circus.seeder.next())
+
+    pos.create_attribute("SIM_BULK_BUY_SIZE", init_gen=sim_bulk_gen)
+
     return pos
+
+
+def add_sim_bulk_purchase_action(circus, params):
+
+    build_purchases = circus.create_action(
+        name="pos_to_dealer_sim_bulk_purchases",
+        initiating_actor=circus.pos,
+        actorid_field="POS_ID"
+
+        # no timer_gen nor activity_gen: this action is not triggered by the
+        # clock
+    )
+
+    build_purchases.set_operations(
+        circus.clock.ops.timestamp(named_as="TIME"),
+
+        circus.pos.get_relationship("DEALER").ops.select_one(
+            from_field="POS_ID",
+            named_as="DEALER"),
+
+        circus.pos.ops.lookup(
+            actor_id_field="POS_ID",
+            select={"SIM_BULK_BUY_SIZE": "SIM_BULK_BUY_SIZE"}),
+
+        # selecting and removing Sims from dealers
+        circus.dealers.get_relationship("SIMS").ops.select_many(
+            from_field="DEALER",
+            named_as="BOUGHT_SIM_BULK",
+            quantity_field="SIM_BULK_BUY_SIZE",
+
+            # if a SIM is selected, it is removed from the dealer's stock
+            pop=True,
+
+            # TODO: put this back to True and log the failed purchases
+            discard_missing=True
+        ),
+
+        # and adding them to the POS
+        circus.pos.get_relationship("SIMS").ops.add_grouped(
+            from_field="POS_ID",
+            grouped_items_field="BOUGHT_SIM_BULK"),
+
+        # just logging the number of sims instead of the sims themselves...
+        operations.Apply(source_fields="BOUGHT_SIM_BULK",
+                         named_as="NUMBER_OF_SIMS",
+                         f=lambda s: s.map(len), f_args="series"),
+
+        operations.FieldLogger(log_id="pos_to_dealer_sim_bulk_purchases",
+                               cols=["TIME",  "POS_ID", "DEALER",
+                                     "NUMBER_OF_SIMS"]
+                               ),
+    )
