@@ -4,3 +4,6 @@
 .idea/*
 .cache
 explore.ipynb
+cdr_output_logs/
+snd_output_logs/
+

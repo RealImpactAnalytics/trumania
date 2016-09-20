@@ -106,7 +106,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         Circus.__init__(self, master_seed=123456,
                         start=pd.Timestamp("8 June 2016"),
-                        step_s=self.params["time_step"])
+                        step_s=params["time_step"],
+                        output_folder=params["output_folder"])
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
         cells, cities = self.add_uganda_geography()
@@ -114,8 +115,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         self.add_er_social_network_relationship(
             subs,
             relationship_name="FRIENDS",
-            average_degree=self.params["average_degree"],
-            n_subscribers=self.params["n_subscribers"])
+            average_degree=params["average_degree"],
+            n_subscribers=params["n_subscribers"])
 
         self.add_topups(sims, recharge_gen)
         self.add_communications(subs, sims, cells)
@@ -593,7 +594,9 @@ def run_cdr_scenario(params):
     built_time = pd.Timestamp(datetime.now())
 
     # running it
-    logs = scenario.run(params["n_iterations"])
+    scenario.run(params["n_iterations"], delete_existing_logs=True)
+    logs = load_all_logs(params["output_folder"])
+
     execution_time = pd.Timestamp(datetime.now())
 
     for logid, lg in logs.iteritems():
@@ -633,7 +636,8 @@ def test_cdr_scenario():
         "n_agents": 100,
         "n_subscribers": 1000,
         "average_degree": 20,
-        "n_iterations": 50
+        "n_iterations": 50,
+        "output_folder": "cdr_output_logs"
     }
 
     run_cdr_scenario(params)

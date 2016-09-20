@@ -1,6 +1,5 @@
-import logging
-
 from datagenerator.core.action import *
+import os
 
 
 class Circus(object):
@@ -17,15 +16,21 @@ class Circus(object):
 
     """
 
-    def __init__(self, master_seed, **clock_params):
+    def __init__(self, master_seed, output_folder, **clock_params):
         """Create a new Circus object
 
-        :type clock: Clock object
-        :param clock:
+        :param master_seed: seed used to initialized random generatof of
+        other seeds
+        :type master_seed: int
+
+        :param output_folder: folder where to write the logs.
+        :type output_folder: string
+
         :rtype: Circus
         :return: a new Circus object, with the clock, is created
         """
         self.seeder = seed_provider(master_seed=master_seed)
+        self.output_folder = output_folder
         self.clock = Clock(seed=self.seeder.next(), **clock_params)
         self.__actions = []
 
@@ -36,6 +41,7 @@ class Circus(object):
             action = Action(name=name, **action_params)
             self.__actions.append(action)
             return action
+
         else:
             raise ValueError("Cannot add action {}: another action with "
                              "identical name is already in the circus".format(name))
@@ -51,32 +57,45 @@ class Circus(object):
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
 
-    def one_step(self, round_number):
+    def save_logs(self, log_id, logs):
         """
-        Performs one round of all actions
-        """
-
-        logging.info("step : {}".format(round_number))
-
-        # puts the logs of all actions into one grand dictionary.
-        logs = merge_dicts((action.execute() for action in self.__actions),
-                           df_concat)
-
-        self.clock.increment()
-
-        return logs
-
-    def run(self, n_iterations):
-        """
-        Executes all actions for as many iteration as specified.
-
-        :param n_iterations:
-        :return: a list of as many dataframes as there are actions configured in
-        this circus, each gathering all rows produces throughout all iterations
+        Appends those logs to the corresponding output file, creating it if
+        it does not exist or appending lines to it otherwise.
         """
 
-        logging.info("starting circus")
-        all_actions_logs = (self.one_step(r) for r in range(n_iterations))
+        output_file = os.path.join(self.output_folder, "{}.csv".format(log_id))
 
-        # merging logs from all actions
-        return merge_dicts(all_actions_logs, df_concat)
+        if not os.path.exists(self.output_folder):
+            os.makedirs(self.output_folder)
+
+        if len(logs) > 0:
+            if not os.path.exists(output_file):
+                logs.to_csv(output_file, index=False, header=True)
+
+            else:
+                with open(output_file, "a") as out_f:
+                    logs.to_csv(out_f, index=False, header=False)
+
+    def run(self, n_iterations, delete_existing_logs=False):
+        """
+        Executes all actions in the circus for as many iterations as specified.
+        """
+
+        logging.info("Starting circus")
+
+        if os.path.exists(self.output_folder):
+            if delete_existing_logs:
+                ensure_non_existing_dir(self.output_folder)
+            else:
+                raise EnvironmentError("{} exists and delete_existing_logs "
+                                       "is False => refusing to start and "
+                                       "overwrite logs".format(self.output_folder))
+
+        for step_number in range(n_iterations):
+            logging.info("step : {}".format(step_number))
+
+            for action in self.__actions:
+                for log_id, logs in action.execute().iteritems():
+                    self.save_logs(log_id, logs)
+
+            self.clock.increment()

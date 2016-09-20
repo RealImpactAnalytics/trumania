@@ -32,7 +32,8 @@ params = {
 
     "sim_price": 10,
 
-    "n_iterations": 200
+    "n_iterations": 200,
+    "output_folder": "snd_output_logs"
 }
 
 
@@ -52,6 +53,7 @@ class SND(Circus):
         Circus.__init__(
             self,
             master_seed=12345,
+            output_folder=params["output_folder"],
             start=pd.Timestamp("13 Sept 2016 12:00"),
             step_s=300)
 
@@ -81,8 +83,9 @@ if __name__ == "__main__":
     circus = SND()
     built_ts = pd.Timestamp(datetime.now())
 
-    logs = circus.run(n_iterations=params["n_iterations"])
+    circus.run(n_iterations=params["n_iterations"])
     execution_ts = pd.Timestamp(datetime.now())
+    logs = load_all_logs(params["output_folder"])
 
     for logid, log_df in logs.iteritems():
         logging.info(" - some {}:\n{}\n\n".format(
