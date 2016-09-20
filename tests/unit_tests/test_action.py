@@ -2,7 +2,6 @@ from datagenerator.core.action import Action
 from datagenerator.core.actor import Actor
 from tests.mocks.operations import *
 from tests.mocks.random_generators import *
-from datagenerator.components.time_patterns.profilers import *
 from datagenerator.core.random_generators import *
 
 
@@ -18,7 +17,7 @@ def test_empty_action_should_do_nothing_and_not_crash():
     logs = empty_action.execute()
 
     # no logs should be produced
-    assert logs is None
+    assert logs == {}
 
 
 def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
