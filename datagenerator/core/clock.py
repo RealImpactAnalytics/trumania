@@ -1,7 +1,5 @@
 from __future__ import division
 
-from datetime import timedelta
-
 from datagenerator.core.random_generators import *
 from datagenerator.core.util_functions import *
 
@@ -12,14 +10,15 @@ class Clock(object):
     It's generating timestamps on demand, and provides information for TimeProfiler objects.
     """
 
-    def __init__(self, start, step_s, seed, output_format="%Y%m%d %H:%M:%S"):
+    def __init__(self, start, step_duration, seed,
+                 output_format="%Y%m%d %H:%M:%S"):
         """Create a Clock object.
 
         :type start: pd.Timestamp
         :param start: instant of start of the generation
 
-        :type step_s: int
-        :param step_s: number of seconds between each iteration
+        :type step_duration: pd.Timedelta
+        :param step_duration: duration of a clock step
 
         :type output_format: string
         :param output_format: format string to return timestamps
@@ -31,16 +30,11 @@ class Clock(object):
         """
 
         self.current_date = start
-        self.step_s = step_s
-        self.step_delta = timedelta(seconds=step_s)
+        self.step_duration = step_duration
 
         self.output_format = output_format
         self.__state = RandomState(seed)
         self.ops = self.ClockOps(self)
-
-        # number of clock ticks in one day and in one week
-        self.ticks_per_day = 24 * 60 * 60 / step_s
-        self.ticks_per_week = self.ticks_per_day * 7
 
         self.__increment_listeners = []
 
@@ -55,7 +49,7 @@ class Clock(object):
         :rtype: NoneType
         :return: None
         """
-        self.current_date += self.step_delta
+        self.current_date += self.step_duration
 
         for listener in self.__increment_listeners:
             listener.increment()
@@ -66,13 +60,25 @@ class Clock(object):
         :type size: int
         :param size: number of timestamps to generate, default 1
         :rtype: Pandas Series
-        :return: random timestamps in the form of strings, formatted as defined in the Clock.
+        :return: random timestamps in the form of strings
         """
 
-        def make_ts(x):
-            return (self.current_date + timedelta(seconds=x)).strftime(self.output_format)
+        def make_ts(delta_secs):
+            date = self.current_date + pd.Timedelta(seconds=delta_secs)
+            return date.strftime(self.output_format)
 
-        return pd.Series(self.__state.choice(self.step_s, size)).apply(make_ts)
+        step_secs = int(self.step_duration.total_seconds())
+        return pd.Series(self.__state.choice(step_secs, size)).apply(make_ts)
+
+    def n_iterations(self, duration):
+        """
+        :type duration: pd.TimeDelta
+
+        :return: the smallest number of iteration of this clock s.t. the
+        simulated duration is >= duration
+        """
+        step_secs = self.step_duration.total_seconds()
+        return int(np.ceil(duration.total_seconds() / step_secs))
 
     class ClockOps(object):
         def __init__(self, clock):
@@ -139,7 +145,7 @@ class CyclicTimerGenerator(DependentGenerator):
                                 index=profile_idx)
 
         # scaled weight profile, s.t. one clock step == one profile value
-        profile_ser = profile_ser.resample(rule="%ds" % clock.step_s,
+        profile_ser = profile_ser.resample(rule=clock.step_duration,
                                            fill_method='pad')[:-1]
 
         profile_cdf = (profile_ser / profile_ser.sum()).cumsum()
@@ -234,5 +240,4 @@ class CyclicTimerProfile(object):
         start_date = pd.Timestamp(saved_df.loc["start_date"].values[0][0])
 
         return CyclicTimerProfile(profile, profile_time_steps, start_date)
-
 

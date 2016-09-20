@@ -24,7 +24,12 @@ def make_random_bipartite_data(group1, group2, p, seed):
     :rtype: list
     :return: all edges in the graph
     """
-    bp_network = bipartite.random_graph(len(group1), len(group2), 0.4, seed)
+    logging.info("  creating a bipartite graph between {} items in group1, {} "
+                 "items in group2 and edge probability {}".format(
+                   len(group1), len(group2), p))
+
+    bp_network = bipartite.random_graph(len(group1), len(group2), p, seed)
+    logging.info("  (bipartite index created, now resolving item values)")
     i1 = 0
     i2 = 0
     node_index = {}
@@ -46,12 +51,13 @@ def make_random_bipartite_data(group1, group2, p, seed):
     return edges_for_out
 
 
-def assign_random_proportions(name1,name2,group1,group2,seed):
+def assign_random_proportions(name1, name2, group1, group2, seed):
 
     state = RandomState(seed)
-    assignments = state.rand(len(group1),len(group2))
-    assignments = assignments/assignments.sum(axis=1,keepdims=True)
-    data = pd.DataFrame(assignments,index=group1,columns=group2).stack().reset_index(level=[0,1])
+    assignments = state.rand(len(group1), len(group2))
+    assignments = assignments/assignments.sum(axis=1, keepdims=True)
+    data = pd.DataFrame(assignments, index=group1,
+                        columns=group2).stack().reset_index(level=[0, 1])
     data.rename(columns={"level_0": name1,
                          "level_1": name2,
                          0: "weight"},

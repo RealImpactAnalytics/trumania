@@ -19,43 +19,47 @@ import snd_field_agents
 
 import logging
 
-params = {
-    "n_sites": 500,
-    "n_customers": 5000,
-    "n_field_agents": 50,
 
-    "n_pos": 1000,
+# scenario is meant to match scenario 1 divided by 100
+scenario_0 = {
+    "n_sites": 50,
+    "n_customers": 50000,
+    "n_field_agents": 2,
+    "n_pos": 500,
+    "n_dealers": 3,     # should be 1 if really  divided by 100
+
+
+    "mean_known_sites_per_customer": 4,
+
+    "clock_time_step": "5 min",   # one round per 5 minutes
     "n_init_sim_per_pos": 100,
-
-    "n_dealers": 100,
     "n_init_sim_per_dealer": 1000,
-
     "sim_price": 10,
 
-    "n_iterations": 200,
-    "output_folder": "snd_output_logs"
+    "duration": "12h",
+    "output_folder": "snd_output_logs/scenario_0"
 }
 
 
 # to be removed: temporary downscaling of the scenario to accelerate tests
-params.update({
-    "n_sites": 50,
-    "n_customers": 500,
-    "n_pos": 100,
-    "n_dealers": 100,
-    "n_iterations": 20
-})
+# scenario_1.update({
+#     "n_sites": 50,
+#     "n_customers": 500,
+#     "n_pos": 100,
+#     "n_dealers": 100,
+#     "n_iterations": 20
+# })
 
 
 class SND(Circus):
 
-    def __init__(self):
+    def __init__(self, params):
         Circus.__init__(
             self,
             master_seed=12345,
             output_folder=params["output_folder"],
             start=pd.Timestamp("13 Sept 2016 12:00"),
-            step_s=300)
+            step_duration=pd.Timedelta(params["clock_time_step"]))
 
         # using one central sim_id generator to guarantee unicity of ids
         sim_id_gen = SequencialGenerator(prefix="SIM_")
@@ -77,13 +81,16 @@ class SND(Circus):
 
 if __name__ == "__main__":
 
+    params = scenario_0
+
     setup_logging()
     start_ts = pd.Timestamp(datetime.now())
 
-    circus = SND()
+    circus = SND(params)
     built_ts = pd.Timestamp(datetime.now())
 
-    circus.run(n_iterations=params["n_iterations"])
+    circus.run(pd.Timedelta(params["duration"]),
+               delete_existing_logs=True)
     execution_ts = pd.Timestamp(datetime.now())
     logs = load_all_logs(params["output_folder"])
 
@@ -105,4 +112,3 @@ if __name__ == "__main__":
      - building the circus: {}
      - running the simulation: {}
     """.format(built_ts - start_ts, execution_ts - built_ts))
-

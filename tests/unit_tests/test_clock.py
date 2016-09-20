@@ -8,7 +8,11 @@ def test_clock_tick_per_day():
                   seed=1234)
 
     # time steps is 900 s, i.e 15 min
-    assert clock.ticks_per_day == 24*4
+    assert clock.n_iterations(pd.Timedelta("7D")) == 7*24*4
+    assert clock.n_iterations(pd.Timedelta("1D")) == 24*4
+
+    # 47 min should be rounded up to 4 quarters
+    assert clock.n_iterations(pd.Timedelta("47min")) == 4
 
 
 def test_init_cyclictimergenerator():
