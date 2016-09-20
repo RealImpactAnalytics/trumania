@@ -147,6 +147,8 @@ class Actor(object):
         If the folder already exists, it is deleted first
         """
 
+        logging.info("saving actor to {}".format(actor_dir))
+
         ensure_non_existing_dir(actor_dir)
         os.makedirs(actor_dir)
 
