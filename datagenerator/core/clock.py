@@ -108,23 +108,12 @@ class CyclicTimerGenerator(DependentGenerator):
     This allows to quickly produce random waiting times until the next event for the users
 
     """
-    def __init__(self, clock, profile, profile_time_steps, start_date, seed):
+    def __init__(self, clock, seed, config):
         """
         This should not be used, only child classes
 
         :type clock: Clock
         :param clock: the master clock driving this simulator
-
-        :type profile: python array
-        :param profile: Weight of each period
-
-        :type profile_time_steps: string
-        :param profile_time_steps: duration of the time-steps in the profile
-        (e.g. "15min")
-
-        :type start_date: pd.Timestamp
-        :param start_date: date of the origin of the specified profile =>
-        this is used to align with the values of the clock
 
         :type seed: int
         :param seed: seed for random number generator, default None
@@ -136,16 +125,18 @@ class CyclicTimerGenerator(DependentGenerator):
         # "macro" time shift: we shift the whole profile n times in the future
         # or the past until it overlaps with the current clock date
         init_date = latest_date_before(
-            starting_date=start_date,
+            starting_date=config.start_date,
             upper_bound=clock.current_date,
-            time_step=pd.Timedelta(profile_time_steps)*len(profile))
+            time_step=pd.Timedelta(config.profile_time_steps)*len(
+                config.profile))
 
         # Un-scaled weight profile. We artificially adds a nan to force the
         # up-sclaling to multiply the last element
         profile_idx = pd.date_range(start=init_date,
-                                    freq=profile_time_steps,
-                                    periods=len(profile)+1)
-        profile_ser = pd.Series(data=profile + [np.nan], index=profile_idx)
+                                    freq=config.profile_time_steps,
+                                    periods=len(config.profile)+1)
+        profile_ser = pd.Series(data=config.profile + [np.nan],
+                                index=profile_idx)
 
         # scaled weight profile, s.t. one clock step == one profile value
         profile_ser = profile_ser.resample(rule="%ds" % clock.step_s,
@@ -195,3 +186,53 @@ class CyclicTimerGenerator(DependentGenerator):
         p = draw / observations.values
         return pd.Series(self.profile["cdf"].searchsorted(p),
                          index=observations.index)
+
+
+class CyclicTimerProfile(object):
+    """
+    Static parameters of the Timer profile. Separated from the timer gen
+    itself to facilitate persistence.
+
+    :type profile: python array
+    :param profile: Weight of each period
+
+    :type profile_time_steps: string
+    :param profile_time_steps: duration of the time-steps in the profile
+    (e.g. "15min")
+
+    :type start_date: pd.Timestamp
+    :param start_date: date of the origin of the specified profile =>
+    this is used to align with the values of the clock
+
+    """
+    def __init__(self, profile, profile_time_steps, start_date):
+        self.start_date = start_date
+        self.profile = profile
+        self.profile_time_steps = profile_time_steps
+
+    def save_to(self, file_path):
+
+        logging.info("saving timer generator to {}".format(file_path))
+
+        saved_df = pd.DataFrame({("value", "profile"): self.profile},
+                                dtype=str).stack()
+        saved_df.index = saved_df.index.reorder_levels([1, 0])
+        saved_df.loc[("start_date", 0),] = self.start_date
+        saved_df.loc[("profile_time_steps", 0),] = self.profile_time_steps
+        saved_df.to_csv(file_path)
+
+    @staticmethod
+    def load_from(file_path):
+        saved_df = pd.read_csv(file_path, index_col=[0, 1])
+
+        profile = saved_df.loc[("profile", slice(None))]\
+            .unstack()\
+            .astype(float)\
+            .tolist()
+
+        profile_time_steps = saved_df.loc["profile_time_steps"].values[0][0]
+        start_date = pd.Timestamp(saved_df.loc["start_date"].values[0][0])
+
+        return CyclicTimerProfile(profile, profile_time_steps, start_date)
+
+

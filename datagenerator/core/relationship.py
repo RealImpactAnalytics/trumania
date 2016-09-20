@@ -276,6 +276,8 @@ class Relationship(object):
 
     def save_to(self, file_path):
 
+        logging.info("saving relationship to {}".format(file_path))
+
         # creating a vertical dataframe to store the inner table
         saved_df = pd.DataFrame(self._table.stack())
 

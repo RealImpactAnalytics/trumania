@@ -82,6 +82,7 @@ class Attribute(object):
     ############
     # IO
     def save_to(self, file_path):
+        logging.info("saving attribute to {}".format(file_path))
         self._table.to_csv(file_path)
 
     @staticmethod

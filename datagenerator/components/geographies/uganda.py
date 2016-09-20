@@ -1,5 +1,5 @@
 """
-This is just an illustration of how to define a persistent model component
+This is just an illustration of how to persist various scenario components
 """
 from datagenerator.core.actor import *
 from datagenerator.core import operations
@@ -36,8 +36,13 @@ class WithUganda(Circus):
 
         # same profiler for breakdown and repair: they are both related to
         # typical human activity
-        default_day_profiler = DefaultDailyTimerGenerator(self.clock,
-                                                          seed=seeder.next())
+
+        repair_n_fix_timer = CyclicTimerGenerator(
+            clock=self.clock,
+            seed=self.seeder.next(),
+            config=db.load_timer_gen_config("uganda",
+                                            "cell_repair_timer_profile"))
+
         logging.info(" adding Uganda Geography6")
         cell_break_down_action = self.create_action(
             name="cell_break_down",
@@ -45,7 +50,7 @@ class WithUganda(Circus):
             initiating_actor=uganda_cells,
             actorid_field="CELL_ID",
 
-            timer_gen=default_day_profiler,
+            timer_gen=repair_n_fix_timer,
 
             # fault activity is very low: most cell tend never to break down (
             # hopefully...)
@@ -58,7 +63,7 @@ class WithUganda(Circus):
             initiating_actor=uganda_cells,
             actorid_field="CELL_ID",
 
-            timer_gen=default_day_profiler,
+            timer_gen=repair_n_fix_timer,
 
             # repair activity is much higher
             activity_gen=ParetoGenerator(xmin=100, a=1.2,
@@ -114,6 +119,7 @@ if __name__ == "__main__":
     # whereas the "dynamic parts" (e.g. actions) are stored "in code", i.e.
     # in the withXYZ() class above that then need to be mixed in a Circus.
 
+    setup_logging()
     seeder = seed_provider(12345)
 
     cells = Actor(ids_gen=SequencialGenerator(prefix="CELL_"), size=200)
@@ -139,8 +145,7 @@ if __name__ == "__main__":
     cell_city_df = make_random_assign(cells.ids, cities.ids, seeder.next())
     cell_city_rel.add_relations(
         from_ids=cell_city_df["from"],
-        to_ids=cell_city_df["to"],
-    )
+        to_ids=cell_city_df["to"])
 
     pop_gen = ParetoGenerator(xmin=10000, a=1.4, seed=seeder.next())
     cities.create_attribute("population", init_gen=pop_gen)
@@ -148,6 +153,17 @@ if __name__ == "__main__":
     db.remove_namespace("uganda")
     db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
     db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
+
+    uganda_timer_gen = CyclicTimerProfile(
+        profile=[1, .5, .2, .15, .2, .4, 3.8,
+                 7.2, 8.4, 9.1, 9.0, 8.3, 8.1,
+                 7.7, 7.4, 7.8, 8.0, 7.9, 9.7,
+                 10.4, 10.5, 8.8, 5.7, 2.8],
+        profile_time_steps="1h",
+        start_date=pd.Timestamp("6 June 2016 00:00:00"))
+
+    db.save_timer_gen(timer_gen=uganda_timer_gen, namespace="uganda",
+                      timer_gen_id="cell_repair_timer_profile")
 
 
 
