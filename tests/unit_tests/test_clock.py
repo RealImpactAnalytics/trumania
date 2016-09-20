@@ -24,10 +24,11 @@ def test_init_cyclictimergenerator():
     # 1 to 12 then 12 to 1, from midnight to midnight
     timer_gen = CyclicTimerGenerator(
         clock=clock,
-
-        profile=range(1, 13) + range(12, 0, -1),
-        profile_time_steps="1H",
-        start_date=pd.Timestamp("1 January 2014 00:00:00"),
+        config=CyclicTimerProfile(
+            profile=range(1, 13) + range(12, 0, -1),
+            profile_time_steps="1H",
+            start_date=pd.Timestamp("1 January 2014 00:00:00"),
+        ),
         seed=1234
     )
 

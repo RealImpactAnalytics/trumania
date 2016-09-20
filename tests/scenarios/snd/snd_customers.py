@@ -51,10 +51,13 @@ def add_mobility_action(circus):
                 1., 1., 5., 10., 5., 1., 1., 1., 1.]
     mobility_time_gen = CyclicTimerGenerator(
         clock=circus.clock,
-        profile=mov_prof,
-        profile_time_steps="1H",
-        start_date=pd.Timestamp("12 September 2016 00:00.00"),
-        seed=circus.seeder.next())
+        seed=circus.seeder.next(),
+        config=CyclicTimerProfile(
+            profile=mov_prof,
+            profile_time_steps="1H",
+            start_date=pd.Timestamp("12 September 2016 00:00.00"),
+        )
+        )
 
     mobility_action = circus.create_action(
         name="customer_mobility",

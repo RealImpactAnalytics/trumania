@@ -224,10 +224,13 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                     1., 1., 5., 10., 5., 1., 1., 1., 1.]
         mobility_time_gen = CyclicTimerGenerator(
             clock=self.clock,
-            profile=mov_prof,
-            profile_time_steps="1H",
-            start_date=pd.Timestamp("12 September 2016 00:00.00"),
-            seed=self.seeder.next())
+            seed=self.seeder.next(),
+            config=CyclicTimerProfile(
+                profile=mov_prof,
+                profile_time_steps="1H",
+                start_date=pd.Timestamp("12 September 2016 00:00.00")
+            )
+            )
 
         # Mobility network, i.e. choice of cells per user, i.e. these are the
         # weighted "used cells" (as in "most used cells) for each user
