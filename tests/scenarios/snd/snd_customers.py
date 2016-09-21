@@ -1,4 +1,4 @@
-import logging
+from __future__ import division
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
@@ -12,18 +12,18 @@ def create_customers(circus, params):
     customers = Actor(size=params["n_customers"],
                       ids_gen=SequencialGenerator(prefix="CUST_"))
 
-    logging.info(" adding mobility relationships to customers")
+    logging.info(" adding 'possible sites' mobility relationship to customers")
 
     mobility_rel = customers.create_relationship(
         "POSSIBLE_SITES",
         seed=circus.seeder.next())
 
-    # TODO: make sure the number of sites per customer is "reasonable"
     mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(customers.ids,
-                                   circus.sites.ids,
-                                   0.4,
-                                   seed=circus.seeder.next()),
+        make_random_bipartite_data(
+            customers.ids,
+            circus.sites.ids,
+            p=params["mean_known_sites_per_customer"]/params["n_sites"],
+            seed=circus.seeder.next()),
         columns=["CID", "SID"])
 
     mobility_weight_gen = NumpyRandomGenerator(
@@ -59,13 +59,25 @@ def add_mobility_action(circus):
         )
         )
 
+    mean_daily_mobility = 6
+    std_daily_mobility = 3
+    min_daily_mobility = 1
+    gaussian_activity = NumpyRandomGenerator(
+        method="normal", loc=mean_daily_mobility / 24,
+        scale=std_daily_mobility / 24)
+    mobility_activity_gen = TransformedGenerator(
+        upstream_gen = gaussian_activity,
+        f=lambda a: max(min_daily_mobility/24, a))
+
     mobility_action = circus.create_action(
         name="customer_mobility",
 
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
 
-        timer_gen=mobility_time_gen,)
+        timer_gen=mobility_time_gen,
+        activity_gen=mobility_activity_gen
+    )
 
     logging.info(" adding operations")
 
@@ -103,9 +115,7 @@ def add_purchase_sim_action(circus, params):
 
     # between 1 to 6 SIM bought per year per customer
     purchase_activity_gen = NumpyRandomGenerator(
-        # TODO: put this back to 1/360 (just faster now for forcing data...)
-#        method="choice", a=np.arange(1, 6) / 360.,
-        method="choice", a=np.arange(1, 6),
+        method="choice", a=np.arange(1, 6) / 360.,
         seed=circus.seeder.next())
 
     purchase_action = circus.create_action(
@@ -120,10 +130,7 @@ def add_purchase_sim_action(circus, params):
     # => chances getting out of stock < (1-.0.05)**20 ~= .35
     # => we can expect about 30% or so of POS to run out of stock regularly
     pos_bulk_purchase_trigger = DependentTriggerGenerator(
-        #value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
-
-        # TODO: use the parameters above (these are just high values to get logs)
-        value_to_proba_mapper=operations.logistic(k=-.5, x0=1000, L=1)
+        value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
     )
 
     purchase_action.set_operations(

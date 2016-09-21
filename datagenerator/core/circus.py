@@ -70,18 +70,30 @@ class Circus(object):
 
         if len(logs) > 0:
             if not os.path.exists(output_file):
+                # If these are this first persisted logs, we create the file
+                # and include the field names as column header.
                 logs.to_csv(output_file, index=False, header=True)
 
             else:
+                # Otherwise, open the existing log file in append mode and add
+                # the new logs at the end, this time without columns headers.
                 with open(output_file, "a") as out_f:
                     logs.to_csv(out_f, index=False, header=False)
 
-    def run(self, n_iterations, delete_existing_logs=False):
+    def run(self, duration, delete_existing_logs=False):
         """
-        Executes all actions in the circus for as many iterations as specified.
+        Executes all actions in the circus for as long as requested.
+
+        :param duration: duration of the desired simulation (start date is
+        dictated by the clock)
+        :type duration: pd.TimeDelta
+
+        :param delete_existing_logs:
         """
 
-        logging.info("Starting circus")
+        n_iterations = self.clock.n_iterations(duration)
+        logging.info("Starting circus for {} iterations of {}".format(
+            n_iterations, self.clock.step_duration))
 
         if os.path.exists(self.output_folder):
             if delete_existing_logs:

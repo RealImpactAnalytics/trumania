@@ -221,6 +221,31 @@ class MSISDNGenerator(Generator):
         return msisdns
 
 
+class TransformedGenerator(Generator):
+    """
+    Generators which maps the output of another generator with a
+    deterministic function.
+
+    I.e., if the upstream generator provides samples from X, this provides
+    samples from f(X).
+
+    TODO: refactor: ParetoGenerator is now a specific case of this class
+    """
+
+    def __init__(self, upstream_gen, f):
+        """
+        :param upstream_gen: upstream generator
+        :param f: transformation function
+        """
+        Generator.__init__(self)
+        self.upstream_gen = upstream_gen
+        self.f = f
+
+    def generate(self, size):
+        samples = self.upstream_gen.generate(size=size)
+        return [self.f(sample) for sample in samples]
+
+
 class DependentGenerator(object):
     """
     Generator providing random values depending on some live observation

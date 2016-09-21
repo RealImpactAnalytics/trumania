@@ -106,7 +106,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         Circus.__init__(self, master_seed=123456,
                         start=pd.Timestamp("8 June 2016"),
-                        step_s=params["time_step"],
+                        step_duration=pd.Timedelta(params["time_step"]),
                         output_folder=params["output_folder"])
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
@@ -594,7 +594,8 @@ def run_cdr_scenario(params):
     built_time = pd.Timestamp(datetime.now())
 
     # running it
-    scenario.run(params["n_iterations"], delete_existing_logs=True)
+    scenario.run(duration=pd.Timedelta(params["simulation_duration"]),
+                 delete_existing_logs=True)
     logs = load_all_logs(params["output_folder"])
 
     execution_time = pd.Timestamp(datetime.now())
@@ -631,12 +632,12 @@ def run_cdr_scenario(params):
 def test_cdr_scenario():
 
     params = {
-        "time_step": 60,
+        "time_step": "60s",
         "n_cells": 100,
         "n_agents": 100,
         "n_subscribers": 1000,
         "average_degree": 20,
-        "n_iterations": 50,
+        "simulation_duration": "1h",
         "output_folder": "cdr_output_logs"
     }
 
