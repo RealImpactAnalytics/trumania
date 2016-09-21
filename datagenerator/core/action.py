@@ -174,7 +174,7 @@ class Action(object):
 
         if len(active_ids) == 0:
             # skips execution altogether if no actor has a timer at 0 right now
-            all_logs = None
+            all_logs = {}
 
         else:
             ids_df = pd.DataFrame({self.actorid_field_name: active_ids},

@@ -193,8 +193,3 @@ def test_latest_date_before_should_shift_forward_until_upper_bound():
     result = latest_date_before(starting_date, upper_bound, time_step)
 
     assert result == upper_bound
-
-
-
-
-

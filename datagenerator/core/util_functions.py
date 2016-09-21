@@ -215,3 +215,22 @@ def latest_date_before(starting_date, upper_bound, time_step):
         result += time_step
 
     return result
+
+
+def load_all_logs(folder):
+    """
+    loads all csv file contained in this folder and retun them as one
+    dictionary where the key is the filename without the extension
+    """
+
+    all_logs = {}
+
+    for file_name in os.listdir(folder):
+        full_path = os.path.join(folder, file_name)
+        logs = pd.read_csv(full_path, index_col=None)
+        log_id = file_name[:-4]
+
+        all_logs[log_id] = logs
+
+    return all_logs
+

@@ -15,10 +15,8 @@ def test_init_cyclictimergenerator():
 
     # say we have a clock at 5.45pm on 10th June
     clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
-
                   # time steps by 15min
                   step_s=900,
-
                   seed=1234)
 
     # 1 to 12 then 12 to 1, from midnight to midnight
@@ -43,10 +41,7 @@ def test_init_cyclictimergenerator():
 def test_DefaultDailyTimerGenerator_should_be_initialized_correctly():
 
     clock = Clock(start=pd.Timestamp("12 Sept 2016"),
-
-                  # time steps by 15min
                   step_s=60,
-
                   seed=1234)
 
     daily = DefaultDailyTimerGenerator(clock=clock, seed=1234)

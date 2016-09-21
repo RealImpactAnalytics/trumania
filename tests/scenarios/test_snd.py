@@ -29,7 +29,9 @@ params = {
     "average_agent_degree": 20,
 
     "n_init_sims_dealer": 1000,
-    "n_init_sims_distributor": 500000
+    "n_init_sims_distributor": 500000,
+
+    "output_folder": "snd_output_logs"
 }
 
 
@@ -37,8 +39,9 @@ class SndScenario(WithRandomGeo, Circus):
 
     def __init__(self):
         Circus.__init__(self, master_seed=1234,
+                        output_folder=params["output_folder"],
                         start=pd.Timestamp("8 June 2016"),
-                        step_s=60)
+                        step_s=60,)
 
         distributors, sim_generator = self.create_distributors_with_sims()
         self.add_distributor_recharge_action(distributors, sim_generator)
@@ -491,7 +494,8 @@ def test_snd_scenario():
 
     scenario = SndScenario()
 
-    logs = scenario.run(n_iterations=100)
+    scenario.run(n_iterations=100)
+    logs = load_all_logs(params["output_folder"])
 
     for logid, lg in logs.iteritems():
         log_dataframe_sample(" - some {}".format(logid), lg)
@@ -513,5 +517,4 @@ def test_snd_scenario():
     # broke dealer should have maximum 3 successful sales
     ok_sales_of_broke = sales_of_broke[~sales_of_broke["FAILED_SALE"]]
     assert ok_sales_of_broke.shape[0] <= 3
-
 
