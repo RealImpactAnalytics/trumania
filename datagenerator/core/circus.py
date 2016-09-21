@@ -70,9 +70,13 @@ class Circus(object):
 
         if len(logs) > 0:
             if not os.path.exists(output_file):
+                # If these are this first persisted logs, we create the file
+                # and include the field names as column header.
                 logs.to_csv(output_file, index=False, header=True)
 
             else:
+                # Otherwise, open the existing log file in append mode and add
+                # the new logs at the end, this time without columns headers.
                 with open(output_file, "a") as out_f:
                     logs.to_csv(out_f, index=False, header=False)
 
