@@ -31,6 +31,8 @@ def make_random_bipartite_data(group1, group2, p, seed):
     bp = pd.DataFrame.from_records(bipartite.random_graph(len(group1), len(group2), p, seed).edges(),columns=["from","to"])
     logging.info("  (bipartite index created, now resolving item values)")
 
+    # as all "to" nodes are from the second group, but numbered by networkx in range(len(group1),len(group1)+len(group2))
+    # we need to deduct len(group1) to have proper indexes.
     bp["to"] -= len(group1)
 
     bp["from"] = bp.apply(lambda x: group1[x["from"]],axis=1)
