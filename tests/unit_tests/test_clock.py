@@ -4,7 +4,7 @@ from datagenerator.components.time_patterns.profilers import *
 def test_clock_tick_per_day():
 
     clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
-                  step_s=900,
+                  step_duration=pd.Timedelta("15 min"),
                   seed=1234)
 
     # time steps is 900 s, i.e 15 min
@@ -20,7 +20,7 @@ def test_init_cyclictimergenerator():
     # say we have a clock at 5.45pm on 10th June
     clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
                   # time steps by 15min
-                  step_s=900,
+                  step_duration=pd.Timedelta("15 min"),
                   seed=1234)
 
     # 1 to 12 then 12 to 1, from midnight to midnight
@@ -45,7 +45,7 @@ def test_init_cyclictimergenerator():
 def test_DefaultDailyTimerGenerator_should_be_initialized_correctly():
 
     clock = Clock(start=pd.Timestamp("12 Sept 2016"),
-                  step_s=60,
+                  step_duration=pd.Timedelta("60 s"),
                   seed=1234)
 
     daily = DefaultDailyTimerGenerator(clock=clock, seed=1234)

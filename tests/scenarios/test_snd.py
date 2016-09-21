@@ -41,7 +41,7 @@ class SndScenario(WithRandomGeo, Circus):
         Circus.__init__(self, master_seed=1234,
                         output_folder=params["output_folder"],
                         start=pd.Timestamp("8 June 2016"),
-                        step_s=60,)
+                        step_duration=pd.Timedelta("60s"),)
 
         distributors, sim_generator = self.create_distributors_with_sims()
         self.add_distributor_recharge_action(distributors, sim_generator)
@@ -494,7 +494,7 @@ def test_snd_scenario():
 
     scenario = SndScenario()
 
-    scenario.run(n_iterations=100)
+    scenario.run(duration=pd.Timedelta("1h30m"), delete_existing_logs=True)
     logs = load_all_logs(params["output_folder"])
 
     for logid, lg in logs.iteritems():

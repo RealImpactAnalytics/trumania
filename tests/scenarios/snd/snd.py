@@ -28,15 +28,15 @@ scenario_0 = {
     "n_pos": 500,
     "n_dealers": 3,     # should be 1 if really  divided by 100
 
-
     "mean_known_sites_per_customer": 4,
 
-    "clock_time_step": "5 min",   # one round per 5 minutes
+    "clock_time_step": "5 min",
     "n_init_sim_per_pos": 100,
     "n_init_sim_per_dealer": 1000,
     "sim_price": 10,
 
-    "duration": "12h",
+    "simulation_start_date": "13 Sept 2016 12:00",
+    "simulation_duration": "12h",
     "output_folder": "snd_output_logs/scenario_0"
 }
 
@@ -58,8 +58,8 @@ class SND(Circus):
             self,
             master_seed=12345,
             output_folder=params["output_folder"],
-            start=pd.Timestamp("13 Sept 2016 12:00"),
-            step_duration=pd.Timedelta(params["clock_time_step"]))
+            start=pd.Timestamp(params["simulation_start_date"]),
+            step_duration=pd.Timedelta(params["simulation_duration"]))
 
         # using one central sim_id generator to guarantee unicity of ids
         sim_id_gen = SequencialGenerator(prefix="SIM_")

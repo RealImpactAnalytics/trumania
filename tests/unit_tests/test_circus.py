@@ -14,7 +14,7 @@ def test_create_action_get_action_should_work_as_expected():
     flying = Circus(master_seed=1,
                     output_folder="no_output",
                     start=pd.Timestamp("8 June 2016"),
-                    step_s=60)
+                    step_duration=pd.Timedelta("60s"))
 
     mobility_time_gen = DefaultDailyTimerGenerator(flying.clock, seed=1)
 
@@ -39,7 +39,7 @@ def test_get_non_existing_action_should_return_none():
     flying = Circus(master_seed=1,
                     output_folder="no_output",
                     start=pd.Timestamp("8 June 2016"),
-                    step_s=60)
+                    step_duration=pd.Timedelta("60s"))
 
     assert flying.get_action("non_existing_name") is None
 
@@ -49,7 +49,7 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
     flying = Circus(master_seed=1,
                     output_folder="no_output",
                     start=pd.Timestamp("8 June 2016"),
-                    step_s=60)
+                    step_duration=pd.Timedelta("60s"))
 
     customers = Actor(size=100,
                       ids_gen=SequencialGenerator(prefix="a"))
