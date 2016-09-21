@@ -193,3 +193,12 @@ def test_latest_date_before_should_shift_forward_until_upper_bound():
     result = latest_date_before(starting_date, upper_bound, time_step)
 
     assert result == upper_bound
+
+
+def test_if_networkx_bipartite_keeps_actual_structure():
+
+    # Currently, Netorkx.bipartite returns bipartite networks where the first node
+    # is always in the first group, and the second node is always in the second group
+    RB = bipartite.random_graph(5, 10, 0.9, 1234)
+
+    assert reduce(lambda x, y: x & y, [e[0] < 5 for e in RB.edges()])

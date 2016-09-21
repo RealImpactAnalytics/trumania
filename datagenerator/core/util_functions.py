@@ -28,27 +28,18 @@ def make_random_bipartite_data(group1, group2, p, seed):
                  "items in group2 and edge probability {}".format(
                    len(group1), len(group2), p))
 
-    bp_network = bipartite.random_graph(len(group1), len(group2), p, seed)
+    bp = pd.DataFrame.from_records(bipartite.random_graph(len(group1), len(group2), p, seed).edges(),columns=["from","to"])
     logging.info("  (bipartite index created, now resolving item values)")
-    i1 = 0
-    i2 = 0
-    node_index = {}
-    node_type = {}
-    for n, d in bp_network.nodes(data=True):
-        if d["bipartite"] == 0:
-            node_index[n] = i1
-            i1 += 1
-        else:
-            node_index[n] = i2
-            i2 += 1
-        node_type[n] = d["bipartite"]
-    edges_for_out = []
-    for e in bp_network.edges():
-        if node_type[e[0]] == 0:
-            edges_for_out.append((group1[node_index[e[0]]], group2[node_index[e[1]]]))
-        else:
-            edges_for_out.append((group2[node_index[e[1]]], group1[node_index[e[0]]]))
-    return edges_for_out
+
+    bp["to"] -= len(group1)
+
+    bp["from"] = bp.apply(lambda x: group1[x["from"]],axis=1)
+    bp["to"] = bp.apply(lambda x: group2[x["to"]],axis=1)
+    logging.info("  (resolution done, now converting to tuples)")
+    out = [tuple(x) for x in bp.to_records(index=False)]
+    logging.info("  (exiting bipartite)")
+    return out
+
 
 
 def assign_random_proportions(name1, name2, group1, group2, seed):
