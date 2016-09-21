@@ -30,6 +30,9 @@ scenario_0 = {
 
     "mean_known_sites_per_customer": 4,
 
+    "mean_daily_mobility_activity": 6,
+    "std_daily_mobility_activity": 2,
+
     "clock_time_step": "5 min",
     "n_init_sim_per_pos": 100,
     "n_init_sim_per_dealer": 1000,
@@ -89,7 +92,7 @@ if __name__ == "__main__":
     circus = SND(params)
     built_ts = pd.Timestamp(datetime.now())
 
-    circus.run(pd.Timedelta(params["duration"]),
+    circus.run(pd.Timedelta(params["simulation_duration"]),
                delete_existing_logs=True)
     execution_ts = pd.Timestamp(datetime.now())
     logs = load_all_logs(params["output_folder"])

@@ -39,9 +39,7 @@ def _create_attractiveness(circus, pos):
         actorid_field="POS_ID",
 
         # exactly one attractiveness evolution per day
-        #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
-        # TODO: remove this: just increasing speed to force some logs
-        timer_gen=ConstantDependentGenerator(value=5)
+        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
     )
 
     def update_attract_base(df):

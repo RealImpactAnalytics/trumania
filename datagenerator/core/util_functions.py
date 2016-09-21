@@ -31,7 +31,6 @@ def make_random_bipartite_data(group1, group2, p, seed):
     if len(group1) == 0 or len(group2) == 0 or p == 0:
         return []
 
-
     bp = pd.DataFrame.from_records(bipartite.random_graph(len(group1), len(group2), p, seed).edges(),columns=["from","to"])
     logging.info("  (bipartite index created, now resolving item values)")
 
@@ -45,7 +44,6 @@ def make_random_bipartite_data(group1, group2, p, seed):
     out = [tuple(x) for x in bp.to_records(index=False)]
     logging.info("  (exiting bipartite)")
     return out
-
 
 
 def assign_random_proportions(name1, name2, group1, group2, seed):
