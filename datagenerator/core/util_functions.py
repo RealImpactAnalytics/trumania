@@ -28,6 +28,10 @@ def make_random_bipartite_data(group1, group2, p, seed):
                  "items in group2 and edge probability {}".format(
                    len(group1), len(group2), p))
 
+    if len(group1) == 0 or len(group2) == 0 or p == 0:
+        return []
+
+
     bp = pd.DataFrame.from_records(bipartite.random_graph(len(group1), len(group2), p, seed).edges(),columns=["from","to"])
     logging.info("  (bipartite index created, now resolving item values)")
 
