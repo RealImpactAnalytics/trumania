@@ -127,6 +127,7 @@ class CyclicTimerGenerator(DependentGenerator):
         """
         DependentGenerator.__init__(self)
         self._state = RandomState(seed)
+        self.config = config
 
         # "macro" time shift: we shift the whole profile n times in the future
         # or the past until it overlaps with the current clock date
@@ -193,6 +194,19 @@ class CyclicTimerGenerator(DependentGenerator):
         return pd.Series(self.profile["cdf"].searchsorted(p),
                          index=observations.index)
 
+    def activity(self, n_actions, per):
+        """
+
+        :param n_actions: number of actions
+        :param per: time period for that number of actions
+        :type per: pd.Timedelta
+        :return: the activity level corresponding to the specified number of
+        action per time perio
+        """
+
+        scale = self.config.duration().total_seconds() / per.total_seconds()
+        return n_actions * scale
+
 
 class CyclicTimerProfile(object):
     """
@@ -241,3 +255,9 @@ class CyclicTimerProfile(object):
 
         return CyclicTimerProfile(profile, profile_time_steps, start_date)
 
+    def duration(self):
+        """
+        :return: the total duration corresponding to this time profile
+        """
+
+        return len(self.profile) * pd.Timedelta(self.profile_time_steps)

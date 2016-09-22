@@ -126,7 +126,7 @@ def _create_attractiveness(circus, pos):
 
 def create_pos(circus, params, sim_id_gen):
 
-    logging.info("creating POS")
+    logging.info("creating {} POS".format(params["n_pos"]))
     pos = Actor(size=params["n_pos"],
                 ids_gen=SequencialGenerator(prefix="POS_"))
 

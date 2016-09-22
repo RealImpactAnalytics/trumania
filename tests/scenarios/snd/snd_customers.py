@@ -56,8 +56,8 @@ def add_mobility_action(circus, params):
     )
 
     gaussian_activity = NumpyRandomGenerator(
-        method="normal", loc=params["mean_daily_mobility_activity"],
-        scale=params["std_daily_mobility_activity"])
+        method="normal", loc=params["mean_daily_customer_mobility_activity"],
+        scale=params["std_daily_customer_mobility_activity"])
     mobility_activity_gen = TransformedGenerator(
         upstream_gen=gaussian_activity,
         f=lambda a: max(.5, a))
@@ -107,9 +107,14 @@ def add_purchase_sim_action(circus, params):
     purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
                                                     circus.seeder.next())
 
-    # between 1 to 6 SIM bought per year per customer
+    min_purchase_activity = purchase_timer_gen.activity(
+        n_actions=1, per=pd.Timedelta("360 days"))
+    max_purchase_activity = purchase_timer_gen.activity(
+        n_actions=6, per=pd.Timedelta("360 days"))
+
     purchase_activity_gen = NumpyRandomGenerator(
-        method="choice", a=np.arange(1, 6) / 360.,
+        method="choice",
+        a=np.arange(min_purchase_activity, max_purchase_activity),
         seed=circus.seeder.next())
 
     purchase_action = circus.create_action(
