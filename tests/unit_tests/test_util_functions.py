@@ -98,10 +98,10 @@ def test_make_random_assign_shoud_assign_each_element_only_once():
     assert assignment.shape == (1000, 2)
 
     # all SIM should have been given
-    assert set(assignment["to"].unique().tolist()) == set(sims)
+    assert set(assignment["set1"].unique().tolist()) == set(sims)
 
     # all owners should be part of the dealers
-    assert set(assignment["from"].unique().tolist()) <= set(dealers)
+    assert set(assignment["chosen_from_set2"].unique().tolist()) <= set(dealers)
 
 
 def test_cap_to_total_should_leave_untouched_values_below_target():

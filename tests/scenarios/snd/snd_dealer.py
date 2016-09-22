@@ -23,7 +23,7 @@ def create_dealers(circus, params, sim_id_gen):
         seed=circus.seeder.next())
 
     dealer_sims.add_relations(
-        from_ids=sims_dealer["from"],
-        to_ids=sims_dealer["to"])
+        from_ids=sims_dealer["chosen_from_set2"],
+        to_ids=sims_dealer["set1"])
 
     return dealers

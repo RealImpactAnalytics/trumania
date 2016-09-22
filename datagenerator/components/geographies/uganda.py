@@ -144,8 +144,8 @@ if __name__ == "__main__":
 
     cell_city_df = make_random_assign(cells.ids, cities.ids, seeder.next())
     cell_city_rel.add_relations(
-        from_ids=cell_city_df["from"],
-        to_ids=cell_city_df["to"])
+        from_ids=cell_city_df["chosen_from_set2"],
+        to_ids=cell_city_df["set1"])
 
     pop_gen = ParetoGenerator(xmin=10000, a=1.4, seed=seeder.next())
     cities.create_attribute("population", init_gen=pop_gen)
