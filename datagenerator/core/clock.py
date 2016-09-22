@@ -149,7 +149,7 @@ class CyclicTimerGenerator(DependentGenerator):
 
         # scaled weight profile, s.t. one clock step == one profile value
         profile_ser = profile_ser.resample(rule=clock.step_duration,
-                                           how="sum",
+#                                           how="sum",
                                            fill_method='pad')[:-1]
 
         profile_cdf = (profile_ser / profile_ser.sum()).cumsum()
@@ -196,6 +196,7 @@ class CyclicTimerGenerator(DependentGenerator):
 
     def activity(self, n_actions, per):
         """
+
         :param n_actions: number of actions
         :param per: time period for that number of actions
         :type per: pd.Timedelta
