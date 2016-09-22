@@ -65,7 +65,7 @@ def make_random_assign(set1, set2, seed):
       :return: a dataframe with as many rows as set1
     """
     chosen_froms = RandomState(seed).choice(set2, size=len(set1))
-    return pd.DataFrame({"from": chosen_froms, "to": set1})
+    return pd.DataFrame({"set1": set1, "chosen_from_set2": chosen_froms})
 
 
 def merge_2_dicts(dict1, dict2, value_merge_func=None):

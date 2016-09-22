@@ -166,19 +166,19 @@ def create_pos(circus, params, sim_id_gen):
         seed=circus.seeder.next())
 
     pos_sims.add_relations(
-        from_ids=sims_dealer["from"],
-        to_ids=sims_dealer["to"])
+        from_ids=sims_dealer["chosen_from_set2"],
+        to_ids=sims_dealer["set1"])
 
     logging.info("assigning a dealer to each POS")
     dealer_of_pos = make_random_assign(
-        set1=circus.dealers.ids,
-        set2=pos.ids,
+        set1=pos.ids,
+        set2=circus.dealers.ids,
         seed=circus.seeder.next())
 
     dealer_rel = pos.create_relationship("DEALER", seed=circus.seeder.next())
     dealer_rel.add_relations(
-        from_ids=dealer_of_pos["from"],
-        to_ids=dealer_of_pos["to"])
+        from_ids=dealer_of_pos["set1"],
+        to_ids=dealer_of_pos["chosen_from_set2"])
 
     logging.info("generating size of sim bulk purchase for each pos")
     sim_bulk_gen = ParetoGenerator(xmin=500, a=1.5, force_int=True,

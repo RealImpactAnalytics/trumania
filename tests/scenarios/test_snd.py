@@ -75,7 +75,8 @@ class SndScenario(WithRandomGeo, Circus):
         sim_ids = sim_generator.generate(params["n_init_sims_distributor"])
         sims_dist = make_random_assign(set1=sim_ids, set2=distributors.ids,
                                        seed=self.seeder.next())
-        sims.add_relations(from_ids=sims_dist["from"], to_ids=sims_dist["to"])
+        sims.add_relations(from_ids=sims_dist["chosen_from_set2"],
+                           to_ids=sims_dist["set1"])
 
         # this tells to the "restock" action of the distributor how many
         # sim should be re-generated to replenish the stocks
@@ -139,7 +140,8 @@ class SndScenario(WithRandomGeo, Circus):
         sim_ids = build_ids(size=params["n_init_sims_dealer"], prefix="SIM_")
         sims_dealer = make_random_assign(set1=sim_ids, set2=dealers.ids,
                                          seed=self.seeder.next())
-        sims.add_relations(from_ids=sims_dealer["from"], to_ids=sims_dealer["to"])
+        sims.add_relations(from_ids=sims_dealer["chosen_from_set2"],
+                           to_ids=sims_dealer["set1"])
 
         # one more dealer with just 3 sims in stock => this one will trigger
         # lot's of failed sales
