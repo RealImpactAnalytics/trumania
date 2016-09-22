@@ -8,11 +8,11 @@ import snd_constants
 
 def create_dealers(circus, params, sim_id_gen):
 
-    logging.info("creating Dealers")
+    logging.info("creating dealers")
     dealers = Actor(size=params["n_dealers"],
                 ids_gen=SequencialGenerator(prefix="DEALER_"))
 
-    logging.info("generating dealer initial SIM stock")
+    logging.info(" generating dealer initial SIM stock")
     dealer_sims = dealers.create_relationship("SIMS", seed=circus.seeder.next())
     sim_ids = sim_id_gen.generate(
         size=params["n_init_sim_per_dealer"] * dealers.size)

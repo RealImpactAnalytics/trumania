@@ -44,7 +44,7 @@ def create_field_agents(circus, params):
 
 def add_mobility_action(circus):
 
-    logging.info(" creating mobility action")
+    logging.info(" creating field agent mobility action")
 
     # TODO: post-generation check: is the actual move set realistic?
     # Field agents move only during the work hours
@@ -90,6 +90,8 @@ def add_mobility_action(circus):
 
 
 def add_survey_action(circus):
+
+    logging.info(" creating field agent survey action")
 
     # Surveys only happen during work hours
     survey_timer_gen = WorkHoursTimerGenerator(clock=circus.clock,

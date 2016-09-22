@@ -72,10 +72,10 @@ class Clock(object):
 
     def n_iterations(self, duration):
         """
-        :type duration: pd.TimeDelta
+        :type duration: pd.Timedelta
 
         :return: the smallest number of iteration of this clock s.t. the
-        simulated duration is >= duration
+        corresponding duration is >= duration
         """
         step_secs = self.step_duration.total_seconds()
         return int(np.ceil(duration.total_seconds() / step_secs))

@@ -8,7 +8,6 @@ import pandas as pd
 def create_customers(circus, params):
 
     logging.info(" adding customers")
-
     customers = Actor(size=params["n_customers"],
                       ids_gen=SequencialGenerator(prefix="CUST_"))
 
@@ -34,19 +33,16 @@ def create_customers(circus, params):
         to_ids=mobility_df["SID"],
         weights=mobility_weight_gen.generate(mobility_df.shape[0]))
 
-    # Initialize the mobility by allocating one first random site to each
-    # customer among its network
+    logging.info(" assigning a first random site to each customer")
     customers.create_attribute(name="CURRENT_SITE",
                                     init_relationship="POSSIBLE_SITES")
 
     return customers
 
 
-def add_mobility_action(circus):
+def add_mobility_action(circus, params):
 
-    logging.info(" creating mobility action")
-
-    # TODO: post-generation check: is the actual move set realistic?
+    logging.info(" creating customer mobility action")
     mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1.,
                 1., 1., 5., 10., 5., 1., 1., 1., 1.]
     mobility_time_gen = CyclicTimerGenerator(
@@ -57,17 +53,14 @@ def add_mobility_action(circus):
             profile_time_steps="1H",
             start_date=pd.Timestamp("12 September 2016 00:00.00"),
         )
-        )
+    )
 
-    mean_daily_mobility = 6
-    std_daily_mobility = 3
-    min_daily_mobility = 1
     gaussian_activity = NumpyRandomGenerator(
-        method="normal", loc=mean_daily_mobility / 24,
-        scale=std_daily_mobility / 24)
+        method="normal", loc=params["mean_daily_mobility_activity"],
+        scale=params["std_daily_mobility_activity"])
     mobility_activity_gen = TransformedGenerator(
-        upstream_gen = gaussian_activity,
-        f=lambda a: max(min_daily_mobility/24, a))
+        upstream_gen=gaussian_activity,
+        f=lambda a: max(.5, a))
 
     mobility_action = circus.create_action(
         name="customer_mobility",
@@ -110,6 +103,7 @@ def add_mobility_action(circus):
 
 def add_purchase_sim_action(circus, params):
 
+    logging.info("creating customer SIM purchase action")
     purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
                                                     circus.seeder.next())
 
