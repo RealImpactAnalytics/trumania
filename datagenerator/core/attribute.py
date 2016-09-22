@@ -37,6 +37,11 @@ class Attribute(object):
             elif init_values is None:
                 init_values = init_gen.generate(size=actor.size)
 
+            if type(init_values) == pd.Series:
+                logging.warn("  Trying to create attribute with a series "
+                             "but indices will be lost.")
+                init_values = init_values.tolist()
+
             self._table = pd.DataFrame({"value": init_values}, index=actor.ids)
 
         else:
