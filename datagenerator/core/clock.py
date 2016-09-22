@@ -2,6 +2,7 @@ from __future__ import division
 
 from datagenerator.core.random_generators import *
 from datagenerator.core.util_functions import *
+import logging
 
 
 class Clock(object):
@@ -128,6 +129,7 @@ class CyclicTimerGenerator(DependentGenerator):
         DependentGenerator.__init__(self)
         self._state = RandomState(seed)
         self.config = config
+        self.clock = clock
 
         # "macro" time shift: we shift the whole profile n times in the future
         # or the past until it overlaps with the current clock date
@@ -147,6 +149,7 @@ class CyclicTimerGenerator(DependentGenerator):
 
         # scaled weight profile, s.t. one clock step == one profile value
         profile_ser = profile_ser.resample(rule=clock.step_duration,
+                                           how="sum",
                                            fill_method='pad')[:-1]
 
         profile_cdf = (profile_ser / profile_ser.sum()).cumsum()
@@ -186,9 +189,6 @@ class CyclicTimerGenerator(DependentGenerator):
         :param observations: contains an array of floats
         :return: Pandas Series
         """
-        # if sum(np.isnan(self._profile["next_prob"])) > 0:
-        #     raise Exception("Time profiler is not initialised!")
-
         draw = self._state.uniform(size=observations.shape[0])
         p = draw / observations.values
         return pd.Series(self.profile["cdf"].searchsorted(p),
@@ -196,16 +196,28 @@ class CyclicTimerGenerator(DependentGenerator):
 
     def activity(self, n_actions, per):
         """
-
         :param n_actions: number of actions
         :param per: time period for that number of actions
         :type per: pd.Timedelta
         :return: the activity level corresponding to the specified number of
-        action per time perio
+        action per time period
         """
 
         scale = self.config.duration().total_seconds() / per.total_seconds()
-        return n_actions * scale
+        activity = n_actions * scale
+
+        requested_period = pd.Timedelta(seconds=per.total_seconds() / n_actions)
+        if requested_period < self.clock.step_duration:
+            logging.warn("Creating activity level for {} actions per {} => "
+                         "activity is {} but period is {}, which is shorter "
+                         "than the clock period ({}). This clock cannot keep "
+                         "up with such rate and less events will be "
+                         "produced".format(
+                n_actions, per, activity, requested_period,
+                self.clock.step_duration)
+            )
+
+        return activity
 
 
 class CyclicTimerProfile(object):
