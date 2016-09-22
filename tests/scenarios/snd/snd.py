@@ -8,6 +8,7 @@ https://realimpactanalytics.atlassian.net/wiki/pages/viewpage.action?spaceKey=SD
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
+from datagenerator.components.geographies.belgium import *
 import pandas as pd
 
 from datetime import datetime
@@ -45,16 +46,16 @@ scenario_0 = {
 
 
 # to be removed: temporary downscaling of the scenario to accelerate tests
-# scenario_1.update({
-#     "n_sites": 50,
-#     "n_customers": 500,
-#     "n_pos": 100,
-#     "n_dealers": 100,
-#     "n_iterations": 20
-# })
+scenario_0.update({
+    "n_sites": 50,
+    "n_customers": 500,
+    "n_pos": 100,
+    "n_dealers": 100,
+    "n_iterations": 20
+})
 
 
-class SND(Circus):
+class SND(WithBelgium):
 
     def __init__(self, params):
         Circus.__init__(
