@@ -31,16 +31,19 @@ scenario_0 = {
 
     "mean_known_sites_per_customer": 4,
 
-    "mean_daily_mobility_activity": 3,
-    "std_daily_mobility_activity": .5,
+    "mean_daily_customer_mobility_activity": 2,
+    "std_daily_customer_mobility_activity": .5,
 
-    "clock_time_step": "5 min",
+    "mean_daily_fa_mobility_activity": 5,
+    "std_daily_fa_mobility_activity": .5,
+
+    "clock_time_step": "15 min",
     "n_init_sim_per_pos": 100,
     "n_init_sim_per_dealer": 1000,
     "sim_price": 10,
 
     "simulation_start_date": "13 Sept 2016 12:00",
-    "simulation_duration": "12h",
+    "simulation_duration": "2 days",
     "output_folder": "snd_output_logs/scenario_0"
 }
 
@@ -79,7 +82,7 @@ class SND(WithBelgium):
         snd_customers.add_purchase_sim_action(self, params)
 
         self.field_agents = snd_field_agents.create_field_agents(self, params)
-        snd_field_agents.add_mobility_action(self)
+        snd_field_agents.add_mobility_action(self, params)
         snd_field_agents.add_survey_action(self)
 
 

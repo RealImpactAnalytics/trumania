@@ -7,7 +7,7 @@ import pandas as pd
 
 def create_field_agents(circus, params):
 
-    logging.info(" adding field agents")
+    logging.info(" adding {} field agents".format(params["n_field_agents"]))
 
     field_agents = Actor(size=params["n_field_agents"],
                          ids_gen=SequencialGenerator(prefix="FA_"))
@@ -42,7 +42,7 @@ def create_field_agents(circus, params):
     return field_agents
 
 
-def add_mobility_action(circus):
+def add_mobility_action(circus, params):
 
     logging.info(" creating field agent mobility action")
 
@@ -51,6 +51,13 @@ def add_mobility_action(circus):
     mobility_time_gen = WorkHoursTimerGenerator(clock=circus.clock,
                                                 seed=circus.seeder.next())
 
+    gaussian_activity = NumpyRandomGenerator(
+        method="normal", loc=params["mean_daily_fa_mobility_activity"],
+        scale=params["std_daily_fa_mobility_activity"])
+    mobility_activity_gen = TransformedGenerator(
+        upstream_gen=gaussian_activity,
+        f=lambda a: max(1, a))
+
     mobility_action = circus.create_action(
         name="field_agent_mobility",
 
@@ -58,6 +65,7 @@ def add_mobility_action(circus):
         actorid_field="FA_ID",
 
         timer_gen=mobility_time_gen,
+        activity_gen=mobility_activity_gen
     )
 
     logging.info(" adding operations")
@@ -97,9 +105,13 @@ def add_survey_action(circus):
     survey_timer_gen = WorkHoursTimerGenerator(clock=circus.clock,
                                                seed=circus.seeder.next())
 
-    # Between 10 and 100 surveys per week
+    min_activity = survey_timer_gen.activity(
+        n_actions=10, per=pd.Timedelta("7 days"),)
+    max_activity = survey_timer_gen.activity(
+        n_actions=100, per=pd.Timedelta("7 days"),)
+
     survey_activity_gen = NumpyRandomGenerator(
-        method="choice", a=np.arange(10, 100),
+        method="choice", a=np.arange(min_activity, max_activity),
         seed=circus.seeder.next())
 
     survey_action = circus.create_action(

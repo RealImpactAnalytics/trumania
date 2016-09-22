@@ -51,3 +51,49 @@ def test_DefaultDailyTimerGenerator_should_be_initialized_correctly():
     daily = DefaultDailyTimerGenerator(clock=clock, seed=1234)
 
     assert daily.profile.index[0] == pd.Timestamp("12 Sept 2016")
+
+
+def test_cyclic_timer_profile_should_compute_duration_correct():
+
+    tested = CyclicTimerProfile(
+        profile=[10, 20, 10, 40],
+        profile_time_steps="2h",
+        start_date=pd.Timestamp("21 March 1956")
+    )
+
+    assert tested.duration() == pd.Timedelta("8h")
+
+
+def test_activity_level_should_be_scaled_according_to_profile_duration():
+
+    clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
+                  # time steps by 15min
+                  step_duration=pd.Timedelta("15 min"),
+                  seed=1234)
+
+    # 1 to 12 then 12 to 1, from midnight to midnight
+    one_day_timer = CyclicTimerGenerator(
+        clock=clock,
+        config=CyclicTimerProfile(
+            profile=range(1, 13) + range(12, 0, -1),
+            profile_time_steps="1H",
+            start_date=pd.Timestamp("1 January 2014 00:00:00"),
+        ),
+        seed=1234
+    )
+
+    # 14 actions/week should be scaled to activity 2 since profile lasts 1 day
+    assert 2 == one_day_timer.activity(n_actions=14, per=pd.Timedelta("7 days"))
+
+    assert 48 == one_day_timer.activity(n_actions=4, per=pd.Timedelta("2h"))
+
+    assert .5 == one_day_timer.activity(n_actions=1, per=pd.Timedelta("2 days"))
+
+    assert .5 == one_day_timer.activity(n_actions=.25, per=pd.Timedelta("12h"))
+
+    assert 1./360 - one_day_timer.activity(
+        n_actions=1, per=pd.Timedelta("360 days")) < 1e-10
+
+
+
+
