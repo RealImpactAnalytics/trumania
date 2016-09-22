@@ -39,7 +39,8 @@ def _create_attractiveness(circus, pos):
         actorid_field="POS_ID",
 
         # exactly one attractiveness evolution per day
-        timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_day)
+        timer_gen=ConstantDependentGenerator(
+            value=circus.clock.n_iterations(pd.Timedelta("1 day")))
     )
 
     def update_attract_base(df):
@@ -93,9 +94,8 @@ def _create_attractiveness(circus, pos):
         initiating_actor=pos,
         actorid_field="POS_ID",
 
-        #timer_gen=ConstantDependentGenerator(value=circus.clock.ticks_per_week)
-        # TODO: remove this: just increasing speed to force some logs
-        timer_gen=ConstantDependentGenerator(value=10)
+        timer_gen=ConstantDependentGenerator(
+            value=circus.clock.n_iterations(pd.Timedelta("7 days")))
     )
 
     attractiveness_delta_evolution.set_operations(
@@ -191,6 +191,7 @@ def create_pos(circus, params, sim_id_gen):
 
 def add_sim_bulk_purchase_action(circus):
 
+    logging.info("creating POS SIM bulk purchase action")
     build_purchases = circus.create_action(
         name="pos_to_dealer_sim_bulk_purchases",
         initiating_actor=circus.pos,

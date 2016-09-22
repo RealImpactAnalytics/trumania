@@ -92,8 +92,9 @@ class Circus(object):
         """
 
         n_iterations = self.clock.n_iterations(duration)
-        logging.info("Starting circus for {} iterations of {}".format(
-            n_iterations, self.clock.step_duration))
+        logging.info("Starting circus for {} iterations of {} for a "
+                     "total duration of {}".format(
+            n_iterations, self.clock.step_duration, duration))
 
         if os.path.exists(self.output_folder):
             if delete_existing_logs:

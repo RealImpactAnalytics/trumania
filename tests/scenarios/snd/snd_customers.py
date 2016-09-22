@@ -8,7 +8,6 @@ import pandas as pd
 def create_customers(circus, params):
 
     logging.info(" adding customers")
-
     customers = Actor(size=params["n_customers"],
                       ids_gen=SequencialGenerator(prefix="CUST_"))
 
@@ -43,8 +42,7 @@ def create_customers(circus, params):
 
 def add_mobility_action(circus, params):
 
-    logging.info(" creating mobility action")
-
+    logging.info(" creating customer mobility action")
     mov_prof = [1., 1., 1., 1., 1., 1., 1., 1., 5., 10., 5., 1., 1., 1., 1.,
                 1., 1., 5., 10., 5., 1., 1., 1., 1.]
     mobility_time_gen = CyclicTimerGenerator(
@@ -105,6 +103,7 @@ def add_mobility_action(circus, params):
 
 def add_purchase_sim_action(circus, params):
 
+    logging.info("creating customer SIM purchase action")
     purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
                                                     circus.seeder.next())
 

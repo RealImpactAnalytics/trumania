@@ -30,8 +30,8 @@ scenario_0 = {
 
     "mean_known_sites_per_customer": 4,
 
-    "mean_daily_mobility_activity": 6,
-    "std_daily_mobility_activity": 2,
+    "mean_daily_mobility_activity": 3,
+    "std_daily_mobility_activity": .5,
 
     "clock_time_step": "5 min",
     "n_init_sim_per_pos": 100,
@@ -62,14 +62,14 @@ class SND(Circus):
             master_seed=12345,
             output_folder=params["output_folder"],
             start=pd.Timestamp(params["simulation_start_date"]),
-            step_duration=pd.Timedelta(params["simulation_duration"]))
+            step_duration=pd.Timedelta(params["clock_time_step"]))
 
         # using one central sim_id generator to guarantee unicity of ids
         sim_id_gen = SequencialGenerator(prefix="SIM_")
 
         self.sites = snd_sites.create_sites(self, params)
         self.customers = snd_customers.create_customers(self, params)
-        snd_customers.add_mobility_action(self)
+        snd_customers.add_mobility_action(self, params)
 
         self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen)
 
