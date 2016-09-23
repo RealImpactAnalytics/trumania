@@ -1,15 +1,12 @@
+"""
+This is a
+
+"""
+
 from __future__ import division
 
-from datetime import datetime
-from datagenerator.core.clock import *
-from datagenerator.core.actor import *
-from datagenerator.core.action import *
-from datagenerator.core.attribute import *
 from datagenerator.core.relationship import *
 from datagenerator.core.circus import *
-from datagenerator.core.operations import *
-from datagenerator.core.random_generators import *
-from datagenerator.core.util_functions import *
 from datagenerator.components.time_patterns.profilers import *
 from datagenerator.components.geographies.random_geo import *
 
