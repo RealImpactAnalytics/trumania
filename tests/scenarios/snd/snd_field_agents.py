@@ -46,14 +46,21 @@ def add_mobility_action(circus, params):
 
     logging.info(" creating field agent mobility action")
 
-    # TODO: post-generation check: is the actual move set realistic?
     # Field agents move only during the work hours
     mobility_time_gen = WorkHoursTimerGenerator(clock=circus.clock,
                                                 seed=circus.seeder.next())
 
+    fa_mean_weekly_activity = mobility_time_gen.activity(
+        n_actions=params["mean_daily_fa_mobility_activity"],
+        per=pd.Timedelta("1day"))
+
+    fa_daily_std = mobility_time_gen.activity(
+        n_actions=params["std_daily_fa_mobility_activity"],
+        per=pd.Timedelta("1day"))
+
     gaussian_activity = NumpyRandomGenerator(
-        method="normal", loc=params["mean_daily_fa_mobility_activity"],
-        scale=params["std_daily_fa_mobility_activity"])
+        method="normal", loc=fa_mean_weekly_activity,
+        scale=fa_daily_std)
     mobility_activity_gen = TransformedGenerator(
         upstream_gen=gaussian_activity,
         f=lambda a: max(1, a))
@@ -65,8 +72,7 @@ def add_mobility_action(circus, params):
         actorid_field="FA_ID",
 
         timer_gen=mobility_time_gen,
-        activity_gen=mobility_activity_gen
-    )
+        activity_gen=mobility_activity_gen)
 
     logging.info(" adding operations")
 

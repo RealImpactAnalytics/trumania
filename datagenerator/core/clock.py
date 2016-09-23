@@ -131,7 +131,6 @@ class CyclicTimerGenerator(DependentGenerator):
         self.config = config
         self.clock = clock
 
-
         # "macro" time shift: we shift the whole profile n times in the future
         # or the past until it overlaps with the current clock date
         init_date = latest_date_before(
@@ -193,7 +192,7 @@ class CyclicTimerGenerator(DependentGenerator):
         :return: Pandas Series
         """
 
-        activities = observations#.reset_index(drop=True)
+        activities = observations
 
         # activities less often than once per cycle length
         low_activities = activities.where(activities <= 2).dropna()

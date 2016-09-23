@@ -25,7 +25,7 @@ import logging
 scenario_0 = {
     "n_sites": 50,
     "n_customers": 50000,
-    "n_field_agents": 2,
+    "n_field_agents": 5,
     "n_pos": 500,
     "n_dealers": 3,     # should be 1 if really  divided by 100
 
@@ -49,13 +49,16 @@ scenario_0 = {
 
 
 # to be removed: temporary downscaling of the scenario to accelerate tests
-# scenario_0.update({
-#     "n_sites": 50,
-#     "n_customers": 500,
-#     "n_pos": 100,
-#     "n_dealers": 100,
-#     "n_iterations": 20
-# })
+scenario_0.update({
+    "n_sites": 50,
+    "n_customers": 500,
+    "n_pos": 100,
+    "n_dealers": 100,
+    "n_iterations": 20,
+
+# longer simulation to validate resulting logs volumes
+#    "simulation_duration": "30 days",
+})
 
 
 class SND(WithBelgium):

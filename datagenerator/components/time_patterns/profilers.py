@@ -35,14 +35,14 @@ class WorkHoursTimerGenerator(CyclicTimerGenerator):
         assert start_hour <= end_hour
 
         # if start_hour = 0, before_work is empty
-        before_work = [0.] * start_hour
+        before_work = [0] * start_hour
         during_work = [1.] * (end_hour-start_hour+1)
         # if end_hour = 23, after_work is empty
-        after_work = [0.] * (23-end_hour)
+        after_work = [0] * (23-end_hour)
 
         # the sum of before_work, during_work and after_work is always 24
         week_day_profile = before_work + during_work + after_work
-        weekend_day_profile = [0.] * 24
+        weekend_day_profile = [0] * 24
 
         week_profile = week_day_profile * 5 + weekend_day_profile * 2
 
