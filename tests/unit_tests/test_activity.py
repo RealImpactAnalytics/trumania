@@ -278,16 +278,3 @@ def test_actors_during_working_hours():
 
         # 30 days of simulation should produce 100 * 5 * 30 == 15k logs
         assert 14e3 <= logs.shape[0] <= 16e3
-
-
-def test_actors_during_working_hours2():
-
-    with path.tempdir() as log_parent_folder:
-        log_folder = os.path.join(log_parent_folder, "logs")
-
-        field_agents = Actor(
-            size=100,
-            ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
-
-
-
