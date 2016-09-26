@@ -247,7 +247,6 @@ class CyclicTimerGenerator(DependentGenerator):
         # makes sure all_timers is in the same order and with the same index
         # as input observations, even in case of duplicate index values
         all_timers = all_timers.reindex_like(observations)
-        #all_timers.index = observations.index
         return all_timers
 
     def activity(self, n_actions, per):

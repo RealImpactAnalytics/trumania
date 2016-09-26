@@ -39,6 +39,7 @@ def _create_attractiveness(circus, pos):
         actorid_field="POS_ID",
 
         # exactly one attractiveness evolution per day
+        # caveat: all at the same time for now
         timer_gen=ConstantDependentGenerator(
             value=circus.clock.n_iterations(pd.Timedelta("1 day")))
     )
@@ -124,7 +125,7 @@ def _create_attractiveness(circus, pos):
     )
 
 
-def create_pos(circus, params, sim_id_gen):
+def create_pos(circus, params, sim_id_gen, recharge_id_gen):
 
     logging.info("creating {} POS".format(params["n_pos"]))
     pos = Actor(size=params["n_pos"],
@@ -156,18 +157,13 @@ def create_pos(circus, params, sim_id_gen):
         from_ids=pos.get_attribute_values("SITE"),
         to_ids=pos.ids)
 
-    logging.info("generating POS initial SIM stock")
-    pos_sims = pos.create_relationship("SIMS", seed=circus.seeder.next())
-    sim_ids = sim_id_gen.generate(size=params["n_init_sim_per_pos"] * pos.size)
+    pos.create_stock_relationship(
+        name="SIMS", item_id_gen=sim_id_gen,
+        n_items_per_actor=params["n_init_sim_per_pos"], seeder=circus.seeder)
 
-    sims_dealer = make_random_assign(
-        set1=sim_ids,
-        set2=pos.ids,
-        seed=circus.seeder.next())
-
-    pos_sims.add_relations(
-        from_ids=sims_dealer["chosen_from_set2"],
-        to_ids=sims_dealer["set1"])
+    pos.create_stock_relationship(
+        name="ERS", item_id_gen=recharge_id_gen,
+        n_items_per_actor=params["n_init_er_per_pos"], seeder=circus.seeder)
 
     logging.info("assigning a dealer to each POS")
     dealer_of_pos = make_random_assign(

@@ -47,6 +47,26 @@ class Actor(object):
         self.relationships[name] = Relationship(seed=seed)
         return self.relationships[name]
 
+    def create_stock_relationship(self, name, item_id_gen, n_items_per_actor,
+                                  seeder):
+        """
+        Creates a relationship aimed at maintaining a stock.
+        The relationship does not point to another actor, but to items
+        whose id is generated with the provided generator.
+        """
+
+        logging.info("generating initial {} stock".format(name))
+        rel_to_items = self.create_relationship(name=name, seed=seeder.next())
+
+        assigned_items = make_random_assign(
+            set1=item_id_gen.generate(size=n_items_per_actor * self.size),
+            set2=self.ids,
+            seed=seeder.next())
+
+        rel_to_items.add_relations(
+            from_ids=assigned_items["chosen_from_set2"],
+            to_ids=assigned_items["set1"])
+
     def get_relationship(self, name):
         return self.relationships[name]
 

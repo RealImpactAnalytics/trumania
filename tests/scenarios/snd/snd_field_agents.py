@@ -159,6 +159,3 @@ def add_survey_action(circus):
                           "POS_LATITUDE", "POS_LONGITUDE", "TIME"]
                     )
     )
-
-
-

@@ -2,6 +2,12 @@
 SND scenario, based on
 
 https://realimpactanalytics.atlassian.net/wiki/pages/viewpage.action?spaceKey=SD&title=Tech+Design+%3A+Lab+Data+Generator
+
+https://realimpactanalytics.atlassian.net/wiki/pages/viewpage.action?pageId=73958895
+
+and
+
+https://realimpactanalytics.atlassian.net/browse/OASD-1593
 """
 
 
@@ -22,7 +28,7 @@ import logging
 
 
 # scenario is meant to match scenario 1 divided by 100
-scenario_0 = {
+scenario_1 = {
     "n_sites": 50,
     "n_customers": 50000,
     "n_field_agents": 5,
@@ -38,9 +44,13 @@ scenario_0 = {
     "std_daily_fa_mobility_activity": .5,
 
     "clock_time_step": "15 min",
+
     "n_init_sim_per_pos": 100,
     "n_init_sim_per_dealer": 1000,
     "sim_price": 10,
+
+    "n_init_er_per_pos": 1000,
+    "n_init_er_per_dealer": 1000,
 
     "simulation_start_date": "13 Sept 2016 12:00",
     "simulation_duration": "2 days",
@@ -48,8 +58,8 @@ scenario_0 = {
 }
 
 
-# to be removed: temporary downscaling of the scenario to accelerate tests
-scenario_0.update({
+# temporary downscaling of the scenario to accelerate tests
+scenario_1.update({
     "n_sites": 50,
     "n_customers": 500,
     "n_pos": 100,
@@ -73,14 +83,16 @@ class SND(WithBelgium):
 
         # using one central sim_id generator to guarantee unicity of ids
         sim_id_gen = SequencialGenerator(prefix="SIM_")
+        recharge_id_gen = SequencialGenerator(prefix="ER_")
 
         self.sites = snd_sites.create_sites(self, params)
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 
-        self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen)
+        self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen,
+                                                 recharge_id_gen)
 
-        self.pos = snd_pos.create_pos(self, params, sim_id_gen)
+        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
         snd_pos.add_sim_bulk_purchase_action(self)
         snd_customers.add_purchase_sim_action(self, params)
 
@@ -91,7 +103,7 @@ class SND(WithBelgium):
 
 if __name__ == "__main__":
 
-    params = scenario_0
+    params = scenario_1
 
     setup_logging()
     start_ts = pd.Timestamp(datetime.now())
