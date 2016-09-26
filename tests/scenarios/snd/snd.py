@@ -27,12 +27,16 @@ import snd_field_agents
 import logging
 
 
-# scenario is meant to match scenario 1 divided by 100
 scenario_1 = {
-    "n_sites": 50,
+    "geography": "belgium", # this geography contains 4208 sites
+
     "n_customers": 50000,
     "n_field_agents": 5,
-    "n_pos": 500,
+
+    "n_pos": 50000,     # we must have a large number of POS, to saturate the
+                        # the sites, otherwise lot's of action fail due to
+                        # empty sites (e.g. no pos to buy from,...)
+
     "n_dealers": 3,     # should be 1 if really  divided by 100
 
     "mean_known_sites_per_customer": 4,
@@ -43,7 +47,7 @@ scenario_1 = {
     "mean_daily_fa_mobility_activity": 5,
     "std_daily_fa_mobility_activity": .5,
 
-    "clock_time_step": "15 min",
+    "clock_time_step": "1h",
 
     "n_init_sim_per_pos": 100,
     "n_init_sim_per_dealer": 1000,
@@ -53,21 +57,19 @@ scenario_1 = {
     "n_init_er_per_dealer": 1000,
 
     "simulation_start_date": "13 Sept 2016 12:00",
-    "simulation_duration": "2 days",
+    "simulation_duration": "5 days",
     "output_folder": "snd_output_logs/scenario_0"
 }
 
 
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
-    "n_sites": 50,
-    "n_customers": 500,
-    "n_pos": 100,
-    "n_dealers": 100,
-    "n_iterations": 20,
+    "geography": "belgium_5",
+    "n_pos": 50,
 
-# longer simulation to validate resulting logs volumes
-#    "simulation_duration": "30 days",
+    "n_customers": 500,
+    "n_dealers": 100,
+    "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
 })
 
 
@@ -95,6 +97,7 @@ class SND(WithBelgium):
         self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
         snd_pos.add_sim_bulk_purchase_action(self)
         snd_customers.add_purchase_sim_action(self, params)
+        snd_customers.add_purchase_er_action(self)
 
         self.field_agents = snd_field_agents.create_field_agents(self, params)
         snd_field_agents.add_mobility_action(self, params)

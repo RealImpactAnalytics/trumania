@@ -2,12 +2,14 @@ import logging
 from datagenerator.core.util_functions import *
 import pandas as pd
 from numpy.random import *
+from datagenerator.components import db
 
 
 def create_sites(circus, params):
 
     logging.info("adding sites")
-    sites = circus.add_belgium_geography()
+    #sites = circus.add_belgium_geography()
+    sites = db.load_actor(namespace=params["geography"], actor_id="sites")
 
     cells_of_site_rel = sites.create_relationship("CELLS",
                                                   seed=circus.seeder.next())

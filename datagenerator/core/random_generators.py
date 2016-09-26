@@ -88,7 +88,7 @@ class NumpyRandomGenerator(Generator):
         Generator wrapping any numpy.Random method.
     """
 
-    def __init__(self, method, seed=None, **numpy_parameters):
+    def __init__(self, method, seed, **numpy_parameters):
         """Initialise a random number generator
 
         :param method: string: must be a valid numpy.Randomstate method that

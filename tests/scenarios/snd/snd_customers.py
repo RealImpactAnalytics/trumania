@@ -21,7 +21,7 @@ def create_customers(circus, params):
         make_random_bipartite_data(
             customers.ids,
             circus.sites.ids,
-            p=params["mean_known_sites_per_customer"]/params["n_sites"],
+            p=params["mean_known_sites_per_customer"]/circus.sites.size,
             seed=circus.seeder.next()),
         columns=["CID", "SID"])
 
@@ -57,7 +57,8 @@ def add_mobility_action(circus, params):
 
     gaussian_activity = NumpyRandomGenerator(
         method="normal", loc=params["mean_daily_customer_mobility_activity"],
-        scale=params["std_daily_customer_mobility_activity"])
+        scale=params["std_daily_customer_mobility_activity"],
+        seed=circus.seeder.next())
     mobility_activity_gen = TransformedGenerator(
         upstream_gen=gaussian_activity,
         f=lambda a: max(.5, a))
@@ -117,8 +118,45 @@ def add_purchase_sim_action(circus, params):
         a=np.arange(min_purchase_activity, max_purchase_activity),
         seed=circus.seeder.next())
 
+    _create_customer_purchase_action(
+        circus, purchase_timer_gen, purchase_activity_gen, "SIMS",
+        item_price_gen=ConstantGenerator(value=params["sim_price"]),
+        action_name="sim_purchases_to_pos")
+
+
+def add_purchase_er_action(circus):
+
+    logging.info("creating customer ER purchase action")
+    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
+                                                    circus.seeder.next())
+
+    # exponential distro do not really have a physical meaning here, I just a
+    # real number with mean 1/5
+    purchase_activity_gen = NumpyRandomGenerator(
+        method="exponential",
+        scale=purchase_timer_gen.activity(
+            n_actions=1, per=pd.Timedelta("5 days")),
+        seed=circus.seeder.next())
+
+    price_gen = NumpyRandomGenerator(
+        method="choice", a=[5, 10, 25, 50, 100], seed=circus.seeder.next())
+
+    _create_customer_purchase_action(
+        circus, purchase_timer_gen=purchase_timer_gen,
+        purchase_activity_gen=purchase_activity_gen,
+        pos_relationship="ERS",
+        item_price_gen=price_gen, action_name="ers_purchases_to_pos")
+
+
+def _create_customer_purchase_action(
+        circus, purchase_timer_gen, purchase_activity_gen,
+        pos_relationship, item_price_gen, action_name):
+    """
+    Creates an action of Customer buying from POS
+    """
+
     purchase_action = circus.create_action(
-        name="sim_purchases_to_pos",
+        name=action_name,
         initiating_actor=circus.customers,
         actorid_field="CUST_ID",
         timer_gen=purchase_timer_gen,
@@ -128,9 +166,9 @@ def add_purchase_sim_action(circus, params):
     # below it, it quickly rises to 5%
     # => chances getting out of stock < (1-.0.05)**20 ~= .35
     # => we can expect about 30% or so of POS to run out of stock regularly
-    pos_bulk_purchase_trigger = DependentTriggerGenerator(
-        value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
-    )
+    # pos_bulk_purchase_trigger = DependentTriggerGenerator(
+    #     value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
+    # )
 
     purchase_action.set_operations(
 
@@ -148,43 +186,46 @@ def add_purchase_sim_action(circus, params):
             # anything => we could add a re-try mechanism here
             discard_empty=True),
 
-        circus.pos.get_relationship("SIMS").ops.select_one(
+        circus.pos.get_relationship(pos_relationship).ops.select_one(
             from_field="POS",
-            named_as="SIM",
+            named_as="BOUGHT_ITEM",
 
             pop=True,
-            discard_empty=True),
+
+            discard_empty=False),
+
+        operations.Apply(source_fields="BOUGHT_ITEM",
+                         named_as="FAILED_SALE_OUT_OF_STOCK",
+                         f=pd.isnull, f_args="series"),
 
         circus.sites.get_relationship("CELLS").ops.select_one(
             from_field="SITE",
             named_as="CELL",),
 
-        SequencialGenerator(prefix="SIM_TX_")\
-            .ops.generate(named_as="TX_ID"),
+        SequencialGenerator(prefix="TX_").ops.generate(named_as="TX_ID"),
 
-        ConstantGenerator(value=params["sim_price"])\
-            .ops.generate(named_as="VALUE"),
+        item_price_gen.ops.generate(named_as="VALUE"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        FieldLogger(log_id="sim_purchases_to_pos"),
+        FieldLogger(log_id=action_name),
 
 
-        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
-            from_field="POS",
-            named_as="CURRENT_POS_STOCK"
-        ),
-
-        pos_bulk_purchase_trigger.ops.generate(
-            named_as="SHOULD_RESTOCK",
-            observed_field="CURRENT_POS_STOCK"
-        ),
-
-        # => use pos_bulk_purchase_trigger and stock size (in relationship)
-        circus.get_action("pos_to_dealer_sim_bulk_purchases").ops \
-            .force_act_next(
-            actor_id_field="POS",
-            condition_field="SHOULD_RESTOCK"),
+        # circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+        #     from_field="POS",
+        #     named_as="CURRENT_POS_STOCK"
+        # ),
+        #
+        # pos_bulk_purchase_trigger.ops.generate(
+        #     named_as="SHOULD_RESTOCK",
+        #     observed_field="CURRENT_POS_STOCK"
+        # ),
+        #
+        # # => use pos_bulk_purchase_trigger and stock size (in relationship)
+        # circus.get_action("pos_to_dealer_sim_bulk_purchases").ops \
+        #     .force_act_next(
+        #     actor_id_field="POS",
+        #     condition_field="SHOULD_RESTOCK"),
     )
 
 

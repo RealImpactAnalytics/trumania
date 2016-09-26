@@ -128,6 +128,30 @@ def test_1000_actors_with_low_activity():
         assert 3500 <= logs.shape[0] <= 4500
 
 
+def test_1000_actors_with_low_activity2():
+    """
+
+    This is a low activity test, where the actors have less than one activity
+    per cycle
+
+    """
+
+    with path.tempdir() as log_parent_folder:
+        log_folder = os.path.join(log_parent_folder, "logs")
+
+        run_test_scenario_1(clock_step="3 h",
+                            simulation_duration="15days",
+                            n_actions=1,
+                            per=pd.Timedelta("5 days"),
+                            log_folder=log_folder)
+
+        logging.info("loading produced logs")
+        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+
+        # 2 days of simulation should produce 1000 * 15 * 1/5 == 3000 logs
+        assert 2600 <= logs.shape[0] <= 3400
+
+
 def test_1000_actors_with_activity_one_per_cycle():
     """
     This is a border case between low and high activity, where the desired
@@ -254,3 +278,16 @@ def test_actors_during_working_hours():
 
         # 30 days of simulation should produce 100 * 5 * 30 == 15k logs
         assert 14e3 <= logs.shape[0] <= 16e3
+
+
+def test_actors_during_working_hours2():
+
+    with path.tempdir() as log_parent_folder:
+        log_folder = os.path.join(log_parent_folder, "logs")
+
+        field_agents = Actor(
+            size=100,
+            ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
+
+
+
