@@ -182,7 +182,8 @@ class SndScenario(WithRandomGeo, Circus):
 
         deg_prob = params["average_agent_degree"] / params["n_agents"] * params["n_dealers"]
 
-        agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.)
+        agent_weight_gen = NumpyRandomGenerator(method="exponential", scale=1.,
+                                                seed=1)
 
         agent_customer_df = pd.DataFrame.from_records(
             make_random_bipartite_data(agents.ids, dealers.ids, deg_prob,

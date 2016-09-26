@@ -13,7 +13,7 @@ def test_numpy_random_generator_should_delegate_to_numpy_correctly():
 
     # basic "smoke" test, if it does not crash it at least proves it's able
     # to load the appropriate method
-    tested = NumpyRandomGenerator(method="normal", loc=10, scale=4)
+    tested = NumpyRandomGenerator(method="normal", loc=10, scale=4, seed=1)
     assert len(tested.generate(size=10)) == 10
 
 
@@ -60,7 +60,7 @@ def test_sequencial_generator_should_create_unique_values():
 
 def test_random_generator_should_provide_correct_amount_of_single_values():
 
-    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8)
+    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8, seed=1)
 
     genops = tested.ops.generate(named_as="rand")
 
@@ -77,7 +77,7 @@ def test_random_generator_should_provide_correct_amount_of_single_values():
 
 def test_random_generator_should_provide_correct_amount_of_list_of_values():
 
-    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8)
+    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8, seed=1)
 
     action_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"],
