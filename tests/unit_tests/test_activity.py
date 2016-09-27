@@ -73,11 +73,11 @@ def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days():
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
 
         # 2 days of simulation should produce 1000 * 12 * 2 == 24k logs
-        logging.info("test 1, clock step 15min: {} logs".format(logs.shape[0]))
+        logging.info("number of produced logs: {} logs".format(logs.shape[0]))
         assert 22e3 <= logs.shape[0] <= 26e3
 
 
-def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days_bis():
+def test_1000_actors_with_activity_12perday_should_yield_60k_logs_in_5days():
     """
     same test as above, with bigger clock step => typically more "rounding
     errors", and longer total simulation duration
@@ -96,9 +96,9 @@ def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days_bis()
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
 
-        logging.info("test 2, clock step 1h: {} logs".format(logs.shape[0]))
+        logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
-        # 2 days of simulation should produce 1000 * 12 * 5 == 60k logs
+        # 5 days of simulation should produce 1000 * 12 * 5 == 60k logs
         assert 55e3 <= logs.shape[0] <= 65e3
 
 
@@ -122,10 +122,9 @@ def test_1000_actors_with_low_activity():
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
 
-        logging.info("test 3, low activity, clock step 1h: {} logs".format(
-            logs.shape[0]))
+        logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
-        # 2 days of simulation should produce 1000 * .2 * 20 == 4000 logs
+        # 20 days of simulation should produce 1000 * .2 * 20 == 4000 logs
         assert 3500 <= logs.shape[0] <= 4500
 
 
@@ -149,14 +148,12 @@ def test_1000_actors_with_activity_one_per_cycle():
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
 
-        logging.info("test 4, low activity, clock step 1h: {} logs".format(
-            logs.shape[0]))
+        logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
-        # 2 days of simulation should produce 1000 * 1 * 10 == 10000 logs
+        # 10 days of simulation should produce 1000 * 1 * 10 == 10000 logs
         assert 9500 <= logs.shape[0] <= 10500
 
 
-# trying to debug why we have less field agent mobility logs than expected
 def test_actors_during_default_daily():
 
     with path.tempdir() as log_parent_folder:
@@ -199,9 +196,9 @@ def test_actors_during_default_daily():
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
 
-        logging.info("test 5, working hours: {} logs".format(logs.shape[0]))
+        logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
-        # 2 days of simulation should produce 100 * 5 * 30 == 15k logs
+        # 30 days of simulation should produce 100 * 5 * 30 == 15k logs
         assert 14e3 <= logs.shape[0] <= 16.5e3
 
 
@@ -253,11 +250,7 @@ def test_actors_during_working_hours():
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
 
-        logging.info("test 5, working hours: {} logs".format(logs.shape[0]))
+        logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
-        # 2 days of simulation should produce 100 * 5 * 30 == 15k logs
-        assert 14e3 <= logs.shape[0] <= 15e3
-
-
-
-
+        # 30 days of simulation should produce 100 * 5 * 30 == 15k logs
+        assert 14e3 <= logs.shape[0] <= 16e3

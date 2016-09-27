@@ -54,16 +54,14 @@ def add_mobility_action(circus, params):
         n_actions=params["mean_daily_fa_mobility_activity"],
         per=pd.Timedelta("1day"))
 
-    fa_daily_std = mobility_time_gen.activity(
+    fa_weekly_std = mobility_time_gen.activity(
         n_actions=params["std_daily_fa_mobility_activity"],
         per=pd.Timedelta("1day"))
 
     gaussian_activity = NumpyRandomGenerator(
-        method="normal", loc=fa_mean_weekly_activity,
-        scale=fa_daily_std)
+        method="normal", loc=fa_mean_weekly_activity, scale=fa_weekly_std)
     mobility_activity_gen = TransformedGenerator(
-        upstream_gen=gaussian_activity,
-        f=lambda a: max(1, a))
+        upstream_gen=gaussian_activity, f=lambda a: max(1, a))
 
     mobility_action = circus.create_action(
         name="field_agent_mobility",
