@@ -56,6 +56,16 @@ scenario_1 = {
     "n_init_er_per_pos": 1000,
     "n_init_er_per_dealer": 1000,
 
+    "mean_pos_sim_bulk_purchase_size": 1000,
+    "std_pos_sim_bulk_purchase_size": 100,
+    "pos_sim_bulk_purchase_periods_days": [10, 15, 20, 25, 30],
+    "pos_sim_bulk_purchase_periods_dist": [.2, .2, .2, .2, .2],
+
+    "mean_pos_ers_bulk_purchase_size": 1000,
+    "std_pos_ers_bulk_purchase_size": 100,
+    "pos_ers_bulk_purchase_periods_days": [10, 15, 20, 25, 30],
+    "pos_ers_bulk_purchase_periods_dist": [.3, .2, .1, .05, .35],
+
     "simulation_start_date": "13 Sept 2016 12:00",
     "simulation_duration": "5 days",
     "output_folder": "snd_output_logs/scenario_0"
@@ -70,6 +80,10 @@ scenario_1.update({
     "n_customers": 500,
     "n_dealers": 100,
     "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
+
+    # just forcing higher frequencies to see some outputs
+    "pos_sim_bulk_purchase_periods_days": [1, 1, 2, 2, 3],
+    "pos_ers_bulk_purchase_periods_days": [1, 1.5, 2, 2.5, 3],
 
 })
 
@@ -96,7 +110,8 @@ class SND(WithBelgium):
                                                  recharge_id_gen)
 
         self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
-        snd_pos.add_sim_bulk_purchase_action(self)
+        snd_pos.add_sim_bulk_purchase_action(self, params)
+        snd_pos.add_ers_bulk_purchase_action(self, params)
         snd_customers.add_purchase_sim_action(self, params)
         snd_customers.add_purchase_er_action(self)
 
