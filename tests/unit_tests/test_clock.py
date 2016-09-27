@@ -68,7 +68,7 @@ def test_activity_level_should_be_scaled_according_to_profile_duration():
 
     clock = Clock(start=pd.Timestamp("10 June 2016 5:45pm"),
                   # time steps by 15min
-                  step_duration=pd.Timedelta("15 min"),
+                  step_duration=pd.Timedelta("1 h"),
                   seed=1234)
 
     # 1 to 12 then 12 to 1, from midnight to midnight
@@ -85,6 +85,8 @@ def test_activity_level_should_be_scaled_according_to_profile_duration():
     # 14 actions/week should be scaled to activity 2 since profile lasts 1 day
     assert 2 == one_day_timer.activity(n_actions=14, per=pd.Timedelta("7 days"))
 
+    # this one should generate a warning log since the corresponding freq
+    # is shorter than the clock step
     assert 48 == one_day_timer.activity(n_actions=4, per=pd.Timedelta("2h"))
 
     assert .5 == one_day_timer.activity(n_actions=1, per=pd.Timedelta("2 days"))

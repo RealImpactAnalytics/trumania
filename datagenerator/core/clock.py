@@ -152,6 +152,8 @@ class CyclicTimerGenerator(DependentGenerator):
 #                                           how="sum",
                                            fill_method='pad')[:-1]
 
+        self.n_time_bin = profile_ser.shape[0]
+
         profile_cdf = (profile_ser / profile_ser.sum()).cumsum()
         self.profile = pd.DataFrame({"cdf": profile_cdf,
 
@@ -185,14 +187,68 @@ class CyclicTimerGenerator(DependentGenerator):
         levels. The higher the level of activity, the shorter the waiting
         times will be
 
-        :type observations: Pandas Series
-        :param observations: contains an array of floats
+        :type activities: Pandas Series
+        :param activities: contains an array of floats
         :return: Pandas Series
         """
-        draw = self._state.uniform(size=observations.shape[0])
-        p = draw / observations.values
-        return pd.Series(self.profile["cdf"].searchsorted(p),
-                         index=observations.index)
+
+        activities = observations
+
+        # activities less often than once per cycle length
+        low_activities = activities.where(activities <= 2).dropna()
+        if low_activities.shape[0] > 0:
+
+            draw = self._state.uniform(size=low_activities.shape[0])
+
+            # A uniform [0, 2/activity] yields an expected freqs == 1/activity
+            # == average period between action.
+            # => n_cycles is the number of full timer cycles from now until
+            # next action. It's typically not an integer and possibly be > 1
+            # since we have on average less han 1 activity per cycle of this
+            # timer.
+            n_cycles = 2 * draw / low_activities.values
+
+            timer_slots = n_cycles % 1
+            n_cycles_int = n_cycles - timer_slots
+
+            timers = self.profile["cdf"].searchsorted(timer_slots) + \
+                self.n_time_bin * n_cycles_int
+
+            low_activity_timer = pd.Series(timers, index=low_activities.index)
+
+        else:
+            low_activity_timer = pd.Series()
+
+        high_activities = activities.where(activities > 2).dropna()
+        if high_activities.shape[0] > 0:
+
+            # A beta(1, activity-1) will yield expected frequencies of
+            # 1/(1+activity-1) == 1/activity == average period between action.
+            # This just stops to work for activities < 1, or even close to one
+            # => we use the uniform mechanism above for activities <= 2 and
+            # rely on betas here for expected frequencies of 2 per cycle or
+            # higher
+            timer_slots = high_activities.apply(
+                lambda activity: self._state.beta(1, activity-1))
+
+            timers = self.profile["cdf"].searchsorted(timer_slots, side="left")
+            high_activity_timer = pd.Series(timers, index=high_activities.index)
+
+        else:
+            high_activity_timer = pd.Series()
+
+        all_timers = pd.concat([low_activity_timer, high_activity_timer])
+
+        # Not sure about that one, there seem to be a bias somewhere that
+        # systematically generates too large timer. Maybe it's a rounding
+        # effect of searchsorted() or so. Or a bug elsewhere ?
+        all_timers = all_timers.apply(lambda d: max(0, d-1))
+
+        # makes sure all_timers is in the same order and with the same index
+        # as input observations, even in case of duplicate index values
+        all_timers = all_timers.reindex_like(observations)
+        #all_timers.index = observations.index
+        return all_timers
 
     def activity(self, n_actions, per):
         """
@@ -209,11 +265,11 @@ class CyclicTimerGenerator(DependentGenerator):
 
         requested_period = pd.Timedelta(seconds=per.total_seconds() / n_actions)
         if requested_period < self.clock.step_duration:
-            logging.warn("Creating activity level for {} actions per {} => "
-                         "activity is {} but period is {}, which is shorter "
-                         "than the clock period ({}). This clock cannot keep "
-                         "up with such rate and less events will be "
-                         "produced".format(
+            logging.warn("Warning: Creating activity level for {} actions per "
+                         "{} =>  activity is {} but period is {}, which is "
+                         "shorter  than the clock period ({}). This clock "
+                         "cannot keep up with such rate and less events will be"
+                         " produced".format(
                 n_actions, per, activity, requested_period,
                 self.clock.step_duration)
             )
