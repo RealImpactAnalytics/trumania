@@ -70,6 +70,7 @@ scenario_1.update({
     "n_customers": 500,
     "n_dealers": 100,
     "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
+
 })
 
 

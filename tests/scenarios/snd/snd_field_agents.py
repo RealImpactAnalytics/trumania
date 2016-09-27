@@ -61,8 +61,9 @@ def add_mobility_action(circus, params):
     gaussian_activity = NumpyRandomGenerator(
         method="normal", loc=fa_mean_weekly_activity, scale=fa_weekly_std,
         seed=circus.seeder.next())
-    mobility_activity_gen = TransformedGenerator(
-        upstream_gen=gaussian_activity, f=lambda a: max(1, a))
+
+    mobility_activity_gen = BoundedGenerator(
+        upstream_gen=gaussian_activity, lb=1)
 
     mobility_action = circus.create_action(
         name="field_agent_mobility",
