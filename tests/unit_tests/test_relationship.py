@@ -438,7 +438,11 @@ def test_select_many_should_return_subsets_of_relationships():
     selection = four_to_plenty.select_many(
         from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
         named_as="selected_sets",
-        quantities=[4, 5, 6, 7, 8],
+
+        # On purpose requesting non-integer quantities => these should be
+        # rounded to int. It's very common to have them in practise, typically
+        # when generating "bulk size" out of a non-integer distribution
+        quantities=[4, 5, 6.5, 7.5, 8],
         remove_selected=False,
         discard_empty=False)
 
@@ -677,5 +681,7 @@ def test_io_round_trip():
         assert four_to_plenty._table.index.equals(retrieved._table.index)
         assert four_to_plenty._table.columns.equals(retrieved._table.columns)
         assert four_to_plenty._table.equals(retrieved._table)
+
+
 
 

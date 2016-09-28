@@ -110,8 +110,7 @@ def _create_attractiveness(circus, pos):
         operations.Apply(
             source_fields=["ATTRACT_DELTA", "DELTA_UPDATE"],
             named_as="NEW_ATTRACT_DELTA",
-            f=np.add, f_args="series"
-        ),
+            f=np.add, f_args="series"),
 
         pos.get_attribute("ATTRACT_DELTA").ops.update(
             actor_id_field="POS_ID",
@@ -121,7 +120,6 @@ def _create_attractiveness(circus, pos):
         # TODO: remove this (currently there just for debugs)
         circus.clock.ops.timestamp(named_as="TIME"),
         FieldLogger(log_id="att_delta_updates")
-
     )
 
 
@@ -176,25 +174,99 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
         from_ids=dealer_of_pos["set1"],
         to_ids=dealer_of_pos["chosen_from_set2"])
 
-    logging.info("generating size of sim bulk purchase for each pos")
-    sim_bulk_gen = ParetoGenerator(xmin=500, a=1.5, force_int=True,
-                                   seed=circus.seeder.next())
+    logging.info("generating size of sim and ers bulk purchase for each pos")
+    pos.create_attribute(
+        name="SIM_BULK_BUY_SIZE",
+        init_gen=BoundedGenerator(
+            upstream_gen=NumpyRandomGenerator(
+                method="normal",
+                loc=params["mean_pos_sim_bulk_purchase_size"],
+                scale=params["std_pos_sim_bulk_purchase_size"],
+                seed=circus.seeder.next()
+            ), lb=0
+        ))
 
-    pos.create_attribute("SIM_BULK_BUY_SIZE", init_gen=sim_bulk_gen)
+    pos.create_attribute(
+        name="ERS_BULK_BUY_SIZE",
+        init_gen=BoundedGenerator(
+            upstream_gen=NumpyRandomGenerator(
+                method="normal",
+                loc=params["mean_pos_ers_bulk_purchase_size"],
+                scale=params["std_pos_ers_bulk_purchase_size"],
+                seed=circus.seeder.next()
+            ), lb=0
+        ))
 
     return pos
 
 
-def add_sim_bulk_purchase_action(circus):
+def add_sim_bulk_purchase_action(circus, params):
 
     logging.info("creating POS SIM bulk purchase action")
-    build_purchases = circus.create_action(
-        name="pos_to_dealer_sim_bulk_purchases",
-        initiating_actor=circus.pos,
-        actorid_field="POS_ID"
+    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
+                                                    circus.seeder.next())
 
-        # no timer_gen nor activity_gen: this action is not triggered by the
-        # clock
+    bulk_purchase_periods = [
+        purchase_timer_gen.activity(n_actions=1, per=pd.Timedelta(days=n))
+        for n in params["pos_sim_bulk_purchase_periods_days"]]
+
+    purchase_activity_gen = NumpyRandomGenerator(
+        method="choice",
+        a=bulk_purchase_periods,
+        p=params["pos_sim_bulk_purchase_periods_dist"],
+        seed=circus.seeder.next())
+
+    _add_bulk_purchase_action(
+        circus,
+        purchase_timer_gen=purchase_timer_gen,
+        purchase_activity_gen=purchase_activity_gen,
+        action_name="pos_to_dealer_sim_bulk_purchases",
+        bulk_size_attribute="SIM_BULK_BUY_SIZE",
+        dealers_relationship="SIMS",
+        pos_relationship="SIMS")
+
+
+def add_ers_bulk_purchase_action(circus, params):
+
+    logging.info("creating POS ERS bulk purchase action")
+    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
+                                                    circus.seeder.next())
+
+    bulk_purchase_periods = [
+        purchase_timer_gen.activity(n_actions=1, per=pd.Timedelta(days=n))
+        for n in params["pos_ers_bulk_purchase_periods_days"]]
+
+    purchase_activity_gen = NumpyRandomGenerator(
+        method="choice",
+        a=bulk_purchase_periods,
+        p=params["pos_ers_bulk_purchase_periods_dist"],
+        seed=circus.seeder.next())
+
+    _add_bulk_purchase_action(
+        circus,
+        purchase_timer_gen=purchase_timer_gen,
+        purchase_activity_gen=purchase_activity_gen,
+        action_name="pos_to_dealer_ers_bulk_purchases",
+        bulk_size_attribute="ERS_BULK_BUY_SIZE",
+        dealers_relationship="ERS",
+        pos_relationship="ERS")
+
+
+def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
+                              purchase_activity_gen, bulk_size_attribute,
+                              dealers_relationship, pos_relationship):
+    """
+    Generic utility method to create a bulk purchase action from pos to dealers
+    """
+
+    logging.info("creating POS bulk purchase action")
+    build_purchases = circus.create_action(
+        name=action_name,
+        initiating_actor=circus.pos,
+        actorid_field="POS_ID",
+
+        timer_gen=purchase_timer_gen,
+        activity_gen=purchase_activity_gen
     )
 
     build_purchases.set_operations(
@@ -206,42 +278,46 @@ def add_sim_bulk_purchase_action(circus):
 
         circus.pos.ops.lookup(
             actor_id_field="POS_ID",
-            select={"SIM_BULK_BUY_SIZE": "SIM_BULK_BUY_SIZE"}),
+            select={bulk_size_attribute: "REQUESTED_BULK_SIZE"}),
+
+        circus.pos.get_relationship(pos_relationship).ops \
+            .get_neighbourhood_size(
+                from_field="POS_ID",
+                named_as="OLD_POS_STOCK"),
 
         # selecting and removing Sims from dealers
-        circus.dealers.get_relationship("SIMS").ops.select_many(
+        circus.dealers.get_relationship(dealers_relationship).ops.select_many(
             from_field="DEALER",
-            named_as="BOUGHT_SIM_BULK",
-            quantity_field="SIM_BULK_BUY_SIZE",
+            named_as="ITEMS_BULK",
+            quantity_field="REQUESTED_BULK_SIZE",
 
-            # if a SIM is selected, it is removed from the dealer's stock
+            # if an item is selected, it is removed from the dealer's stock
             pop=True,
 
             # TODO: put this back to True and log the failed purchases
-            discard_missing=True
-        ),
-
-        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
-            from_field="POS_ID",
-            named_as="OLD_POS_STOCK"),
+            discard_missing=True),
 
         # and adding them to the POS
-        circus.pos.get_relationship("SIMS").ops.add_grouped(
+        circus.pos.get_relationship(pos_relationship).ops.add_grouped(
             from_field="POS_ID",
-            grouped_items_field="BOUGHT_SIM_BULK"),
+            grouped_items_field="ITEMS_BULK"),
 
-        circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
-            from_field="POS_ID",
-            named_as="NEW_POS_STOCK"),
+        # We do not track the old and new stock of the dealer since the result
+        # is misleading: since all purchases are performed in parallel,
+        # if a dealer is selected several times, its stock level after the
+        # select_many() is the level _after_ all purchases are done, which is
+        # typically not what we want to include in the log.
+        circus.pos.get_relationship(pos_relationship).ops\
+            .get_neighbourhood_size(
+                from_field="POS_ID",
+                named_as="NEW_POS_STOCK"),
 
-        # just logging the number of sims instead of the sims themselves...
-        operations.Apply(source_fields="BOUGHT_SIM_BULK",
-                         named_as="NUMBER_OF_SIMS",
+        # actual number of bought items might be different due to out of stock
+        operations.Apply(source_fields="ITEMS_BULK",
+                         named_as="BULK_SIZE",
                          f=lambda s: s.map(len), f_args="series"),
 
-        operations.FieldLogger(log_id="pos_to_dealer_sim_bulk_purchases",
+        operations.FieldLogger(log_id=action_name,
                                cols=["TIME",  "POS_ID", "DEALER",
                                      "OLD_POS_STOCK", "NEW_POS_STOCK",
-                                     "NUMBER_OF_SIMS"]
-                               ),
-    )
+                                     "BULK_SIZE"]))

@@ -243,7 +243,31 @@ class TransformedGenerator(Generator):
 
     def generate(self, size):
         samples = self.upstream_gen.generate(size=size)
+
+        # TODO: optimization: we should allow ndfunc to be passed here to avoid
+        # the loop
         return [self.f(sample) for sample in samples]
+
+
+class BoundedGenerator(TransformedGenerator):
+    """
+    TransformedGenerator that bounds the generated values to a min and a max
+    value.
+
+    TODO: this simplistic implementation is just replacing out of bound
+    values with the bounds themselves. We could re-draw them instead  (though
+    we'd then need to prevent infinite recursions somehow...)
+    """
+
+    def __init__(self, upstream_gen, lb=None, ub=None):
+
+        def bound_value(value):
+            bounded = max(lb, value)
+            if ub is not None:
+                bounded = min(ub, bounded)
+            return bounded
+
+        TransformedGenerator.__init__(self, upstream_gen, bound_value)
 
 
 class DependentGenerator(object):

@@ -59,9 +59,9 @@ def add_mobility_action(circus, params):
         method="normal", loc=params["mean_daily_customer_mobility_activity"],
         scale=params["std_daily_customer_mobility_activity"],
         seed=circus.seeder.next())
-    mobility_activity_gen = TransformedGenerator(
-        upstream_gen=gaussian_activity,
-        f=lambda a: max(.5, a))
+
+    mobility_activity_gen = BoundedGenerator(
+        upstream_gen=gaussian_activity, lb=.5)
 
     mobility_action = circus.create_action(
         name="customer_mobility",
