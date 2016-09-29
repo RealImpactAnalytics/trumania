@@ -59,9 +59,11 @@ def add_mobility_action(circus, params):
         per=pd.Timedelta("1day"))
 
     gaussian_activity = NumpyRandomGenerator(
-        method="normal", loc=fa_mean_weekly_activity, scale=fa_weekly_std)
-    mobility_activity_gen = TransformedGenerator(
-        upstream_gen=gaussian_activity, f=lambda a: max(1, a))
+        method="normal", loc=fa_mean_weekly_activity, scale=fa_weekly_std,
+        seed=circus.seeder.next())
+
+    mobility_activity_gen = BoundedGenerator(
+        upstream_gen=gaussian_activity, lb=1)
 
     mobility_action = circus.create_action(
         name="field_agent_mobility",
@@ -142,7 +144,6 @@ def add_survey_action(circus):
             discard_empty=True
         ),
 
-
         circus.pos.ops.lookup(
             actor_id_field="POS_ID",
             select={
@@ -156,9 +157,5 @@ def add_survey_action(circus):
 
         FieldLogger(log_id="pos_surveys",
                     cols=["FA_ID", "POS_ID", "POS_NAME",
-                          "POS_LATITUDE", "POS_LONGITUDE", "TIME"]
-                    )
+                          "POS_LATITUDE", "POS_LONGITUDE", "TIME"])
     )
-
-
-

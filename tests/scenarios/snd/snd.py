@@ -2,6 +2,12 @@
 SND scenario, based on
 
 https://realimpactanalytics.atlassian.net/wiki/pages/viewpage.action?spaceKey=SD&title=Tech+Design+%3A+Lab+Data+Generator
+
+https://realimpactanalytics.atlassian.net/wiki/pages/viewpage.action?pageId=73958895
+
+and
+
+https://realimpactanalytics.atlassian.net/browse/OASD-1593
 """
 
 
@@ -21,12 +27,16 @@ import snd_field_agents
 import logging
 
 
-# scenario is meant to match scenario 1 divided by 100
-scenario_0 = {
-    "n_sites": 50,
+scenario_1 = {
+    "geography": "belgium", # this geography contains 4208 sites
+
     "n_customers": 50000,
     "n_field_agents": 5,
-    "n_pos": 500,
+
+    "n_pos": 50000,     # we must have a large number of POS, to saturate the
+                        # the sites, otherwise lot's of action fail due to
+                        # empty sites (e.g. no pos to buy from,...)
+
     "n_dealers": 3,     # should be 1 if really  divided by 100
 
     "mean_known_sites_per_customer": 4,
@@ -37,27 +47,44 @@ scenario_0 = {
     "mean_daily_fa_mobility_activity": 5,
     "std_daily_fa_mobility_activity": .5,
 
-    "clock_time_step": "15 min",
+    "clock_time_step": "1h",
+
     "n_init_sim_per_pos": 100,
     "n_init_sim_per_dealer": 1000,
     "sim_price": 10,
 
+    "n_init_er_per_pos": 1000,
+    "n_init_er_per_dealer": 1000,
+
+    "mean_pos_sim_bulk_purchase_size": 1000,
+    "std_pos_sim_bulk_purchase_size": 100,
+    "pos_sim_bulk_purchase_periods_days": [10, 15, 20, 25, 30],
+    "pos_sim_bulk_purchase_periods_dist": [.2, .2, .2, .2, .2],
+
+    "mean_pos_ers_bulk_purchase_size": 1000,
+    "std_pos_ers_bulk_purchase_size": 100,
+    "pos_ers_bulk_purchase_periods_days": [10, 15, 20, 25, 30],
+    "pos_ers_bulk_purchase_periods_dist": [.3, .2, .1, .05, .35],
+
     "simulation_start_date": "13 Sept 2016 12:00",
-    "simulation_duration": "2 days",
+    "simulation_duration": "5 days",
     "output_folder": "snd_output_logs/scenario_0"
 }
 
 
-# to be removed: temporary downscaling of the scenario to accelerate tests
-scenario_0.update({
-    "n_sites": 50,
-    "n_customers": 500,
-    "n_pos": 100,
-    "n_dealers": 100,
-    "n_iterations": 20,
+# temporary downscaling of the scenario to accelerate tests
+scenario_1.update({
+    "geography": "belgium_5",
+    "n_pos": 50,
 
-# longer simulation to validate resulting logs volumes
-#    "simulation_duration": "30 days",
+    "n_customers": 500,
+    "n_dealers": 100,
+    "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
+
+    # just forcing higher frequencies to see some outputs
+    "pos_sim_bulk_purchase_periods_days": [1, 1, 2, 2, 3],
+    "pos_ers_bulk_purchase_periods_days": [1, 1.5, 2, 2.5, 3],
+
 })
 
 
@@ -73,16 +100,20 @@ class SND(WithBelgium):
 
         # using one central sim_id generator to guarantee unicity of ids
         sim_id_gen = SequencialGenerator(prefix="SIM_")
+        recharge_id_gen = SequencialGenerator(prefix="ER_")
 
         self.sites = snd_sites.create_sites(self, params)
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 
-        self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen)
+        self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen,
+                                                 recharge_id_gen)
 
-        self.pos = snd_pos.create_pos(self, params, sim_id_gen)
-        snd_pos.add_sim_bulk_purchase_action(self)
+        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
+        snd_pos.add_sim_bulk_purchase_action(self, params)
+        snd_pos.add_ers_bulk_purchase_action(self, params)
         snd_customers.add_purchase_sim_action(self, params)
+        snd_customers.add_purchase_er_action(self)
 
         self.field_agents = snd_field_agents.create_field_agents(self, params)
         snd_field_agents.add_mobility_action(self, params)
@@ -91,7 +122,7 @@ class SND(WithBelgium):
 
 if __name__ == "__main__":
 
-    params = scenario_0
+    params = scenario_1
 
     setup_logging()
     start_ts = pd.Timestamp(datetime.now())

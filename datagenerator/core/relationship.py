@@ -175,7 +175,9 @@ class Relationship(object):
         (each "from" value could be present several times, so we cannot use
         that as index)
         """
+
         req = pd.DataFrame({"from": from_ids, "qties": quantities})
+        req["qties"] = req["qties"].astype(np.int)
 
         # gathers all requests to the same "from" together, keeping track of
         # the index in the original "from_ids" to be able to merge it later

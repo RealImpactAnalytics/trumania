@@ -200,7 +200,7 @@ class Action(object):
         """
 
         def __init__(self, action):
-            self.judge = NumpyRandomGenerator(method="uniform")
+            self.judge = NumpyRandomGenerator(method="uniform", seed=1234)
             self.action = action
 
         def side_effect(self, action_data):

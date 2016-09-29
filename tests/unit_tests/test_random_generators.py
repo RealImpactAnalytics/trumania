@@ -13,7 +13,7 @@ def test_numpy_random_generator_should_delegate_to_numpy_correctly():
 
     # basic "smoke" test, if it does not crash it at least proves it's able
     # to load the appropriate method
-    tested = NumpyRandomGenerator(method="normal", loc=10, scale=4)
+    tested = NumpyRandomGenerator(method="normal", loc=10, scale=4, seed=1)
     assert len(tested.generate(size=10)) == 10
 
 
@@ -60,7 +60,7 @@ def test_sequencial_generator_should_create_unique_values():
 
 def test_random_generator_should_provide_correct_amount_of_single_values():
 
-    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8)
+    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8, seed=1)
 
     genops = tested.ops.generate(named_as="rand")
 
@@ -77,7 +77,7 @@ def test_random_generator_should_provide_correct_amount_of_single_values():
 
 def test_random_generator_should_provide_correct_amount_of_list_of_values():
 
-    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8)
+    tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8, seed=1)
 
     action_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"],
@@ -110,5 +110,42 @@ def test_faker_generator_should_delegate_to_faker_correct():
     assert len(some_addresses) == 30
 
 
+def test_bounded_generator_should_not_modify_unbounded_values():
 
+    no_bound = BoundedGenerator(ConstantGenerator(value=10), lb=None, ub=None)
+    assert no_bound.generate(size=3) == [10, 10, 10]
+
+
+def test_bounded_generator_should_limnit_with_lower_bound():
+
+    bounded_below = BoundedGenerator(ConstantGenerator(value=10),
+                                      lb=15, ub=None)
+    assert bounded_below.generate(size=3) == [15, 15, 15]
+
+    bounded_above = BoundedGenerator(ConstantGenerator(value=10),
+                                      lb=5, ub=None)
+    assert bounded_above.generate(size=3) == [10, 10, 10]
+
+
+def test_bounded_generator_should_limnit_with_upper_bound():
+
+    bounded_above = BoundedGenerator(ConstantGenerator(value=10),
+                                      lb=None, ub=5)
+    assert bounded_above.generate(size=3) == [5, 5, 5]
+
+    bounded_below = BoundedGenerator(ConstantGenerator(value=10),
+                                      lb=None, ub=15)
+    assert bounded_below.generate(size=3) == [10, 10, 10]
+
+
+def test_bounded_generator_should_limnit_with_both_bound():
+
+    bounded_above = BoundedGenerator(ConstantGenerator(value=10), lb=3, ub=5)
+    assert bounded_above.generate(size=3) == [5, 5, 5]
+
+    bounded_below = BoundedGenerator(ConstantGenerator(value=1), lb=3, ub=5)
+    assert bounded_below.generate(size=3) == [3, 3, 3]
+
+    bounded_within = BoundedGenerator(ConstantGenerator(value=4), lb=3, ub=5)
+    assert bounded_within.generate(size=3) == [4, 4, 4]
 
