@@ -166,10 +166,10 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
     logging.info("assigning a dealer to each POS")
     dealer_of_pos = make_random_assign(
         set1=pos.ids,
-        set2=circus.dealers.ids,
+        set2=circus.dealers_l2.ids,
         seed=circus.seeder.next())
 
-    dealer_rel = pos.create_relationship("DEALER", seed=circus.seeder.next())
+    dealer_rel = pos.create_relationship("DEALERS_L2", seed=circus.seeder.next())
     dealer_rel.add_relations(
         from_ids=dealer_of_pos["set1"],
         to_ids=dealer_of_pos["chosen_from_set2"])
@@ -272,9 +272,9 @@ def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
     build_purchases.set_operations(
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        circus.pos.get_relationship("DEALER").ops.select_one(
+        circus.pos.get_relationship("DEALERS_L2").ops.select_one(
             from_field="POS_ID",
-            named_as="DEALER"),
+            named_as="DEALER_L2"),
 
         circus.pos.ops.lookup(
             actor_id_field="POS_ID",
@@ -286,8 +286,8 @@ def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
                 named_as="OLD_POS_STOCK"),
 
         # selecting and removing Sims from dealers
-        circus.dealers.get_relationship(dealers_relationship).ops.select_many(
-            from_field="DEALER",
+        circus.dealers_l2.get_relationship(dealers_relationship).ops.select_many(
+            from_field="DEALER_L2",
             named_as="ITEMS_BULK",
             quantity_field="REQUESTED_BULK_SIZE",
 
@@ -318,6 +318,6 @@ def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
                          f=lambda s: s.map(len), f_args="series"),
 
         operations.FieldLogger(log_id=action_name,
-                               cols=["TIME",  "POS_ID", "DEALER",
+                               cols=["TIME",  "POS_ID", "DEALER_L2",
                                      "OLD_POS_STOCK", "NEW_POS_STOCK",
                                      "BULK_SIZE"]))
