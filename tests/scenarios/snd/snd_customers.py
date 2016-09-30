@@ -210,7 +210,6 @@ def _create_customer_purchase_action(
 
         FieldLogger(log_id=action_name),
 
-
         # circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
         #     from_field="POS",
         #     named_as="CURRENT_POS_STOCK"
@@ -226,6 +225,8 @@ def _create_customer_purchase_action(
         #     .force_act_next(
         #     actor_id_field="POS",
         #     condition_field="SHOULD_RESTOCK"),
+
     )
+
 
 

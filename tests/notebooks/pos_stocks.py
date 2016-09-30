@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from scipy import stats
 import seaborn as sns
@@ -58,3 +60,31 @@ def compute_stationary(transition_matrix):
     x, res, rank, s = np.linalg.lstsq(A2, b)
 
     return x.T[0], res
+
+
+
+def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
+    """
+    Builds a S-shape curve that evolve from 0 to 1 (if incrementing) or 1 to 0 (otherwise)
+    between x_min and x_max.
+    
+    This is preferable to the logitic function for cases where we want to make sure that the curve
+    actually reaches 0 and 1 at some point (e.g. probability of triggering an "restock" action
+    must be 1 if stock is as low as 1). 
+    """
+    def f(x):
+        if x < x_min:
+            return f(x_min)
+        
+        if x > x_max: 
+            return f(x_max)
+        
+        if incrementing:
+            return stats.beta.cdf( (x-x_min)/(x_max-x_min), a=shape, b=shape)
+        else:
+            return stats.beta.sf( (x-x_min)/(x_max-x_min), a=shape, b=shape)
+    
+    return f
+            
+
+
