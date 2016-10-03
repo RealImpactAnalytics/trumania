@@ -55,7 +55,6 @@ scenario_1 = {
     "sim_price": 10,
 
     "n_init_er_per_pos": 1000,
-    "n_init_er_per_dealer": 1000,
 
     "mean_pos_sim_bulk_purchase_size": 1000,
     "std_pos_sim_bulk_purchase_size": 100,
@@ -77,6 +76,10 @@ scenario_1 = {
 scenario_1.update({
     "geography": "belgium_5",
     "n_pos": 50,
+
+    "n_dealers_l2": 4,
+    "n_dealers_l1": 2,
+    "n_telcos": 1,
 
     "n_customers": 500,
     "n_dealers": 100,

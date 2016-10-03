@@ -1,3 +1,5 @@
+from __future__ import division
+
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
@@ -10,10 +12,11 @@ def create_telcos(circus, params, distributor_id_gen,
     logging.info("creating telcos")
     telcos = Actor(size=params["n_telcos"], ids_gen=distributor_id_gen)
 
-    logging.info(" generating l2 dealer initial SIM stock")
+    logging.info(" generating telcos initial SIM stock")
 
     pos_per_telco = params["n_pos"] / params["n_telcos"]
     sims_per_telco = params["n_init_sim_per_pos"] * pos_per_telco
+    ers_per_telco = params["n_init_er_per_pos"] * pos_per_telco
 
     telcos.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -21,7 +24,7 @@ def create_telcos(circus, params, distributor_id_gen,
 
     telcos.create_stock_relationship(
         name="ERS", item_id_gen=recharge_id_gen,
-        n_items_per_actor=sims_per_telco, seeder=circus.seeder)
+        n_items_per_actor=ers_per_telco, seeder=circus.seeder)
 
     sim_bulk_restock_size = \
         params["mean_pos_sim_bulk_purchase_size"] * pos_per_telco
@@ -115,6 +118,7 @@ def create_dealers_l1(circus, params, distributor_id_gen,
 
     pos_per_dealer_l1 = params["n_pos"] / params["n_dealers_l1"]
     sims_per_dealer_l1 = params["n_init_sim_per_pos"] * pos_per_dealer_l1
+    ers_per_dealer_l1 = params["n_init_er_per_pos"] * pos_per_dealer_l1
 
     dealers_l1.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -122,7 +126,7 @@ def create_dealers_l1(circus, params, distributor_id_gen,
 
     dealers_l1.create_stock_relationship(
         name="ERS", item_id_gen=recharge_id_gen,
-        n_items_per_actor=sims_per_dealer_l1, seeder=circus.seeder)
+        n_items_per_actor=ers_per_dealer_l1, seeder=circus.seeder)
 
     logging.info(" linking l1 dealers to telcos")
     _create_distribution_link(circus, circus.telcos, dealers_l1, "TELCOS")
@@ -172,6 +176,7 @@ def create_dealers_l2(circus, params, distributor_id_gen,
 
     pos_per_dealer_l2 = params["n_pos"] / params["n_dealers_l2"]
     sims_per_dealer_l2 = params["n_init_sim_per_pos"] * pos_per_dealer_l2
+    ers_per_dealer_l2 = params["n_init_er_per_pos"] * pos_per_dealer_l2
 
     dealers_l2.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -179,7 +184,7 @@ def create_dealers_l2(circus, params, distributor_id_gen,
 
     dealers_l2.create_stock_relationship(
         name="ERS", item_id_gen=recharge_id_gen,
-        n_items_per_actor=sims_per_dealer_l2, seeder=circus.seeder)
+        n_items_per_actor=ers_per_dealer_l2, seeder=circus.seeder)
 
     logging.info(" linking l2 dealers to l1 dealers")
     _create_distribution_link(circus,
@@ -297,7 +302,7 @@ def _add_bulk_purchase_action(circus,
                 # if an item is selected, it is removed from the dealer's stock
                 pop=True,
 
-                # TODO: put this back to True and log the failed purchases
+                # TODO: put this back to False and log the failed purchases
                 discard_missing=True),
 
         # and adding them to the buyer

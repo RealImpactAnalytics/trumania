@@ -294,7 +294,7 @@ def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
             # if an item is selected, it is removed from the dealer's stock
             pop=True,
 
-            # TODO: put this back to True and log the failed purchases
+            # TODO: put this back to False and log the failed purchases
             discard_missing=True),
 
         # and adding them to the POS
