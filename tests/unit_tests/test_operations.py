@@ -4,6 +4,7 @@ from datagenerator.core.util_functions import *
 from datagenerator.core import operations
 import numpy as np
 
+
 def test_apply_should_delegate_to_single_col_dataframe_function_correctly():
 
     # some function that expect a dataframe as input => must return
@@ -193,7 +194,7 @@ def test_drop_should_remove_the_rows_where_condition_is_true_():
     assert action_data["duration"].equals(cdrs.loc[kept_index]["duration"])
 
 
-def test_increasing_bounded_sigmoid_must_reach_min_and_max_at_boudaries():
+def test_increasing_bounded_sigmoid_must_reach_min_and_max_at_boundaries():
 
     freud = operations.bounded_sigmoid(x_min=2, x_max=15, shape=5,
                                        incrementing=True)
@@ -211,7 +212,7 @@ def test_increasing_bounded_sigmoid_must_reach_min_and_max_at_boudaries():
         assert 0 <= freud(x) <= 1
 
 
-def test_decreasing_bounded_sigmoid_must_reach_min_and_max_at_boudaries():
+def test_decreasing_bounded_sigmoid_must_reach_min_and_max_at_boundaries():
 
     freud = operations.bounded_sigmoid(x_min=2, x_max=15, shape=5,
                                        incrementing=False)
@@ -227,6 +228,25 @@ def test_decreasing_bounded_sigmoid_must_reach_min_and_max_at_boudaries():
     # all values in between should be in [0,1 ]
     for x in np.linspace(0, 1, 200):
         assert 0 <= freud(x) <= 1
+
+
+def test_bounded_sigmoid_should_broadcast_as_a_ufunc():
+
+    freud = operations.bounded_sigmoid(x_min=2, x_max=15, shape=5,
+                                       incrementing=True)
+
+    # passing a range of x should yield a range of y's
+    for y in freud(np.linspace(-100, 2, 200)):
+        assert y == 0
+
+    # all values after x_max should be 1
+    for y in freud(np.linspace(15, 100, 200)):
+        assert y == 1
+
+    # all values in between should be in [0,1 ]
+    for y in freud(np.linspace(0, 1, 200)):
+        assert 0 <= y <= 1
+
 
 
 

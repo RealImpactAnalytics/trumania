@@ -282,7 +282,7 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
             return stats.beta.sf((x - x_min) / (x_max - x_min),
                                  a=shape, b=shape)
 
-    return f
+    return np.frompyfunc(f, 1, 1)
 
 
 def identity(x):
