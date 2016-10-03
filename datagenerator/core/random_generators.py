@@ -384,3 +384,21 @@ class DependentTriggerGenerator(DependentTrigger, DependentGenerator):
         DependentTrigger.__init__(self, value_to_proba_mapper, seed)
         DependentGenerator.__init__(self)
 
+
+class DependentBulkGenerator(DependentGenerator):
+    """
+    Dependent Generator that transforms that observations into a list of
+    observation elements that are generated through element_generator.
+    """
+    def __init__(self, element_generator):
+        DependentGenerator.__init__(self)
+        self.element_generator = element_generator
+
+    def generate(self, observations):
+
+        def f(obs):
+            self.element_generator.generate(obs)
+
+        return [f(observation) for observation in observations]
+
+
