@@ -86,7 +86,10 @@ def _add_bulk_restock_action(circus,
                 from_field="DISTRIBUTOR",
                 named_as="OLD_STOCK"),
 
-        # generate ITEMS_BULK
+        # TODO fix this
+        operations.Apply(source_fields="REQUESTED_BULK_SIZE",
+                         named_as="ITEMS_BULK",
+                         f=?)
 
         # and adding them to the buyer
         actor.get_relationship(stock_relationship).ops.add_grouped(
