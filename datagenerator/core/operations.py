@@ -1,5 +1,5 @@
 from __future__ import division
-
+from scipy import stats
 from abc import ABCMeta, abstractmethod
 
 from datagenerator.core.util_functions import *
@@ -255,6 +255,34 @@ def logistic(k, x0=0, L=1):
         return L / (1 + np.exp(the_exp))
 
     return _logistic
+
+
+def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
+    """
+    Builds a S-shape curve that evolves between x_min and x_max from 0 to 1
+    if incrementing=True or from 1 to 0 otherwise.
+
+    This is preferable to the logitic function for cases where we want to
+    ensure that the curve actually reaches 0 and 1 at the boundaries of the
+    domain (e.g. having a probability of triggering an "restock" action
+    must be 1 if stock is as low as 1).
+    """
+
+    def f(x):
+        if x < x_min:
+            return f(x_min)
+
+        if x > x_max:
+            return f(x_max)
+
+        if incrementing:
+            return stats.beta.cdf((x - x_min) / (x_max - x_min),
+                                  a=shape, b=shape)
+        else:
+            return stats.beta.sf((x - x_min) / (x_max - x_min),
+                                 a=shape, b=shape)
+
+    return f
 
 
 def identity(x):
