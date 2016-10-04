@@ -34,7 +34,8 @@ def create_telcos(circus, params, distributor_id_gen,
                              actor=telcos,
                              bulk_restock_attribute="SIM_BULK_RESTOCK_SIZE",
                              bulk_restock_size=sim_bulk_restock_size,
-                             stock_relationship="SIMS")
+                             stock_relationship="SIMS",
+                             stock_id_generator=sim_id_gen)
 
     ers_bulk_restock_size = \
         params["mean_pos_ers_bulk_purchase_size"] * pos_per_telco
@@ -44,7 +45,8 @@ def create_telcos(circus, params, distributor_id_gen,
                              actor=telcos,
                              bulk_restock_attribute="ERS_BULK_RESTOCK_SIZE",
                              bulk_restock_size=ers_bulk_restock_size,
-                             stock_relationship="ERS")
+                             stock_relationship="ERS",
+                             stock_id_generator=recharge_id_gen)
 
     return telcos
 
@@ -54,7 +56,8 @@ def _add_bulk_restock_action(circus,
                              actor,
                              bulk_restock_attribute,
                              bulk_restock_size,
-                             stock_relationship):
+                             stock_relationship,
+                             stock_id_generator):
     """
     Generic utility method to create a bulk restock action for a telco
     """
@@ -74,6 +77,8 @@ def _add_bulk_restock_action(circus,
         # no timer or activity
     )
 
+    bulk_gen = DependentBulkGenerator(stock_id_generator)
+
     build_purchases.set_operations(
         circus.clock.ops.timestamp(named_as="TIME"),
 
@@ -86,10 +91,8 @@ def _add_bulk_restock_action(circus,
                 from_field="DISTRIBUTOR",
                 named_as="OLD_STOCK"),
 
-        # TODO fix this
-        operations.Apply(source_fields="REQUESTED_BULK_SIZE",
-                         named_as="ITEMS_BULK",
-                         f=?)
+        bulk_gen.ops.generate(named_as="ITEMS_BULK",
+                              observed_field="REQUESTED_BULK_SIZE"),
 
         # and adding them to the buyer
         actor.get_relationship(stock_relationship).ops.add_grouped(
