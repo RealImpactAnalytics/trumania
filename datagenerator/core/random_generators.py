@@ -36,6 +36,21 @@ class Generator(object):
         """
         pass
 
+    def flatmap(self, dependent_generator):
+        """
+        chains self with this other generator by feeding "our" output values as
+        observations to the dependent_generator
+
+        :param dependent_generator: must be an instance of DependentGenerator,
+         i.e. have a .generate(observations=...) method
+
+        :return: an instance of Generator whose .generate(size=...) method
+            provides the combination of the above
+
+        """
+        return TransformedGenerator(upstream_gen=self,
+                                    vect_f=dependent_generator.generate)
+
     class GeneratorOps(object):
         def __init__(self, generator):
             self.generator = generator
@@ -222,6 +237,8 @@ class MSISDNGenerator(Generator):
 
 
 class TransformedGenerator(Generator):
+    # TODO: this could become a .map() operation on the Generator, just beside
+    # the existing flatmap()
     """
     Generators which maps the output of another generator with a
     deterministic function.
@@ -232,21 +249,29 @@ class TransformedGenerator(Generator):
     TODO: refactor: ParetoGenerator is now a specific case of this class
     """
 
-    def __init__(self, upstream_gen, f):
+    def __init__(self, upstream_gen, f=None, vect_f=None):
         """
         :param upstream_gen: upstream generator
-        :param f: transformation function
+        :param f: item per item transformation function
+        :param vect_f: "vectorialized" transformation function, i.e. able to
+         transform everything in one go
         """
+
+        assert (f is not None) ^ (vect_f is not None)
+
         Generator.__init__(self)
         self.upstream_gen = upstream_gen
         self.f = f
+        self.vect_f = vect_f
 
     def generate(self, size):
         samples = self.upstream_gen.generate(size=size)
 
-        # TODO: optimization: we should allow ndfunc to be passed here to avoid
-        # the loop
-        return [self.f(sample) for sample in samples]
+        if self.vect_f is not None:
+            return self.vect_f(samples)
+
+        elif self.f is not None:
+            return [self.f(sample) for sample in samples]
 
 
 class BoundedGenerator(TransformedGenerator):
@@ -398,9 +423,8 @@ class DependentBulkGenerator(DependentGenerator):
 
     def generate(self, observations):
 
-        def f(obs):
-            self.element_generator.generate(obs)
+        def f(bulk_size):
+            return self.element_generator.generate(bulk_size)
 
         return [f(observation) for observation in observations]
-
 

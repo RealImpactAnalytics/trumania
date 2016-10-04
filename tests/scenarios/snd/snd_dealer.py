@@ -16,7 +16,7 @@ def create_telcos(circus, params, distributor_id_gen,
 
     pos_per_telco = params["n_pos"] / params["n_telcos"]
     sims_per_telco = params["n_init_sim_per_pos"] * pos_per_telco
-    ers_per_telco = params["n_init_er_per_pos"] * pos_per_telco
+    ers_per_telco = params["pos_ers_max_stock"] * pos_per_telco / 2
 
     telcos.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -124,7 +124,7 @@ def create_dealers_l1(circus, params, distributor_id_gen,
 
     pos_per_dealer_l1 = params["n_pos"] / params["n_dealers_l1"]
     sims_per_dealer_l1 = params["n_init_sim_per_pos"] * pos_per_dealer_l1
-    ers_per_dealer_l1 = params["n_init_er_per_pos"] * pos_per_dealer_l1
+    ers_per_dealer_l1 = params["pos_ers_max_stock"] * pos_per_dealer_l1 / 2
 
     dealers_l1.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -182,7 +182,7 @@ def create_dealers_l2(circus, params, distributor_id_gen,
 
     pos_per_dealer_l2 = params["n_pos"] / params["n_dealers_l2"]
     sims_per_dealer_l2 = params["n_init_sim_per_pos"] * pos_per_dealer_l2
-    ers_per_dealer_l2 = params["n_init_er_per_pos"] * pos_per_dealer_l2
+    ers_per_dealer_l2 = params["pos_ers_max_stock"] * pos_per_dealer_l2 / 2
 
     dealers_l2.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -192,41 +192,41 @@ def create_dealers_l2(circus, params, distributor_id_gen,
         name="ERS", item_id_gen=recharge_id_gen,
         n_items_per_actor=ers_per_dealer_l2, seeder=circus.seeder)
 
-    logging.info(" linking l2 dealers to l1 dealers")
-    _create_distribution_link(circus,
-                              circus.dealers_l1, dealers_l2, "DEALERS_L1")
-
-    ers_mean_bulk_size = \
-        params["mean_pos_ers_bulk_purchase_size"] * pos_per_dealer_l2
-    ers_std_bulk_size = \
-        params["std_pos_ers_bulk_purchase_size"] * pos_per_dealer_l2
-
-    _add_bulk_purchase_action(circus,
-                              action_name="dealer_l2_buys_ers_from_dealer_l1",
-                              buyer_actor=dealers_l2,
-                              seller_actor=circus.dealers_l1,
-                              bulk_size_attribute="ER_BULK_BUY_SIZE",
-                              mean_bulk_purchase_size=ers_mean_bulk_size,
-                              std_bulk_purchase_size=ers_std_bulk_size,
-                              link_relationship="DEALERS_L1",
-                              buyer_stock_relationship="ERS",
-                              seller_stock_relationship="ERS")
-
-    sim_mean_bulk_size = \
-        params["mean_pos_sim_bulk_purchase_size"] * pos_per_dealer_l2
-    sim_std_bulk_size = \
-        params["std_pos_sim_bulk_purchase_size"] * pos_per_dealer_l2
-
-    _add_bulk_purchase_action(circus,
-                              action_name="dealer_l2_buys_sims_from_dealer_l1",
-                              buyer_actor=dealers_l2,
-                              seller_actor=circus.dealers_l1,
-                              bulk_size_attribute="SIM_BULK_BUY_SIZE",
-                              mean_bulk_purchase_size=sim_mean_bulk_size,
-                              std_bulk_purchase_size=sim_std_bulk_size,
-                              link_relationship="DEALERS_L1",
-                              buyer_stock_relationship="SIMS",
-                              seller_stock_relationship="SIMS")
+    # logging.info(" linking l2 dealers to l1 dealers")
+    # _create_distribution_link(circus,
+    #                           circus.dealers_l1, dealers_l2, "DEALERS_L1")
+    #
+    # ers_mean_bulk_size = \
+    #     params["mean_pos_ers_bulk_purchase_size"] * pos_per_dealer_l2
+    # ers_std_bulk_size = \
+    #     params["std_pos_ers_bulk_purchase_size"] * pos_per_dealer_l2
+    #
+    # _add_bulk_purchase_action(circus,
+    #                           action_name="dealer_l2_buys_ers_from_dealer_l1",
+    #                           buyer_actor=dealers_l2,
+    #                           seller_actor=circus.dealers_l1,
+    #                           bulk_size_attribute="ER_BULK_BUY_SIZE",
+    #                           mean_bulk_purchase_size=ers_mean_bulk_size,
+    #                           std_bulk_purchase_size=ers_std_bulk_size,
+    #                           link_relationship="DEALERS_L1",
+    #                           buyer_stock_relationship="ERS",
+    #                           seller_stock_relationship="ERS")
+    #
+    # sim_mean_bulk_size = \
+    #     params["mean_pos_sim_bulk_purchase_size"] * pos_per_dealer_l2
+    # sim_std_bulk_size = \
+    #     params["std_pos_sim_bulk_purchase_size"] * pos_per_dealer_l2
+    #
+    # _add_bulk_purchase_action(circus,
+    #                           action_name="dealer_l2_buys_sims_from_dealer_l1",
+    #                           buyer_actor=dealers_l2,
+    #                           seller_actor=circus.dealers_l1,
+    #                           bulk_size_attribute="SIM_BULK_BUY_SIZE",
+    #                           mean_bulk_purchase_size=sim_mean_bulk_size,
+    #                           std_bulk_purchase_size=sim_std_bulk_size,
+    #                           link_relationship="DEALERS_L1",
+    #                           buyer_stock_relationship="SIMS",
+    #                           seller_stock_relationship="SIMS")
 
     return dealers_l2
 

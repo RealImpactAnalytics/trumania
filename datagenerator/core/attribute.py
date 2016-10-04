@@ -19,10 +19,6 @@ class Attribute(object):
                  # "from" field. init_relationship is a string that contains
                  # the name of the
                  init_relationship=None):
-        """
-        :param ids:
-        :return:
-        """
         self.ops = self.AttributeOps(self)
 
         if actor.size == 0:

@@ -22,8 +22,7 @@ class Relationship(object):
         self.seed = seed
         self.state = RandomState(self.seed)
         self._table = pd.DataFrame(
-            columns=["from", "to", "weight", "table_index"]
-            )
+            columns=["from", "to", "weight", "table_index"])
         self.ops = self.RelationshipOps(self)
 
     def add_relations(self, from_ids, to_ids, weights=1):
@@ -41,6 +40,22 @@ class Relationship(object):
         # accessed within a group-by operation => copying the info in a separate
         # column is the only way I found...
         self._table["table_index"] = self._table.index
+
+    def add_grouped_relations(self, from_ids, grouped_ids):
+        """
+        Add "bulk" relationship, i.e. many "to" side for each "from" side at
+        once.
+
+        :param from_ids: list of "from" sides of the relationships to add
+        :param grouped_ids: list of list of "to" sides of the relationships
+            to add
+
+        Note: we assume all weights are 1 for now...
+        """
+
+        for one_from, many_tos in zip(from_ids, grouped_ids):
+            rels = pd.DataFrame({"from": one_from, "to": many_tos})
+            self.add_relations(from_ids=rels["from"], to_ids=rels["to"])
 
     def get_relations(self, from_ids):
         if from_ids is None:
@@ -477,17 +492,9 @@ class Relationship(object):
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
 
-                    all_dfs = (
-                        pd.DataFrame({"from": r[1][self.from_field],
-                                      "to": r[1][self.grouped_items_field]})
-                        for r in action_data.iterrows())
-
-                    verticalized = pd.concat(all_dfs, ignore_index=True,
-                                             copy=False)
-
-                    self.relationship.add_relations(
-                        from_ids=verticalized["from"],
-                        to_ids=verticalized["to"])
+                    self.relationship.add_grouped_relations(
+                        from_ids=action_data[self.from_field],
+                        grouped_ids=action_data[self.grouped_items_field])
 
         def add_grouped(self, from_field, grouped_items_field):
             """
@@ -495,7 +502,7 @@ class Relationship(object):
             contain lists of "to" values instead of single ones
             """
             return self.AddGrouped(self.relationship, from_field,
-                                  grouped_items_field)
+                                   grouped_items_field)
 
         class Remove(SideEffectOnly):
             def __init__(self, relationship, from_field, item_field):
@@ -511,96 +518,3 @@ class Relationship(object):
 
         def remove(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
-
-
-# class SimpleMobilityRelationship(WeightedRelationship):
-#     """
-#
-#     """
-#
-#     def choose(self, clock, key_column, keys):
-#         return self.select_one(key_column, keys)
-#
-#
-# class HWRMobilityRelationship(WeightedRelationship):
-#     """
-#
-#     """
-#     def __init__(self,r1,r2,chooser,time_f):
-#         """
-#
-#         :param r1:
-#         :param r2:
-#         :param chooser:
-#         :param time_f:
-#         :return:
-#         """
-#         cols = {r1: pd.Series(dtype=int),
-#                 r2: pd.Series(dtype=int),
-#                 "weight": pd.Series(dtype=float)}
-#         self._home_table = pd.DataFrame(cols)
-#         self._work_table = pd.DataFrame(cols)
-#         self._random_table = pd.DataFrame(cols)
-#         self.__chooser = chooser
-#         self.__r1 = r1
-#         self.__r2 = r2
-#         self.__time_f = time_f
-#
-#     def add_home(self, r1, A, r2, B):
-#         """
-#
-#         :param r1:
-#         :param A:
-#         :param r2:
-#         :param B:
-#         :return:
-#         """
-#         df = pd.DataFrame({r1: A, r2: B})
-#         self._home_table = self._home_table.append(df, ignore_index=True)
-#
-#     def add_work(self, r1, A, r2, B):
-#         """
-#
-#         :param r1:
-#         :param A:
-#         :param r2:
-#         :param B:
-#         :return:
-#         """
-#         df = pd.DataFrame({r1: A, r2: B})
-#         self._work_table = self._work_table.append(df, ignore_index=True)
-#
-#     def add_random(self, r1, A, r2, B):
-#         """
-#
-#         :param r1:
-#         :param A:
-#         :param r2:
-#         :param B:
-#         :return:
-#         """
-#         df = pd.DataFrame({r1: A, r2: B})
-#         self._random_table = self._random_table.append(df, ignore_index=True)
-#
-#     def choose(self, clock, key_column, keys):
-#         """
-#
-#         :param clock:
-#         :param key_column:
-#         :param keys:
-#         :return:
-#         """
-#         # TODO: make a function of the clock that returns what's needed
-#         w_home,w_work,w_random = self.__time_f(clock)
-#
-#         small_home = self._home_table[self._home_table[self.__r1].isin(keys)].copy()
-#         small_home["weight"] = small_home["weight"]*w_home
-#
-#         small_work = self._work_table[self._work_table[self.__r1].isin(keys)].copy()
-#         small_work["weight"] = small_work["weight"]*w_work
-#
-#         small_random = self._random_table[self._random_table[self.__r1].isin(keys)].copy()
-#         small_random["weight"] = small_random["weight"]*w_random
-#
-#         small_tab = pd.concat([small_home,small_work,small_random],ignore_index=True)
-#         return small_tab.groupby(key_column).aggregate(self.__chooser.generate)

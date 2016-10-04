@@ -156,8 +156,6 @@ def add_purchase_er_action(circus, params):
             seed=circus.seeder.next()),
         f=lambda per: 1/per)
 
-    logging.info("")
-
     price_gen = NumpyRandomGenerator(
         method="choice", a=[5, 10, 25, 50, 100], seed=circus.seeder.next())
 
