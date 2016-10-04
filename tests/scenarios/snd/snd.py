@@ -42,7 +42,9 @@ scenario_1 = {
                         #  pos => limiting geography to make sure we have
                         # at least one pos per site
 
-    "n_dealers": 3,     # should be 1 if really  divided by 100
+    "n_dealers_l2": 24,
+    "n_dealers_l1": 4,
+    "n_telcos": 1,
 
     "mean_known_sites_per_customer": 6,
 
@@ -64,10 +66,7 @@ scenario_1 = {
 
     # TODO: adapt init stock to desired equilibrium
     "n_init_sim_per_pos": 100,
-    "n_init_sim_per_dealer": 1000,
-
     "n_init_er_per_pos": 100,
-    "n_init_er_per_dealer": 1000,
 
     "pos_sim_max_stock": 50,
     "pos_ers_max_stock": 500,
@@ -104,6 +103,10 @@ scenario_1.update({
     "geography": "belgium_5",
     "n_pos": 50,
 
+    "n_dealers_l2": 4,
+    "n_dealers_l1": 2,
+    "n_telcos": 1,
+
     "n_customers": 500,
     "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
 
@@ -121,6 +124,7 @@ class SND(WithBelgium):
             step_duration=pd.Timedelta(params["clock_time_step"]))
 
         # using one central sim_id generator to guarantee unicity of ids
+        distributor_id_gen = SequencialGenerator(prefix="DIST_")
         sim_id_gen = SequencialGenerator(prefix="SIM_")
         recharge_id_gen = SequencialGenerator(prefix="ER_")
 
@@ -128,8 +132,20 @@ class SND(WithBelgium):
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 
-        self.dealers = snd_dealer.create_dealers(self, params, sim_id_gen,
-                                                 recharge_id_gen)
+        self.telcos = snd_dealer.create_telcos(self, params,
+                                               distributor_id_gen,
+                                               sim_id_gen,
+                                               recharge_id_gen)
+
+        self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
+                                                       distributor_id_gen,
+                                                       sim_id_gen,
+                                                       recharge_id_gen)
+
+        self.dealers_l2 = snd_dealer.create_dealers_l2(self, params,
+                                                       distributor_id_gen,
+                                                       sim_id_gen,
+                                                       recharge_id_gen)
 
         self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
         snd_pos.add_sim_bulk_purchase_action(self, params)
