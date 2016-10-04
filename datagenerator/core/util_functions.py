@@ -175,23 +175,28 @@ def cap_to_total(values, target_total):
         return cap_to_total(values[:-1], target_total) + [0]
 
 
-def ensure_non_existing_dir(path):
+def ensure_folder_exists(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+
+def ensure_non_existing_dir(folder):
     """
     makes sure the specified directory does not exist, potentially deleting
     any file or folder it contains
     """
 
-    if not os.path.exists(path):
+    if not os.path.exists(folder):
         return
 
-    if os.path.isfile(path):
-        os.remove(path)
+    if os.path.isfile(folder):
+        os.remove(folder)
 
     else:
-        for f in os.listdir(path):
-            full_path = os.path.join(path, f)
+        for f in os.listdir(folder):
+            full_path = os.path.join(folder, f)
             ensure_non_existing_dir(full_path)
-        os.rmdir(path)
+        os.rmdir(folder)
 
 
 def latest_date_before(starting_date, upper_bound, time_step):
