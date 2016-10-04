@@ -174,87 +174,67 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
         from_ids=dealer_of_pos["set1"],
         to_ids=dealer_of_pos["chosen_from_set2"])
 
-    logging.info("generating size of sim and ers bulk purchase for each pos")
-    pos.create_attribute(
-        name="SIM_BULK_BUY_SIZE",
-        init_gen=BoundedGenerator(
-            upstream_gen=NumpyRandomGenerator(
-                method="normal",
-                loc=params["mean_pos_sim_bulk_purchase_size"],
-                scale=params["std_pos_sim_bulk_purchase_size"],
-                seed=circus.seeder.next()
-            ), lb=0
-        ))
-
-    pos.create_attribute(
-        name="ERS_BULK_BUY_SIZE",
-        init_gen=BoundedGenerator(
-            upstream_gen=NumpyRandomGenerator(
-                method="normal",
-                loc=params["mean_pos_ers_bulk_purchase_size"],
-                scale=params["std_pos_ers_bulk_purchase_size"],
-                seed=circus.seeder.next()
-            ), lb=0
-        ))
-
     return pos
 
 
 def add_sim_bulk_purchase_action(circus, params):
 
     logging.info("creating POS SIM bulk purchase action")
-    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
-                                                    circus.seeder.next())
 
-    bulk_purchase_periods = [
-        purchase_timer_gen.activity(n_actions=1, per=pd.Timedelta(days=n))
-        for n in params["pos_sim_bulk_purchase_periods_days"]]
-
-    purchase_activity_gen = NumpyRandomGenerator(
+    bulk_size_gen = NumpyRandomGenerator(
         method="choice",
-        a=bulk_purchase_periods,
-        p=params["pos_sim_bulk_purchase_periods_dist"],
+        a=params["pos_sim_bulk_purchase_sizes"],
+        p=params["pos_sim_bulk_purchase_sizes_dist"],
         seed=circus.seeder.next())
 
     _add_bulk_purchase_action(
         circus,
-        purchase_timer_gen=purchase_timer_gen,
-        purchase_activity_gen=purchase_activity_gen,
         action_name="pos_to_dealer_sim_bulk_purchases",
-        bulk_size_attribute="SIM_BULK_BUY_SIZE",
+        bulk_size_gen=bulk_size_gen,
         dealers_relationship="SIMS",
-        pos_relationship="SIMS")
+        pos_relationship="SIMS",
+        max_stock=params["pos_sim_max_stock"])
 
 
 def add_ers_bulk_purchase_action(circus, params):
 
     logging.info("creating POS ERS bulk purchase action")
-    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
-                                                    circus.seeder.next())
 
-    bulk_purchase_periods = [
-        purchase_timer_gen.activity(n_actions=1, per=pd.Timedelta(days=n))
-        for n in params["pos_ers_bulk_purchase_periods_days"]]
-
-    purchase_activity_gen = NumpyRandomGenerator(
+    bulk_size_gen = NumpyRandomGenerator(
         method="choice",
-        a=bulk_purchase_periods,
-        p=params["pos_ers_bulk_purchase_periods_dist"],
+        a=params["pos_ers_bulk_purchase_sizes"],
+        p=params["pos_ers_bulk_purchase_sizes_dist"],
         seed=circus.seeder.next())
 
     _add_bulk_purchase_action(
         circus,
-        purchase_timer_gen=purchase_timer_gen,
-        purchase_activity_gen=purchase_activity_gen,
         action_name="pos_to_dealer_ers_bulk_purchases",
-        bulk_size_attribute="ERS_BULK_BUY_SIZE",
+        bulk_size_gen=bulk_size_gen,
         dealers_relationship="ERS",
-        pos_relationship="ERS")
+        pos_relationship="ERS",
+        max_stock=params["pos_ers_max_stock"])
 
 
-def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
-                              purchase_activity_gen, bulk_size_attribute,
-                              dealers_relationship, pos_relationship):
+def _bound_diff_to_max(max_stock):
+    """
+    Builds a function that adapts an array of deltas s.t. when added to the
+    specified array of stock levels, the result does not exceed max_stock.
+    """
+    def _bound(action_data):
+        stocks, deltas = action_data.iloc[:, 0], action_data.iloc[:, 1]
+
+        ceiling = np.min(
+            np.array([stocks + deltas, [max_stock] * stocks.shape[0]]),
+            axis=0)
+
+        return pd.DataFrame(ceiling - stocks)
+
+    return _bound
+
+
+def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
+                              dealers_relationship, pos_relationship,
+                              max_stock):
     """
     Generic utility method to create a bulk purchase action from pos to dealers
     """
@@ -265,8 +245,8 @@ def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
         initiating_actor=circus.pos,
         actorid_field="POS_ID",
 
-        timer_gen=purchase_timer_gen,
-        activity_gen=purchase_activity_gen
+        # no timer_gen nor activity gens for the POS bulk actions: these are
+        # triggered from low stock conditions after the purchases
     )
 
     build_purchases.set_operations(
@@ -276,14 +256,16 @@ def _add_bulk_purchase_action(circus, action_name, purchase_timer_gen,
             from_field="POS_ID",
             named_as="DEALER"),
 
-        circus.pos.ops.lookup(
-            actor_id_field="POS_ID",
-            select={bulk_size_attribute: "REQUESTED_BULK_SIZE"}),
+        bulk_size_gen.ops.generate(named_as="DESIRED_BULK_SIZE"),
 
         circus.pos.get_relationship(pos_relationship).ops \
             .get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="OLD_POS_STOCK"),
+
+        operations.Apply(source_fields=["OLD_POS_STOCK", "DESIRED_BULK_SIZE"],
+                         named_as="REQUESTED_BULK_SIZE",
+                         f=_bound_diff_to_max(max_stock)),
 
         # selecting and removing Sims from dealers
         circus.dealers.get_relationship(dealers_relationship).ops.select_many(
