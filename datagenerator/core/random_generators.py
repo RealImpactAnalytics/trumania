@@ -324,8 +324,10 @@ class DependentGenerator(object):
 
         def generate(self, named_as, observed_field):
             """
-            :param named_as:
-            :param observed_field:
+            :param named_as: the name of the supplementary field inserted in
+              the action_data
+            :param observed_field: the name of the action_data field whose
+              content is used as observed input by this DependentGenerator
             :return:
             """
             return self.RandomValuesFromField(self.generator, named_as,
