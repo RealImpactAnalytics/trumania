@@ -4,3 +4,5 @@ numpy
 teamcity-messages
 pytest
 fake-factory
+jupyter
+rpy2

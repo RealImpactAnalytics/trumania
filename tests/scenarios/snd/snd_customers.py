@@ -108,49 +108,81 @@ def add_purchase_sim_action(circus, params):
     purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
                                                     circus.seeder.next())
 
-    min_purchase_activity = purchase_timer_gen.activity(
-        n_actions=1, per=pd.Timedelta("360 days"))
-    max_purchase_activity = purchase_timer_gen.activity(
-        n_actions=6, per=pd.Timedelta("360 days"))
+    max_activity = purchase_timer_gen.activity(n_actions=1,
+        per=pd.Timedelta(days=params["customer_sim_purchase_min_period_days"]))
+    min_activity = purchase_timer_gen.activity(n_actions=1,
+        per=pd.Timedelta(days=params["customer_sim_purchase_max_period_days"]))
 
-    purchase_activity_gen = NumpyRandomGenerator(
-        method="choice",
-        a=np.arange(min_purchase_activity, max_purchase_activity),
-        seed=circus.seeder.next())
+    purchase_activity_gen = TransformedGenerator(
+        upstream_gen=NumpyRandomGenerator(
+            method="uniform",
+            low=1 / max_activity,
+            high=1 / min_activity,
+            seed=circus.seeder.next()),
+        f=lambda per: 1/per)
+
+    low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
+        value_to_proba_mapper=operations.bounded_sigmoid(
+            x_min=1,
+            x_max=params["max_pos_sim_stock_triggering_restock"],
+            shape=params["pos_sim_restock_shape"],
+            incrementing=False)
+    )
 
     _create_customer_purchase_action(
         circus, purchase_timer_gen, purchase_activity_gen, "SIMS",
         item_price_gen=ConstantGenerator(value=params["sim_price"]),
-        action_name="sim_purchases_to_pos")
+        action_name="sim_purchases_to_pos",
+        pos_restock_trigger=low_stock_bulk_purchase_trigger,
+        pos_restock_action_name="pos_to_dealer_sim_bulk_purchases")
 
 
-def add_purchase_er_action(circus):
+def add_purchase_er_action(circus, params):
 
     logging.info("creating customer ER purchase action")
     purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
                                                     circus.seeder.next())
 
-    # exponential distro do not really have a physical meaning here, I just a
-    # real number with mean 1/5
-    purchase_activity_gen = NumpyRandomGenerator(
-        method="exponential",
-        scale=purchase_timer_gen.activity(
-            n_actions=1, per=pd.Timedelta("5 days")),
-        seed=circus.seeder.next())
+    max_activity = purchase_timer_gen.activity(n_actions=1,
+        per=pd.Timedelta(days=params["customer_er_purchase_min_period_days"]))
+    min_activity = purchase_timer_gen.activity(n_actions=1,
+        per=pd.Timedelta(days=params["customer_er_purchase_max_period_days"]))
+
+    purchase_activity_gen = TransformedGenerator(
+        upstream_gen=NumpyRandomGenerator(
+            method="uniform",
+            low=1 / max_activity,
+            high=1 / min_activity,
+            seed=circus.seeder.next()),
+        f=lambda per: 1/per)
+
+    logging.info("")
 
     price_gen = NumpyRandomGenerator(
         method="choice", a=[5, 10, 25, 50, 100], seed=circus.seeder.next())
+
+    low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
+        value_to_proba_mapper=operations.bounded_sigmoid(
+            x_min=1,
+            x_max=params["max_pos_er_stock_triggering_restock"],
+            shape=params["pos_er_restock_shape"],
+            incrementing=False))
 
     _create_customer_purchase_action(
         circus, purchase_timer_gen=purchase_timer_gen,
         purchase_activity_gen=purchase_activity_gen,
         pos_relationship="ERS",
-        item_price_gen=price_gen, action_name="ers_purchases_to_pos")
+        item_price_gen=price_gen,
+        action_name="ers_purchases_to_pos",
+        pos_restock_trigger=low_stock_bulk_purchase_trigger,
+        pos_restock_action_name="pos_to_dealer_ers_bulk_purchases"
+    )
 
 
 def _create_customer_purchase_action(
         circus, purchase_timer_gen, purchase_activity_gen,
-        pos_relationship, item_price_gen, action_name):
+        pos_relationship, item_price_gen, action_name,
+        pos_restock_trigger, pos_restock_action_name):
     """
     Creates an action of Customer buying from POS
     """
@@ -161,14 +193,6 @@ def _create_customer_purchase_action(
         actorid_field="CUST_ID",
         timer_gen=purchase_timer_gen,
         activity_gen=purchase_activity_gen)
-
-    # Above a stock of 20, probability of re-stocking is close to 0
-    # below it, it quickly rises to 5%
-    # => chances getting out of stock < (1-.0.05)**20 ~= .35
-    # => we can expect about 30% or so of POS to run out of stock regularly
-    # pos_bulk_purchase_trigger = DependentTriggerGenerator(
-    #     value_to_proba_mapper=operations.logistic(k=-.5, x0=20, L=.05)
-    # )
 
     purchase_action.set_operations(
 
@@ -210,23 +234,18 @@ def _create_customer_purchase_action(
 
         FieldLogger(log_id=action_name),
 
-        # circus.pos.get_relationship("SIMS").ops.get_neighbourhood_size(
-        #     from_field="POS",
-        #     named_as="CURRENT_POS_STOCK"
-        # ),
-        #
-        # pos_bulk_purchase_trigger.ops.generate(
-        #     named_as="SHOULD_RESTOCK",
-        #     observed_field="CURRENT_POS_STOCK"
-        # ),
-        #
-        # # => use pos_bulk_purchase_trigger and stock size (in relationship)
-        # circus.get_action("pos_to_dealer_sim_bulk_purchases").ops \
-        #     .force_act_next(
-        #     actor_id_field="POS",
-        #     condition_field="SHOULD_RESTOCK"),
+        circus.pos.get_relationship(pos_relationship)\
+            .ops.get_neighbourhood_size(
+                from_field="POS",
+                named_as="CURRENT_POS_STOCK"),
 
+        pos_restock_trigger.ops.generate(
+            named_as="SHOULD_RESTOCK",
+            observed_field="CURRENT_POS_STOCK"),
+
+        # => use pos_bulk_purchase_trigger and stock size (in relationship)
+        circus.get_action(pos_restock_action_name).ops.force_act_next(
+            actor_id_field="POS",
+            condition_field="SHOULD_RESTOCK"),
     )
-
-
 

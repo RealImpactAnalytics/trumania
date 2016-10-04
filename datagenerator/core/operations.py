@@ -1,5 +1,5 @@
 from __future__ import division
-
+from scipy import stats
 from abc import ABCMeta, abstractmethod
 
 from datagenerator.core.util_functions import *
@@ -255,6 +255,48 @@ def logistic(k, x0=0, L=1):
         return L / (1 + np.exp(the_exp))
 
     return _logistic
+
+
+def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
+    """
+    Builds a S-shape curve that have y values evolving between 0 and 1 over
+    the x domain [x_min, x_max]
+
+    This is preferable to the logistic function for cases where we want to
+    make sure that the curve actually reaches 0 and 1 at some point (e.g.
+    probability of triggering an "restock" action must be 1 if stock is as
+    low as 1).
+
+    :param x_min: lower bound of the x domain
+    :param x_max: lower bound of the x domain
+    :param incrementing: if True, evolve from 0 to 1, or from 1 to 0 otherwise
+    :param shape: strictly positive number controlling the shape of the
+                  resulting function
+                  * 1 correspond to linear transition
+                  * higher values yield a more and more sharper, i.e. more
+                    vertical S shape, converging towards a step function
+                    transiting at (x_max-x_min)/2 for very large values of S (
+                    e.g. 10000)
+                  * values in ]0,1[ yield vertically shaped sigmoids, sharply
+                    rising/falling at the boundary of the x domain and
+                    transiting more smoothly in the middle of it.
+    """
+
+    def f(x):
+        if x < x_min:
+            return f(x_min)
+
+        if x > x_max:
+            return f(x_max)
+
+        if incrementing:
+            return stats.beta.cdf((x - x_min) / (x_max - x_min),
+                                  a=shape, b=shape)
+        else:
+            return stats.beta.sf((x - x_min) / (x_max - x_min),
+                                 a=shape, b=shape)
+
+    return np.frompyfunc(f, 1, 1)
 
 
 def identity(x):

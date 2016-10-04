@@ -12,7 +12,6 @@ https://realimpactanalytics.atlassian.net/browse/OASD-1593
 
 
 from datagenerator.core.circus import *
-from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
 from datagenerator.components.geographies.belgium import *
 import pandas as pd
@@ -28,43 +27,70 @@ import logging
 
 
 scenario_1 = {
-    "geography": "belgium", # this geography contains 4208 sites
+
+    # Belgium geography contains 4208 sites => we limit to 100 to limit the
+    # cases when purchase fail due to missing POS at a SITE
+    # TODO: implement "move and retry" strategy for the customer and put back
+    #  the full Belgium geography
+
+    "geography": "belgium_100",
 
     "n_customers": 50000,
     "n_field_agents": 5,
 
-    "n_pos": 50000,     # we must have a large number of POS, to saturate the
-                        # the sites, otherwise lot's of action fail due to
-                        # empty sites (e.g. no pos to buy from,...)
+    "n_pos": 500,       # keeping a ration 100 between number of customer and
+                        #  pos => limiting geography to make sure we have
+                        # at least one pos per site
 
     "n_dealers_l2": 24,
     "n_dealers_l1": 4,
     "n_telcos": 1,
 
-    "mean_known_sites_per_customer": 4,
+    "mean_known_sites_per_customer": 6,
 
-    "mean_daily_customer_mobility_activity": 2,
-    "std_daily_customer_mobility_activity": .5,
+    "mean_daily_customer_mobility_activity": .3,
+    "std_daily_customer_mobility_activity": .2,
 
-    "mean_daily_fa_mobility_activity": 5,
-    "std_daily_fa_mobility_activity": .5,
+    "mean_daily_fa_mobility_activity": 1,
+    "std_daily_fa_mobility_activity": .2,
+
+    # average number of days between 2 item purchase by the same customer
+    "customer_er_purchase_min_period_days": 1,
+    "customer_er_purchase_max_period_days": 9,
+
+    "customer_sim_purchase_min_period_days": 60,
+    "customer_sim_purchase_max_period_days": 360,
 
     "clock_time_step": "1h",
-
-    "n_init_sim_per_pos": 100,
     "sim_price": 10,
 
-    "n_init_er_per_pos": 1000,
+    # TODO: adapt init stock to desired equilibrium
+    "n_init_sim_per_pos": 100,
+    "n_init_er_per_pos": 100,
 
+    "pos_sim_max_stock": 50,
+    "pos_ers_max_stock": 500,
+
+    # distribution of POS's bulk size when buying SIMs
+    "pos_sim_bulk_purchase_sizes": [10, 15, 25],
+    "pos_sim_bulk_purchase_sizes_dist": [.5, .3, .2],
+
+    # distribution of POS's bulk size when buying electronic recharges
+    "pos_ers_bulk_purchase_sizes": [100, 200, 450],
+    "pos_ers_bulk_purchase_sizes_dist": [.4, .3, .3],
+
+    # largest possible er or SIM stock level that can trigger a restock
+    "max_pos_er_stock_triggering_restock": 50,
+    "pos_er_restock_shape": 2,
+    "max_pos_sim_stock_triggering_restock": 10,
+    "pos_sim_restock_shape": 5,
+
+    # distribution of SIM and ERs bulk size bought by POS
     "mean_pos_sim_bulk_purchase_size": 1000,
     "std_pos_sim_bulk_purchase_size": 100,
-    "pos_sim_bulk_purchase_periods_days": [10, 15, 20, 25, 30],
-    "pos_sim_bulk_purchase_periods_dist": [.2, .2, .2, .2, .2],
 
     "mean_pos_ers_bulk_purchase_size": 1000,
     "std_pos_ers_bulk_purchase_size": 100,
-    "pos_ers_bulk_purchase_periods_days": [10, 15, 20, 25, 30],
-    "pos_ers_bulk_purchase_periods_dist": [.3, .2, .1, .05, .35],
 
     "simulation_start_date": "13 Sept 2016 12:00",
     "simulation_duration": "5 days",
@@ -82,12 +108,7 @@ scenario_1.update({
     "n_telcos": 1,
 
     "n_customers": 500,
-    "n_dealers": 100,
     "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
-
-    # just forcing higher frequencies to see some outputs
-    "pos_sim_bulk_purchase_periods_days": [1, 1, 2, 2, 3],
-    "pos_ers_bulk_purchase_periods_days": [1, 1.5, 2, 2.5, 3],
 
 })
 
@@ -130,7 +151,7 @@ class SND(WithBelgium):
         snd_pos.add_sim_bulk_purchase_action(self, params)
         snd_pos.add_ers_bulk_purchase_action(self, params)
         snd_customers.add_purchase_sim_action(self, params)
-        snd_customers.add_purchase_er_action(self)
+        snd_customers.add_purchase_er_action(self, params)
 
         self.field_agents = snd_field_agents.create_field_agents(self, params)
         snd_field_agents.add_mobility_action(self, params)
