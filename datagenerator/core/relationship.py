@@ -44,7 +44,7 @@ class Relationship(object):
     def add_grouped_relations(self, from_ids, grouped_ids):
         """
         Add "bulk" relationship, i.e. many "to" side for each "from" side at
-        once. 
+        once.
 
         :param from_ids: list of "from" sides of the relationships to add
         :param grouped_ids: list of list of "to" sides of the relationships
@@ -518,96 +518,3 @@ class Relationship(object):
 
         def remove(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
-
-
-# class SimpleMobilityRelationship(WeightedRelationship):
-#     """
-#
-#     """
-#
-#     def choose(self, clock, key_column, keys):
-#         return self.select_one(key_column, keys)
-#
-#
-# class HWRMobilityRelationship(WeightedRelationship):
-#     """
-#
-#     """
-#     def __init__(self,r1,r2,chooser,time_f):
-#         """
-#
-#         :param r1:
-#         :param r2:
-#         :param chooser:
-#         :param time_f:
-#         :return:
-#         """
-#         cols = {r1: pd.Series(dtype=int),
-#                 r2: pd.Series(dtype=int),
-#                 "weight": pd.Series(dtype=float)}
-#         self._home_table = pd.DataFrame(cols)
-#         self._work_table = pd.DataFrame(cols)
-#         self._random_table = pd.DataFrame(cols)
-#         self.__chooser = chooser
-#         self.__r1 = r1
-#         self.__r2 = r2
-#         self.__time_f = time_f
-#
-#     def add_home(self, r1, A, r2, B):
-#         """
-#
-#         :param r1:
-#         :param A:
-#         :param r2:
-#         :param B:
-#         :return:
-#         """
-#         df = pd.DataFrame({r1: A, r2: B})
-#         self._home_table = self._home_table.append(df, ignore_index=True)
-#
-#     def add_work(self, r1, A, r2, B):
-#         """
-#
-#         :param r1:
-#         :param A:
-#         :param r2:
-#         :param B:
-#         :return:
-#         """
-#         df = pd.DataFrame({r1: A, r2: B})
-#         self._work_table = self._work_table.append(df, ignore_index=True)
-#
-#     def add_random(self, r1, A, r2, B):
-#         """
-#
-#         :param r1:
-#         :param A:
-#         :param r2:
-#         :param B:
-#         :return:
-#         """
-#         df = pd.DataFrame({r1: A, r2: B})
-#         self._random_table = self._random_table.append(df, ignore_index=True)
-#
-#     def choose(self, clock, key_column, keys):
-#         """
-#
-#         :param clock:
-#         :param key_column:
-#         :param keys:
-#         :return:
-#         """
-#         # TODO: make a function of the clock that returns what's needed
-#         w_home,w_work,w_random = self.__time_f(clock)
-#
-#         small_home = self._home_table[self._home_table[self.__r1].isin(keys)].copy()
-#         small_home["weight"] = small_home["weight"]*w_home
-#
-#         small_work = self._work_table[self._work_table[self.__r1].isin(keys)].copy()
-#         small_work["weight"] = small_work["weight"]*w_work
-#
-#         small_random = self._random_table[self._random_table[self.__r1].isin(keys)].copy()
-#         small_random["weight"] = small_random["weight"]*w_random
-#
-#         small_tab = pd.concat([small_home,small_work,small_random],ignore_index=True)
-#         return small_tab.groupby(key_column).aggregate(self.__chooser.generate)
