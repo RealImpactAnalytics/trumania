@@ -48,7 +48,7 @@ scenario_1 = {
 
     "mean_known_sites_per_customer": 6,
 
-    "mean_daily_customer_mobility_activity": .3,
+    "mean_daily_customer_mobility_activity": .2,
     "std_daily_customer_mobility_activity": .2,
 
     "mean_daily_fa_mobility_activity": 1,
@@ -64,9 +64,11 @@ scenario_1 = {
     "clock_time_step": "1h",
     "sim_price": 10,
 
-    # TODO: adapt init stock to desired equilibrium
     "n_init_sim_per_pos": 100,
-    "n_init_er_per_pos": 100,
+    "n_init_sim_per_dealer": 1000,
+
+    # empirical distribution of pos initial stock level
+    "pos_init_er_stock_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
 
     "pos_sim_max_stock": 50,
     "pos_ers_max_stock": 500,
@@ -107,7 +109,7 @@ scenario_1.update({
     "n_dealers_l1": 2,
     "n_telcos": 1,
 
-    "n_customers": 500,
+    "n_customers": 5000,
     "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
 
 })
@@ -132,16 +134,16 @@ class SND(WithBelgium):
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 
-        self.telcos = snd_dealer.create_telcos(self, params,
-                                               distributor_id_gen,
-                                               sim_id_gen,
-                                               recharge_id_gen)
-
-        self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
-                                                       distributor_id_gen,
-                                                       sim_id_gen,
-                                                       recharge_id_gen)
-
+        # self.telcos = snd_dealer.create_telcos(self, params,
+        #                                        distributor_id_gen,
+        #                                        sim_id_gen,
+        #                                        recharge_id_gen)
+        #
+        # self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
+        #                                                distributor_id_gen,
+        #                                                sim_id_gen,
+        #                                                recharge_id_gen)
+        #
         self.dealers_l2 = snd_dealer.create_dealers_l2(self, params,
                                                        distributor_id_gen,
                                                        sim_id_gen,
