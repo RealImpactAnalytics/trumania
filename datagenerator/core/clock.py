@@ -11,8 +11,7 @@ class Clock(object):
     It's generating timestamps on demand, and provides information for TimeProfiler objects.
     """
 
-    def __init__(self, start, step_duration, seed,
-                 output_format="%Y%m%d %H:%M:%S"):
+    def __init__(self, start, step_duration, seed):
         """Create a Clock object.
 
         :type start: pd.Timestamp
@@ -33,7 +32,6 @@ class Clock(object):
         self.current_date = start
         self.step_duration = step_duration
 
-        self.output_format = output_format
         self.__state = RandomState(seed)
         self.ops = self.ClockOps(self)
 
@@ -55,7 +53,7 @@ class Clock(object):
         for listener in self.__increment_listeners:
             listener.increment()
 
-    def get_timestamp(self, size=1):
+    def get_timestamp(self, size=1, random=True, output_format="%Y%m%d %H:%M:%S"):
         """Returns random timestamps within the current value of the clock and the next step
 
         :type size: int
@@ -64,12 +62,18 @@ class Clock(object):
         :return: random timestamps in the form of strings
         """
 
+        if output_format is None:
+            output_format = "%Y%m%d %H:%M:%S"
+
         def make_ts(delta_secs):
             date = self.current_date + pd.Timedelta(seconds=delta_secs)
-            return date.strftime(self.output_format)
+            return date.strftime(output_format)
 
-        step_secs = int(self.step_duration.total_seconds())
-        return pd.Series(self.__state.choice(step_secs, size)).apply(make_ts)
+        if random:
+            step_secs = int(self.step_duration.total_seconds())
+            return pd.Series(self.__state.choice(step_secs, size)).apply(make_ts)
+        else:
+            return pd.Series([self.current_date.strftime(output_format)] * size)
 
     def n_iterations(self, duration):
         """
@@ -86,22 +90,26 @@ class Clock(object):
             self.clock = clock
 
         class Timestamp(AddColumns):
-            def __init__(self, clock, named_as):
+            def __init__(self, clock, named_as, random, format):
                 AddColumns.__init__(self)
                 self.clock = clock
                 self.named_as = named_as
+                self.random = random
+                self.format = format
 
             def build_output(self, action_data):
-                values = self.clock.get_timestamp(action_data.shape[0]).values
+                values = self.clock.get_timestamp(size=action_data.shape[0],
+                    random=self.random, output_format=self.format).values
+
                 df = pd.DataFrame({self.named_as: values},
                                   index=action_data.index)
                 return df
 
-        def timestamp(self, named_as):
+        def timestamp(self, named_as, random=True, format=None):
             """
             Generates a random timestamp within the current time slice
             """
-            return self.Timestamp(self.clock, named_as)
+            return self.Timestamp(self.clock, named_as, random, format)
 
 
 class CyclicTimerGenerator(DependentGenerator):
