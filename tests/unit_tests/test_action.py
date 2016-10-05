@@ -20,7 +20,7 @@ def test_empty_action_should_do_nothing_and_not_crash():
     assert logs == {}
 
 
-def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
+def test_all_actors_should_be_inactive_when_timers_are_positive():
 
     actor = Actor(size=10,
                   ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
@@ -42,7 +42,7 @@ def test_active_inactive_ids_should_say_nothing_active_if_timer_are_positive():
     assert ([], actor.ids.tolist()) == action.active_inactive_ids()
 
 
-def test_active_inactive_ids_should_say_5_actives_for_timer_0():
+def test_active_inactive_ids_should_mark_timer_0_as_active():
 
     actor = Actor(size=10,
                   ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
@@ -63,7 +63,7 @@ def test_active_inactive_ids_should_say_5_actives_for_timer_0():
     assert (actor.ids[:5].tolist(), actor.ids[5:].tolist()) == action.active_inactive_ids()
 
 
-def test_active_inactive_ids_should_all_actives_for_timer_0():
+def test_active_inactive_ids_should_mark_all_actors_active_when_all_timers_0():
 
     actor = Actor(size=10,
                   ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
@@ -163,7 +163,7 @@ def test_get_activity_should_be_aligned_for_each_state():
                                               actor.ids, ).tolist()
 
 
-def test_scenario_transiting_to_state_with_0_backprob_should_remain_there():
+def test_scenario_transiting_to_state_with_0_back_to_default_prob_should_remain_there():
     """
     we create an action with a transit_to_state operation and 0 probability
     of going back to normal => after the execution, all triggered actors should
@@ -225,7 +225,7 @@ def test_scenario_transiting_to_state_with_0_backprob_should_remain_there():
     assert expected_state == action.timer["state"].tolist()
 
 
-def test_scenario_transiting_to_state_with_1_backprob_should_go_back_to_normal():
+def test_scenario_transiting_to_state_with_1_back_to_default_prob_should_go_back_to_normal():
     """
     similar test to above, though this time we are using
     back_to_normal_prob = 1 => all actors should be back to "normal" state
@@ -485,7 +485,15 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
 
 
 def test_bugfix_collisions_force_act_next():
-    # previously, resetting the timer of reset actors was cancelling the reset
+    # Previously, resetting the timer of reset actors was cancelling the reset.
+    #
+    # We typically want to reset the timer when we have change the activity
+    # state => we want to generate new timer values that reflect the new state.
+    #
+    # But force_act_next should still have priority on that: if somewhere else
+    # we force some actors to act at the next clock step (e.g. to re-try
+    # buying an ER or so), the fact that their activity level changed should
+    # not cancel the retry.
 
     actor = Actor(size=10,
                   ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
@@ -520,8 +528,11 @@ def test_bugfix_collisions_force_act_next():
     action.reset_timers()
     assert action.timer.loc[forced]["remaining"].tolist() == [0, 0, 0, 0, 0]
 
-    # ticking the timers should not change the timers of the actors that
-    # are being forced
+    # Ticking the timers should not change the timers of the actors that
+    # are being forced.
+    # This is important for actor forcing themselves to act at the next clock
+    # step (typical scenario for retry) => the fact of thick the clock at the
+    # end of the execution should not impact them.
     action.timer_tick(actor.ids)
     assert action.timer.loc[forced]["remaining"].tolist() == [0, 0, 0, 0, 0]
     assert action.timer.loc[not_forced]["remaining"].equals(
@@ -529,9 +540,44 @@ def test_bugfix_collisions_force_act_next():
     )
 
 
+def test_bugfix_force_actors_should_only_act_once():
 
+    actor = Actor(size=10,
+                  ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
+    # 5 actors should trigger in 2 ticks, and 5 more
+    init_timers = pd.Series([2] * 5 + [5] * 5, index=actor.ids)
+    timers_gen = MockTimerGenerator(init_timers)
 
+    action = Action(
+        name="tested",
+        initiating_actor=actor,
+        actorid_field="ac_id",
 
+        # forcing the timer of all actors to be initialized to 0
+        timer_gen=timers_gen)
 
+    recording_op = FakeRecording()
+    action.set_operations(recording_op)
+
+    forced = pd.Index(["ac_1", "ac_3", "ac_7", "ac_8", "ac_9"])
+
+    # force_act_next should only impact those ids
+    action.force_act_next(forced)
+
+    assert action.timer["remaining"].tolist() == [2, 0, 2, 0, 2, 5, 5, 0, 0, 0]
+
+    action.execute()
+    assert recording_op.last_seen_actor_ids == ["ac_1", "ac_3", "ac_7", "ac_8", "ac_9"]
+    print action.timer["remaining"].tolist()
+    assert action.timer["remaining"].tolist() == [1, 2, 1, 2, 1, 4, 4, 5, 5, 5]
+    recording_op.reset()
+
+    action.execute()
+    assert recording_op.last_seen_actor_ids == []
+    assert action.timer["remaining"].tolist() == [0, 1, 0, 1, 0, 3, 3, 4, 4, 4]
+
+    action.execute()
+    assert recording_op.last_seen_actor_ids == ["ac_0", "ac_2", "ac_4"]
+    assert action.timer["remaining"].tolist() == [2, 0, 2, 0, 2, 2, 2, 3, 3, 3]
 
