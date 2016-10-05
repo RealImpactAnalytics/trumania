@@ -14,6 +14,19 @@ class FakeOp(operations.Operation):
         return self.output, self.logs
 
 
+class FakeRecording(operations.Operation):
+
+    def __init__(self):
+        self.last_seen_actor_ids = []
+
+    def __call__(self, action_data):
+        self.last_seen_actor_ids = action_data.index.tolist()
+        return action_data, {}
+
+    def reset(self):
+        self.last_seen_actor_ids = []
+
+
 class MockDropOp(operations.Operation):
     """
     simulating an action that drops rows

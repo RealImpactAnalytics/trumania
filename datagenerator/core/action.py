@@ -155,6 +155,13 @@ class Action(object):
         else:
             ids = pd.Index(ids)
 
+        # The reset_timers *operation* is called on an actor typically to
+        # re-generate some timer values because the activity level has
+        # changed (e.g. subscribers get "bursty" => their next action should
+        # now be earlier than originally timed).
+        # BUT: if some some other reason, some (typically other) actors have
+        # been forced to act at the next clock step, we don't want to cancel
+        # that by resetting their timers to some positive value.
         ids = ids.difference(self.forced_to_act_next)
 
         if len(ids) > 0:
@@ -168,6 +175,12 @@ class Action(object):
             self.timer.loc[ids, "remaining"] = new_timer
 
     def execute(self):
+
+        # Any previously forced actions will now execute => cancelling the flag.
+        # Note that some actors might put back the flag to themselves during
+        # self.operation_chain(ids_df), which is ok and in which case their
+        # timer will not be ticked => they will re-execte at the next clock step
+        self.forced_to_act_next = pd.Series()
 
         logging.info(" executing {} ".format(self.name))
         active_ids, inactive_ids = self.active_inactive_ids()
@@ -186,8 +199,6 @@ class Action(object):
             else:
                 # this should set the timer to -1 => will stay there ad vitam
                 self.timer_tick(active_ids)
-
-        self.forced_to_act_next = pd.Series()
 
         self.timer_tick(inactive_ids)
         return all_logs
