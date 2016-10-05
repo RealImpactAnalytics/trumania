@@ -195,6 +195,31 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
         from_ids=dealer_of_pos["set1"],
         to_ids=dealer_of_pos["chosen_from_set2"])
 
+    # Recording the stock level of every pos every day, for degugging
+    build_purchases = circus.create_action(
+        name="pos_stock_log",
+        initiating_actor=pos,
+        actorid_field="POS_ID",
+
+        timer_gen=ConstantDependentGenerator(
+            value=circus.clock.n_iterations(duration=pd.Timedelta("24h")) - 1
+        ))
+
+    build_purchases.set_operations(
+        pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+                from_field="POS_ID",
+                named_as="SIM_STOCK_LEVEL"),
+
+        pos.get_relationship("ERS").ops.get_neighbourhood_size(
+                from_field="POS_ID",
+                named_as="ERS_STOCK_LEVEL"),
+
+        circus.clock.ops.timestamp(named_as="TIME", random=False,
+                                   format="%Y-%m-%d"),
+
+        operations.FieldLogger(log_id="pos_stock_log")
+    )
+
     return pos
 
 

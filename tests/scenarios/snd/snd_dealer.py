@@ -181,8 +181,10 @@ def create_dealers_l2(circus, params, distributor_id_gen,
     logging.info(" generating l2 dealer initial SIM stock")
 
     pos_per_dealer_l2 = params["n_pos"] / params["n_dealers_l2"]
-    sims_per_dealer_l2 = params["n_init_sim_per_pos"] * pos_per_dealer_l2
-    ers_per_dealer_l2 = params["pos_ers_max_stock"] * pos_per_dealer_l2 / 2
+
+    # bugfix: we need enough ERS to feed the POS. 250k should be enough though..
+    sims_per_dealer_l2 = 10000000
+    ers_per_dealer_l2 = 10000000
 
     dealers_l2.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,

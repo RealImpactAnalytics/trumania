@@ -361,7 +361,7 @@ class DependentGenerator(object):
 
 class ConstantDependentGenerator(ConstantGenerator, DependentGenerator):
     """
-    Dependent generator ignoring the observation and producing a constant
+    Dependent generator ignoring the observations and producing a constant
     value.
     """
 

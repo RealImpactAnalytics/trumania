@@ -61,7 +61,13 @@ scenario_1 = {
     "customer_sim_purchase_min_period_days": 60,
     "customer_sim_purchase_max_period_days": 360,
 
-    "clock_time_step": "1h",
+    # clock_time_step limits the simulation in two ways:
+    #  - it is impossible to have more than one event per actor per clock step
+    #  - timestamps will typically be generated uniformly randomly inside a
+    # clock step => resulting daily distribution will be as coarse grained as
+    # the clock step.
+    "clock_time_step": "8h",
+
     "sim_price": 10,
 
     "n_init_sim_per_pos": 100,
@@ -95,7 +101,7 @@ scenario_1 = {
     "std_pos_ers_bulk_purchase_size": 100,
 
     "simulation_start_date": "13 Sept 2016 12:00",
-    "simulation_duration": "5 days",
+    "simulation_duration": "60 days",
     "output_folder": "snd_output_logs/scenario_0"
 }
 
@@ -103,15 +109,13 @@ scenario_1 = {
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
     "geography": "belgium_5",
-    "n_pos": 50,
+    "n_pos": 100,
 
     "n_dealers_l2": 4,
     "n_dealers_l1": 2,
     "n_telcos": 1,
 
-    "n_customers": 5000,
-    "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
-
+    "n_customers": 10000,
 })
 
 
