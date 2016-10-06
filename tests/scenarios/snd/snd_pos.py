@@ -124,26 +124,17 @@ def _create_attractiveness(circus, pos):
     )
 
 
-def _add_ers_stock(circus, pos, recharge_id_gen, params):
+def build_pos_stock_size_gen(circus, params):
     """
-    add a relationship to those POS to maintain the electronic recharge stock
-    + initialize them according to the know stock distribution
+    return: the generator for intial pos ERS stock
     """
 
-    # generator of stock sizes:
     gen_namespace, gen_id = params["pos_init_er_stock_distro"].split("/")
-    pos_stock_size_gen = db.load_empirical_discrete_generator(
-        namespace=gen_namespace, gen_id=gen_id, seed=circus.seeder.next())
 
-    # generator of list of ER ids
-    ers_stock_gen = pos_stock_size_gen.flatmap(
-        DependentBulkGenerator(element_generator=recharge_id_gen))
-
-    # storing the electronic recharges as a POS relationship
-    ers_stock_rel = pos.create_relationship("ERS", seed=circus.seeder.next())
-    ers_stock_rel.add_grouped_relations(
-        from_ids=pos.ids,
-        grouped_ids=ers_stock_gen.generate(size=pos.size))
+    return db.load_empirical_discrete_generator(
+        namespace=gen_namespace,
+        gen_id=gen_id,
+        seed=circus.seeder.next())
 
 
 def create_pos(circus, params, sim_id_gen, recharge_id_gen):
@@ -182,7 +173,12 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
         name="SIMS", item_id_gen=sim_id_gen,
         n_items_per_actor=params["n_init_sim_per_pos"], seeder=circus.seeder)
 
-    _add_ers_stock(circus, pos, recharge_id_gen, params)
+    logging.info("generating POS initial ERS stock")
+    ers_stock_gen = build_pos_stock_size_gen(circus, params).flatmap(
+        DependentBulkGenerator(element_generator=recharge_id_gen))
+    pos.create_stock_relationship_grp(name="ERS",
+                                      stock_bulk_gen=ers_stock_gen,
+                                      seed=circus.seeder.next())
 
     logging.info("assigning a dealer to each POS")
     dealer_of_pos = make_random_assign(

@@ -3,7 +3,7 @@ from __future__ import division
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
-from numpy.random import *
+import snd_pos
 
 
 def create_telcos(circus, params, distributor_id_gen,
@@ -182,9 +182,21 @@ def create_dealers_l2(circus, params, distributor_id_gen,
 
     pos_per_dealer_l2 = params["n_pos"] / params["n_dealers_l2"]
 
+    logging.info("generating Dealers L2 initial ERS stock")
+    ers_stock_gen = snd_pos.build_pos_stock_size_gen(circus, params)\
+        .map(f_vect=scale(factor=pos_per_dealer_l2))\
+        .flatmap(DependentBulkGenerator(element_generator=recharge_id_gen))
+
+    dealers_l2.create_stock_relationship_grp(
+        name="ERS",
+        stock_bulk_gen=ers_stock_gen,
+        seed=circus.seeder.next())
+
     # bugfix: we need enough ERS to feed the POS. 250k should be enough though..
+
+    logging.info("generating Dealers L2 initial SIM stock")
     sims_per_dealer_l2 = 10000
-    ers_per_dealer_l2 = 10000
+    # ers_per_dealer_l2 = 10000
     # sims_per_dealer_l2 = 10000000
     # ers_per_dealer_l2 = 10000000
 
@@ -192,9 +204,9 @@ def create_dealers_l2(circus, params, distributor_id_gen,
         name="SIMS", item_id_gen=sim_id_gen,
         n_items_per_actor=sims_per_dealer_l2, seeder=circus.seeder)
 
-    dealers_l2.create_stock_relationship(
-        name="ERS", item_id_gen=recharge_id_gen,
-        n_items_per_actor=ers_per_dealer_l2, seeder=circus.seeder)
+    # dealers_l2.create_stock_relationship(
+    #     name="ERS", item_id_gen=recharge_id_gen,
+    #     n_items_per_actor=ers_per_dealer_l2, seeder=circus.seeder)
 
     # logging.info(" linking l2 dealers to l1 dealers")
     # _create_distribution_link(circus,
