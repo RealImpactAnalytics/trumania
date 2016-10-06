@@ -62,8 +62,7 @@ def add_mobility_action(circus, params):
         method="normal", loc=fa_mean_weekly_activity, scale=fa_weekly_std,
         seed=circus.seeder.next())
 
-    mobility_activity_gen = BoundedGenerator(
-        upstream_gen=gaussian_activity, lb=1)
+    mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=1))
 
     mobility_action = circus.create_action(
         name="field_agent_mobility",

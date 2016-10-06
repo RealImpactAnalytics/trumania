@@ -183,8 +183,10 @@ def create_dealers_l2(circus, params, distributor_id_gen,
     pos_per_dealer_l2 = params["n_pos"] / params["n_dealers_l2"]
 
     # bugfix: we need enough ERS to feed the POS. 250k should be enough though..
-    sims_per_dealer_l2 = 10000000
-    ers_per_dealer_l2 = 10000000
+    sims_per_dealer_l2 = 10000
+    ers_per_dealer_l2 = 10000
+    # sims_per_dealer_l2 = 10000000
+    # ers_per_dealer_l2 = 10000000
 
     dealers_l2.create_stock_relationship(
         name="SIMS", item_id_gen=sim_id_gen,
@@ -266,14 +268,13 @@ def _add_bulk_purchase_action(circus,
     logging.info("generating size of bulk purchase for {}".format(action_name))
     buyer_actor.create_attribute(
         name=bulk_size_attribute,
-        init_gen=BoundedGenerator(
-            upstream_gen=NumpyRandomGenerator(
-                method="normal",
-                loc=mean_bulk_purchase_size,
-                scale=std_bulk_purchase_size,
-                seed=circus.seeder.next()
-            ), lb=0
-        ))
+        init_gen=NumpyRandomGenerator(
+                    method="normal",
+                    loc=mean_bulk_purchase_size,
+                    scale=std_bulk_purchase_size,
+                    seed=circus.seeder.next()
+                ).map(f=bound_value(lb=0))
+    )
 
     logging.info("creating {} bulk purchase action".format(action_name))
     build_purchases = circus.create_action(

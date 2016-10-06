@@ -64,7 +64,7 @@ scenario_1 = {
     # clock_time_step limits the simulation in two ways:
     #  - it is impossible to have more than one event per actor per clock step
     #  - timestamps will typically be generated uniformly randomly inside a
-    # clock step => resulting daily distribution will be as coarse grained as
+    # clock step => resulting daily distributions will be as coarse grained as
     # the clock step.
     "clock_time_step": "8h",
 
@@ -109,13 +109,16 @@ scenario_1 = {
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
     "geography": "belgium_5",
-    "n_pos": 100,
+    #"n_pos": 100,
+    "n_pos": 10,
 
     "n_dealers_l2": 4,
     "n_dealers_l1": 2,
     "n_telcos": 1,
+    "simulation_duration": "8 days",
 
-    "n_customers": 10000,
+    #    "n_customers": 10000,
+    "n_customers": 100,
 })
 
 

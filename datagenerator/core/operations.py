@@ -231,6 +231,20 @@ def copy_if(action_data):
     return copied.rename(columns={source_field: "result"})
 
 
+def bound_value(lb=None, ub=None):
+    """
+    builds a function that limits the restraint the range of a value
+    """
+
+    def _f(value):
+        limited = max(lb, value)
+        if ub is not None:
+            limited = min(ub, limited)
+        return limited
+
+    return _f
+
+
 def logistic(k, x0=0, L=1):
     """
 
@@ -282,20 +296,21 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
                     transiting more smoothly in the middle of it.
     """
 
-    def f(x):
-        if x < x_min:
-            return f(x_min)
+    bounded = bound_value(lb=x_min, ub=x_max)
 
-        if x > x_max:
-            return f(x_max)
+    def f(x):
+        # values outside the sigmoid are just the repetition of what's
+        # happening at the boundaries
+        x_b = bounded(x)
 
         if incrementing:
-            return stats.beta.cdf((x - x_min) / (x_max - x_min),
-                                  a=shape, b=shape)
+            return stats.beta.cdf((x_b - x_min) / (x_max - x_min),
+                                   a=shape, b=shape)
         else:
-            return stats.beta.sf((x - x_min) / (x_max - x_min),
-                                 a=shape, b=shape)
+            return stats.beta.sf((x_b - x_min) / (x_max - x_min),
+                                  a=shape, b=shape)
 
+    # TODO: user bounded here
     return np.frompyfunc(f, 1, 1)
 
 

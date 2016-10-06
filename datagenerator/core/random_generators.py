@@ -36,10 +36,37 @@ class Generator(object):
         """
         pass
 
+    def map(self, f=None, f_vect=None):
+        """
+        Creates a new generator that transforms the generated values with the
+        provided function.
+
+        # TODO: do we really need "non vectorialized" f and vectorialized
+        f_vect? Have a look at numpy ufunc...
+        """
+
+        assert (f is not None) ^ (f_vect is not None)
+        parent = self
+
+        class Transformed(Generator):
+            def generate(self, size):
+
+                samples = parent.generate(size=size)
+
+                if f_vect is not None:
+                    return f_vect(samples)
+
+                elif f is not None:
+                    return [f(sample) for sample in samples]
+
+        return Transformed()
+
     def flatmap(self, dependent_generator):
         """
-        chains self with this other generator by feeding "our" output values as
-        observations to the dependent_generator
+        Not _really_ a flatmap but close enough on concept (I guess): this
+        chains self with a DependentGenerator by feeding our output
+        values as observations to the DependentGenerator at the moment of
+        generation.
 
         :param dependent_generator: must be an instance of DependentGenerator,
          i.e. have a .generate(observations=...) method
@@ -48,8 +75,7 @@ class Generator(object):
             provides the combination of the above
 
         """
-        return TransformedGenerator(upstream_gen=self,
-                                    vect_f=dependent_generator.generate)
+        return self.map(f_vect=dependent_generator.generate)
 
     class GeneratorOps(object):
         def __init__(self, generator):
@@ -234,65 +260,6 @@ class MSISDNGenerator(Generator):
                                      axis=0)
 
         return msisdns
-
-
-class TransformedGenerator(Generator):
-    # TODO: this could become a .map() operation on the Generator, just beside
-    # the existing flatmap()
-    """
-    Generators which maps the output of another generator with a
-    deterministic function.
-
-    I.e., if the upstream generator provides samples from X, this provides
-    samples from f(X).
-
-    TODO: refactor: ParetoGenerator is now a specific case of this class
-    """
-
-    def __init__(self, upstream_gen, f=None, vect_f=None):
-        """
-        :param upstream_gen: upstream generator
-        :param f: item per item transformation function
-        :param vect_f: "vectorialized" transformation function, i.e. able to
-         transform everything in one go
-        """
-
-        assert (f is not None) ^ (vect_f is not None)
-
-        Generator.__init__(self)
-        self.upstream_gen = upstream_gen
-        self.f = f
-        self.vect_f = vect_f
-
-    def generate(self, size):
-        samples = self.upstream_gen.generate(size=size)
-
-        if self.vect_f is not None:
-            return self.vect_f(samples)
-
-        elif self.f is not None:
-            return [self.f(sample) for sample in samples]
-
-
-class BoundedGenerator(TransformedGenerator):
-    """
-    TransformedGenerator that bounds the generated values to a min and a max
-    value.
-
-    TODO: this simplistic implementation is just replacing out of bound
-    values with the bounds themselves. We could re-draw them instead  (though
-    we'd then need to prevent infinite recursions somehow...)
-    """
-
-    def __init__(self, upstream_gen, lb=None, ub=None):
-
-        def bound_value(value):
-            bounded = max(lb, value)
-            if ub is not None:
-                bounded = min(ub, bounded)
-            return bounded
-
-        TransformedGenerator.__init__(self, upstream_gen, bound_value)
 
 
 class DependentGenerator(object):

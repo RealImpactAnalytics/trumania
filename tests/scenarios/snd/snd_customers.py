@@ -60,8 +60,7 @@ def add_mobility_action(circus, params):
         scale=params["std_daily_customer_mobility_activity"],
         seed=circus.seeder.next())
 
-    mobility_activity_gen = BoundedGenerator(
-        upstream_gen=gaussian_activity, lb=.5)
+    mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=.5))
 
     mobility_action = circus.create_action(
         name="customer_mobility",
@@ -113,13 +112,11 @@ def add_purchase_sim_action(circus, params):
     min_activity = purchase_timer_gen.activity(n_actions=1,
         per=pd.Timedelta(days=params["customer_sim_purchase_max_period_days"]))
 
-    purchase_activity_gen = TransformedGenerator(
-        upstream_gen=NumpyRandomGenerator(
+    purchase_activity_gen = NumpyRandomGenerator(
             method="uniform",
             low=1 / max_activity,
             high=1 / min_activity,
-            seed=circus.seeder.next()),
-        f=lambda per: 1/per)
+            seed=circus.seeder.next()).map(f=lambda per: 1/per)
 
     low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
@@ -148,13 +145,11 @@ def add_purchase_er_action(circus, params):
     min_activity = purchase_timer_gen.activity(n_actions=1,
         per=pd.Timedelta(days=params["customer_er_purchase_max_period_days"]))
 
-    purchase_activity_gen = TransformedGenerator(
-        upstream_gen=NumpyRandomGenerator(
+    purchase_activity_gen = NumpyRandomGenerator(
             method="uniform",
             low=1 / max_activity,
             high=1 / min_activity,
-            seed=circus.seeder.next()),
-        f=lambda per: 1/per)
+            seed=circus.seeder.next()).map(f=lambda per: 1/per)
 
     price_gen = NumpyRandomGenerator(
         method="choice", a=[5, 10, 25, 50, 100], seed=circus.seeder.next())
