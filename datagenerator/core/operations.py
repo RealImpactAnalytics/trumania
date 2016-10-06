@@ -317,7 +317,6 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
             return stats.beta.sf((x_b - x_min) / (x_max - x_min),
                                   a=shape, b=shape)
 
-    # TODO: user bounded here
     return np.frompyfunc(f, 1, 1)
 
 

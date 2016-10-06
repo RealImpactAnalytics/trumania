@@ -66,7 +66,7 @@ scenario_1 = {
     #  - timestamps will typically be generated uniformly randomly inside a
     # clock step => resulting daily distributions will be as coarse grained as
     # the clock step.
-    "clock_time_step": "8h",
+    "clock_time_step": "4h",
 
     "sim_price": 10,
 
@@ -110,16 +110,14 @@ scenario_1 = {
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
     "geography": "belgium_5",
-    #"n_pos": 100,
-    "n_pos": 10,
+    "n_pos": 100,
 
-    "n_dealers_l2": 4,
+    "n_dealers_l2": 10,
     "n_dealers_l1": 2,
     "n_telcos": 1,
-    "simulation_duration": "8 days",
+    "simulation_duration": "30 days",
 
-    #    "n_customers": 10000,
-    "n_customers": 100,
+    "n_customers": 10000,
 })
 
 
@@ -142,22 +140,24 @@ class SND(WithBelgium):
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 
-        # self.telcos = snd_dealer.create_telcos(self, params,
-        #                                        distributor_id_gen,
-        #                                        sim_id_gen,
-        #                                        recharge_id_gen)
-        #
-        # self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
-        #                                                distributor_id_gen,
-        #                                                sim_id_gen,
-        #                                                recharge_id_gen)
-        #
+        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
+
+        self.telcos = snd_dealer.create_telcos(self, params,
+                                               distributor_id_gen,
+                                               sim_id_gen,
+                                               recharge_id_gen)
+
+        self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
+                                                       distributor_id_gen,
+                                                       sim_id_gen,
+                                                       recharge_id_gen)
+
         self.dealers_l2 = snd_dealer.create_dealers_l2(self, params,
                                                        distributor_id_gen,
                                                        sim_id_gen,
                                                        recharge_id_gen)
 
-        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
+        snd_pos.connect_pos_to_dealers(self)
         snd_pos.add_sim_bulk_purchase_action(self, params)
         snd_pos.add_ers_bulk_purchase_action(self, params)
         snd_customers.add_purchase_sim_action(self, params)
@@ -170,18 +170,18 @@ class SND(WithBelgium):
 
 if __name__ == "__main__":
 
-    params = scenario_1
+    run_params = scenario_1
 
     setup_logging()
     start_ts = pd.Timestamp(datetime.now())
 
-    circus = SND(params)
+    circus = SND(run_params)
     built_ts = pd.Timestamp(datetime.now())
 
-    circus.run(pd.Timedelta(params["simulation_duration"]),
+    circus.run(pd.Timedelta(run_params["simulation_duration"]),
                delete_existing_logs=True)
     execution_ts = pd.Timestamp(datetime.now())
-    logs = load_all_logs(params["output_folder"])
+    logs = load_all_logs(run_params["output_folder"])
 
     for logid, log_df in logs.iteritems():
         logging.info(" - some {}:\n{}\n\n".format(
