@@ -182,31 +182,24 @@ def create_dealers_l2(circus, params, distributor_id_gen,
 
     pos_per_dealer_l2 = params["n_pos"] / params["n_dealers_l2"]
 
-    logging.info("generating Dealers L2 initial ERS stock")
+    logging.info("generating dealers L2 initial ERS stock")
     ers_stock_gen = snd_pos.build_pos_stock_size_gen(circus, params)\
         .map(f_vect=scale(factor=pos_per_dealer_l2))\
         .flatmap(DependentBulkGenerator(element_generator=recharge_id_gen))
 
-    dealers_l2.create_stock_relationship_grp(
-        name="ERS",
-        stock_bulk_gen=ers_stock_gen,
-        seed=circus.seeder.next())
+    dealers_l2.create_stock_relationship_grp(name="ERS",
+                                             stock_bulk_gen=ers_stock_gen,
+                                             seed=circus.seeder.next())
 
-    # bugfix: we need enough ERS to feed the POS. 250k should be enough though..
+    logging.info("generating dealers L2 initial SIMS stock")
+    sims_stock_gen = snd_pos.build_pos_stock_size_gen(circus, params)\
+        .map(f_vect=scale(factor=pos_per_dealer_l2/params["ers_to_sim_ratio"]))\
+        .map(f=bound_value(lb=100)) \
+        .flatmap(DependentBulkGenerator(element_generator=sim_id_gen))
 
-    logging.info("generating Dealers L2 initial SIM stock")
-    sims_per_dealer_l2 = 10000
-    # ers_per_dealer_l2 = 10000
-    # sims_per_dealer_l2 = 10000000
-    # ers_per_dealer_l2 = 10000000
-
-    dealers_l2.create_stock_relationship(
-        name="SIMS", item_id_gen=sim_id_gen,
-        n_items_per_actor=sims_per_dealer_l2, seeder=circus.seeder)
-
-    # dealers_l2.create_stock_relationship(
-    #     name="ERS", item_id_gen=recharge_id_gen,
-    #     n_items_per_actor=ers_per_dealer_l2, seeder=circus.seeder)
+    dealers_l2.create_stock_relationship_grp(name="SIMS",
+                                             stock_bulk_gen=sims_stock_gen,
+                                             seed=circus.seeder.next())
 
     # logging.info(" linking l2 dealers to l1 dealers")
     # _create_distribution_link(circus,

@@ -70,14 +70,15 @@ scenario_1 = {
 
     "sim_price": 10,
 
-    "n_init_sim_per_pos": 100,
-    "n_init_sim_per_dealer": 1000,
+    # There are no parameters for the SIM purchases, we just scale the ERS
+    # down by a factor 100 as a simplification for now
+    "ers_to_sim_ratio": 100,
 
     # empirical distribution of pos initial stock level
     "pos_init_er_stock_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
 
-    "pos_sim_max_stock": 50,
     "pos_ers_max_stock": 500,
+    "pos_sim_max_stock": 500,
 
     # distribution of POS's bulk size when buying SIMs
     "pos_sim_bulk_purchase_sizes": [10, 15, 25],

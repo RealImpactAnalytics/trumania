@@ -169,15 +169,20 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
         from_ids=pos.get_attribute_values("SITE"),
         to_ids=pos.ids)
 
-    pos.create_stock_relationship(
-        name="SIMS", item_id_gen=sim_id_gen,
-        n_items_per_actor=params["n_init_sim_per_pos"], seeder=circus.seeder)
-
     logging.info("generating POS initial ERS stock")
     ers_stock_gen = build_pos_stock_size_gen(circus, params).flatmap(
         DependentBulkGenerator(element_generator=recharge_id_gen))
     pos.create_stock_relationship_grp(name="ERS",
                                       stock_bulk_gen=ers_stock_gen,
+                                      seed=circus.seeder.next())
+
+    logging.info("generating POS initial SIMS stock")
+    sim_stock_gen = build_pos_stock_size_gen(circus, params) \
+        .map(f_vect=scale(factor=1/params["ers_to_sim_ratio"]))\
+        .map(f=bound_value(lb=10))\
+        .flatmap(DependentBulkGenerator(element_generator=sim_id_gen))
+    pos.create_stock_relationship_grp(name="SIMS",
+                                      stock_bulk_gen=sim_stock_gen,
                                       seed=circus.seeder.next())
 
     logging.info("assigning a dealer to each POS")
@@ -211,7 +216,7 @@ def create_pos(circus, params, sim_id_gen, recharge_id_gen):
                 named_as="ERS_STOCK_LEVEL"),
 
         circus.clock.ops.timestamp(named_as="TIME", random=False,
-                                   format="%Y-%m-%d"),
+                                   log_format="%Y-%m-%d"),
 
         operations.FieldLogger(log_id="pos_stock_log")
     )
