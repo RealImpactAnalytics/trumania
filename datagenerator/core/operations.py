@@ -245,6 +245,13 @@ def bound_value(lb=None, ub=None):
     return _f
 
 
+def scale(factor):
+    def _f_vect(value):
+        return value * factor
+
+    return _f_vect
+
+
 def logistic(k, x0=0, L=1):
     """
 
