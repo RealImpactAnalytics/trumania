@@ -103,30 +103,6 @@ class Actor(object):
     def relationship_names(self):
         return self.relationships.keys()
 
-    def check_attributes(self, ids, field, condition, threshold):
-        """
-
-        :param ids:
-        :param field:
-        :param condition:
-        :param threshold:
-        :return:
-        """
-
-        attr = self.get_attribute_values(ids, field)
-
-        if condition == ">":
-            return attr > threshold
-        if condition == ">=":
-            return attr >= threshold
-        if condition == "<":
-            return attr < threshold
-        if condition == "<=":
-            return attr <= threshold
-        if condition == "==":
-            return attr == threshold
-        raise Exception("Unknown condition : %s" % condition)
-
     def update(self, attribute_df):
         """
         Adds or updates actors with the provided attribute ids and values
