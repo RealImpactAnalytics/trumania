@@ -393,5 +393,5 @@ class DependentBulkGenerator(DependentGenerator):
         def f(bulk_size):
             return self.element_generator.generate(bulk_size)
 
-        return [f(observation) for observation in observations]
+        return pd.Series([f(observation) for observation in observations])
 

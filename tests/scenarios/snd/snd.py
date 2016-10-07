@@ -28,24 +28,6 @@ import logging
 
 scenario_1 = {
 
-    # Belgium geography contains 4208 sites => we limit to 100 to limit the
-    # cases when purchase fail due to missing POS at a SITE
-    # TODO: implement "move and retry" strategy for the customer and put back
-    #  the full Belgium geography
-
-    "geography": "belgium_100",
-
-    "n_customers": 50000,
-    "n_field_agents": 5,
-
-    "n_pos": 500,       # keeping a ration 100 between number of customer and
-                        #  pos => limiting geography to make sure we have
-                        # at least one pos per site
-
-    "n_dealers_l2": 24,
-    "n_dealers_l1": 4,
-    "n_telcos": 1,
-
     "mean_known_sites_per_customer": 6,
 
     "mean_daily_customer_mobility_activity": .2,
@@ -66,7 +48,7 @@ scenario_1 = {
     #  - timestamps will typically be generated uniformly randomly inside a
     # clock step => resulting daily distributions will be as coarse grained as
     # the clock step.
-    "clock_time_step": "4h",
+    "clock_time_step": "1h",
 
     "sim_price": 10,
 
@@ -95,29 +77,32 @@ scenario_1 = {
     "pos_sim_restock_shape": 5,
 
     # distribution of SIM and ERs bulk size bought by POS
-    "mean_pos_sim_bulk_purchase_size": 1000,
-    "std_pos_sim_bulk_purchase_size": 100,
-
-    "mean_pos_ers_bulk_purchase_size": 1000,
-    "std_pos_ers_bulk_purchase_size": 100,
+    # "mean_pos_sim_bulk_purchase_size": 1000,
+    # "std_pos_sim_bulk_purchase_size": 100,
+    #
+    # "mean_pos_ers_bulk_purchase_size": 1000,
+    # "std_pos_ers_bulk_purchase_size": 100,
 
     "simulation_start_date": "13 Sept 2016 12:00",
     "simulation_duration": "60 days",
-    "output_folder": "snd_output_logs/scenario_0"
+    "output_folder": "snd_output_logs/scenario_0",
 }
 
 
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
     "geography": "belgium_5",
-    "n_pos": 100,
-
-    "n_dealers_l2": 10,
-    "n_dealers_l1": 2,
-    "n_telcos": 1,
-    "simulation_duration": "30 days",
 
     "n_customers": 10000,
+    "n_pos": 50,
+    "n_dealers_l2": 15,
+    "n_dealers_l1": 1,
+
+    "n_field_agents": 10,
+
+    "n_telcos": 1,
+
+    "simulation_duration": "5 days",
 })
 
 
