@@ -76,13 +76,6 @@ scenario_1 = {
     "max_pos_sim_stock_triggering_restock": 10,
     "pos_sim_restock_shape": 5,
 
-    # distribution of SIM and ERs bulk size bought by POS
-    # "mean_pos_sim_bulk_purchase_size": 1000,
-    # "std_pos_sim_bulk_purchase_size": 100,
-    #
-    # "mean_pos_ers_bulk_purchase_size": 1000,
-    # "std_pos_ers_bulk_purchase_size": 100,
-
     "simulation_start_date": "13 Sept 2016 12:00",
     "simulation_duration": "60 days",
     "output_folder": "snd_output_logs/scenario_0",
@@ -91,18 +84,17 @@ scenario_1 = {
 
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
-    "geography": "belgium_5",
 
-    "n_customers": 10000,
-    "n_pos": 50,
-    "n_dealers_l2": 15,
-    "n_dealers_l1": 1,
+    "geography": "belgium_500",
+    "n_pos": 5000,
 
-    "n_field_agents": 10,
-
+    "n_dealers_l2": 500,
+    "n_dealers_l1": 25,
     "n_telcos": 1,
 
-    "simulation_duration": "5 days",
+    "n_field_agents": 100,
+
+    "n_customers": 500000,
 })
 
 
