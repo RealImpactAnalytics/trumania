@@ -85,7 +85,7 @@ class Relationship(object):
             missing_index = from_ids.index.difference(selected.index)
             missing_values = pd.DataFrame({
                     "from": from_ids.loc[missing_index],
-                    "to": None},
+                    "to": [None] * missing_index.shape[0]},
                 index=missing_index)
 
             return pd.concat([selected, missing_values], copy=False)
@@ -314,7 +314,7 @@ class Relationship(object):
         seed = int(saved_df.loc[("seed")].values[0][0])
 
         table = saved_df.loc[("table", slice(None), slice(None))].unstack()
-        table.columns = table .columns.droplevel(level=0)
+        table.columns = table.columns.droplevel(level=0)
         table.columns.name = None
         table.index.name = None
         table["weight"] = table["weight"].astype(float)
