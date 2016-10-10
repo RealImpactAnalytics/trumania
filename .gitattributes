@@ -47,3 +47,14 @@ datagenerator/components/_DB/uganda/actors/cities/relationships/CELLS.csv filter
 datagenerator/components/_DB/uganda/generators filter=lfs diff=lfs merge=lfs -text
 datagenerator/components/_DB/uganda/generators/timer_gens filter=lfs diff=lfs merge=lfs -text
 datagenerator/components/_DB/uganda/generators/timer_gens/cell_repair_timer_profile.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1 filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/circus_config.json filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites/attributes filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites/attributes/LATITUDE.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites/attributes/LONGITUDE.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites/ids.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites/relationships filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/snd_v1/actors/sites/relationships/CELLS.csv filter=lfs diff=lfs merge=lfs -text

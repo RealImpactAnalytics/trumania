@@ -26,78 +26,6 @@ import snd_field_agents
 import logging
 
 
-scenario_1 = {
-
-    "mean_known_sites_per_customer": 6,
-
-    "mean_daily_customer_mobility_activity": .2,
-    "std_daily_customer_mobility_activity": .2,
-
-    "mean_daily_fa_mobility_activity": 1,
-    "std_daily_fa_mobility_activity": .2,
-
-    # average number of days between 2 item purchase by the same customer
-    "customer_er_purchase_min_period_days": 1,
-    "customer_er_purchase_max_period_days": 9,
-
-    "customer_sim_purchase_min_period_days": 60,
-    "customer_sim_purchase_max_period_days": 360,
-
-    # clock_time_step limits the simulation in two ways:
-    #  - it is impossible to have more than one event per actor per clock step
-    #  - timestamps will typically be generated uniformly randomly inside a
-    # clock step => resulting daily distributions will be as coarse grained as
-    # the clock step.
-    "clock_time_step": "1h",
-
-    "sim_price": 10,
-
-    # There are no parameters for the SIM purchases, we just scale the ERS
-    # down by a factor 100 as a simplification for now
-#    "ers_to_sim_ratio": 100,
-
-    # empirical distribution of pos initial stock level
-    "pos_init_er_stock_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
-
-    "pos_ers_max_stock": 500,
-    "pos_sim_max_stock": 500,
-
-    # distribution of POS's bulk size when buying SIMs
-    "pos_sim_bulk_purchase_sizes": [10, 15, 25],
-    "pos_sim_bulk_purchase_sizes_dist": [.5, .3, .2],
-
-    # distribution of POS's bulk size when buying electronic recharges
-    "pos_ers_bulk_purchase_sizes": [100, 200, 450],
-    "pos_ers_bulk_purchase_sizes_dist": [.4, .3, .3],
-
-    # largest possible er or SIM stock level that can trigger a restock
-    "max_pos_er_stock_triggering_restock": 50,
-    "pos_er_restock_shape": 2,
-    "max_pos_sim_stock_triggering_restock": 10,
-    "pos_sim_restock_shape": 5,
-
-    "simulation_start_date": "13 Sept 2016 12:00",
-    "simulation_duration": "60 days",
-    "output_folder": "snd_output_logs/scenario_0",
-}
-
-
-# temporary downscaling of the scenario to accelerate tests
-scenario_1.update({
-
-    "geography": "belgium_5",
-    "n_pos": 100,
-
-    "n_dealers_l2": 25,
-    "n_dealers_l1": 5,
-    "n_telcos": 1,
-
-    "n_field_agents": 100,
-
-    "n_customers": 5000,
-})
-
-
 class SND(WithBelgium):
 
     def __init__(self, params):
@@ -113,7 +41,7 @@ class SND(WithBelgium):
         sim_id_gen = SequencialGenerator(prefix="SIM_")
         recharge_id_gen = SequencialGenerator(prefix="ER_")
 
-        self.sites = snd_sites.create_sites(self, params)
+        self.sites = snd_sites.add_sites(self, params)
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 

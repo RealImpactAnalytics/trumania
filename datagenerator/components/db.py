@@ -25,6 +25,11 @@ def load_actor(namespace, actor_id):
     return Actor.load_from(_actor_folder(namespace, actor_id))
 
 
+def list_actors(namespace):
+    folder = namespace_folder(namespace)
+    return [d for d in os.listdir(folder) if os.path.isdir(d)]
+
+
 def save_timer_gen(timer_gen, namespace, timer_gen_id):
 
     timer_gen_folder = _timer_gens_root_folder(namespace)
@@ -70,24 +75,35 @@ def load_empirical_discrete_generator(namespace, gen_id, seed):
     return gen
 
 
-def _namespace_folder(namespace):
+def is_namespace_existing(namespace):
+    return os.path.exists(namespace_folder(namespace))
+
+
+def namespace_folder(namespace):
     return os.path.join(_db_folder(), namespace)
 
 
+def create_namespace(namespace):
+    folder = namespace_folder(namespace)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    return folder
+
+
 def remove_namespace(namespace):
-    ensure_non_existing_dir(_namespace_folder(namespace))
+    ensure_non_existing_dir(namespace_folder(namespace))
 
 
 def _actor_folder(namespace, actor_id):
     return os.path.join(
-        _namespace_folder(namespace),
+        namespace_folder(namespace),
         "actors",
         actor_id)
 
 
 def _generators_folder(namespace):
     return os.path.join(
-        _namespace_folder(namespace),
+        namespace_folder(namespace),
         "generators")
 
 
