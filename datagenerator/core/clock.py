@@ -53,11 +53,20 @@ class Clock(object):
         for listener in self.__increment_listeners:
             listener.increment()
 
-    def get_timestamp(self, size=1, random=True, log_format="%Y%m%d %H:%M:%S"):
-        """Returns random timestamps within the current value of the clock and the next step
+    def get_timestamp(self, size=1, random=True, log_format=None):
+        """
+        Returns timestamps formatted as string
 
         :type size: int
         :param size: number of timestamps to generate, default 1
+
+        :type random: boolean
+        :param random: if True, the timestamps are randomly generated in [
+        self.current_date, self.current_date+self.step_duration]
+
+        :type random: string
+        :param log_format: string format of the generated timestamps
+
         :rtype: Pandas Series
         :return: random timestamps in the form of strings
         """
