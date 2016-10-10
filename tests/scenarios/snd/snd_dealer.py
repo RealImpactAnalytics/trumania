@@ -115,7 +115,7 @@ def create_dealers_l1(circus, params, distributor_id_gen,
                                              stock_bulk_gen=ers_stock_gen,
                                              seed=circus.seeder.next())
 
-    logging.info("generating dealers L2 initial SIMS stock")
+    logging.info("generating dealers L1 initial SIMS stock")
     sims_stock_gen = snd_pos.build_ers_pos_stock_size_gen(circus, params)\
         .map(f_vect=scale(factor=pos_per_dealer_l1/params["ers_to_sim_ratio"]))\
         .map(f=bound_value(lb=1000)) \

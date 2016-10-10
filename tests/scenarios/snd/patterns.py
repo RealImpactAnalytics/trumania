@@ -6,7 +6,7 @@ import datagenerator.core.operations as operations
 
 def trigger_action_if_low_stock(
         circus, stock_relationship, actor_id_field, restock_trigger,
-        triggered_action_name, field_prefix=None):
+        triggered_action_name, field_prefix=""):
     """
 
     Looks up the stock level of the specified relationship and submits that
