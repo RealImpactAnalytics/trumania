@@ -50,8 +50,15 @@ class Circus(object):
                              "".format(name))
 
         self.actors[name] = actor.Actor(**actor_params)
+        return self.actors[name]
 
-    def load_actor(self, namespace, actor_id):
+    def load_actor(self, actor_id, namespace=None):
+
+        # Defaulting to the namespace associated to this circus if none
+        # specified
+        if namespace is None:
+            namespace = self.name
+
         actor = db.load_actor(namespace=namespace, actor_id=actor_id)
         self.actors[actor_id] = actor
         return actor
@@ -159,8 +166,7 @@ class Circus(object):
                             **clock_config)
 
             for actor_id in db.list_actors(namespace=circus_name):
-                circus.actions[actor_id] = db.load_actor(
-                    namespace=circus_name, actor_id=actor_id)
+                circus.load_actor(actor_id)
 
             return circus
 
@@ -201,3 +207,15 @@ class Circus(object):
 
         logging.info("circus saved")
 
+    def description(self):
+
+        return {
+            "circus_name": self.name,
+            "master_seed": self.master_seed,
+            "actors": {actor_id: actor.description()
+                       for actor_id, actor in self.actors.iteritems()
+                       }
+        }
+
+    def __str__(self):
+        return json.dumps(self.description(), indent=4)
