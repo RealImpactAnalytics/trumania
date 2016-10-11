@@ -50,7 +50,9 @@ class Actor(object):
     def create_stock_relationship(self, name, item_id_gen, n_items_per_actor,
                                   seeder):
         """
-        Creates a relationship aimed at maintaining a stock.
+        Creates a relationship aimed at maintaining a stock, from a generator
+        that create stock item ids.
+
         The relationship does not point to another actor, but to items
         whose id is generated with the provided generator.
         """
@@ -66,6 +68,18 @@ class Actor(object):
         rel_to_items.add_relations(
             from_ids=assigned_items["chosen_from_set2"],
             to_ids=assigned_items["set1"])
+
+    def create_stock_relationship_grp(self, name, stock_bulk_gen, seed):
+        """
+        This creates exactly the same kind of relationship as
+        create_stock_relationship, but using a generator of list of stock
+        items instead of a generators of items.
+        """
+
+        stock_rel = self.create_relationship(name, seed=seed)
+        stock_rel.add_grouped_relations(
+            from_ids=self.ids,
+            grouped_ids=stock_bulk_gen.generate(size=self.size))
 
     def get_relationship(self, name):
         return self.relationships[name]
@@ -88,30 +102,6 @@ class Actor(object):
 
     def relationship_names(self):
         return self.relationships.keys()
-
-    def check_attributes(self, ids, field, condition, threshold):
-        """
-
-        :param ids:
-        :param field:
-        :param condition:
-        :param threshold:
-        :return:
-        """
-
-        attr = self.get_attribute_values(ids, field)
-
-        if condition == ">":
-            return attr > threshold
-        if condition == ">=":
-            return attr >= threshold
-        if condition == "<":
-            return attr < threshold
-        if condition == "<=":
-            return attr <= threshold
-        if condition == "==":
-            return attr == threshold
-        raise Exception("Unknown condition : %s" % condition)
 
     def update(self, attribute_df):
         """

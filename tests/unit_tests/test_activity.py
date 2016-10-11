@@ -198,9 +198,7 @@ def test_actors_during_default_daily():
         gaussian_activity = NumpyRandomGenerator(
             method="normal", loc=5,
             scale=.5, seed=1)
-        mobility_activity_gen = TransformedGenerator(
-            upstream_gen=gaussian_activity,
-            f=lambda a: max(1, a))
+        mobility_activity_gen = gaussian_activity.map(bound_value(lb=1))
 
         # just a dummy operation to produce some logs
         action = circus.create_action(
@@ -252,9 +250,7 @@ def test_actors_during_working_hours():
         gaussian_activity = NumpyRandomGenerator(
             method="normal", loc=five_per_day,
             scale=std_per_day, seed=1)
-        mobility_activity_gen = TransformedGenerator(
-            upstream_gen=gaussian_activity,
-            f=lambda a: max(1, a))
+        mobility_activity_gen = gaussian_activity.map(bound_value(lb=1))
 
         # just a dummy operation to produce some logs
         action = circus.create_action(

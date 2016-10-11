@@ -28,24 +28,6 @@ import logging
 
 scenario_1 = {
 
-    # Belgium geography contains 4208 sites => we limit to 100 to limit the
-    # cases when purchase fail due to missing POS at a SITE
-    # TODO: implement "move and retry" strategy for the customer and put back
-    #  the full Belgium geography
-
-    "geography": "belgium_100",
-
-    "n_customers": 50000,
-    "n_field_agents": 5,
-
-    "n_pos": 500,       # keeping a ration 100 between number of customer and
-                        #  pos => limiting geography to make sure we have
-                        # at least one pos per site
-
-    "n_dealers_l2": 24,
-    "n_dealers_l1": 4,
-    "n_telcos": 1,
-
     "mean_known_sites_per_customer": 6,
 
     "mean_daily_customer_mobility_activity": .2,
@@ -61,17 +43,24 @@ scenario_1 = {
     "customer_sim_purchase_min_period_days": 60,
     "customer_sim_purchase_max_period_days": 360,
 
+    # clock_time_step limits the simulation in two ways:
+    #  - it is impossible to have more than one event per actor per clock step
+    #  - timestamps will typically be generated uniformly randomly inside a
+    # clock step => resulting daily distributions will be as coarse grained as
+    # the clock step.
     "clock_time_step": "1h",
+
     "sim_price": 10,
 
-    "n_init_sim_per_pos": 100,
-    "n_init_sim_per_dealer": 1000,
+    # There are no parameters for the SIM purchases, we just scale the ERS
+    # down by a factor 100 as a simplification for now
+#    "ers_to_sim_ratio": 100,
 
     # empirical distribution of pos initial stock level
     "pos_init_er_stock_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
 
-    "pos_sim_max_stock": 50,
     "pos_ers_max_stock": 500,
+    "pos_sim_max_stock": 500,
 
     # distribution of POS's bulk size when buying SIMs
     "pos_sim_bulk_purchase_sizes": [10, 15, 25],
@@ -87,31 +76,25 @@ scenario_1 = {
     "max_pos_sim_stock_triggering_restock": 10,
     "pos_sim_restock_shape": 5,
 
-    # distribution of SIM and ERs bulk size bought by POS
-    "mean_pos_sim_bulk_purchase_size": 1000,
-    "std_pos_sim_bulk_purchase_size": 100,
-
-    "mean_pos_ers_bulk_purchase_size": 1000,
-    "std_pos_ers_bulk_purchase_size": 100,
-
     "simulation_start_date": "13 Sept 2016 12:00",
-    "simulation_duration": "5 days",
-    "output_folder": "snd_output_logs/scenario_0"
+    "simulation_duration": "60 days",
+    "output_folder": "snd_output_logs/scenario_0",
 }
 
 
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
-    "geography": "belgium_5",
-    "n_pos": 50,
 
-    "n_dealers_l2": 4,
-    "n_dealers_l1": 2,
+    "geography": "belgium_5",
+    "n_pos": 100,
+
+    "n_dealers_l2": 25,
+    "n_dealers_l1": 5,
     "n_telcos": 1,
 
-    "n_customers": 5000,
-    "clock_time_step": "12h",    # => max effective action rate is 2 per day  per actor
+    "n_field_agents": 100,
 
+    "n_customers": 5000,
 })
 
 
@@ -134,22 +117,24 @@ class SND(WithBelgium):
         self.customers = snd_customers.create_customers(self, params)
         snd_customers.add_mobility_action(self, params)
 
-        # self.telcos = snd_dealer.create_telcos(self, params,
-        #                                        distributor_id_gen,
-        #                                        sim_id_gen,
-        #                                        recharge_id_gen)
-        #
-        # self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
-        #                                                distributor_id_gen,
-        #                                                sim_id_gen,
-        #                                                recharge_id_gen)
-        #
+        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
+
+        self.telcos = snd_dealer.create_telcos(self, params,
+                                               distributor_id_gen,
+                                               sim_id_gen,
+                                               recharge_id_gen)
+
+        self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
+                                                       distributor_id_gen,
+                                                       sim_id_gen,
+                                                       recharge_id_gen)
+
         self.dealers_l2 = snd_dealer.create_dealers_l2(self, params,
                                                        distributor_id_gen,
                                                        sim_id_gen,
                                                        recharge_id_gen)
 
-        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
+        snd_pos.connect_pos_to_dealers(self)
         snd_pos.add_sim_bulk_purchase_action(self, params)
         snd_pos.add_ers_bulk_purchase_action(self, params)
         snd_customers.add_purchase_sim_action(self, params)
@@ -162,18 +147,18 @@ class SND(WithBelgium):
 
 if __name__ == "__main__":
 
-    params = scenario_1
+    run_params = scenario_1
 
     setup_logging()
     start_ts = pd.Timestamp(datetime.now())
 
-    circus = SND(params)
+    circus = SND(run_params)
     built_ts = pd.Timestamp(datetime.now())
 
-    circus.run(pd.Timedelta(params["simulation_duration"]),
+    circus.run(pd.Timedelta(run_params["simulation_duration"]),
                delete_existing_logs=True)
     execution_ts = pd.Timestamp(datetime.now())
-    logs = load_all_logs(params["output_folder"])
+    logs = load_all_logs(run_params["output_folder"])
 
     for logid, log_df in logs.iteritems():
         logging.info(" - some {}:\n{}\n\n".format(

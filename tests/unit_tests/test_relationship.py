@@ -140,19 +140,23 @@ def test_select_one_nonexistingids_should_return_empty_if_not_keep_missing():
     assert result.columns.tolist() == ["from", "to"]
 
 
-def test_select_one_nonexistingids_should_return_none_if_keep_missing():
+def test_select_one_nonexistingids_should_insert_none_if_keep_missing():
     tested = Relationship(seed=1)
     tested.add_relations(from_ids=["a", "b", "b", "c"],
-                         to_ids=["b", "c", "a", "b"])
+                         to_ids=["a1", "b1", "b2", "c1"])
 
-    result = tested.select_one(["non_existing_id", "neither"],
+    result = tested.select_one(["c", "b_non_existing_id", "a", "neither", "a"],
                                discard_empty=False)
 
-    assert result.shape[0] == 2
+    assert result.shape[0] == 5
     assert result.columns.tolist() == ["from", "to"]
 
-    assert sorted(result["from"].tolist()) == ["neither", "non_existing_id"]
-    assert result["to"].tolist() == [None, None]
+    result_s = result.sort_values("from")
+
+    assert result_s["from"].tolist() == ["a", "a", "b_non_existing_id", "c",
+                                         "neither"]
+
+    assert result_s["to"].tolist() == ["a1", "a1", None, "c1", None, ]
 
 
 def test_select_one_from_all_ids_should_return_one_line_per_id():
@@ -620,7 +624,7 @@ def test_select_many_operation_should_join_subsets_of_relationships():
     # no capping should have occurred: four_to_plenty has largely enough
     selection["found"].apply(len).tolist() == [4, 5, 6, 7, 8]
 
-    # every chosen elemnt should be persent at most once
+    # every chosen element should be present at most once
     s = reduce(lambda s1, s2: set(s1) | set(s2), selection["found"])
     assert len(s) == np.sum([4, 5, 6, 7, 8])
 

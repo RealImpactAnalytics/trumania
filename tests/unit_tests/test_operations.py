@@ -248,7 +248,37 @@ def test_bounded_sigmoid_should_broadcast_as_a_ufunc():
         assert 0 <= y <= 1
 
 
+def test_bounding_function_should_not_modify_unbounded_values():
+    bound_f = operations.bound_value(lb=None, ub=None)
 
+    for x in np.arange(-1000, 2000, 10000):
+        assert x == bound_f(x)
+
+
+def test_bounded_generator_should_limnit_with_lower_bound():
+
+    bound_f = operations.bound_value(lb=15)
+    assert bound_f(10) == 15
+    assert bound_f(15) == 15
+    assert bound_f(20) == 20
+
+
+def test_bounded_generator_should_limnit_with_upper_bound():
+
+    bound_f = operations.bound_value(ub=15)
+    assert bound_f(10) == 10
+    assert bound_f(15) == 15
+    assert bound_f(20) == 15
+
+
+def test_bounded_generator_should_limnit_with_both_bound():
+
+    bound_f = operations.bound_value(lb=10, ub=15)
+    assert bound_f(5) == 10
+    assert bound_f(10) == 10
+    assert bound_f(12) == 12
+    assert bound_f(15) == 15
+    assert bound_f(20) == 15
 
 
 

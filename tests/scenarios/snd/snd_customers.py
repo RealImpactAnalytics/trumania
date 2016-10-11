@@ -2,6 +2,7 @@ from __future__ import division
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
+import patterns
 import pandas as pd
 
 
@@ -60,8 +61,7 @@ def add_mobility_action(circus, params):
         scale=params["std_daily_customer_mobility_activity"],
         seed=circus.seeder.next())
 
-    mobility_activity_gen = BoundedGenerator(
-        upstream_gen=gaussian_activity, lb=.5)
+    mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=.5))
 
     mobility_action = circus.create_action(
         name="customer_mobility",
@@ -113,13 +113,11 @@ def add_purchase_sim_action(circus, params):
     min_activity = purchase_timer_gen.activity(n_actions=1,
         per=pd.Timedelta(days=params["customer_sim_purchase_max_period_days"]))
 
-    purchase_activity_gen = TransformedGenerator(
-        upstream_gen=NumpyRandomGenerator(
+    purchase_activity_gen = NumpyRandomGenerator(
             method="uniform",
             low=1 / max_activity,
             high=1 / min_activity,
-            seed=circus.seeder.next()),
-        f=lambda per: 1/per)
+            seed=circus.seeder.next()).map(f=lambda per: 1/per)
 
     low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
@@ -148,18 +146,16 @@ def add_purchase_er_action(circus, params):
     min_activity = purchase_timer_gen.activity(n_actions=1,
         per=pd.Timedelta(days=params["customer_er_purchase_max_period_days"]))
 
-    purchase_activity_gen = TransformedGenerator(
-        upstream_gen=NumpyRandomGenerator(
+    purchase_activity_gen = NumpyRandomGenerator(
             method="uniform",
             low=1 / max_activity,
             high=1 / min_activity,
-            seed=circus.seeder.next()),
-        f=lambda per: 1/per)
+            seed=circus.seeder.next()).map(f=lambda per: 1/per)
 
     price_gen = NumpyRandomGenerator(
         method="choice", a=[5, 10, 25, 50, 100], seed=circus.seeder.next())
 
-    low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
+    low_stock_pos_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
             x_min=1,
             x_max=params["max_pos_er_stock_triggering_restock"],
@@ -172,7 +168,7 @@ def add_purchase_er_action(circus, params):
         pos_relationship="ERS",
         item_price_gen=price_gen,
         action_name="ers_purchases_to_pos",
-        pos_restock_trigger=low_stock_bulk_purchase_trigger,
+        pos_restock_trigger=low_stock_pos_bulk_purchase_trigger,
         pos_restock_action_name="pos_to_dealer_ers_bulk_purchases"
     )
 
@@ -232,18 +228,13 @@ def _create_customer_purchase_action(
 
         FieldLogger(log_id=action_name),
 
-        circus.pos.get_relationship(pos_relationship)\
-            .ops.get_neighbourhood_size(
-                from_field="POS",
-                named_as="CURRENT_POS_STOCK"),
-
-        pos_restock_trigger.ops.generate(
-            named_as="SHOULD_RESTOCK",
-            observed_field="CURRENT_POS_STOCK"),
-
-        # => use pos_bulk_purchase_trigger and stock size (in relationship)
-        circus.get_action(pos_restock_action_name).ops.force_act_next(
+        patterns.trigger_action_if_low_stock(
+            circus,
+            stock_relationship=circus.pos.get_relationship(pos_relationship),
             actor_id_field="POS",
-            condition_field="SHOULD_RESTOCK"),
+            restock_trigger=pos_restock_trigger,
+            triggered_action_name=pos_restock_action_name
+        )
+
     )
 
