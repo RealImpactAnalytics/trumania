@@ -26,25 +26,54 @@ def load_actor(namespace, actor_id):
 
 
 def list_actors(namespace):
-    folder = namespace_folder(namespace)
-    return [d for d in os.listdir(folder) if os.path.isdir(d)]
+    folder = _actors_folder(namespace)
+    return [d for d in os.listdir(folder)
+            if os.path.isdir(os.path.join(folder, d))]
 
 
+def save_generator(generator, namespace, gen_id):
+
+    output_folder = _gen_folder(namespace=namespace,
+                                gen_type=generator.__class__.__name__,)
+
+    ensure_folder_exists(output_folder)
+    generator.save_to(json_item_path(output_folder, gen_id))
+
+
+def list_generators(namespace):
+    folder = _generators_folder(namespace)
+
+    def _list():
+        for gen_type in os.listdir(folder):
+            for gen_file in os.listdir(os.path.join(folder, gen_type)):
+                gen_id = gen_file.split(".")[0]
+                yield [gen_type, gen_id]
+
+    return list(_list())
+
+
+def load_generator(namespace, gen_type, gen_id):
+
+    input_file = json_item_path(
+        _gen_folder(namespace=namespace, gen_type=gen_type), gen_id)
+
+    return Generator.load_generator(gen_type, input_file)
+
+
+# TODO: this can now be refactored to save as NumpyGenerator, togheter with
+# its state
 def save_timer_gen(timer_gen, namespace, timer_gen_id):
 
     timer_gen_folder = _timer_gens_root_folder(namespace)
     ensure_folder_exists(timer_gen_folder)
-    timer_gen_file_path = os.path.join(timer_gen_folder,
-                                       "%s.csv" % timer_gen_id)
-    timer_gen.save_to(timer_gen_file_path)
+    timer_gen.save_to(csv_item_path(timer_gen_folder, timer_gen_id))
 
 
 def load_timer_gen_config(namespace, timer_gen_id):
     timer_gen_folder = _timer_gens_root_folder(namespace)
-    timer_gen_file_path = os.path.join(timer_gen_folder,
-                                       "%s.csv" % timer_gen_id)
 
-    return clock.CyclicTimerProfile.load_from(timer_gen_file_path)
+    return clock.CyclicTimerProfile.load_from(
+        csv_item_path(timer_gen_folder, timer_gen_id))
 
 
 def save_empirical_discrete_generator(distribution, values, namespace, gen_id):
@@ -52,11 +81,11 @@ def save_empirical_discrete_generator(distribution, values, namespace, gen_id):
 
     root_folder = _empirical_discrete_gen_folder(namespace)
     ensure_folder_exists(root_folder)
-    gen_file_path = os.path.join(root_folder, "%s.csv" % gen_id)
+    gen_file_path = csv_item_path(root_folder, gen_id)
 
     df = pd.DataFrame({
         "px": distribution,
-    }, index=pd.Series(values, name="x"))
+      }, index=pd.Series(values, name="x"))
 
     df.to_csv(gen_file_path, index=True)
 
@@ -94,17 +123,30 @@ def remove_namespace(namespace):
     ensure_non_existing_dir(namespace_folder(namespace))
 
 
+def _actors_folder(namespace):
+    return os.path.join(namespace_folder(namespace), "actors")
+
+
 def _actor_folder(namespace, actor_id):
-    return os.path.join(
-        namespace_folder(namespace),
-        "actors",
-        actor_id)
+    return os.path.join(_actors_folder(namespace), actor_id)
 
 
 def _generators_folder(namespace):
     return os.path.join(
         namespace_folder(namespace),
         "generators")
+
+
+def _gen_folder(namespace, gen_type):
+    return os.path.join(_generators_folder(namespace), gen_type)
+
+
+def csv_item_path(folder, item_id):
+    return os.path.join(folder, "{}.csv".format(item_id))
+
+
+def json_item_path(folder, item_id):
+    return os.path.join(folder, "{}.json".format(item_id))
 
 
 def _timer_gens_root_folder(namespace):

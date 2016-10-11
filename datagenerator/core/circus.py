@@ -39,6 +39,7 @@ class Circus(object):
         self.clock = Clock(seed=self.seeder.next(), **clock_params)
         self.actions = []
         self.actors = {}
+        self.generators = {}
 
     def create_actor(self, name, **actor_params):
         """
@@ -53,6 +54,9 @@ class Circus(object):
         return self.actors[name]
 
     def load_actor(self, actor_id, namespace=None):
+        """
+        Load this actor definition add attach it to this circus
+        """
 
         # Defaulting to the namespace associated to this circus if none
         # specified
@@ -64,6 +68,11 @@ class Circus(object):
         return actor
 
     def create_action(self, name, **action_params):
+        """
+        Creates an action with the provided parameters and attach it to this
+        circus.
+        """
+
         existing = self.get_action(name)
 
         if existing is None:
@@ -85,6 +94,27 @@ class Circus(object):
 
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
+
+    def attach_generator(self, gen_id, generator):
+        """
+        "attach" a random generator to this circus, s.t. it gets persisted
+        with the rest
+        """
+        if gen_id in self.generators:
+            raise ValueError("refusing to replace existing generator: {} "
+                             "".format(gen_id))
+
+        self.generators[gen_id] = generator
+
+    def load_generator(self, gen_type, gen_id):
+        """
+        Load this actor definition add attach it to this circus
+        """
+        gen = db.load_generator(
+            namespace=self.name, gen_type=gen_type, gen_id=gen_id)
+
+        self.attach_generator(gen_id, gen)
+        return gen
 
     def save_logs(self, log_id, logs, log_output_folder):
         """
@@ -168,6 +198,9 @@ class Circus(object):
             for actor_id in db.list_actors(namespace=circus_name):
                 circus.load_actor(actor_id)
 
+            for gen_type, gen_id in db.list_generators(namespace=circus_name):
+                circus.load_generator(gen_type=gen_type, gen_id=gen_id)
+
             return circus
 
     def save_to_db(self, overwrite=False):
@@ -192,7 +225,7 @@ class Circus(object):
 
         namespace_folder = db.create_namespace(namespace=self.name)
         config_file = os.path.join(namespace_folder, "circus_config.json")
-        with open (config_file, "w") as o:
+        with open(config_file, "w") as o:
             config = {"master_seed": self.master_seed,
                       "clock_config": {
                           "start": self.clock_params["start"].isoformat(),
@@ -202,8 +235,13 @@ class Circus(object):
                       }
             json.dump(config, o, indent=4)
 
-        for actor_id, actor in self.actors.iteritems():
-            db.save_actor(actor, namespace=self.name, actor_id=actor_id)
+        logging.info("saving all actors")
+        for actor_id, ac in self.actors.iteritems():
+            db.save_actor(ac, namespace=self.name, actor_id=actor_id)
+
+        logging.info("saving all generators")
+        for gen_id, generator in self.generators.iteritems():
+            db.save_generator(generator, namespace=self.name, gen_id=gen_id)
 
         logging.info("circus saved")
 
@@ -214,7 +252,10 @@ class Circus(object):
             "master_seed": self.master_seed,
             "actors": {actor_id: actor.description()
                        for actor_id, actor in self.actors.iteritems()
-                       }
+                       },
+            "generators": {gen_id: gen.description()
+                       for gen_id, gen in self.generators.iteritems()
+                       },
         }
 
     def __str__(self):
