@@ -36,3 +36,17 @@ def trigger_action_if_low_stock(
             condition_field="{}SHOULD_RESTOCK".format(field_prefix)),
     )
 
+
+def scale_stock_size_gen(stock_size_gen, scale_factor):
+    """
+    stock_size_gen must be a generator of positive number
+     => this just builds another one, scaled a requested, making sure the
+     generated numbers are never 0
+    """
+
+    if scale_factor is not None:
+        return stock_size_gen\
+            .map(f_vect=operations.scale(factor=scale_factor)) \
+            .map(f=operations.bound_value(lb=1))
+
+    return stock_size_gen

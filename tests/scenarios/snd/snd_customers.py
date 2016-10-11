@@ -6,11 +6,12 @@ import patterns
 import pandas as pd
 
 
-def create_customers(circus, params):
+def add_customers(circus, params):
 
     logging.info(" adding customers")
-    customers = Actor(size=params["n_customers"],
-                      ids_gen=SequencialGenerator(prefix="CUST_"))
+    customers = circus.create_actor(name="customers",
+                                    size=params["n_customers"],
+                                    ids_gen=SequencialGenerator(prefix="CUST_"))
 
     logging.info(" adding 'possible sites' mobility relationship to customers")
 
@@ -18,11 +19,13 @@ def create_customers(circus, params):
         "POSSIBLE_SITES",
         seed=circus.seeder.next())
 
+    sites = circus.actors["sites"]
+
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(
             customers.ids,
-            circus.sites.ids,
-            p=params["mean_known_sites_per_customer"]/circus.sites.size,
+            sites.ids,
+            p=params["mean_known_sites_per_customer"]/sites.size,
             seed=circus.seeder.next()),
         columns=["CID", "SID"])
 
@@ -66,7 +69,7 @@ def add_mobility_action(circus, params):
     mobility_action = circus.create_action(
         name="customer_mobility",
 
-        initiating_actor=circus.customers,
+        initiating_actor=circus.actors["customers"],
         actorid_field="CUST_ID",
 
         timer_gen=mobility_time_gen,
@@ -76,18 +79,18 @@ def add_mobility_action(circus, params):
     logging.info(" adding operations")
 
     mobility_action.set_operations(
-        circus.customers.ops.lookup(
+        circus.actors["customers"].ops.lookup(
             actor_id_field="CUST_ID",
             select={"CURRENT_SITE": "PREV_SITE"}),
 
         # selects a destination site (or maybe the same as current... ^^)
 
-        circus.customers \
+        circus.actors["customers"] \
             .get_relationship("POSSIBLE_SITES") \
             .ops.select_one(from_field="CUST_ID", named_as="NEW_SITE"),
 
         # update the SITE attribute of the customers accordingly
-        circus.customers \
+        circus.actors["customers"] \
             .get_attribute("CURRENT_SITE") \
             .ops.update(
                 actor_id_field="CUST_ID",

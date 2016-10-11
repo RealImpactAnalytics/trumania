@@ -41,16 +41,15 @@ class SND(WithBelgium):
         sim_id_gen = SequencialGenerator(prefix="SIM_")
         recharge_id_gen = SequencialGenerator(prefix="ER_")
 
-        self.sites = snd_sites.add_sites(self, params)
-        self.customers = snd_customers.create_customers(self, params)
-        snd_customers.add_mobility_action(self, params)
+        self.sites = snd_sites.add_sites(self, params)     #
+        self.customers = snd_customers.add_customers(self, params)  #
+        snd_customers.add_mobility_action(self, params)          #
+        self.pos = snd_pos.add_pos(self, params, sim_id_gen, recharge_id_gen)
 
-        self.pos = snd_pos.create_pos(self, params, sim_id_gen, recharge_id_gen)
-
-        self.telcos = snd_dealer.create_telcos(self, params,
-                                               distributor_id_gen,
-                                               sim_id_gen,
-                                               recharge_id_gen)
+        self.telcos = snd_dealer.add_telcos(self, params,
+                                            distributor_id_gen,
+                                            sim_id_gen,
+                                            recharge_id_gen)
 
         self.dealers_l1 = snd_dealer.create_dealers_l1(self, params,
                                                        distributor_id_gen,
