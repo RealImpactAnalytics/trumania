@@ -54,7 +54,7 @@ scenario_1 = {
 
     # There are no parameters for the SIM purchases, we just scale the ERS
     # down by a factor 100 as a simplification for now
-    "ers_to_sim_ratio": 100,
+#    "ers_to_sim_ratio": 100,
 
     # empirical distribution of pos initial stock level
     "pos_init_er_stock_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
@@ -85,16 +85,16 @@ scenario_1 = {
 # temporary downscaling of the scenario to accelerate tests
 scenario_1.update({
 
-    "geography": "belgium_500",
-    "n_pos": 5000,
+    "geography": "belgium_5",
+    "n_pos": 100,
 
-    "n_dealers_l2": 500,
-    "n_dealers_l1": 25,
+    "n_dealers_l2": 25,
+    "n_dealers_l1": 5,
     "n_telcos": 1,
 
     "n_field_agents": 100,
 
-    "n_customers": 500000,
+    "n_customers": 5000,
 })
 
 
