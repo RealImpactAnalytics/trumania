@@ -37,11 +37,13 @@ def trigger_action_if_low_stock(
     )
 
 
-def scale_stock_size_gen(stock_size_gen, scale_factor):
+def scale_quantity_gen(stock_size_gen, scale_factor):
     """
-    stock_size_gen must be a generator of positive number
-     => this just builds another one, scaled a requested, making sure the
-     generated numbers are never 0
+    stock_size_gen must be a generator of positive numbers (think of them as
+     "quantities" of stuff, i.e on a ratio scale)
+
+    This just builds another generator of numbers scaled a requested,
+     making sure the generated numbers are always positive
     """
 
     if scale_factor is not None:

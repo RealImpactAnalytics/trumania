@@ -184,30 +184,34 @@ def _create_customer_purchase_action(
     Creates an action of Customer buying from POS
     """
 
+    customers = circus.actors["customers"]
+    pos = circus.actors["pos"]
+    sites = circus.actors["sites"]
+
     purchase_action = circus.create_action(
         name=action_name,
-        initiating_actor=circus.customers,
+        initiating_actor=customers,
         actorid_field="CUST_ID",
         timer_gen=purchase_timer_gen,
         activity_gen=purchase_activity_gen)
 
     purchase_action.set_operations(
 
-        circus.customers.ops.lookup(
+        customers.ops.lookup(
             actor_id_field="CUST_ID",
             select={"CURRENT_SITE": "SITE"}),
 
-        circus.sites.get_relationship("POS").ops.select_one(
+        sites.get_relationship("POS").ops.select_one(
             from_field="SITE",
             named_as="POS",
 
-            weight=circus.pos.get_attribute_values("ATTRACTIVENESS"),
+            weight=pos.get_attribute_values("ATTRACTIVENESS"),
 
             # TODO: this means customer in a location without POS do not buy
             # anything => we could add a re-try mechanism here
             discard_empty=True),
 
-        circus.pos.get_relationship(pos_relationship).ops.select_one(
+        pos.get_relationship(pos_relationship).ops.select_one(
             from_field="POS",
             named_as="BOUGHT_ITEM",
 
@@ -219,7 +223,7 @@ def _create_customer_purchase_action(
                          named_as="FAILED_SALE_OUT_OF_STOCK",
                          f=pd.isnull, f_args="series"),
 
-        circus.sites.get_relationship("CELLS").ops.select_one(
+        sites.get_relationship("CELLS").ops.select_one(
             from_field="SITE",
             named_as="CELL",),
 
@@ -233,11 +237,9 @@ def _create_customer_purchase_action(
 
         patterns.trigger_action_if_low_stock(
             circus,
-            stock_relationship=circus.pos.get_relationship(pos_relationship),
+            stock_relationship=pos.get_relationship(pos_relationship),
             actor_id_field="POS",
             restock_trigger=pos_restock_trigger,
             triggered_action_name=pos_restock_action_name
         )
-
     )
-

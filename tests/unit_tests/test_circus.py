@@ -11,8 +11,8 @@ def test_create_action_get_action_should_work_as_expected():
     customers = Actor(size=100,
                       ids_gen=SequencialGenerator(prefix="a"))
 
-    flying = Circus(master_seed=1,
-                    output_folder="no_output",
+    flying = Circus(name="tested_circus",
+                    master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
@@ -36,8 +36,8 @@ def test_create_action_get_action_should_work_as_expected():
 
 def test_get_non_existing_action_should_return_none():
 
-    flying = Circus(master_seed=1,
-                    output_folder="no_output",
+    flying = Circus(name="tested_circus",
+                    master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
@@ -46,8 +46,8 @@ def test_get_non_existing_action_should_return_none():
 
 def test_adding_a_second_action_with_same_name_should_be_refused():
 
-    flying = Circus(master_seed=1,
-                    output_folder="no_output",
+    flying = Circus(name="tested_circus",
+                    master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 

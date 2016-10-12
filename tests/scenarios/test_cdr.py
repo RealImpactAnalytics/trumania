@@ -104,10 +104,11 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         logging.info("building subscriber actors ")
 
-        Circus.__init__(self, master_seed=123456,
+        Circus.__init__(self,
+                        name="test_cdr_circus",
+                        master_seed=123456,
                         start=pd.Timestamp("8 June 2016"),
-                        step_duration=pd.Timedelta(params["time_step"]),
-                        output_folder=params["output_folder"])
+                        step_duration=pd.Timedelta(params["time_step"]),)
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
         cells, cities = self.add_uganda_geography()
@@ -595,7 +596,8 @@ def run_cdr_scenario(params):
 
     # running it
     scenario.run(duration=pd.Timedelta(params["simulation_duration"]),
-                 delete_existing_logs=True)
+                 delete_existing_logs=True,
+                 log_output_folder=params["output_folder"])
     logs = load_all_logs(params["output_folder"])
 
     execution_time = pd.Timestamp(datetime.now())

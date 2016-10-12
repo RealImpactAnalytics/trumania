@@ -271,6 +271,23 @@ def add_pos(circus, params, sim_id_gen, recharge_id_gen):
                                       seed=circus.seeder.next())
 
 
+def connect_pos_to_dealer_l1(circus):
+
+    logging.info("assigning one dealer L1 to each POS")
+
+    pos = circus.actors["pos"]
+    dealer_of_pos = make_random_assign(
+        set1=pos.ids,
+        set2=circus.actors["dealers_l2"].ids,
+        seed=circus.seeder.next())
+
+    dealer_rel = pos.create_relationship("DEALERS_L2",
+                                         seed=circus.seeder.next())
+    dealer_rel.add_relations(
+        from_ids=dealer_of_pos["set1"],
+        to_ids=dealer_of_pos["chosen_from_set2"])
+
+
 def add_pos_stock_log_action(circus):
     """
     Adds am action recording the stock level of every pos every day,
@@ -306,62 +323,50 @@ def add_pos_stock_log_action(circus):
     return pos
 
 
-def connect_pos_to_dealers(circus):
+def add_bulk_purchases_action(circus, params):
 
-    logging.info("assigning a dealer to each POS")
-    dealer_of_pos = make_random_assign(
-        set1=circus.pos.ids,
-        set2=circus.dealers_l2.ids,
-        seed=circus.seeder.next())
-
-    dealer_rel = circus.pos.create_relationship("DEALERS_L2",
-                                                seed=circus.seeder.next())
-    dealer_rel.add_relations(
-        from_ids=dealer_of_pos["set1"],
-        to_ids=dealer_of_pos["chosen_from_set2"])
-
-
-def add_sim_bulk_purchase_action(circus, params):
+    dealers_l2 = circus.actors["dealers_l2"]
+    pos_per_dealer_l2 = circus.actors["pos"].size / dealers_l2.size
 
     logging.info("creating POS SIM bulk purchase action")
 
-    low_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
+    # low stock trigger on the dealer l2 that should trigger his own restock
+    low_sims_stock_dealer_2_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=1,
-            x_max=params["max_pos_sim_stock_triggering_restock"],
+            x_min=pos_per_dealer_l2,
+            x_max=params["max_pos_sim_stock_triggering_restock"] * pos_per_dealer_l2,
             shape=params["pos_sim_restock_shape"],
             incrementing=False))
 
     _add_bulk_purchase_action(
         circus,
         action_name="pos_to_dealer_sim_bulk_purchases",
-        bulk_size_gen=sims_bulk_size_gen(params, seed=circus.seeder.next()),
-        dealers_relationship="SIMS",
-        pos_relationship="SIMS",
+        bulk_size_gen=circus.generators["pos_sim_bulk_size_gen"],
+        dealers_stock_relationship="SIMS",
+        pos_stock_relationship="SIMS",
         max_stock=params["pos_sim_max_stock"],
-        upperlevel_bulk_purchase_trigger=low_stock_dealer_bulk_purchase_trigger,
+        upperlevel_bulk_purchase_trigger=low_sims_stock_dealer_2_bulk_purchase_trigger,
         upperlevel_bulk_purchase_action_name="dealer_l2_buys_sims_from_dealer_l1"
     )
 
-
-def add_ers_bulk_purchase_action(circus, params):
-
     logging.info("creating POS ERS bulk purchase action")
-    low_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
+
+    # low stock trigger on the dealer l2 that should trigger his own restock
+    low_ers_stock_dealer_l2_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=1,
-            x_max=params["max_pos_er_stock_triggering_restock"],
+            x_min=pos_per_dealer_l2,
+            x_max=params["max_pos_er_stock_triggering_restock"] * pos_per_dealer_l2,
             shape=params["pos_er_restock_shape"],
             incrementing=False))
 
     _add_bulk_purchase_action(
         circus,
         action_name="pos_to_dealer_ers_bulk_purchases",
-        bulk_size_gen=ers_bulk_size_gen(params, seed=circus.seeder.next()),
-        dealers_relationship="ERS",
-        pos_relationship="ERS",
+        bulk_size_gen=circus.generators["pos_ers_bulk_size_gen"],
+        dealers_stock_relationship="ERS",
+        pos_stock_relationship="ERS",
         max_stock=params["pos_ers_max_stock"],
-        upperlevel_bulk_purchase_trigger=low_stock_dealer_bulk_purchase_trigger,
+        upperlevel_bulk_purchase_trigger=low_ers_stock_dealer_l2_bulk_purchase_trigger,
         upperlevel_bulk_purchase_action_name="dealer_l2_buys_ers_from_dealer_l1"
     )
 
@@ -384,7 +389,7 @@ def _bound_diff_to_max(max_stock):
 
 
 def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
-                              dealers_relationship, pos_relationship,
+                              dealers_stock_relationship, pos_stock_relationship,
                               max_stock,
                               upperlevel_bulk_purchase_trigger=None,
                               upperlevel_bulk_purchase_action_name=None):
@@ -392,10 +397,13 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
     Generic utility method to create a bulk purchase action from pos to dealers
     """
 
+    pos = circus.actors["pos"]
+    dealers_l2 = circus.actors["dealers_l2"]
+
     logging.info("creating POS bulk purchase action")
     build_purchases = circus.create_action(
         name=action_name,
-        initiating_actor=circus.pos,
+        initiating_actor=circus.actors["pos"],
         actorid_field="POS_ID",
 
         # no timer_gen nor activity gens for the POS bulk actions: these are
@@ -408,7 +416,7 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
     else:
         upper_level_bulk_purchases = patterns.trigger_action_if_low_stock(
             circus,
-            stock_relationship=circus.dealers_l2.get_relationship(dealers_relationship),
+            stock_relationship=dealers_l2.get_relationship(dealers_stock_relationship),
             actor_id_field="DEALER_L2",
             restock_trigger=upperlevel_bulk_purchase_trigger,
             triggered_action_name=upperlevel_bulk_purchase_action_name
@@ -417,13 +425,13 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
     build_purchases.set_operations(
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        circus.pos.get_relationship("DEALERS_L2").ops.select_one(
+        pos.get_relationship("DEALERS_L2").ops.select_one(
             from_field="POS_ID",
             named_as="DEALER_L2"),
 
         bulk_size_gen.ops.generate(named_as="DESIRED_BULK_SIZE"),
 
-        circus.pos.get_relationship(pos_relationship).ops \
+        pos.get_relationship(pos_stock_relationship).ops \
             .get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="OLD_POS_STOCK"),
@@ -433,7 +441,7 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
                          f=_bound_diff_to_max(max_stock)),
 
         # selecting and removing Sims from dealers
-        circus.dealers_l2.get_relationship(dealers_relationship).ops.select_many(
+        dealers_l2.get_relationship(dealers_stock_relationship).ops.select_many(
             from_field="DEALER_L2",
             named_as="ITEMS_BULK",
             quantity_field="REQUESTED_BULK_SIZE",
@@ -445,7 +453,7 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
             discard_missing=True),
 
         # and adding them to the POS
-        circus.pos.get_relationship(pos_relationship).ops.add_grouped(
+        pos.get_relationship(pos_stock_relationship).ops.add_grouped(
             from_field="POS_ID",
             grouped_items_field="ITEMS_BULK"),
 
@@ -454,7 +462,7 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
         # if a dealer is selected several times, its stock level after the
         # select_many() is the level _after_ all purchases are done, which is
         # typically not what we want to include in the log.
-        circus.pos.get_relationship(pos_relationship).ops\
+        pos.get_relationship(pos_stock_relationship).ops\
             .get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="NEW_POS_STOCK"),
