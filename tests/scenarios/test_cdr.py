@@ -2,7 +2,9 @@ from __future__ import division
 
 from datagenerator.components.social_networks.erdos_renyi import *
 from datagenerator.components.geographies.random_geo import *
+from datagenerator.components.time_patterns.profilers import *
 from datagenerator.components.geographies.uganda import *
+
 from datagenerator.core import operations
 
 from datetime import datetime
@@ -111,7 +113,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                         step_duration=pd.Timedelta(params["time_step"]),)
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
-        cells, cities = self.add_uganda_geography()
+        cells, cities = self.add_uganda_geography(force_build=True)
         self.add_mobility(subs, cells)
         self.add_er_social_network_relationship(
             subs,

@@ -19,14 +19,27 @@ def build_healthy_level_gen(seed):
 
 class WithUganda(Circus):
 
-    def add_uganda_geography(self):
+    def add_uganda_geography(self, force_build=False):
         """
         Loads the cells definition from Uganda + adds 2 actions to control
         """
         logging.info(" adding Uganda Geography")
         seeder = seed_provider(12345)
-        uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
-        uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
+
+        if force_build:
+            uganda_cells, uganda_cities, timer_config = build_uganda_actors()
+
+        else:
+            uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
+            uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
+            timer_config = db.load_timer_gen_config("uganda",
+                                                "cell_repair_timer_profile")
+
+
+        repair_n_fix_timer = CyclicTimerGenerator(
+                clock=self.clock,
+                seed=self.seeder.next(),
+                config=timer_config )
 
         unhealthy_level_gen = build_unhealthy_level_gen(seeder.next())
         healthy_level_gen = build_healthy_level_gen(seeder.next())
@@ -37,11 +50,6 @@ class WithUganda(Circus):
         # same profiler for breakdown and repair: they are both related to
         # typical human activity
 
-        repair_n_fix_timer = CyclicTimerGenerator(
-            clock=self.clock,
-            seed=self.seeder.next(),
-            config=db.load_timer_gen_config("uganda",
-                                            "cell_repair_timer_profile"))
 
         logging.info(" adding Uganda Geography6")
         cell_break_down_action = self.create_action(
@@ -106,20 +114,8 @@ class WithUganda(Circus):
 
         return uganda_cells, uganda_cities
 
+def build_uganda_actors():
 
-if __name__ == "__main__":
-    # This is meant to be executed only once, to create the data on disk.
-
-    # Note: using generators and persisting the result could make sense
-    # if such generation is costly or for facilitating reproduceability,
-    # though a more common use cas might be to build such Actors and
-    # relationship from empirical exploration of a dataset.
-
-    # Note2: only the "static" properties of an environment are saved here,
-    # whereas the "dynamic parts" (e.g. actions) are stored "in code", i.e.
-    # in the withXYZ() class above that then need to be mixed in a Circus.
-
-    setup_logging()
     seeder = seed_provider(12345)
 
     cells = Actor(ids_gen=SequencialGenerator(prefix="CELL_"), size=200)
@@ -150,11 +146,7 @@ if __name__ == "__main__":
     pop_gen = ParetoGenerator(xmin=10000, a=1.4, seed=seeder.next())
     cities.create_attribute("population", init_gen=pop_gen)
 
-    db.remove_namespace("uganda")
-    db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
-    db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
-
-    uganda_timer_gen = CyclicTimerProfile(
+    timer_config = CyclicTimerProfile(
         profile=[1, .5, .2, .15, .2, .4, 3.8,
                  7.2, 8.4, 9.1, 9.0, 8.3, 8.1,
                  7.7, 7.4, 7.8, 8.0, 7.9, 9.7,
@@ -162,7 +154,30 @@ if __name__ == "__main__":
         profile_time_steps="1h",
         start_date=pd.Timestamp("6 June 2016 00:00:00"))
 
-    db.save_timer_gen(timer_gen=uganda_timer_gen, namespace="uganda",
+    return cells, cities, timer_config
+
+
+if __name__ == "__main__":
+    # This is meant to be executed only once, to create the data on disk.
+
+    # Note: using generators and persisting the result could make sense
+    # if such generation is costly or for facilitating reproduceability,
+    # though a more common use cas might be to build such Actors and
+    # relationship from empirical exploration of a dataset.
+
+    # Note2: only the "static" properties of an environment are saved here,
+    # whereas the "dynamic parts" (e.g. actions) are stored "in code", i.e.
+    # in the withXYZ() class above that then need to be mixed in a Circus.
+
+    setup_logging()
+
+    cells, cities, timer_config  = build_uganda_actors()
+
+    db.remove_namespace("uganda")
+    db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
+    db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
+
+    db.save_timer_gen(timer_gen=timer_config , namespace="uganda",
                       timer_gen_id="cell_repair_timer_profile")
 
 
