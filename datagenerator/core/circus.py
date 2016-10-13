@@ -1,5 +1,9 @@
 from datagenerator.core.action import *
+from datagenerator.core import actor
+import logging
 import os
+import json
+from datagenerator.components import db
 
 
 class Circus(object):
@@ -16,30 +20,64 @@ class Circus(object):
 
     """
 
-    def __init__(self, master_seed, output_folder, **clock_params):
+    def __init__(self, name, master_seed, **clock_params):
         """Create a new Circus object
 
         :param master_seed: seed used to initialized random generatof of
         other seeds
         :type master_seed: int
 
-        :param output_folder: folder where to write the logs.
-        :type output_folder: string
-
         :rtype: Circus
         :return: a new Circus object, with the clock, is created
         """
+        self.name = name
+
+        self.master_seed = master_seed
+        self.clock_params = clock_params
+
         self.seeder = seed_provider(master_seed=master_seed)
-        self.output_folder = output_folder
         self.clock = Clock(seed=self.seeder.next(), **clock_params)
-        self.__actions = []
+        self.actions = []
+        self.actors = {}
+        self.generators = {}
+
+    def create_actor(self, name, **actor_params):
+        """
+        Creates an actor with the specifed parameters and attach it to this
+        circus.
+        """
+        if name in self.actors:
+            raise ValueError("refusing to overwrite existing actor: {} "
+                             "".format(name))
+
+        self.actors[name] = actor.Actor(**actor_params)
+        return self.actors[name]
+
+    def load_actor(self, actor_id, namespace=None):
+        """
+        Load this actor definition add attach it to this circus
+        """
+
+        # Defaulting to the namespace associated to this circus if none
+        # specified
+        if namespace is None:
+            namespace = self.name
+
+        actor = db.load_actor(namespace=namespace, actor_id=actor_id)
+        self.actors[actor_id] = actor
+        return actor
 
     def create_action(self, name, **action_params):
+        """
+        Creates an action with the provided parameters and attach it to this
+        circus.
+        """
+
         existing = self.get_action(name)
 
         if existing is None:
             action = Action(name=name, **action_params)
-            self.__actions.append(action)
+            self.actions.append(action)
             return action
 
         else:
@@ -47,7 +85,7 @@ class Circus(object):
                              "identical name is already in the circus".format(name))
 
     def get_action(self, action_name):
-        found = filter(lambda a: a.name == action_name, self.__actions)
+        found = filter(lambda a: a.name == action_name, self.actions)
         if len(found) == 0:
             logging.warn("action not found: {}".format(action_name))
             return None
@@ -57,16 +95,37 @@ class Circus(object):
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
 
-    def save_logs(self, log_id, logs):
+    def attach_generator(self, gen_id, generator):
+        """
+        "attach" a random generator to this circus, s.t. it gets persisted
+        with the rest
+        """
+        if gen_id in self.generators:
+            raise ValueError("refusing to replace existing generator: {} "
+                             "".format(gen_id))
+
+        self.generators[gen_id] = generator
+
+    def load_generator(self, gen_type, gen_id):
+        """
+        Load this actor definition add attach it to this circus
+        """
+        gen = db.load_generator(
+            namespace=self.name, gen_type=gen_type, gen_id=gen_id)
+
+        self.attach_generator(gen_id, gen)
+        return gen
+
+    def save_logs(self, log_id, logs, log_output_folder):
         """
         Appends those logs to the corresponding output file, creating it if
         it does not exist or appending lines to it otherwise.
         """
 
-        output_file = os.path.join(self.output_folder, "{}.csv".format(log_id))
+        output_file = os.path.join(log_output_folder, "{}.csv".format(log_id))
 
-        if not os.path.exists(self.output_folder):
-            os.makedirs(self.output_folder)
+        if not os.path.exists(log_output_folder):
+            os.makedirs(log_output_folder)
 
         if len(logs) > 0:
             if not os.path.exists(output_file):
@@ -80,13 +139,16 @@ class Circus(object):
                 with open(output_file, "a") as out_f:
                     logs.to_csv(out_f, index=False, header=False)
 
-    def run(self, duration, delete_existing_logs=False):
+    def run(self, duration, log_output_folder, delete_existing_logs=False):
         """
         Executes all actions in the circus for as long as requested.
 
         :param duration: duration of the desired simulation (start date is
         dictated by the clock)
         :type duration: pd.TimeDelta
+
+        :param output_folder: folder where to write the logs.
+        :type output_folder: string
 
         :param delete_existing_logs:
         """
@@ -96,19 +158,105 @@ class Circus(object):
                      "total duration of {}".format(
             n_iterations, self.clock.step_duration, duration))
 
-        if os.path.exists(self.output_folder):
+        if os.path.exists(log_output_folder):
             if delete_existing_logs:
-                ensure_non_existing_dir(self.output_folder)
+                ensure_non_existing_dir(log_output_folder)
             else:
-                raise EnvironmentError("{} exists and delete_existing_logs "
-                                       "is False => refusing to start and "
-                                       "overwrite logs".format(self.output_folder))
+                raise EnvironmentError("{} exists and delete_existing_logs is "
+                                       "False => refusing to start and "
+                                       "overwrite logs".format(log_output_folder))
 
         for step_number in range(n_iterations):
             logging.info("step : {}".format(step_number))
 
-            for action in self.__actions:
+            for action in self.actions:
                 for log_id, logs in action.execute().iteritems():
-                    self.save_logs(log_id, logs)
+                    self.save_logs(log_id, logs, log_output_folder)
 
             self.clock.increment()
+
+    @staticmethod
+    def load_from_db(circus_name):
+
+        logging.info("loading circus {}".format(circus_name))
+
+        namespace_folder = db.namespace_folder(namespace=circus_name)
+        config_file = os.path.join(namespace_folder, "circus_config.json")
+
+        with open(config_file, "r") as config_h:
+            config = json.load(config_h)
+
+            clock_config = {
+                "start": pd.Timestamp(config["clock_config"]["start"]),
+                "step_duration": pd.Timedelta(
+                    str(config["clock_config"]["step_duration"]))
+            }
+
+            circus = Circus(name=circus_name, master_seed=config["master_seed"],
+                            **clock_config)
+
+            for actor_id in db.list_actors(namespace=circus_name):
+                circus.load_actor(actor_id)
+
+            for gen_type, gen_id in db.list_generators(namespace=circus_name):
+                circus.load_generator(gen_type=gen_type, gen_id=gen_id)
+
+            return circus
+
+    def save_to_db(self, overwrite=False):
+        """
+        Create a db namespace named after this circus and saves all the
+        actors there.
+
+        Only static data is saved, not the actions.
+        """
+
+        logging.info("saving circus {}".format(self.name))
+
+        if db.is_namespace_existing(namespace=self.name):
+            if overwrite:
+                logging.warning(
+                    "overwriting existing circus {}".format(self.name))
+                db.remove_namespace(namespace=self.name)
+
+            else:
+                raise IOError("refusing to remove existing {} namespace since "
+                              "overwrite parameter is False".format(self.name))
+
+        namespace_folder = db.create_namespace(namespace=self.name)
+        config_file = os.path.join(namespace_folder, "circus_config.json")
+        with open(config_file, "w") as o:
+            config = {"master_seed": self.master_seed,
+                      "clock_config": {
+                          "start": self.clock_params["start"].isoformat(),
+                          "step_duration":
+                              str(self.clock_params["step_duration"])
+                        }
+                      }
+            json.dump(config, o, indent=4)
+
+        logging.info("saving all actors")
+        for actor_id, ac in self.actors.iteritems():
+            db.save_actor(ac, namespace=self.name, actor_id=actor_id)
+
+        logging.info("saving all generators")
+        for gen_id, generator in self.generators.iteritems():
+            db.save_generator(generator, namespace=self.name, gen_id=gen_id)
+
+        logging.info("circus saved")
+
+    def description(self):
+
+        return {
+            "circus_name": self.name,
+            "master_seed": self.master_seed,
+            "actors": {actor_id: actor.description()
+                       for actor_id, actor in self.actors.iteritems()
+                       },
+            "generators": {gen_id: gen.description()
+                       for gen_id, gen in self.generators.iteritems()
+                       },
+        }
+
+    def __str__(self):
+        return json.dumps(self.description(), indent=4)

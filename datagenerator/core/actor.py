@@ -146,6 +146,17 @@ class Actor(object):
 
         return df
 
+    def description(self):
+        """"
+        :return a dictionary description of this actor
+        """
+
+        return {
+            "size": self.size,
+            "attributes": self.attribute_names(),
+            "relationships": self.relationship_names(),
+        }
+
     #######
     # IO
 

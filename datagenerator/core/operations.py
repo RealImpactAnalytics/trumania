@@ -233,7 +233,7 @@ def copy_if(action_data):
 
 def bound_value(lb=None, ub=None):
     """
-    builds a function that limits the restraint the range of a value
+    builds a function that limits the range of a value
     """
 
     def _f(value):

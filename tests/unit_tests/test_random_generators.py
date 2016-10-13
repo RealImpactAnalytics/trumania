@@ -1,4 +1,5 @@
 from datagenerator.core.random_generators import *
+import path
 
 
 def test_constant_generator_should_produce_constant_values():
@@ -108,4 +109,47 @@ def test_faker_generator_should_delegate_to_faker_correct():
     tested_address = FakerGenerator(seed=1234, method="address")
     some_addresses = tested_address.generate(30)
     assert len(some_addresses) == 30
+
+
+def test_sequencial_generator_read_from_disk_should_continue_sequence():
+
+    with path.tempdir() as p:
+
+        tested = SequencialGenerator(start=10, prefix="o_", max_length=2)
+
+        list_1 = tested.generate(size=4)
+        assert list_1 == ["o_10", "o_11", "o_12", "o_13"]
+
+        gen_file = os.path.join(p, "tested.json")
+        tested.save_to(gen_file)
+
+        tested2 = Generator.load_generator(gen_type="SequencialGenerator",
+                                           input_file=gen_file)
+
+        list_2 = tested2.generate(size=4)
+        assert list_2 == ["o_14", "o_15", "o_16", "o_17"]
+
+        # loading it again => we should have the same result
+        tested3 = Generator.load_generator(gen_type="SequencialGenerator",
+                                           input_file=gen_file)
+
+        list_3 = tested3.generate(size=4)
+        assert list_3 == ["o_14", "o_15", "o_16", "o_17"]
+
+
+def numpy_generators_read_from_disk_should_generate_same_sequence_as_original():
+
+    with path.tempdir() as p:
+
+        # making sure we're not using the default seed
+        tested = NumpyRandomGenerator(method="normal", loc=10, scale=4,
+                                      seed=123456)
+
+        gen_file = os.path.join(p, "tested2.json")
+        tested.save_to(gen_file)
+
+        reloaded = Generator.load_generator(gen_type="NumpyRandomGenerator",
+                                            input_file=gen_file)
+
+        assert tested.generate(size=10000) == reloaded.generate(size=10000)
 

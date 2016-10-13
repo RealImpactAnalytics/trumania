@@ -9,8 +9,8 @@ def create_field_agents(circus, params):
 
     logging.info(" adding {} field agents".format(params["n_field_agents"]))
 
-    field_agents = Actor(size=params["n_field_agents"],
-                         ids_gen=SequencialGenerator(prefix="FA_"))
+    field_agents = circus.create_actor(name="field_agents", size=params["n_field_agents"],
+                                       ids_gen=SequencialGenerator(prefix="FA_"))
 
     logging.info(" adding mobility relationships to field agents")
 
@@ -21,7 +21,7 @@ def create_field_agents(circus, params):
     # TODO: make sure the number of sites per field agent is "reasonable"
     mobility_df = pd.DataFrame.from_records(
         make_random_bipartite_data(field_agents.ids,
-                                   circus.sites.ids,
+                                   circus.actors["sites"].ids,
                                    0.4,
                                    seed=circus.seeder.next()),
         columns=["FA_ID", "SID"])
@@ -64,10 +64,12 @@ def add_mobility_action(circus, params):
 
     mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=1))
 
+    field_agents = circus.actors["field_agents"]
+
     mobility_action = circus.create_action(
         name="field_agent_mobility",
 
-        initiating_actor=circus.field_agents,
+        initiating_actor=field_agents,
         actorid_field="FA_ID",
 
         timer_gen=mobility_time_gen,
@@ -76,18 +78,18 @@ def add_mobility_action(circus, params):
     logging.info(" adding operations")
 
     mobility_action.set_operations(
-        circus.field_agents.ops.lookup(
+        field_agents.ops.lookup(
             actor_id_field="FA_ID",
             select={"CURRENT_SITE": "PREV_SITE"}),
 
         # selects a destination site (or maybe the same as current... ^^)
 
-        circus.field_agents \
+        field_agents \
             .get_relationship("POSSIBLE_SITES") \
             .ops.select_one(from_field="FA_ID", named_as="NEW_SITE"),
 
         # update the SITE attribute of the field agents accordingly
-        circus.field_agents \
+        field_agents \
             .get_attribute("CURRENT_SITE") \
             .ops.update(
                 actor_id_field="FA_ID",
@@ -106,6 +108,8 @@ def add_survey_action(circus):
 
     logging.info(" creating field agent survey action")
 
+    field_agents = circus.actors["field_agents"]
+
     # Surveys only happen during work hours
     survey_timer_gen = WorkHoursTimerGenerator(clock=circus.clock,
                                                seed=circus.seeder.next())
@@ -121,7 +125,7 @@ def add_survey_action(circus):
 
     survey_action = circus.create_action(
         name="pos_surveys",
-        initiating_actor=circus.field_agents,
+        initiating_actor=field_agents,
         actorid_field="FA_ID",
         timer_gen=survey_timer_gen,
         activity_gen=survey_activity_gen
@@ -129,13 +133,13 @@ def add_survey_action(circus):
 
     survey_action.set_operations(
 
-        circus.field_agents.ops.lookup(
+        field_agents.ops.lookup(
             actor_id_field="FA_ID",
             select={"CURRENT_SITE": "SITE"}
         ),
 
         # TODO: We should select a POS irrespectively of the relationship weight
-        circus.sites.get_relationship("POS").ops.select_one(
+        circus.actors["sites"].get_relationship("POS").ops.select_one(
             from_field="SITE",
             named_as="POS_ID",
 
@@ -143,7 +147,7 @@ def add_survey_action(circus):
             discard_empty=True
         ),
 
-        circus.pos.ops.lookup(
+        circus.actors["pos"].ops.lookup(
             actor_id_field="POS_ID",
             select={
                 "LATITUDE": "POS_LATITUDE",

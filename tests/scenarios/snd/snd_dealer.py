@@ -7,11 +7,11 @@ import snd_pos
 import patterns
 
 
-def create_telcos(circus, params, distributor_id_gen,
-                  sim_id_gen, recharge_id_gen):
+def add_telcos(circus, params, distributor_id_gen, sim_id_gen, recharge_id_gen):
 
     logging.info("creating telcos")
-    telcos = Actor(size=params["n_telcos"], ids_gen=distributor_id_gen)
+    telcos = circus.create_actor(name="telcos", size=params["n_telcos"],
+                                 ids_gen=distributor_id_gen)
 
     logging.info("generating telco initial ERS stock")
     ers_stock_gen = ConstantGenerator(value=params["n_customers"])\
@@ -29,21 +29,34 @@ def create_telcos(circus, params, distributor_id_gen,
                                          stock_bulk_gen=sims_stock_gen,
                                          seed=circus.seeder.next())
 
-    _add_bulk_restock_action(circus,
-                             action_name="telco_bulk_restocks_sims",
-                             telco_actor=telcos,
-                             bulk_restock_size=params["n_customers"] / 10,
-                             stock_relationship="SIMS",
-                             stock_id_generator=sim_id_gen)
 
-    _add_bulk_restock_action(circus,
-                             action_name="telco_bulk_restocks_ers",
-                             telco_actor=telcos,
-                             bulk_restock_size=params["n_customers"],
-                             stock_relationship="ERS",
-                             stock_id_generator=recharge_id_gen)
+def add_telco_restock_actions(circus):
+    """
+    Add actions to "restock" the ERS and SIM products, i.e. create new items
+    when needed (Telco do not buy products from anyone in this model,
+    they just create them).
 
-    return telcos
+    :param circus:
+    :return:
+    """
+
+    n_customers = circus.actors["customers"].size
+
+    _add_bulk_restock_action(
+        circus,
+        action_name="telco_bulk_restocks_sims",
+        telco_actor=circus.actors["telcos"],
+        bulk_restock_size=n_customers / 10,
+        stock_relationship="SIMS",
+        stock_id_generator=circus.generators["sim_id_gen"])
+
+    _add_bulk_restock_action(
+        circus,
+        action_name="telco_bulk_restocks_ers",
+        telco_actor=circus.actors["telcos"],
+        bulk_restock_size=n_customers,
+        stock_relationship="ERS",
+        stock_id_generator=circus.generators["recharge_id_gen"])
 
 
 def _add_bulk_restock_action(circus,
@@ -93,75 +106,106 @@ def _add_bulk_restock_action(circus,
                 named_as="NEW_STOCK"),
 
         operations.FieldLogger(log_id=action_name,
-                               cols=["TIME",  "TELCO", "OLD_STOCK",
+                               cols=["TIME", "TELCO", "OLD_STOCK",
                                      "NEW_STOCK", "BULK_SIZE"]))
 
 
 def create_dealers_l1(circus, params, distributor_id_gen,
                       sim_id_gen, recharge_id_gen):
+    """
+    Adds the dealers level 1, i.e between the telcos and dealers level 2
+    """
 
     logging.info("creating L1 dealers")
-    dealers_l1 = Actor(size=params["n_dealers_l1"], ids_gen=distributor_id_gen)
-    pos_per_dealer_l1 = circus.pos.size / dealers_l1.size
+    dealers_l1 = circus.create_actor(name="dealers_l1",
+                                     size=params["n_dealers_l1"],
+                                     ids_gen=distributor_id_gen)
+    pos_per_dealer_l1 = circus.actors["pos"].size / dealers_l1.size
 
     logging.info("generating dealers L1 initial ERS stock")
-    ers_stock_gen = snd_pos.ers_stock_size_gen(
-            params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l1)\
-        .flatmap(DependentBulkGenerator(element_generator=recharge_id_gen))
+    pos_ers_stock_size_gen = snd_pos.ers_stock_size_gen(
+                params, circus.seeder.next())
+    dealers_ers_stock_size_gen = patterns.scale_quantity_gen(
+            stock_size_gen=pos_ers_stock_size_gen,
+            scale_factor=pos_per_dealer_l1)
+
+    ers_stock_gen = dealers_ers_stock_size_gen.flatmap(
+        DependentBulkGenerator(element_generator=recharge_id_gen))
 
     dealers_l1.create_stock_relationship_grp(name="ERS",
                                              stock_bulk_gen=ers_stock_gen,
                                              seed=circus.seeder.next())
 
+    # As elsewhere, we just re-use the distribution of sim bulk purchase
+    # sizes as  distribution of init SIM stocks
     logging.info("generating dealers L1 initial SIMS stock")
-    sims_stock_gen = snd_pos.sim_stock_size_gen(
-            params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l1) \
-        .flatmap(DependentBulkGenerator(element_generator=sim_id_gen))
+    sims_stock_size_gen = patterns.scale_quantity_gen(
+        stock_size_gen=circus.generators["pos_sim_bulk_size_gen"],
+        scale_factor=pos_per_dealer_l1)
+    sims_stock_gen = sims_stock_size_gen.flatmap(
+        DependentBulkGenerator(element_generator=sim_id_gen))
 
     dealers_l1.create_stock_relationship_grp(name="SIMS",
                                              stock_bulk_gen=sims_stock_gen,
                                              seed=circus.seeder.next())
 
     logging.info(" linking L1 dealers to telcos")
-    _create_distribution_link(circus, circus.telcos, dealers_l1, "TELCOS")
+    _create_distribution_link(circus, circus.actors["telcos"],
+                              dealers_l1, "TELCOS")
 
-    low_ers_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
+
+def add_dealers_l1_bulk_purchase_actions(circus, params):
+    """
+    Adds actions to this circus to trigger bulk purchases by the level 1
+    dealers when their stock gets low.
+    """
+
+    dealers_l1 = circus.actors["dealers_l1"]
+    telcos = circus.actors["telcos"]
+    pos_per_dealer_l1 = circus.actors["pos"].size / dealers_l1.size
+    pos_per_telco = circus.actors["pos"].size / telcos.size
+
+    # trigger on the telco stock that should trigger a re-stock
+    low_ers_stock_telco_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=pos_per_dealer_l1,
-            x_max=params["max_pos_er_stock_triggering_restock"] * pos_per_dealer_l1,
+            x_min=pos_per_telco,
+            x_max=params["max_pos_er_stock_triggering_restock"] * pos_per_telco,
             shape=params["pos_er_restock_shape"],
             incrementing=False))
 
-    ers_bulk_size_gen = snd_pos.ers_bulk_size_gen(
-        params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l1)
+    ers_bulk_size_gen = patterns.scale_quantity_gen(
+        stock_size_gen=circus.generators["pos_ers_bulk_size_gen"],
+        scale_factor=pos_per_dealer_l1)
 
     _add_bulk_purchase_action(
         circus,
         action_name="dealer_l1_buys_ers_from_telco",
         buyer_actor=dealers_l1,
-        seller_actor=circus.telcos,
+        seller_actor=telcos,
         bulk_size_gen=ers_bulk_size_gen,
         link_relationship="TELCOS",
         buyer_stock_relationship="ERS",
         seller_stock_relationship="ERS",
-        upperlevel_bulk_purchase_trigger=low_ers_stock_dealer_bulk_purchase_trigger,
+        upperlevel_bulk_purchase_trigger=low_ers_stock_telco_bulk_purchase_trigger,
         upperlevel_bulk_purchase_action_name="telco_bulk_restocks_ers")
 
+    # trigger on the telco stock that should trigger a re-stock
     low_sims_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=pos_per_dealer_l1,
-            x_max=params["max_pos_sim_stock_triggering_restock"] * pos_per_dealer_l1,
+            x_min=pos_per_telco,
+            x_max=params["max_pos_sim_stock_triggering_restock"] * pos_per_telco,
             shape=params["pos_sim_restock_shape"],
             incrementing=False))
 
-    sims_bulk_size_gen = snd_pos.sims_bulk_size_gen(
-        params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l1)
+    sims_bulk_size_gen = patterns.scale_quantity_gen(
+        stock_size_gen=circus.generators["pos_sim_bulk_size_gen"],
+        scale_factor=pos_per_dealer_l1)
 
     _add_bulk_purchase_action(
         circus,
         action_name="dealer_l1_buys_sims_from_telco",
         buyer_actor=dealers_l1,
-        seller_actor=circus.telcos,
+        seller_actor=telcos,
         bulk_size_gen=sims_bulk_size_gen,
         link_relationship="TELCOS",
         buyer_stock_relationship="SIMS",
@@ -174,79 +218,109 @@ def create_dealers_l1(circus, params, distributor_id_gen,
 
 def create_dealers_l2(circus, params, distributor_id_gen,
                       sim_id_gen, recharge_id_gen):
+    """
+    Adds the dealers level 2, i.e between the dealers level 2 and the POS
+    # TODO (?): this is basically a copy-paste of create_dealers_l1...
+    """
 
     logging.info("creating L2 dealers")
-    dealers_l2 = Actor(size=params["n_dealers_l2"], ids_gen=distributor_id_gen)
-    pos_per_dealer_l2 = circus.pos.size / dealers_l2.size
+    dealers_l2 = circus.create_actor(name="dealers_l2",
+                                     size=params["n_dealers_l2"],
+                                     ids_gen=distributor_id_gen)
+    pos_per_dealer_l2 = circus.actors["pos"].size / dealers_l2.size
 
     logging.info("generating dealers L2 initial ERS stock")
-    ers_stock_gen = snd_pos.ers_stock_size_gen(
-            params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l2)\
-        .flatmap(DependentBulkGenerator(element_generator=recharge_id_gen))
+    pos_ers_stock_size_gen = snd_pos.ers_stock_size_gen(
+                params, circus.seeder.next())
+    dealers_ers_stock_size_gen = patterns.scale_quantity_gen(
+            stock_size_gen=pos_ers_stock_size_gen,
+            scale_factor=pos_per_dealer_l2)
+
+    ers_stock_gen = dealers_ers_stock_size_gen.flatmap(
+        DependentBulkGenerator(element_generator=recharge_id_gen))
 
     dealers_l2.create_stock_relationship_grp(name="ERS",
                                              stock_bulk_gen=ers_stock_gen,
                                              seed=circus.seeder.next())
 
     logging.info("generating dealers L2 initial SIMS stock")
-    sims_stock_gen = snd_pos.sim_stock_size_gen(
-            params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l2) \
-        .flatmap(DependentBulkGenerator(element_generator=sim_id_gen))
+    # As elsewhere, we just re-use the distribution of sim bulk purchase
+    # sizes as  distribution of init SIM stocks
+    sims_stock_size_gen = patterns.scale_quantity_gen(
+        stock_size_gen=circus.generators["pos_sim_bulk_size_gen"],
+        scale_factor=pos_per_dealer_l2)
+    sims_stock_gen = sims_stock_size_gen.flatmap(
+        DependentBulkGenerator(element_generator=sim_id_gen))
 
     dealers_l2.create_stock_relationship_grp(name="SIMS",
                                              stock_bulk_gen=sims_stock_gen,
                                              seed=circus.seeder.next())
 
     logging.info(" linking L2 dealers to L1 dealers")
-    _create_distribution_link(circus,
-                              circus.dealers_l1, dealers_l2, "DEALERS_L1")
+    _create_distribution_link(circus, circus.actors["dealers_l1"], dealers_l2,
+                              "DEALERS_L1")
 
-    ers_bulk_size_gen = snd_pos.ers_bulk_size_gen(
-        params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l2)
 
-    low_ers_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
+def add_dealers_l2_bulk_purchase_actions(circus, params):
+    """
+    Adds actions to this circus to trigger bulk purchases by the level 2
+    dealers when their stock gets low.
+
+    # TODO: this is basically a copy-paste of the corresponging action for level 1
+    """
+
+    dealers_l2 = circus.actors["dealers_l2"]
+    dealers_l1 = circus.actors["dealers_l1"]
+    pos_per_dealer_l1 = circus.actors["pos"].size / dealers_l1.size
+    pos_per_dealer_l2 = circus.actors["pos"].size / dealers_l2.size
+
+    # trigger on the dealer level 1 stock that should trigger a re-stock
+    low_ers_stock_dealer_l1_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=pos_per_dealer_l2,
-            x_max=params["max_pos_er_stock_triggering_restock"] * pos_per_dealer_l2,
+            x_min=pos_per_dealer_l1,
+            x_max=params["max_pos_er_stock_triggering_restock"] * pos_per_dealer_l1,
             shape=params["pos_er_restock_shape"],
             incrementing=False))
+
+    ers_bulk_size_gen = patterns.scale_quantity_gen(
+        stock_size_gen=circus.generators["pos_ers_bulk_size_gen"],
+        scale_factor=pos_per_dealer_l2)
 
     _add_bulk_purchase_action(
         circus,
         action_name="dealer_l2_buys_ers_from_dealer_l1",
         buyer_actor=dealers_l2,
-        seller_actor=circus.dealers_l1,
+        seller_actor=dealers_l1,
         bulk_size_gen=ers_bulk_size_gen,
         link_relationship="DEALERS_L1",
         buyer_stock_relationship="ERS",
         seller_stock_relationship="ERS",
-        upperlevel_bulk_purchase_trigger=low_ers_stock_dealer_bulk_purchase_trigger,
-        upperlevel_bulk_purchase_action_name="dealer_l1_buys_ers_from_telco"
-    )
+        upperlevel_bulk_purchase_trigger=low_ers_stock_dealer_l1_bulk_purchase_trigger,
+        upperlevel_bulk_purchase_action_name="dealer_l1_buys_ers_from_telco")
 
-    sims_bulk_size_gen = snd_pos.sims_bulk_size_gen(
-        params, seed=circus.seeder.next(), scale_factor=pos_per_dealer_l2)
-
-    low_sim_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
+    # trigger on the dealer l1 stock that should trigger a re-stock
+    low_sims_stock_dealer_bulk_purchase_trigger = DependentTriggerGenerator(
         value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=pos_per_dealer_l2,
-            x_max=params["max_pos_sim_stock_triggering_restock"] * pos_per_dealer_l2,
-            shape=params["pos_er_restock_shape"],
+            x_min=pos_per_dealer_l1,
+            x_max=params["max_pos_sim_stock_triggering_restock"] * pos_per_dealer_l1,
+            shape=params["pos_sim_restock_shape"],
             incrementing=False))
+
+    sims_bulk_size_gen = patterns.scale_quantity_gen(
+        stock_size_gen=circus.generators["pos_sim_bulk_size_gen"],
+        scale_factor=pos_per_dealer_l2)
 
     _add_bulk_purchase_action(
         circus,
         action_name="dealer_l2_buys_sims_from_dealer_l1",
         buyer_actor=dealers_l2,
-        seller_actor=circus.dealers_l1,
+        seller_actor=dealers_l1,
         bulk_size_gen=sims_bulk_size_gen,
         link_relationship="DEALERS_L1",
         buyer_stock_relationship="SIMS",
         seller_stock_relationship="SIMS",
-        upperlevel_bulk_purchase_trigger=low_sim_stock_dealer_bulk_purchase_trigger,
+        upperlevel_bulk_purchase_trigger=low_sims_stock_dealer_bulk_purchase_trigger,
         upperlevel_bulk_purchase_action_name="dealer_l1_buys_sims_from_telco")
-
-    return dealers_l2
 
 
 def _create_distribution_link(circus,

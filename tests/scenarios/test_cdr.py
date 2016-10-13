@@ -2,7 +2,9 @@ from __future__ import division
 
 from datagenerator.components.social_networks.erdos_renyi import *
 from datagenerator.components.geographies.random_geo import *
+from datagenerator.components.time_patterns.profilers import *
 from datagenerator.components.geographies.uganda import *
+
 from datagenerator.core import operations
 
 from datetime import datetime
@@ -104,13 +106,14 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         logging.info("building subscriber actors ")
 
-        Circus.__init__(self, master_seed=123456,
+        Circus.__init__(self,
+                        name="test_cdr_circus",
+                        master_seed=123456,
                         start=pd.Timestamp("8 June 2016"),
-                        step_duration=pd.Timedelta(params["time_step"]),
-                        output_folder=params["output_folder"])
+                        step_duration=pd.Timedelta(params["time_step"]),)
 
         subs, sims, recharge_gen = self.create_subs_and_sims()
-        cells, cities = self.add_uganda_geography()
+        cells, cities = self.add_uganda_geography(force_build=True)
         self.add_mobility(subs, cells)
         self.add_er_social_network_relationship(
             subs,
@@ -595,7 +598,8 @@ def run_cdr_scenario(params):
 
     # running it
     scenario.run(duration=pd.Timedelta(params["simulation_duration"]),
-                 delete_existing_logs=True)
+                 delete_existing_logs=True,
+                 log_output_folder=params["output_folder"])
     logs = load_all_logs(params["output_folder"])
 
     execution_time = pd.Timestamp(datetime.now())

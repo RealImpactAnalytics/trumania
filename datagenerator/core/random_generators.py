@@ -1,5 +1,6 @@
 from itertools import islice
 from faker import Faker
+import json
 
 from datagenerator.core.operations import *
 
@@ -21,6 +22,8 @@ class Generator(object):
     Abstract class
     """
     __metaclass__ = ABCMeta
+
+    file_loaders = {}
 
     def __init__(self):
         self.ops = self.GeneratorOps(self)
@@ -76,6 +79,20 @@ class Generator(object):
 
         """
         return self.map(f_vect=dependent_generator.generate)
+
+    def save_to(self, output_file):
+        raise NotImplemented("must be implemented in sub-class")
+
+    def description(self):
+        return {}
+
+    @staticmethod
+    def load_generator(gen_type, input_file):
+        if gen_type in Generator.file_loaders:
+            return Generator.file_loaders[gen_type](input_file)
+        else:
+            raise ValueError("does not know how to parse generator of type "
+                             "{}".format(gen_type))
 
     class GeneratorOps(object):
         def __init__(self, generator):
@@ -140,12 +157,63 @@ class NumpyRandomGenerator(Generator):
         :return: create a random number generator of type "gen_type", with its parameters and seeded.
         """
         Generator.__init__(self)
+        self.method = method
         self.numpy_parameters = numpy_parameters
-        self.numpy_method = getattr(RandomState(seed), method)
+        self.state = RandomState(seed)
+        self.numpy_method = getattr(self.state, method)
 
     def generate(self, size):
         all_params = merge_2_dicts({"size": size}, self.numpy_parameters)
         return self.numpy_method(**all_params)
+
+    def description(self):
+        return {
+            "type": "NumpyRandomGenerator",
+            "method": self.method,
+            "numpy_parameters": self.numpy_parameters
+        }
+
+    def save_to(self, output_file):
+
+        logging.info("saving generator to {}".format(output_file))
+
+        # saving the numpy RandomState instance, converting the numpy array
+        # to enable json serialization
+        np_state = self.state.get_state()
+        state = {
+            "method": self.method,
+            "numpy_parameters": self.numpy_parameters,
+            "numpy_state": (np_state[0], np_state[1].tolist(), np_state[2],
+                            np_state[3], np_state[4])
+        }
+        with open(output_file, "w") as outf:
+            json.dump(state, outf, indent=4)
+
+    @staticmethod
+    def load_from(input_file):
+
+        logging.info("loading numpy generator from {}".format(input_file))
+
+        with open(input_file, "r") as inf:
+            json_payload = json.load(inf)
+
+            # Initializing the generator with an incorrect seed just to make
+            # the constructor happy, then setting the state
+            gen = NumpyRandomGenerator(
+                method=json_payload["method"],
+                seed=1234,
+                **json_payload["numpy_parameters"])
+
+            # retrieving the numpy state + converting list to np.array as needed
+            state_raw_ = json_payload["numpy_state"]
+            np_state = (state_raw_[0], np.array(state_raw_[1]), state_raw_[2],
+                        state_raw_[3], state_raw_[4])
+
+            gen.state = np.random.RandomState(seed=1234)
+            gen.state.set_state(np_state)
+            return gen
+
+Generator.file_loaders["NumpyRandomGenerator"] = NumpyRandomGenerator.load_from
 
 
 class ParetoGenerator(Generator):
@@ -184,7 +252,7 @@ class SequencialGenerator(Generator):
     """
     def __init__(self, start=0, prefix="id_", max_length=10):
         Generator.__init__(self)
-        self.counter=start
+        self.counter = int(start)
         self.prefix = prefix
         self.max_length = max_length
 
@@ -192,6 +260,40 @@ class SequencialGenerator(Generator):
         values = build_ids(size, self.counter, self.prefix, self.max_length)
         self.counter += size
         return values
+
+    def description(self):
+        return {
+            "type": "SequencialGenerator",
+            "prefix": self.prefix,
+            "max_length": self.max_length
+        }
+
+    def save_to(self, output_file):
+
+        logging.info("saving sequencial generator to {}".format(output_file))
+
+        state = {
+            "counter": int(self.counter),
+            "prefix": self.prefix,
+            "max_length": self.max_length
+        }
+        with open(output_file, "w") as outf:
+            json.dump(state, outf, indent=4)
+
+    @staticmethod
+    def load_from(input_file):
+
+        logging.info("loading generator from {}".format(input_file))
+
+        with open(input_file, "r") as inf:
+            state = json.load(inf)
+
+            return SequencialGenerator(
+                start=state["counter"],
+                prefix=state["prefix"],
+                max_length=state["max_length"])
+
+Generator.file_loaders["SequencialGenerator"] = SequencialGenerator.load_from
 
 
 class FakerGenerator(Generator):

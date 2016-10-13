@@ -35,8 +35,9 @@ params = {
 class SndScenario(WithRandomGeo, Circus):
 
     def __init__(self):
-        Circus.__init__(self, master_seed=1234,
-                        output_folder=params["output_folder"],
+        Circus.__init__(self,
+                        name="test_snd_scenario",
+                        master_seed=1234,
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("60s"),)
 
@@ -494,7 +495,8 @@ def test_snd_scenario():
 
     scenario = SndScenario()
 
-    scenario.run(duration=pd.Timedelta("1h30m"), delete_existing_logs=True)
+    scenario.run(duration=pd.Timedelta("1h30m"), delete_existing_logs=True,
+                 log_output_folder=params["output_folder"])
     logs = load_all_logs(params["output_folder"])
 
     for logid, lg in logs.iteritems():

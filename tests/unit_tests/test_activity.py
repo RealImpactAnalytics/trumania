@@ -17,8 +17,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
         size=1000,
         ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
-    circus = Circus(master_seed=1,
-                    output_folder=log_folder,
+    circus = Circus(name="tested_circus", master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta(clock_step))
 
@@ -50,7 +49,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
         operations.FieldLogger(log_id="the_logs")
     )
 
-    circus.run(duration=pd.Timedelta(simulation_duration))
+    circus.run(duration=pd.Timedelta(simulation_duration), log_output_folder=log_folder)
 
 
 def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days():
@@ -187,8 +186,8 @@ def test_actors_during_default_daily():
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
-        circus = Circus(master_seed=1,
-                        output_folder=log_folder,
+        circus = Circus(name="tested_circus",
+                        master_seed=1,
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
@@ -213,7 +212,7 @@ def test_actors_during_default_daily():
             operations.FieldLogger(log_id="the_logs")
         )
 
-        circus.run(duration=pd.Timedelta("30 days"))
+        circus.run(duration=pd.Timedelta("30 days"), log_output_folder=log_folder)
 
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
@@ -233,8 +232,8 @@ def test_actors_during_working_hours():
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
-        circus = Circus(master_seed=1,
-                        output_folder=log_folder,
+        circus = Circus(name="tested_circus",
+                        master_seed=1,
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
@@ -265,7 +264,7 @@ def test_actors_during_working_hours():
             operations.FieldLogger(log_id="the_logs")
         )
 
-        circus.run(duration=pd.Timedelta("30 days"))
+        circus.run(duration=pd.Timedelta("30 days"), log_output_folder=log_folder)
 
         logging.info("loading produced logs")
         logs = util_functions.load_all_logs(log_folder)["the_logs"]
