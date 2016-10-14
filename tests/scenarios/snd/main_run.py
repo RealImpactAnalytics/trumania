@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     util_functions.setup_logging()
 
-    snd = circus.Circus.load_from_db(circus_name="snd_v1")
+    snd = circus.Circus.load_from_db(circus_name="snd_v2")
     logging.info("loaded circus:\n{}".format(snd))
 
     snd_customers.add_mobility_action(snd, runtime_params)
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # restock action must be built in reverse order since they refer to each other
     # TODO: we should fix that since this also influence the order of the executions
-    # => we'd like to re-stock directly, not with delays due to the size of the hierachy
+    # => we'd like to re-stock directly, not with delays due to the size of the hierarchy
     snd_dealer.add_telco_restock_actions(snd)
     snd_dealer.add_dealers_l1_bulk_purchase_actions(snd, runtime_params)
     snd_dealer.add_dealers_l2_bulk_purchase_actions(snd, runtime_params)
@@ -64,5 +64,5 @@ if __name__ == "__main__":
 
     snd.run(
         duration=pd.Timedelta("1 days"),
-        log_output_folder="snd_output_logs/scenario_0",
+        log_output_folder="snd_output_logs/{}".format(snd.name),
         delete_existing_logs=True)

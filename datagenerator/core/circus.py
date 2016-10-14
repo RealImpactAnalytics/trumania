@@ -236,11 +236,11 @@ class Circus(object):
             json.dump(config, o, indent=4)
 
         logging.info("saving all actors")
-        for actor_id, ac in self.actors.iteritems():
+        for actor_id, ac in self.actors.items():
             db.save_actor(ac, namespace=self.name, actor_id=actor_id)
 
         logging.info("saving all generators")
-        for gen_id, generator in self.generators.iteritems():
+        for gen_id, generator in self.generators.items():
             db.save_generator(generator, namespace=self.name, gen_id=gen_id)
 
         logging.info("circus saved")
@@ -251,11 +251,11 @@ class Circus(object):
             "circus_name": self.name,
             "master_seed": self.master_seed,
             "actors": {actor_id: actor.description()
-                       for actor_id, actor in self.actors.iteritems()
+                       for actor_id, actor in self.actors.items()
                        },
             "generators": {gen_id: gen.description()
-                       for gen_id, gen in self.generators.iteritems()
-                       },
+                           for gen_id, gen in self.generators.items()
+                           },
         }
 
     def __str__(self):

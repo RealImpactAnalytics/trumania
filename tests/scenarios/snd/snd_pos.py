@@ -137,38 +137,6 @@ def add_attractiveness_evolution_action(circus):
     )
 
 
-# def _bulk_size_gen(bulk_sizes, bulk_dist, seed, scale_factor):
-#     """
-#     :return: a generator of positive integers chosen as per the provided
-#     distribution, optionally scaled as requested
-#     """
-#     bulk_size_gen = NumpyRandomGenerator(
-#         method="choice",
-#         a=bulk_sizes,
-#         p=bulk_dist,
-#         seed=seed)
-#
-#     if scale_factor is not None:
-#         bulk_size_gen = bulk_size_gen\
-#             .map(f_vect=scale(factor=scale_factor)) \
-#             .map(f=bound_value(lb=1))
-#
-#     return bulk_size_gen
-
-
-# def ers_bulk_size_gen(params, seed, scale_factor=None):
-#     """
-#     :return: a generator for of the POS ERS bulk purchase sizes, optionally
-#     scaled by the provided factor.
-#     """
-#     return _bulk_size_gen(
-#         bulk_sizes=params["pos_ers_bulk_purchase_sizes"],
-#         bulk_dist=params["pos_ers_bulk_purchase_sizes_dist"],
-#         seed=seed,
-#         scale_factor=scale_factor
-#     )
-#
-
 def ers_stock_size_gen(params, seed):
     """
     return: the generator for initial pos ERS stock
@@ -182,32 +150,8 @@ def ers_stock_size_gen(params, seed):
         gen_id=gen_id,
         seed=seed)
 
-#
 
-# def sims_bulk_size_gen(params, seed, scale_factor=None):
-#     """
-#     :return: a generator for of the POS SIMs bulk purchase sizes, optionally
-#     scaled by the provided factor.
-#     """
-#     return _bulk_size_gen(
-#         bulk_sizes=params["pos_sim_bulk_purchase_sizes"],
-#         bulk_dist=params["pos_sim_bulk_purchase_sizes_dist"],
-#         seed=seed,
-#         scale_factor=scale_factor
-#     )
-
-
-# def sim_stock_size_gen(params, seed, scale_factor=None):
-#     """
-#     return: the generator for initial pos SIMS stock, optionally scaled by the
-#     provided factor.
-#     """
-#
-#     # ATM, SIM stock has not been investigated => just re-using the bulk sizes
-#     return sims_bulk_size_gen(**locals())
-
-
-def add_pos(circus, params, sim_id_gen, recharge_id_gen):
+def add_pos(circus, params):
 
     logging.info("creating {} POS".format(params["n_pos"]))
     pos = circus.create_actor(
@@ -239,53 +183,48 @@ def add_pos(circus, params, sim_id_gen, recharge_id_gen):
         from_ids=pos.get_attribute_values("SITE"),
         to_ids=pos.ids)
 
-    logging.info("Building generators of SIM and ERS bulk purchase size")
-    ers_bulk_size_gen = NumpyRandomGenerator(
+    for product, description in params["products"].items():
+        _init_pos_product(circus, product, description)
+
+
+def _init_pos_product(circus, product, description):
+    """
+    Initialize the required stock and generators for this
+    """
+
+    logging.info("Building a generator of {} POS bulk purchase size".format(product))
+    bulk_size_gen = NumpyRandomGenerator(
         method="choice",
-        a=params["pos_ers_bulk_purchase_sizes"],
-        p=params["pos_ers_bulk_purchase_sizes_dist"],
+        a=description["pos_bulk_purchase_sizes"],
+        p=description["pos_bulk_purchase_sizes_dist"],
         seed=circus.seeder.next())
-    circus.attach_generator("pos_ers_bulk_size_gen", ers_bulk_size_gen)
+    circus.attach_generator("pos_{}_bulk_size_gen".format(product), bulk_size_gen)
 
-    sim_bulk_size_gen = NumpyRandomGenerator(
-        method="choice",
-        a=params["pos_sim_bulk_purchase_sizes"],
-        p=params["pos_sim_bulk_purchase_sizes_dist"],
+    logging.info("Building a generators of {} POS initial stock size".format(product))
+    if "pos_init_distro" in description:
+        logging.info(" using pre-defined initial distribution")
+        gen_namespace, gen_id = description["pos_init_distro"].split("/")
+
+        # TODO: with the new save/load, this is now a mere numpyGenerator
+        init_stock_size_gen = db.load_empirical_discrete_generator(
+            namespace=gen_namespace,
+            gen_id=gen_id,
+            seed=circus.seeder.next())
+    else:
+        logging.info(" using bulk size distribution")
+        init_stock_size_gen = bulk_size_gen
+    circus.attach_generator("pos_{}_init_stock_size_gen".format(product), init_stock_size_gen)
+
+    logging.info("Building a generator of {} ids".format(product))
+    id_gen = SequencialGenerator(prefix="{}_".format(product))
+    circus.attach_generator("{}_id_gen".format(product), id_gen)
+
+    logging.info("Initializing POS {} stock".format(product))
+    stock_gen = init_stock_size_gen.flatmap(DependentBulkGenerator(element_generator=id_gen))
+    circus.actors["pos"].create_stock_relationship_grp(
+        name=product,
+        stock_bulk_gen=stock_gen,
         seed=circus.seeder.next())
-    circus.attach_generator("pos_sim_bulk_size_gen", sim_bulk_size_gen)
-
-    logging.info("generating POS initial ERS stock")
-
-    ers_stock_gen = ers_stock_size_gen(params, circus.seeder.next())\
-        .flatmap(DependentBulkGenerator(element_generator=recharge_id_gen))
-    pos.create_stock_relationship_grp(name="ERS",
-                                      stock_bulk_gen=ers_stock_gen,
-                                      seed=circus.seeder.next())
-
-    logging.info("generating POS initial SIMS stock")
-    # re-using the sim bulk size gen for the initial stock for now...
-    sim_stock_gen = sim_bulk_size_gen.flatmap(
-        DependentBulkGenerator(element_generator=sim_id_gen))
-    pos.create_stock_relationship_grp(name="SIMS",
-                                      stock_bulk_gen=sim_stock_gen,
-                                      seed=circus.seeder.next())
-
-
-def connect_pos_to_dealer_l1(circus):
-
-    logging.info("assigning one dealer L1 to each POS")
-
-    pos = circus.actors["pos"]
-    dealer_of_pos = make_random_assign(
-        set1=pos.ids,
-        set2=circus.actors["dealers_l2"].ids,
-        seed=circus.seeder.next())
-
-    dealer_rel = pos.create_relationship("DEALERS_L2",
-                                         seed=circus.seeder.next())
-    dealer_rel.add_relations(
-        from_ids=dealer_of_pos["set1"],
-        to_ids=dealer_of_pos["chosen_from_set2"])
 
 
 def add_pos_stock_log_action(circus):
@@ -309,11 +248,11 @@ def add_pos_stock_log_action(circus):
         circus.clock.ops.timestamp(named_as="TIME", random=False,
                                    log_format="%Y-%m-%d"),
 
-        pos.get_relationship("SIMS").ops.get_neighbourhood_size(
+        pos.get_relationship("SIM").ops.get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="SIM_STOCK_LEVEL"),
 
-        pos.get_relationship("ERS").ops.get_neighbourhood_size(
+        pos.get_relationship("ER").ops.get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="ERS_STOCK_LEVEL"),
 
@@ -341,9 +280,9 @@ def add_bulk_purchases_action(circus, params):
     _add_bulk_purchase_action(
         circus,
         action_name="pos_to_dealer_sim_bulk_purchases",
-        bulk_size_gen=circus.generators["pos_sim_bulk_size_gen"],
-        dealers_stock_relationship="SIMS",
-        pos_stock_relationship="SIMS",
+        bulk_size_gen=circus.generators["pos_SIM_bulk_size_gen"],
+        dealers_stock_relationship="SIM",
+        pos_stock_relationship="SIM",
         max_stock=params["pos_sim_max_stock"],
         upperlevel_bulk_purchase_trigger=low_sims_stock_dealer_2_bulk_purchase_trigger,
         upperlevel_bulk_purchase_action_name="dealer_l2_buys_sims_from_dealer_l1"
@@ -362,9 +301,9 @@ def add_bulk_purchases_action(circus, params):
     _add_bulk_purchase_action(
         circus,
         action_name="pos_to_dealer_ers_bulk_purchases",
-        bulk_size_gen=circus.generators["pos_ers_bulk_size_gen"],
-        dealers_stock_relationship="ERS",
-        pos_stock_relationship="ERS",
+        bulk_size_gen=circus.generators["pos_ER_bulk_size_gen"],
+        dealers_stock_relationship="ER",
+        pos_stock_relationship="ER",
         max_stock=params["pos_ers_max_stock"],
         upperlevel_bulk_purchase_trigger=low_ers_stock_dealer_l2_bulk_purchase_trigger,
         upperlevel_bulk_purchase_action_name="dealer_l2_buys_ers_from_dealer_l1"
@@ -425,7 +364,7 @@ def _add_bulk_purchase_action(circus, action_name, bulk_size_gen,
     build_purchases.set_operations(
         circus.clock.ops.timestamp(named_as="TIME"),
 
-        pos.get_relationship("DEALERS_L2").ops.select_one(
+        pos.get_relationship("dealers_l2").ops.select_one(
             from_field="POS_ID",
             named_as="DEALER_L2"),
 
