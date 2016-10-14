@@ -62,17 +62,17 @@ static_params = {
     # "geography": "belgium",
     "geography": "belgium_5",
     # "n_pos": 50000,
-    "n_pos": 500,
+    "n_pos": 100,
 
     # "n_dealers_l2": 1000,
-    "n_dealers_l2": 100,
-    "n_dealers_l1": 50,
+    "n_dealers_l2": 20,
+    "n_dealers_l1": 2,
     "n_telcos": 1,
 
     "n_field_agents": 500,
 
     # "n_customers": 5000000,
-    "n_customers": 500,
+    "n_customers": 10000,
 }
 
 if __name__ == "__main__":

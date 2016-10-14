@@ -105,141 +105,99 @@ def add_mobility_action(circus, params):
     )
 
 
-def add_purchase_sim_action(circus, params):
-
-    logging.info("creating customer SIM purchase action")
-    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
-                                                    circus.seeder.next())
-
-    max_activity = purchase_timer_gen.activity(n_actions=1,
-        per=pd.Timedelta(days=params["customer_sim_purchase_min_period_days"]))
-    min_activity = purchase_timer_gen.activity(n_actions=1,
-        per=pd.Timedelta(days=params["customer_sim_purchase_max_period_days"]))
-
-    purchase_activity_gen = NumpyRandomGenerator(
-            method="uniform",
-            low=1 / max_activity,
-            high=1 / min_activity,
-            seed=circus.seeder.next()).map(f=lambda per: 1/per)
-
-    low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
-        value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=1,
-            x_max=params["max_pos_sim_stock_triggering_restock"],
-            shape=params["pos_sim_restock_shape"],
-            incrementing=False)
-    )
-
-    _create_customer_purchase_action(
-        circus, purchase_timer_gen, purchase_activity_gen, "SIM",
-        item_price_gen=ConstantGenerator(value=params["sim_price"]),
-        action_name="sim_purchases_to_pos",
-        pos_restock_trigger=low_stock_bulk_purchase_trigger,
-        pos_restock_action_name="pos_to_dealer_sim_bulk_purchases")
-
-
-def add_purchase_er_action(circus, params):
-
-    logging.info("creating customer ER purchase action")
-    purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
-                                                    circus.seeder.next())
-
-    max_activity = purchase_timer_gen.activity(n_actions=1,
-        per=pd.Timedelta(days=params["customer_er_purchase_min_period_days"]))
-    min_activity = purchase_timer_gen.activity(n_actions=1,
-        per=pd.Timedelta(days=params["customer_er_purchase_max_period_days"]))
-
-    purchase_activity_gen = NumpyRandomGenerator(
-            method="uniform",
-            low=1 / max_activity,
-            high=1 / min_activity,
-            seed=circus.seeder.next()).map(f=lambda per: 1/per)
-
-    price_gen = NumpyRandomGenerator(
-        method="choice", a=[5, 10, 25, 50, 100], seed=circus.seeder.next())
-
-    low_stock_pos_bulk_purchase_trigger = DependentTriggerGenerator(
-        value_to_proba_mapper=operations.bounded_sigmoid(
-            x_min=1,
-            x_max=params["max_pos_er_stock_triggering_restock"],
-            shape=params["pos_er_restock_shape"],
-            incrementing=False))
-
-    _create_customer_purchase_action(
-        circus, purchase_timer_gen=purchase_timer_gen,
-        purchase_activity_gen=purchase_activity_gen,
-        pos_stock_relationship="ER",
-        item_price_gen=price_gen,
-        action_name="ers_purchases_to_pos",
-        pos_restock_trigger=low_stock_pos_bulk_purchase_trigger,
-        pos_restock_action_name="pos_to_dealer_ers_bulk_purchases"
-    )
-
-
-def _create_customer_purchase_action(
-        circus, purchase_timer_gen, purchase_activity_gen,
-        pos_stock_relationship, item_price_gen, action_name,
-        pos_restock_trigger, pos_restock_action_name):
-    """
-    Creates an action of Customer buying from POS
-    """
+def add_purchase_actions(circus, params):
 
     customers = circus.actors["customers"]
     pos = circus.actors["pos"]
     sites = circus.actors["sites"]
 
-    purchase_action = circus.create_action(
-        name=action_name,
-        initiating_actor=customers,
-        actorid_field="CUST_ID",
-        timer_gen=purchase_timer_gen,
-        activity_gen=purchase_activity_gen)
+    for product, description in params["products"].items():
 
-    purchase_action.set_operations(
+        logging.info("creating customer {} purchase action".format(product))
+        purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
+                                                        circus.seeder.next())
 
-        customers.ops.lookup(
-            actor_id_field="CUST_ID",
-            select={"CURRENT_SITE": "SITE"}),
+        max_activity = purchase_timer_gen.activity(
+            n_actions=1,
+            per=pd.Timedelta(
+            days=description["customer_purchase_min_period_days"]))
 
-        sites.get_relationship("POS").ops.select_one(
-            from_field="SITE",
-            named_as="POS",
+        min_activity = purchase_timer_gen.activity(
+            n_actions=1,
+            per=pd.Timedelta(
+            days=description["customer_purchase_max_period_days"]))
 
-            weight=pos.get_attribute_values("ATTRACTIVENESS"),
+        purchase_activity_gen = NumpyRandomGenerator(
+            method="uniform",
+            low=1 / max_activity,
+            high=1 / min_activity,
+            seed=circus.seeder.next()).map(f=lambda per: 1 / per)
 
-            # TODO: this means customer in a location without POS do not buy
-            # anything => we could add a re-try mechanism here
-            discard_empty=True),
-
-        pos.get_relationship(pos_stock_relationship).ops.select_one(
-            from_field="POS",
-            named_as="BOUGHT_ITEM",
-
-            pop=True,
-
-            discard_empty=False),
-
-        operations.Apply(source_fields="BOUGHT_ITEM",
-                         named_as="FAILED_SALE_OUT_OF_STOCK",
-                         f=pd.isnull, f_args="series"),
-
-        sites.get_relationship("CELLS").ops.select_one(
-            from_field="SITE",
-            named_as="CELL",),
-
-        SequencialGenerator(prefix="TX_").ops.generate(named_as="TX_ID"),
-
-        item_price_gen.ops.generate(named_as="VALUE"),
-
-        circus.clock.ops.timestamp(named_as="TIME"),
-
-        FieldLogger(log_id=action_name),
-
-        patterns.trigger_action_if_low_stock(
-            circus,
-            stock_relationship=pos.get_relationship(pos_stock_relationship),
-            actor_id_field="POS",
-            restock_trigger=pos_restock_trigger,
-            triggered_action_name=pos_restock_action_name
+        low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
+            value_to_proba_mapper=operations.bounded_sigmoid(
+                x_min=1,
+                x_max=description["max_pos_stock_triggering_pos_restock"],
+                shape=description["restock_sigmoid_shape"],
+                incrementing=False)
         )
-    )
+
+        item_price_gen = NumpyRandomGenerator(
+            method="choice", a=description["item_prices"],
+            seed=circus.seeder.next())
+
+        action_name = "customer_{}_purchase".format(product)
+        purchase_action = circus.create_action(
+            name=action_name,
+            initiating_actor=customers,
+            actorid_field="CUST_ID",
+            timer_gen=purchase_timer_gen,
+            activity_gen=purchase_activity_gen)
+
+        purchase_action.set_operations(
+
+            customers.ops.lookup(
+                actor_id_field="CUST_ID",
+                select={"CURRENT_SITE": "SITE"}),
+
+            sites.get_relationship("POS").ops.select_one(
+                from_field="SITE",
+                named_as="POS",
+
+                weight=pos.get_attribute_values("ATTRACTIVENESS"),
+
+                # TODO: this means customer in a location without POS do not buy
+                # anything => we could add a re-try mechanism here
+                discard_empty=True),
+
+            pos.get_relationship(product).ops.select_one(
+                from_field="POS",
+                named_as="BOUGHT_ITEM",
+
+                pop=True,
+
+                discard_empty=False),
+
+            operations.Apply(source_fields="BOUGHT_ITEM",
+                             named_as="FAILED_SALE_OUT_OF_STOCK",
+                             f=pd.isnull, f_args="series"),
+
+            sites.get_relationship("CELLS").ops.select_one(
+                from_field="SITE",
+                named_as="CELL", ),
+
+            SequencialGenerator(prefix="TX_").ops.generate(named_as="TX_ID"),
+
+            item_price_gen.ops.generate(named_as="VALUE"),
+
+            circus.clock.ops.timestamp(named_as="TIME"),
+
+            FieldLogger(log_id=action_name),
+
+            patterns.trigger_action_if_low_stock(
+                circus,
+                stock_relationship=pos.get_relationship(product),
+                actor_id_field="POS",
+                restock_trigger=low_stock_bulk_purchase_trigger,
+                triggered_action_name="pos_{}_bulk_purchase".format(product)
+            ),
+        )

@@ -6,32 +6,75 @@ import pandas as pd
 import snd_customers
 import snd_pos
 import snd_dealer
+import patterns
 import snd_field_agents
 
 runtime_params = {
-    "sim_price": 10,
-
     "mean_daily_customer_mobility_activity": .2,
     "std_daily_customer_mobility_activity": .2,
 
     "mean_daily_fa_mobility_activity": 1,
     "std_daily_fa_mobility_activity": .2,
 
-    # average number of days between 2 item purchase by the same customer
-    "customer_er_purchase_min_period_days": 1,
-    "customer_er_purchase_max_period_days": 9,
+    "products":  {
+        "SIM": {
+            "customer_purchase_min_period_days": 60,
+            "customer_purchase_max_period_days": 360,
 
-    "customer_sim_purchase_min_period_days": 60,
-    "customer_sim_purchase_max_period_days": 360,
+            "max_pos_stock_triggering_pos_restock": 10,
+            "restock_sigmoid_shape": 5,
 
-    # largest possible er or SIM stock level that can trigger a restock
-    "max_pos_er_stock_triggering_restock": 50,
-    "pos_er_restock_shape": 2,
-    "max_pos_sim_stock_triggering_restock": 10,
-    "pos_sim_restock_shape": 5,
+            "pos_max_stock": 35,
+            "item_prices": [10]
+        },
+        # electronic recharges
+        "ER": {
+            "customer_purchase_min_period_days": 1,
+            "customer_purchase_max_period_days": 9,
 
-    "pos_ers_max_stock": 500,
-    "pos_sim_max_stock": 500,
+            "max_pos_stock_triggering_pos_restock": 50,
+            "restock_sigmoid_shape": 2,
+
+            "pos_max_stock": 500,
+
+            "item_prices": [5, 10, 15, 25, 45]
+        },
+        # physical recharges
+        "PR": {
+            "customer_purchase_min_period_days": 2,
+            "customer_purchase_max_period_days": 15,
+
+            "max_pos_stock_triggering_pos_restock": 40,
+            "restock_sigmoid_shape": 2,
+
+            "pos_max_stock": 300,
+
+            "item_prices": [5, 10, 15, 25, 45]
+        },
+        "MFS": {
+            "customer_purchase_min_period_days": 1,
+            "customer_purchase_max_period_days": 5,
+
+            "max_pos_stock_triggering_pos_restock": 75,
+            "restock_sigmoid_shape": 2,
+
+            "pos_max_stock": 500,
+
+            "item_prices": [1, 5, 10, 25, 50, 75, 100]
+        },
+        "HANDSET": {
+            "customer_purchase_min_period_days": 180,
+            "customer_purchase_max_period_days": 1000,
+
+            "max_pos_stock_triggering_pos_restock": 4,
+            "restock_sigmoid_shape": 2,
+
+            "pos_max_stock": 10,
+
+            "item_prices": [230, 410, 515, 234, 645]
+        }
+    }
+
 
 }
 
@@ -51,18 +94,25 @@ if __name__ == "__main__":
     # restock action must be built in reverse order since they refer to each other
     # TODO: we should fix that since this also influence the order of the executions
     # => we'd like to re-stock directly, not with delays due to the size of the hierarchy
-    snd_dealer.add_telco_restock_actions(snd)
-    snd_dealer.add_dealers_l1_bulk_purchase_actions(snd, runtime_params)
-    snd_dealer.add_dealers_l2_bulk_purchase_actions(snd, runtime_params)
-    snd_pos.add_bulk_purchases_action(snd, runtime_params)
+    snd_dealer.add_telco_restock_actions(snd, runtime_params)
+    patterns.add_bulk_restock_actions(snd, runtime_params,
+                                      buyer_actor_name="dealers_l1",
+                                      seller_actor_name="telcos")
 
-    snd_customers.add_purchase_sim_action(snd, runtime_params)
-    snd_customers.add_purchase_er_action(snd, runtime_params)
+    patterns.add_bulk_restock_actions(snd, runtime_params,
+                                      buyer_actor_name="dealers_l2",
+                                      seller_actor_name="dealers_l1")
+
+    patterns.add_bulk_restock_actions(snd, runtime_params,
+                                      buyer_actor_name="pos",
+                                      seller_actor_name="dealers_l2")
+
+    snd_customers.add_purchase_actions(snd, runtime_params)
 
     snd_field_agents.add_mobility_action(snd, runtime_params)
     snd_field_agents.add_survey_action(snd)
 
     snd.run(
-        duration=pd.Timedelta("1 days"),
+        duration=pd.Timedelta("30 days"),
         log_output_folder="snd_output_logs/{}".format(snd.name),
         delete_existing_logs=True)
