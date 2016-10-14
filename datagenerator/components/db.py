@@ -97,8 +97,8 @@ def load_empirical_discrete_generator(namespace, gen_id, seed):
 
     gen = NumpyRandomGenerator(
         method="choice",
-        a=df["x"],
-        p=df["px"],
+        a=df["x"].tolist(),
+        p=df["px"].tolist(),
         seed=seed)
 
     return gen

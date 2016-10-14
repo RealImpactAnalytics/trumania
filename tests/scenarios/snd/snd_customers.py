@@ -39,7 +39,7 @@ def add_customers(circus, params):
 
     logging.info(" assigning a first random site to each customer")
     customers.create_attribute(name="CURRENT_SITE",
-                                    init_relationship="POSSIBLE_SITES")
+                               init_relationship="POSSIBLE_SITES")
 
     return customers
 
@@ -131,7 +131,7 @@ def add_purchase_sim_action(circus, params):
     )
 
     _create_customer_purchase_action(
-        circus, purchase_timer_gen, purchase_activity_gen, "SIMS",
+        circus, purchase_timer_gen, purchase_activity_gen, "SIM",
         item_price_gen=ConstantGenerator(value=params["sim_price"]),
         action_name="sim_purchases_to_pos",
         pos_restock_trigger=low_stock_bulk_purchase_trigger,
@@ -168,7 +168,7 @@ def add_purchase_er_action(circus, params):
     _create_customer_purchase_action(
         circus, purchase_timer_gen=purchase_timer_gen,
         purchase_activity_gen=purchase_activity_gen,
-        pos_relationship="ERS",
+        pos_stock_relationship="ER",
         item_price_gen=price_gen,
         action_name="ers_purchases_to_pos",
         pos_restock_trigger=low_stock_pos_bulk_purchase_trigger,
@@ -178,7 +178,7 @@ def add_purchase_er_action(circus, params):
 
 def _create_customer_purchase_action(
         circus, purchase_timer_gen, purchase_activity_gen,
-        pos_relationship, item_price_gen, action_name,
+        pos_stock_relationship, item_price_gen, action_name,
         pos_restock_trigger, pos_restock_action_name):
     """
     Creates an action of Customer buying from POS
@@ -211,7 +211,7 @@ def _create_customer_purchase_action(
             # anything => we could add a re-try mechanism here
             discard_empty=True),
 
-        pos.get_relationship(pos_relationship).ops.select_one(
+        pos.get_relationship(pos_stock_relationship).ops.select_one(
             from_field="POS",
             named_as="BOUGHT_ITEM",
 
@@ -237,7 +237,7 @@ def _create_customer_purchase_action(
 
         patterns.trigger_action_if_low_stock(
             circus,
-            stock_relationship=pos.get_relationship(pos_relationship),
+            stock_relationship=pos.get_relationship(pos_stock_relationship),
             actor_id_field="POS",
             restock_trigger=pos_restock_trigger,
             triggered_action_name=pos_restock_action_name
