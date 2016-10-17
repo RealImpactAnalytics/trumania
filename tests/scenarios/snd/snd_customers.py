@@ -185,7 +185,8 @@ def add_purchase_actions(circus, params):
                 from_field="SITE",
                 named_as="CELL", ),
 
-            SequencialGenerator(prefix="TX_").ops.generate(named_as="TX_ID"),
+            SequencialGenerator(prefix="TX_CUST_{}".format(product)).ops.generate(
+                named_as="TX_ID"),
 
             item_price_gen.ops.generate(named_as="VALUE"),
 

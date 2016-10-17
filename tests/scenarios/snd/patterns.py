@@ -84,7 +84,7 @@ def add_bulk_restock_actions(circus, params,
 
     buyer = circus.actors[buyer_actor_name]
     seller = circus.actors[seller_actor_name]
-    pos_per_byer = circus.actors["pos"].size / buyer.size
+    pos_per_buyer = circus.actors["pos"].size / buyer.size
 
     for product, description in params["products"].items():
         action_name = "{}_{}_bulk_purchase".format(buyer_actor_name, product)
@@ -96,15 +96,15 @@ def add_bulk_restock_actions(circus, params,
         # stock get low
         seller_low_stock_bulk_purchase_trigger = random_generators.DependentTriggerGenerator(
             value_to_proba_mapper=operations.bounded_sigmoid(
-                x_min=pos_per_byer,
-                x_max=description["max_pos_stock_triggering_pos_restock"] * pos_per_byer,
+                x_min=pos_per_buyer,
+                x_max=description["max_pos_stock_triggering_pos_restock"] * pos_per_buyer,
                 shape=description["restock_sigmoid_shape"],
                 incrementing=False))
 
         # bulk size distribution is a scaled version of POS bulk size distribution
         bulk_size_gen = scale_quantity_gen(
             stock_size_gen=circus.generators["pos_{}_bulk_size_gen".format(product)],
-            scale_factor=pos_per_byer)
+            scale_factor=pos_per_buyer)
 
         build_purchase_action = circus.create_action(
             name=action_name,
@@ -162,6 +162,11 @@ def add_bulk_restock_actions(circus, params,
             operations.Apply(source_fields="ITEMS_BULK",
                              named_as="BULK_SIZE",
                              f=lambda s: s.map(len), f_args="series"),
+
+            random_generators.SequencialGenerator(
+                prefix="TX_{}_{}".format(buyer_actor_name,
+                                         product)).ops.generate(
+                named_as="TX_ID"),
 
             operations.FieldLogger(log_id=action_name,
                                    cols=["TIME",  "BUYER_ID", "SELLER_ID",
