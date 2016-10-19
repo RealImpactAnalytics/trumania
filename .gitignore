@@ -1,3 +1,5 @@
+
+# python
 *.pyc
 .ipynb_checkpoints
 *.egg-info
@@ -7,3 +9,10 @@ explore.ipynb
 cdr_output_logs/
 snd_output_logs/
 .venv
+
+# scala
+metastore_db
+target
+*.class
+tests/scenarios/snd/parquet_converter/project
+derby.log

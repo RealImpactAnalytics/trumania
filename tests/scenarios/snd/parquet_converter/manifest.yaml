@@ -1,0 +1,21 @@
+---
+manifest_version: "1"
+id: sandbox
+name: "DataModule Sandbox"
+description: "Imports all datasources to use them in a data preparation process"
+version: "0.1.0"
+owner: "XYZ"
+type: dsl_dataflow
+vcs_repository: "https://github.com/RealImpactAnalytics/datamodule-xxx.git"
+datasources:
+  -
+    type: dimension
+    format: cell
+    version: "0.2"
+
+
+datamodule_dependencies: []
+outputs: []
+business_parameters: []
+technical_parameters: []
+
