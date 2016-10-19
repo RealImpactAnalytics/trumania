@@ -134,8 +134,9 @@ class Action(object):
             self.timer.loc[positive_idx, "remaining"] -= 1
 
     def force_act_next(self, ids):
-        self.forced_to_act_next = pd.Index(ids).union(self.forced_to_act_next)
-        self.timer.loc[ids, "remaining"] = 0
+        if len(ids) > 0:
+            self.forced_to_act_next = pd.Index(ids).union(self.forced_to_act_next)
+            self.timer.loc[ids, "remaining"] = 0
 
     def reset_timers(self, ids=None):
         """
@@ -259,6 +260,7 @@ class Action(object):
                         filtered = action_data.where(condition)
 
                     ids = filtered[self.active_ids_field].dropna().values
+
                     self.action.force_act_next(ids)
 
         def __init__(self, action):
