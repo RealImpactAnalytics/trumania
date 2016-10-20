@@ -144,8 +144,9 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         # subs are empty here but will receive a "CELLS" and "EXCITABILITY"
         # attributes later on
-        subs = Actor(size=self.params["n_subscribers"],
-                     ids_gen=SequencialGenerator(prefix="SUBS_"))
+        subs = self.create_actor(name="subs",
+                                 size=self.params["n_subscribers"],
+                                 ids_gen=SequencialGenerator(prefix="SUBS_"))
 
         number_of_operators = npgen.choice(a=range(1, 5), size=subs.size)
         operator_ids = build_ids(size=4, prefix="OPERATOR_", max_length=1)
@@ -171,14 +172,15 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
 
         # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
-        sims = Actor(size=subs_ops_mapping.size,
-                     ids_gen=SequencialGenerator(prefix="SIMS_"))
+        sims = self.create_actor(name="sims",
+                                 size=subs_ops_mapping.size,
+                                 ids_gen=SequencialGenerator(prefix="SIMS_"))
         sims.create_attribute("OPERATOR", init_values=subs_ops_mapping.values)
         recharge_gen = ConstantGenerator(value=1000.)
         sims.create_attribute(name="MAIN_ACCT", init_gen=recharge_gen)
 
         # keeping track of the link between actor and sims as a relationship
-        sims_of_subs = subs.create_relationship("SIMS", seed=self.seeder.next())
+        sims_of_subs = subs.create_relationship("SIMS")
         sims_of_subs.add_relations(
             from_ids=subs_ops_mapping.index,
             to_ids=sims.ids)
@@ -202,8 +204,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
             columns=["SIM_ID", "AGENT"])
 
         logging.info(" creating random sim/agent relationship ")
-        sims_agents_rel = sims.create_relationship("POSSIBLE_AGENTS",
-                                                   seed=self.seeder.next())
+        sims_agents_rel = sims.create_relationship("POSSIBLE_AGENTS")
 
         agent_weight_gen = NumpyRandomGenerator(
             method="exponential", scale=1., seed=self.seeder.next())
@@ -241,8 +242,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         mobility_weight_gen = NumpyRandomGenerator(
             method="exponential", scale=1., seed=self.seeder.next())
 
-        mobility_rel = subs.create_relationship("POSSIBLE_CELLS",
-                                                seed=self.seeder.next())
+        mobility_rel = subs.create_relationship("POSSIBLE_CELLS")
 
         logging.info(" creating bipartite graph ")
         mobility_df = pd.DataFrame.from_records(

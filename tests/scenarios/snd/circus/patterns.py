@@ -71,8 +71,7 @@ def create_distribution_link(circus, from_actor_name, to_actor_name):
         seed=circus.seeder.next())
 
     rel = circus.actors[from_actor_name].create_relationship(
-        name=to_actor_name,
-        seed=circus.seeder.next())
+        name=to_actor_name)
 
     rel.add_relations(
         from_ids=chose_one_upper["set1"],

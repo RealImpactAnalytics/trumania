@@ -21,8 +21,8 @@ def save_actor(actor, namespace, actor_id):
     actor.save_to(_actor_folder(namespace, actor_id))
 
 
-def load_actor(namespace, actor_id):
-    return Actor.load_from(_actor_folder(namespace, actor_id))
+def load_actor(namespace, actor_id, circus):
+    return Actor.load_from(_actor_folder(namespace, actor_id), circus)
 
 
 def list_actors(namespace):

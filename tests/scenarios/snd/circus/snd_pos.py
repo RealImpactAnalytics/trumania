@@ -200,11 +200,11 @@ def add_pos(circus, params):
 
     pos.create_attribute(
         "AGENT_NAME",
-        init_gen=snd_constants.name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("POS_NAMES", circus.seeder.next()))
 
     pos.create_attribute(
         "CONTACT_NAME",
-        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
 
     pos.create_attribute(
         "CONTACT_PHONE",
@@ -212,8 +212,7 @@ def add_pos(circus, params):
                                 seed=circus.seeder.next()))
 
     logging.info("recording the list POS per site in site relationship")
-    pos_rel = circus.actors["sites"].create_relationship(
-        "POS", seed=circus.seeder.next())
+    pos_rel = circus.actors["sites"].create_relationship("POS")
     pos_rel.add_relations(
         from_ids=pos.get_attribute_values("SITE"),
         to_ids=pos.ids)
@@ -257,9 +256,7 @@ def _init_pos_product(circus, product, description):
     logging.info("Initializing POS {} stock".format(product))
     stock_gen = init_stock_size_gen.flatmap(DependentBulkGenerator(element_generator=product_id_gen))
     circus.actors["pos"].create_stock_relationship_grp(
-        name=product,
-        stock_bulk_gen=stock_gen,
-        seed=circus.seeder.next())
+        name=product, stock_bulk_gen=stock_gen)
 
 
 def add_pos_stock_log_action(circus):
@@ -283,11 +280,11 @@ def add_pos_stock_log_action(circus):
         circus.clock.ops.timestamp(named_as="TIME", random=False,
                                    log_format="%Y-%m-%d"),
 
-        pos.get_relationship("SIM").ops.get_neighbourhood_size(
+        pos.get_relationship("Sim").ops.get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="SIM_STOCK_LEVEL"),
 
-        pos.get_relationship("ER").ops.get_neighbourhood_size(
+        pos.get_relationship("ElectronicRecharge").ops.get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="ERS_STOCK_LEVEL"),
 

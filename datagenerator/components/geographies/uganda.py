@@ -27,7 +27,8 @@ class WithUganda(Circus):
         seeder = seed_provider(12345)
 
         if force_build:
-            uganda_cells, uganda_cities, timer_config = build_uganda_actors()
+            uganda_cells, uganda_cities, timer_config = build_uganda_actors(
+                self)
 
         else:
             uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
@@ -114,11 +115,13 @@ class WithUganda(Circus):
 
         return uganda_cells, uganda_cities
 
-def build_uganda_actors():
+def build_uganda_actors(circus):
 
     seeder = seed_provider(12345)
 
-    cells = Actor(ids_gen=SequencialGenerator(prefix="CELL_"), size=200)
+    cells = circus.create_actor(name="cells",
+                              ids_gen=SequencialGenerator(prefix="CELL_"),
+                              size=200)
     latitude_generator = FakerGenerator(method="latitude",
                                         seed=seeder.next())
     cells.create_attribute("latitude", init_gen=latitude_generator)
@@ -134,9 +137,9 @@ def build_uganda_actors():
     cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
     city_gen = FakerGenerator(method="city", seed=seeder.next())
-    cities = Actor(size=200, ids_gen=city_gen)
+    cities = circus.create_actor(name="cities", size=200, ids_gen=city_gen)
 
-    cell_city_rel = cities.create_relationship("CELLS", seed=seeder.next())
+    cell_city_rel = cities.create_relationship("CELLS")
 
     cell_city_df = make_random_assign(cells.ids, cities.ids, seeder.next())
     cell_city_rel.add_relations(

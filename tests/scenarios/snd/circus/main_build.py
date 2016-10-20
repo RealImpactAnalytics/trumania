@@ -9,6 +9,7 @@ import snd_pos
 import snd_dealer
 import snd_field_agents
 import patterns
+import snd_products
 
 import pandas as pd
 
@@ -28,33 +29,51 @@ static_params = {
     "clock_start_date": "13 Sept 2016 12:00",
 
     "products": {
-        "SIM": {
+        "Sim": {
             "pos_bulk_purchase_sizes": [5, 10, 15],
             "pos_bulk_purchase_sizes_dist": [.5, .3, .2],
-            "telco_init_stock_customer_ratio": .05
+            "telco_init_stock_customer_ratio": .05,
+
+            "product_types_num": 5,
+            "prefix": "SIM"
         },
-        # electronic recharges
-        "ER": {
+
+        "ElectronicRecharge": {
             "pos_init_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
             "pos_bulk_purchase_sizes": [100, 200, 450],
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
-            "telco_init_stock_customer_ratio": 1
+            "telco_init_stock_customer_ratio": 1,
+
+            "product_types_num": 1,
+            "prefix": "ER"
         },
-        # physical recharges
-        "PR": {
+
+        "PhysicalRecharge": {
             "pos_bulk_purchase_sizes": [50, 100, 225],
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
-            "telco_init_stock_customer_ratio": .5
+            "telco_init_stock_customer_ratio": .5,
+
+            "product_types_num": 1,
+            "prefix": "PR"
         },
-        "MFS": {
+
+        "Mfs": {
             "pos_bulk_purchase_sizes": [50, 75, 200],
             "pos_bulk_purchase_sizes_dist": [.4, .4, .2],
-            "telco_init_stock_customer_ratio": .2
+            "telco_init_stock_customer_ratio": .2,
+
+            "product_types_num": 5,
+            "prefix": "MFS"
+
         },
-        "HANDSET": {
+
+        "Handset": {
             "pos_bulk_purchase_sizes": [5, 10],
             "pos_bulk_purchase_sizes_dist": [.5, .5],
-            "telco_init_stock_customer_ratio": .05
+            "telco_init_stock_customer_ratio": .05,
+
+            "product_types_num": 1000,
+            "prefix": "HS"
         },
     },
 
@@ -86,6 +105,8 @@ if __name__ == "__main__":
         step_duration=pd.Timedelta(static_params["clock_time_step"]))
 
     distributor_id_gen = random_generators.SequencialGenerator(prefix="DIST_")
+
+    snd_products.create_products(snd, static_params)
 
     snd_sites.add_sites(snd, static_params)
     snd_customers.add_customers(snd, static_params)

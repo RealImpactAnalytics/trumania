@@ -17,7 +17,7 @@ runtime_params = {
     "std_daily_fa_mobility_activity": .2,
 
     "products":  {
-        "SIM": {
+        "Sim": {
             "customer_purchase_min_period_days": 60,
             "customer_purchase_max_period_days": 360,
 
@@ -27,8 +27,8 @@ runtime_params = {
             "pos_max_stock": 35,
             "item_prices": [10]
         },
-        # electronic recharges
-        "ER": {
+
+        "ElectronicRecharge": {
             "customer_purchase_min_period_days": 1,
             "customer_purchase_max_period_days": 9,
 
@@ -39,8 +39,8 @@ runtime_params = {
 
             "item_prices": [5, 10, 15, 25, 45]
         },
-        # physical recharges
-        "PR": {
+
+        "PhysicalRecharge": {
             "customer_purchase_min_period_days": 2,
             "customer_purchase_max_period_days": 15,
 
@@ -51,7 +51,8 @@ runtime_params = {
 
             "item_prices": [5, 10, 15, 25, 45]
         },
-        "MFS": {
+
+        "Mfs": {
             "customer_purchase_min_period_days": 1,
             "customer_purchase_max_period_days": 5,
 
@@ -62,7 +63,8 @@ runtime_params = {
 
             "item_prices": [1, 5, 10, 25, 50, 75, 100]
         },
-        "HANDSET": {
+
+        "Handset": {
             "customer_purchase_min_period_days": 180,
             "customer_purchase_max_period_days": 1000,
 
@@ -74,7 +76,6 @@ runtime_params = {
             "item_prices": [230, 410, 515, 234, 645]
         }
     }
-
 
 }
 
@@ -113,6 +114,6 @@ if __name__ == "__main__":
     snd_field_agents.add_survey_action(snd)
 
     snd.run(
-        duration=pd.Timedelta("30 days"),
+        duration=pd.Timedelta("2 days"),
         log_output_folder="snd_output_logs/{}".format(snd.name),
         delete_existing_logs=True)

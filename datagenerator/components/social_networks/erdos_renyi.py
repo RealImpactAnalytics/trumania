@@ -26,7 +26,7 @@ class WithErdosRenyi(Circus):
             p=average_degree / n_subscribers,
             seed=self.seeder.next())
 
-        social_network = actor.create_relationship(relationship_name, seed=self.seeder.next())
+        social_network = actor.create_relationship(relationship_name)
         social_network.add_relations(
             from_ids=social_network_values["A"].values,
             to_ids=social_network_values["B"].values,
