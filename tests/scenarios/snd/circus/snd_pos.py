@@ -283,11 +283,11 @@ def add_pos_stock_log_action(circus):
         circus.clock.ops.timestamp(named_as="TIME", random=False,
                                    log_format="%Y-%m-%d"),
 
-        pos.get_relationship("SIM").ops.get_neighbourhood_size(
+        pos.get_relationship("Sim").ops.get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="SIM_STOCK_LEVEL"),
 
-        pos.get_relationship("ER").ops.get_neighbourhood_size(
+        pos.get_relationship("ElectronicRecharge").ops.get_neighbourhood_size(
                 from_field="POS_ID",
                 named_as="ERS_STOCK_LEVEL"),
 

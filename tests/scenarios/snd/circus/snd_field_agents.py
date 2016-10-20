@@ -1,4 +1,3 @@
-import logging
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
@@ -152,7 +151,7 @@ def add_survey_action(circus):
             select={
                 "LATITUDE": "POS_LATITUDE",
                 "LONGITUDE": "POS_LONGITUDE",
-                "NAME": "POS_NAME",
+                "AGENT_NAME": "POS_NAME",
             }
         ),
 
