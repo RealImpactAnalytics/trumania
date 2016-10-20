@@ -72,7 +72,7 @@ static_params = {
     "n_field_agents": 500,
 
     # "n_customers": 5000000,
-    "n_customers": 10000,
+    "n_customers": 1000,
 }
 
 if __name__ == "__main__":
