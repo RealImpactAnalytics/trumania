@@ -200,11 +200,11 @@ def add_pos(circus, params):
 
     pos.create_attribute(
         "AGENT_NAME",
-        init_gen=snd_constants.name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("POS_NAMES", circus.seeder.next()))
 
     pos.create_attribute(
         "CONTACT_NAME",
-        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
 
     pos.create_attribute(
         "CONTACT_PHONE",

@@ -102,11 +102,11 @@ def create_dealers(circus, actor_name, actor_size, params, actor_id_gen):
 
     dealers.create_attribute(
         "AGENT_NAME",
-        init_gen=snd_constants.name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("POS_NAMES", circus.seeder.next()))
 
     dealers.create_attribute(
         "CONTACT_NAME",
-        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
 
     dealers.create_attribute(
         "CONTACT_PHONE",
@@ -115,7 +115,7 @@ def create_dealers(circus, actor_name, actor_size, params, actor_id_gen):
 
     dealers.create_attribute(
         "DISTRIBUTOR_SALES_REP_NAME",
-        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
 
     dealers.create_attribute(
         "DISTRIBUTOR_SALES_REP_PHONE",
