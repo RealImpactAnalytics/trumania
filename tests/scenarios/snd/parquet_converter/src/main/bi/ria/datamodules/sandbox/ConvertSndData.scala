@@ -140,6 +140,12 @@ class Converter {
 
   }
 
+  def convertProducts =  {
+    
+  }
+
+
+
   /**
    * *****************
    * main
@@ -156,7 +162,12 @@ class Converter {
     }
     target.mkdir()
 
+    // this is actually not required: we get the POS from the mobile_sync seed file
     convertPos
+
+    convertProducts
+
+
   }
 
 }

@@ -34,7 +34,7 @@ static_params = {
             "pos_bulk_purchase_sizes_dist": [.5, .3, .2],
             "telco_init_stock_customer_ratio": .05,
 
-            "product_types_num": 20,
+            "product_types_num": 5,
             "prefix": "SIM"
         },
 
@@ -44,7 +44,7 @@ static_params = {
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
             "telco_init_stock_customer_ratio": 1,
 
-            "product_types_num": 10,
+            "product_types_num": 1,
             "prefix": "ER"
         },
 
@@ -53,7 +53,7 @@ static_params = {
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
             "telco_init_stock_customer_ratio": .5,
 
-            "product_types_num": 10,
+            "product_types_num": 1,
             "prefix": "PR"
         },
 
@@ -72,7 +72,7 @@ static_params = {
             "pos_bulk_purchase_sizes_dist": [.5, .5],
             "telco_init_stock_customer_ratio": .05,
 
-            "product_types_num": 50,
+            "product_types_num": 1000,
             "prefix": "HS"
         },
     },

@@ -169,13 +169,15 @@ def add_purchase_actions(circus, params):
 
             pos.get_relationship(product).ops.select_one(
                 from_field="POS",
-                named_as="BOUGHT_ITEM",
+                named_as="INSTANCE_ID",
 
                 pop=True,
 
                 discard_empty=False),
 
-            operations.Apply(source_fields="BOUGHT_ITEM",
+            circus.actors[product].ops.select_one(named_as="PRODUCT_ID"),
+
+            operations.Apply(source_fields="INSTANCE_ID",
                              named_as="FAILED_SALE_OUT_OF_STOCK",
                              f=pd.isnull, f_args="series"),
 
