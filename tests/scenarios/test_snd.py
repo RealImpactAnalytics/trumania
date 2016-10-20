@@ -61,13 +61,13 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating distributors and their SIM stock  ")
 
-        distributors = Actor(size=params["n_distributors"],
-                             ids_gen=SequencialGenerator(
+        distributors = self.create_actor(name="distros",
+                                         size=params["n_distributors"],
+                                ids_gen=SequencialGenerator(
                                  prefix="DISTRIBUTOR_",
                                  max_length=1))
 
-        sims = distributors.create_relationship(name="SIM",
-                                                seed=self.seeder.next())
+        sims = distributors.create_relationship(name="SIM")
 
         sim_generator = SequencialGenerator(prefix="SIM_", max_length=30)
         sim_ids = sim_generator.generate(params["n_init_sims_distributor"])
@@ -128,13 +128,14 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating dealer and their SIM stock  ")
 
-        dealers = Actor(size=params["n_dealers"],
-                        ids_gen=SequencialGenerator(
-                            prefix="DEALER_",
-                            max_length=3))
+        dealers = self.create_actor(name="dealers",
+                                    size=params["n_dealers"],
+                                    ids_gen=SequencialGenerator(
+                                    prefix="DEALER_",
+                                    max_length=3))
 
         # SIM relationship to maintain some stock
-        sims = dealers.create_relationship(name="SIM", seed=self.seeder.next())
+        sims = dealers.create_relationship(name="SIM")
         sim_ids = build_ids(size=params["n_init_sims_dealer"], prefix="SIM_")
         sims_dealer = make_random_assign(set1=sim_ids, set2=dealers.ids,
                                          seed=self.seeder.next())
@@ -160,11 +161,12 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating agents ")
 
-        agents = Actor(size=params["n_agents"],
-                       ids_gen=SequencialGenerator(
-                           prefix="AGENT_",
-                           max_length=3))
-        agents.create_relationship(name="SIM", seed=self.seeder.next())
+        agents = self.create_actor(name="agents",
+                                   size=params["n_agents"],
+                                   ids_gen=SequencialGenerator(
+                                       prefix="AGENT_",
+                                       max_length=3))
+        agents.create_relationship(name="SIM")
 
         agents.create_attribute(name="AGENT_NAME",
                                 init_gen=FakerGenerator(seed=self.seeder.next(),
@@ -191,8 +193,7 @@ class SndScenario(WithRandomGeo, Circus):
                                        seed=self.seeder.next()),
             columns=["AGENT", "DEALER"])
 
-        agent_customer_rel = agents.create_relationship(name="DEALERS",
-                                                        seed=self.seeder.next())
+        agent_customer_rel = agents.create_relationship(name="DEALERS")
 
         agent_customer_rel.add_relations(
             from_ids=agent_customer_df["AGENT"],
@@ -209,8 +210,7 @@ class SndScenario(WithRandomGeo, Circus):
     def connect_dealers_to_distributors(self, dealers, distributors):
 
         # let's be simple: each dealer has only one provider
-        distributor_rel = dealers.create_relationship("DISTRIBUTOR",
-                                                      seed=self.seeder.next())
+        distributor_rel = dealers.create_relationship("DISTRIBUTOR")
 
         state = np.random.RandomState(self.seeder.next())
         assigned = state.choice(a=distributors.ids, size=dealers.size, replace=True)
@@ -447,7 +447,7 @@ class SndScenario(WithRandomGeo, Circus):
             method="choice", a=range(1, 4), seed=self.seeder.next())
 
         # the system starts with no reviews
-        review_actor = Actor(size=0)
+        review_actor = self.create_actor(name="rev", size=0)
         review_actor.create_attribute("DATE")
         review_actor.create_attribute("TEXT")
         review_actor.create_attribute("AGENT_ID")

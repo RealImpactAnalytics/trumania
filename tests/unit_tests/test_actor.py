@@ -3,7 +3,8 @@ from datagenerator.core.random_generators import *
 
 from datagenerator.core.actor import Actor
 
-dummy_actor = Actor(size=10,
+dummy_actor = Actor(circus=None,
+                    size=10,
                     ids_gen=SequencialGenerator(max_length=1, prefix="id_"))
 
 ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
@@ -129,6 +130,7 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
 
     # copy of dummy actor that will be updated
     tested_actor = Actor(
+        circus=None,
         size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_")
     )
@@ -161,7 +163,7 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
 def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_values():
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(size=10,
+    tested_actor = Actor(circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
@@ -193,7 +195,7 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     # same as test above but triggered as an Operation on action data
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(size=10,
+    tested_actor = Actor(circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
@@ -234,7 +236,7 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
 def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible():
 
     # empty actor
-    a = Actor(size=0)
+    a = Actor(circus=None, size=0)
     assert a.ids.shape[0] == 0
 
     # empty attributes
@@ -260,7 +262,7 @@ def test_io_round_trip():
 
         actor_path = os.path.join(p, "test_location")
         dummy_actor.save_to(actor_path)
-        retrieved = Actor.load_from(actor_path)
+        retrieved = Actor.load_from(circus=None, actor_dir=actor_path)
 
         assert dummy_actor.size == retrieved.size
         assert dummy_actor.ids.tolist() == retrieved.ids.tolist()

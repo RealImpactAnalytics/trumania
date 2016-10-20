@@ -22,8 +22,7 @@ def add_telcos(circus, params, distributor_id_gen):
             .flatmap(DependentBulkGenerator(element_generator=product_id_gen))
 
         telcos.create_stock_relationship_grp(name=product,
-                                             stock_bulk_gen=int_stock_gen,
-                                             seed=circus.seeder.next())
+                                             stock_bulk_gen=int_stock_gen)
 
 
 def add_telco_restock_actions(circus, params):
@@ -132,5 +131,5 @@ def create_dealers(circus, actor_name, actor_size, params, actor_id_gen):
         stock_gen = init_stock_size_gen.flatmap(
             DependentBulkGenerator(element_generator=product_id_gen))
 
-        dealers.create_stock_relationship_grp(
-            name=product, stock_bulk_gen=stock_gen,seed=circus.seeder.next())
+        dealers.create_stock_relationship_grp(name=product,
+                                              stock_bulk_gen=stock_gen)

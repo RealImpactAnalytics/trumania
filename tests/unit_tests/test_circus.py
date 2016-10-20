@@ -1,5 +1,4 @@
 from __future__ import division
-from datagenerator.core.actor import Actor
 from datagenerator.core.circus import Circus
 from datagenerator.components.time_patterns.profilers import *
 import pytest
@@ -8,13 +7,14 @@ from datagenerator.core.random_generators import *
 
 def test_create_action_get_action_should_work_as_expected():
 
-    customers = Actor(size=100,
-                      ids_gen=SequencialGenerator(prefix="a"))
-
     flying = Circus(name="tested_circus",
                     master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
+
+    customers = flying.create_actor("teste", size=100,
+                      ids_gen=SequencialGenerator(prefix="a"))
+
 
     mobility_time_gen = DefaultDailyTimerGenerator(flying.clock, seed=1)
 
@@ -51,7 +51,7 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
-    customers = Actor(size=100,
+    customers = flying.create_actor(name="tested", size=100,
                       ids_gen=SequencialGenerator(prefix="a"))
 
     flying.create_action(name="the_action",

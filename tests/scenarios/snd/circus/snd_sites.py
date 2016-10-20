@@ -11,8 +11,7 @@ def add_sites(circus, params):
     logging.info("adding sites")
     sites = circus.load_actor(namespace=params["geography"], actor_id="sites")
 
-    cells_of_site_rel = sites.create_relationship("CELLS",
-                                                  seed=circus.seeder.next())
+    cells_of_site_rel = sites.create_relationship("CELLS")
 
     # between 1 and 9 cells per site
     logging.info("populating CELLS of SITES ")

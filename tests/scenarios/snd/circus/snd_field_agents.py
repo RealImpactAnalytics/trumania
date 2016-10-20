@@ -14,8 +14,7 @@ def create_field_agents(circus, params):
     logging.info(" adding mobility relationships to field agents")
 
     mobility_rel = field_agents.create_relationship(
-        "POSSIBLE_SITES",
-        seed=circus.seeder.next())
+        "POSSIBLE_SITES")
 
     # TODO: make sure the number of sites per field agent is "reasonable"
     mobility_df = pd.DataFrame.from_records(

@@ -13,13 +13,14 @@ def run_test_scenario_1(clock_step, simulation_duration,
                         n_actions, per,
                         log_folder):
 
-    actor = Actor(
-        size=1000,
-        ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
     circus = Circus(name="tested_circus", master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta(clock_step))
+
+    actor = circus.create_actor(name="a",
+        size=1000,
+        ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
     daily_profile = CyclicTimerGenerator(
         clock=circus.clock,
@@ -182,14 +183,14 @@ def test_actors_during_default_daily():
     with path.tempdir() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
-        field_agents = Actor(
-            size=100,
-            ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
-
         circus = Circus(name="tested_circus",
                         master_seed=1,
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
+
+        field_agents = circus.create_actor(name="fa",
+            size=100,
+            ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
         mobility_time_gen = DefaultDailyTimerGenerator(
             clock=circus.clock, seed=circus.seeder.next())
@@ -228,14 +229,14 @@ def test_actors_during_working_hours():
     with path.tempdir() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
-        field_agents = Actor(
-            size=100,
-            ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
-
         circus = Circus(name="tested_circus",
                         master_seed=1,
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
+
+        field_agents = circus.create_actor(name="fa",
+            size=100,
+            ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
         mobility_time_gen = WorkHoursTimerGenerator(
             clock=circus.clock, seed=circus.seeder.next())

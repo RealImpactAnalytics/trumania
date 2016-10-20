@@ -15,9 +15,7 @@ def add_customers(circus, params):
 
     logging.info(" adding 'possible sites' mobility relationship to customers")
 
-    mobility_rel = customers.create_relationship(
-        "POSSIBLE_SITES",
-        seed=circus.seeder.next())
+    mobility_rel = customers.create_relationship("POSSIBLE_SITES")
 
     sites = circus.actors["sites"]
 

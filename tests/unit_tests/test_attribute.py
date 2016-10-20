@@ -1,13 +1,17 @@
+import pandas as pd
 import path
 from datagenerator.core.random_generators import *
 
 from datagenerator.core.actor import Actor
+from datagenerator.core.circus import Circus
 from datagenerator.core.attribute import Attribute
 
+tc = Circus("c", master_seed=1234, start=pd.Timestamp("1 Jan 2011"),
+            step_duration=pd.Timedelta("1h"))
 
 def test_set_and_read_values_in_attribute_should_be_equal():
 
-    actor = Actor(size=5,
+    actor = Actor(circus=None, size=5,
                   ids_gen=SequencialGenerator(prefix="abc", max_length=1))
 
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
@@ -20,7 +24,7 @@ def test_set_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updated_and_read_values_in_attribute_should_be_equal():
-    actor = Actor(size=5,
+    actor = Actor(circus=tc , size=5,
                   ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
@@ -34,7 +38,7 @@ def test_updated_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updating_non_existing_actor_ids_should_add_them():
-    actor = Actor(size=5,
+    actor = Actor(circus=tc , size=5,
                   ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
@@ -45,9 +49,10 @@ def test_updating_non_existing_actor_ids_should_add_them():
 
 def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
-    actor = Actor(size=5,
+    actor = Actor(circus=tc ,
+                  size=5,
                   ids_gen=SequencialGenerator(prefix="abc", max_length=1))
-    oneto1= actor.create_relationship("rel", seed=1234)
+    oneto1= actor.create_relationship("rel")
     oneto1.add_relations(from_ids=["abc0", "abc1", "abc2", "abc3", "abc4"],
                          to_ids=["ta", "tb", "tc", "td", "te"])
 
@@ -61,7 +66,8 @@ def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
 def test_overwrite_attribute():
 
-    actor = Actor(size=10,
+    actor = Actor(circus=tc,
+                  size=10,
                   ids_gen=SequencialGenerator(prefix="u_", max_length=1))
 
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
@@ -97,7 +103,8 @@ def test_overwrite_attribute():
 
 
 def test_added_and_read_values_in_attribute_should_be_equal():
-    actor = Actor(size=5,
+    actor = Actor(circus=tc ,
+                  size=5,
                   ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
@@ -107,7 +114,8 @@ def test_added_and_read_values_in_attribute_should_be_equal():
 
 
 def test_adding_several_times_to_the_same_from_should_pile_up():
-    actor = Actor(size=5,
+    actor = Actor(circus=tc,
+                  size=5,
                   ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
@@ -120,8 +128,9 @@ def test_io_round_trip():
 
     with path.tempdir() as root_dir:
 
-        actor = Actor(size=5,
-                  ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+        actor = Actor(circus=tc ,
+                      size=5,
+                      ids_gen=SequencialGenerator(prefix="abc", max_length=1))
         orig = Attribute(actor, init_values=[10, 20, 30, 40, 50])
 
         full_path = os.path.join(root_dir, "attribute.csv")

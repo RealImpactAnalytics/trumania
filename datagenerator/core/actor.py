@@ -1,23 +1,27 @@
 from datagenerator.core.attribute import *
 from datagenerator.core.relationship import *
+from datagenerator.core import random_generators
 
 
 class Actor(object):
-    def __init__(self, ids_gen=None, size=None, ids=None):
+    def __init__(self, circus, ids_gen=None, size=None, ids=None):
         """
         :param ids_gen: generator for the actor ids
         :param size: number of ids to generate (only relevant if is ids_gen
         is specified
         :param ids: if neither ids_gen nore size is specified, we can
-          also specify the ids explicitally
+          also specify the ids explicitly
         :return:
         """
+        self.circus = circus
+
         if ids is not None:
             if ids_gen is not None or size is not None:
                 raise ValueError("cannot specify ids_gen nor size if ids is "
                                  "provided")
             self.ids = pd.Index(ids)
             self.size = len(ids)
+
         else:
             if size == 0:
                 self.ids = pd.Index([])
@@ -35,7 +39,7 @@ class Actor(object):
 
         self.ops = self.ActorOps(self)
 
-    def create_relationship(self, name, seed):
+    def create_relationship(self, name):
         """
         creates an empty relationship from this actor
         """
@@ -44,11 +48,10 @@ class Actor(object):
             raise ValueError("cannot create a second relationship with "
                              "existing name {}".format(name))
 
-        self.relationships[name] = Relationship(seed=seed)
+        self.relationships[name] = Relationship(seed=self.circus.seeder.next())
         return self.relationships[name]
 
-    def create_stock_relationship(self, name, item_id_gen, n_items_per_actor,
-                                  seeder):
+    def create_stock_relationship(self, name, item_id_gen, n_items_per_actor):
         """
         Creates a relationship aimed at maintaining a stock, from a generator
         that create stock item ids.
@@ -58,25 +61,25 @@ class Actor(object):
         """
 
         logging.info("generating initial {} stock".format(name))
-        rel_to_items = self.create_relationship(name=name, seed=seeder.next())
+        rel_to_items = self.create_relationship(name=name)
 
         assigned_items = make_random_assign(
             set1=item_id_gen.generate(size=n_items_per_actor * self.size),
             set2=self.ids,
-            seed=seeder.next())
+            seed=self.circus.seeder.next())
 
         rel_to_items.add_relations(
             from_ids=assigned_items["chosen_from_set2"],
             to_ids=assigned_items["set1"])
 
-    def create_stock_relationship_grp(self, name, stock_bulk_gen, seed):
+    def create_stock_relationship_grp(self, name, stock_bulk_gen):
         """
         This creates exactly the same kind of relationship as
         create_stock_relationship, but using a generator of list of stock
         items instead of a generators of items.
         """
 
-        stock_rel = self.create_relationship(name, seed=seed)
+        stock_rel = self.create_relationship(name)
         stock_rel.add_grouped_relations(
             from_ids=self.ids,
             grouped_ids=stock_bulk_gen.generate(size=self.size))
@@ -192,7 +195,14 @@ class Actor(object):
                 rel.save_to(file_path)
 
     @staticmethod
-    def load_from(actor_dir):
+    def load_from(actor_dir, circus):
+        """
+        Reads all persistent data of this actor and loads it
+
+        :param actor_dir: folder containing all CSV files of this actor
+        :param circus: parent circus containing this actor
+        :return:
+        """
 
         ids_path = os.path.join(actor_dir, "ids.csv")
         ids = pd.read_csv(ids_path, index_col=0, names=[]).index
@@ -217,7 +227,7 @@ class Actor(object):
         else:
             relationships = {}
 
-        actor = Actor(size=0)
+        actor = Actor(circus=circus, size=0)
         actor.attributes = attributes
         actor.relationships = relationships
         actor.ids = ids
@@ -337,3 +347,22 @@ class Actor(object):
             return self.Update(self.actor, actor_id_field,
                                copy_attributes_from_fields)
 
+        def select_one(self, named_as):
+            """
+
+            Appends a field column to the action_action containing actor ids
+            taken at random among the ids of this actor.
+
+            This is similar to relationship_select_one(), except that no
+            particular relation is required, we just sample one id randomly
+
+            :param named_as: the name of the field added to the action_data
+            :param seed: seed of the random generator
+            """
+
+            gen = random_generators.NumpyRandomGenerator(
+                method="choice",
+                a=self.actor.ids,
+                seed=self.actor.circus.seeder.next())
+
+            return gen.ops.generate(named_as=named_as)

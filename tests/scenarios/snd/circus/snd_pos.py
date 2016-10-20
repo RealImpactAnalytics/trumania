@@ -212,8 +212,7 @@ def add_pos(circus, params):
                                 seed=circus.seeder.next()))
 
     logging.info("recording the list POS per site in site relationship")
-    pos_rel = circus.actors["sites"].create_relationship(
-        "POS", seed=circus.seeder.next())
+    pos_rel = circus.actors["sites"].create_relationship("POS")
     pos_rel.add_relations(
         from_ids=pos.get_attribute_values("SITE"),
         to_ids=pos.ids)
@@ -257,9 +256,7 @@ def _init_pos_product(circus, product, description):
     logging.info("Initializing POS {} stock".format(product))
     stock_gen = init_stock_size_gen.flatmap(DependentBulkGenerator(element_generator=product_id_gen))
     circus.actors["pos"].create_stock_relationship_grp(
-        name=product,
-        stock_bulk_gen=stock_gen,
-        seed=circus.seeder.next())
+        name=product, stock_bulk_gen=stock_gen)
 
 
 def add_pos_stock_log_action(circus):

@@ -50,7 +50,7 @@ class Circus(object):
             raise ValueError("refusing to overwrite existing actor: {} "
                              "".format(name))
 
-        self.actors[name] = actor.Actor(**actor_params)
+        self.actors[name] = actor.Actor(circus=self, **actor_params)
         return self.actors[name]
 
     def load_actor(self, actor_id, namespace=None):
@@ -63,7 +63,8 @@ class Circus(object):
         if namespace is None:
             namespace = self.name
 
-        actor = db.load_actor(namespace=namespace, actor_id=actor_id)
+        actor = db.load_actor(namespace=namespace, actor_id=actor_id,
+                              circus=self)
         self.actors[actor_id] = actor
         return actor
 
