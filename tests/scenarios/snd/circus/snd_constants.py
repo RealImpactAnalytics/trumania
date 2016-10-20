@@ -1,9 +1,17 @@
+from datagenerator.core import random_generators
+
 
 POS_NAMES = ["WEBCALLCENTER", "RI-GROUP", "DATA UNICORN", "CALAOS", "QINZ",
              "OINOI", "CLIXXO", "ACTION TREE", "6OMEGA", "DATAMATIAN",
              "QUICK-BEE", "GUIDED-ANALYTICS", "RI-ANALYTICS", "BLUE STAG",
              "DATA-SAPIENS", "TINY TREE", "OROCANTO", "CLIXXO", "XEBI",
              "PREGASUS", "HELIXIRE", "ALICANTIO", "PIXABYTES", "KUNOOZ"]
+
+
+def name_gen(seed):
+    return random_generators.NumpyRandomGenerator(
+        method="choice", seed=seed, a=POS_NAMES)
+
 
 CONTACT_NAMES = [
     "Angella Prisco",
@@ -57,6 +65,11 @@ CONTACT_NAMES = [
     "Beulah Glenn",
     "Adolfo Fuselier"
 ]
+
+
+def contact_name_gen(seed):
+    return random_generators.NumpyRandomGenerator(
+        method="choice", seed=seed, a=POS_NAMES)
 
 INTERNAL_TRANSACTION_TYPES = ["origin_to_mass_distributor",
                               "mass_distributor_to_dealer",

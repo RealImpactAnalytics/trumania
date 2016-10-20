@@ -181,3 +181,4 @@ def add_bulk_restock_actions(circus, params,
                 triggered_action_name=upper_level_restock_action_name
             )
         )
+

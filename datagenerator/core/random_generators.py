@@ -428,6 +428,7 @@ class DependentGenerator(object):
                                               observed_field)
 
 
+
 class ConstantDependentGenerator(ConstantGenerator, DependentGenerator):
     """
     Dependent generator ignoring the observations and producing a constant

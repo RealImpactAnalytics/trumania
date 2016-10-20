@@ -3,7 +3,7 @@ from __future__ import division
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
-import snd_pos
+import snd_constants
 import patterns
 
 
@@ -99,6 +99,28 @@ def create_dealers(circus, actor_name, actor_size, params, actor_id_gen):
                                   size=actor_size,
                                   ids_gen=actor_id_gen)
     pos_per_dealer = circus.actors["pos"].size / dealers.size
+
+    dealers.create_attribute(
+        "AGENT_NAME",
+        init_gen=snd_constants.name_gen(circus.seeder.next()))
+
+    dealers.create_attribute(
+        "CONTACT_NAME",
+        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+
+    dealers.create_attribute(
+        "CONTACT_PHONE",
+        init_gen=FakerGenerator(method="phone_number",
+                                seed=circus.seeder.next()))
+
+    dealers.create_attribute(
+        "DISTRIBUTOR_SALES_REP_NAME",
+        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+
+    dealers.create_attribute(
+        "DISTRIBUTOR_SALES_REP_PHONE",
+        init_gen=FakerGenerator(method="phone_number",
+                                seed=circus.seeder.next()))
 
     for product, description in params["products"].items():
 

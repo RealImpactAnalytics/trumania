@@ -175,6 +175,14 @@ class Action(object):
 
             self.timer.loc[ids, "remaining"] = new_timer
 
+    @staticmethod
+    def init_action_data(actorid_field_name, active_ids):
+        """
+        creates the initial action_data dataframe containing just the id of
+        the currently active actors
+        """
+        return pd.DataFrame({actorid_field_name: active_ids}, index=active_ids)
+
     def execute(self):
 
         # Any previously forced actions will now execute => cancelling the flag.
@@ -191,9 +199,9 @@ class Action(object):
             all_logs = {}
 
         else:
-            ids_df = pd.DataFrame({self.actorid_field_name: active_ids},
-                                  index=active_ids)
-            _, all_logs = self.operation_chain(ids_df)
+            _, all_logs = self.operation_chain(
+                Action.init_action_data(self.actorid_field_name, active_ids))
+
             if self.auto_reset_timer:
                 # re-scheduling those actions one more time
                 self.reset_timers(active_ids)

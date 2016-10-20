@@ -137,6 +137,50 @@ def add_attractiveness_evolution_action(circus):
     )
 
 
+def _add_pos_latlong(circus):
+
+    logging.info("Generating POS random lat/long coord from site lat/long")
+
+    pos = circus.actors["pos"]
+    sites = circus.actors["sites"]
+
+    # 1 deg is about 1km at 40 degree north => standard deviation of about 200m
+    coord_noise = NumpyRandomGenerator(method="normal", loc=0, scale=1/(85*5),
+                                       seed=circus.seeder.next())
+
+    # using an at build time to generate random values :)
+    pos_coord_act = Chain(
+        pos.ops.lookup(
+            actor_id_field="POS_ID",
+            select={"SITE": "SITE_ID"}
+        ),
+
+        sites.ops.lookup(
+            actor_id_field="SITE_ID",
+            select={
+                "LATITUDE": "SITE_LATITUDE",
+                "LONGITUDE": "SITE_LONGITUDE"
+            }
+        ),
+
+        coord_noise.ops.generate(named_as="LAT_NOISE"),
+        coord_noise.ops.generate(named_as="LONG_NOISE"),
+
+        operations.Apply(source_fields=["SITE_LATITUDE", "LAT_NOISE"],
+                         named_as="POS_LATITUDE",
+                         f=np.add, f_args="series"),
+
+        operations.Apply(source_fields=["SITE_LONGITUDE", "LONG_NOISE"],
+                         named_as="POS_LONGITUDE",
+                         f=np.add, f_args="series"),
+    )
+
+    pos_lat_long, _ = pos_coord_act(Action.init_action_data("POS_ID", pos.ids))
+
+    pos.create_attribute("LATITUDE", init_values=pos_lat_long["POS_LATITUDE"])
+    pos.create_attribute("LONGITUDE", init_values=pos_lat_long["POS_LONGITUDE"])
+
+
 def add_pos(circus, params):
 
     logging.info("creating {} POS".format(params["n_pos"]))
@@ -152,15 +196,20 @@ def add_pos(circus, params):
                                     a=circus.actors["sites"].ids)
     pos.create_attribute("SITE", init_gen=site_gen)
 
-    # TODO: Add POS coordinates based on SITE coordinates
-    pos.create_attribute("LATITUDE", init_gen=ConstantGenerator(0.0))
-    pos.create_attribute("LONGITUDE", init_gen=ConstantGenerator(0.0))
+    _add_pos_latlong(circus)
 
-    name_gen = NumpyRandomGenerator(method="choice",
-                                    seed=circus.seeder.next(),
-                                    a=snd_constants.POS_NAMES)
+    pos.create_attribute(
+        "AGENT_NAME",
+        init_gen=snd_constants.name_gen(circus.seeder.next()))
 
-    pos.create_attribute("NAME", init_gen=name_gen)
+    pos.create_attribute(
+        "CONTACT_NAME",
+        init_gen=snd_constants.contact_name_gen(circus.seeder.next()))
+
+    pos.create_attribute(
+        "CONTACT_PHONE",
+        init_gen=FakerGenerator(method="phone_number",
+                                seed=circus.seeder.next()))
 
     logging.info("recording the list POS per site in site relationship")
     pos_rel = circus.actors["sites"].create_relationship(
