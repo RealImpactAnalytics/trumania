@@ -110,3 +110,16 @@ datagenerator/components/_DB/uganda/actors/cities/relationships/CELLS.csv filter
 datagenerator/components/_DB/uganda/generators filter=lfs diff=lfs merge=lfs -text
 datagenerator/components/_DB/uganda/generators/timer_gens filter=lfs diff=lfs merge=lfs -text
 datagenerator/components/_DB/uganda/generators/timer_gens/cell_repair_timer_profile.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_100/actors/sites/attributes/GEO_LEVEL_1.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_5/actors/sites/attributes/GEO_LEVEL_1.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_500/actors/sites/attributes/GEO_LEVEL_1.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium/actors/sites/attributes/GEO_LEVEL_1.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium/circus_config.json filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium/actors/sites/relationships filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium/actors/sites/relationships/CELLS.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_100/actors/sites/relationships filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_100/actors/sites/relationships/CELLS.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_5/actors/sites/relationships filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_5/actors/sites/relationships/CELLS.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_500/actors/sites/relationships filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_500/actors/sites/relationships/CELLS.csv filter=lfs diff=lfs merge=lfs -text

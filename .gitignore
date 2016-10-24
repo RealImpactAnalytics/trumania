@@ -16,3 +16,4 @@ target
 *.class
 tests/scenarios/snd/parquet_converter/project
 derby.log
+run.log
