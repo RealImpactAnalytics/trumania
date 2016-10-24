@@ -136,8 +136,7 @@ def add_purchase_actions(circus, params):
                 x_min=1,
                 x_max=description["max_pos_stock_triggering_pos_restock"],
                 shape=description["restock_sigmoid_shape"],
-                incrementing=False)
-        )
+                incrementing=False))
 
         item_price_gen = NumpyRandomGenerator(
             method="choice", a=description["item_prices"],
@@ -184,10 +183,6 @@ def add_purchase_actions(circus, params):
             operations.Apply(source_fields="INSTANCE_ID",
                              named_as="FAILED_SALE_OUT_OF_STOCK",
                              f=pd.isnull, f_args="series"),
-
-            sites.get_relationship("CELLS").ops.select_one(
-                from_field="SITE",
-                named_as="CELL", ),
 
             SequencialGenerator(prefix="TX_CUST_{}".format(product)).ops.generate(
                 named_as="TX_ID"),
