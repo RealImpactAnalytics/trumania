@@ -4,7 +4,6 @@ from datagenerator.core import random_generators
 import logging
 
 import snd_customers
-import snd_sites
 import snd_pos
 import snd_dealer
 import snd_field_agents
@@ -108,17 +107,24 @@ if __name__ == "__main__":
 
     snd_products.create_products(snd, static_params)
 
-    snd_sites.add_sites(snd, static_params)
+    logging.info("loading Belgium sites and cells")
+    sites = snd.load_actor(
+        namespace=static_params["geography"], actor_id="sites")
+    
     snd_customers.add_customers(snd, static_params)
 
     snd_pos.add_pos(snd, static_params)
     snd_dealer.add_telcos(snd, static_params, distributor_id_gen)
     snd_dealer.create_dealers(snd,
-                              actor_name="dealers_l1", actor_size=static_params["n_dealers_l1"],
-                              params=static_params, actor_id_gen=distributor_id_gen)
+                              actor_name="dealers_l1",
+                              actor_size=static_params["n_dealers_l1"],
+                              params=static_params,
+                              actor_id_gen=distributor_id_gen)
     snd_dealer.create_dealers(snd,
-                              actor_name="dealers_l2", actor_size=static_params["n_dealers_l2"],
-                              params=static_params, actor_id_gen=distributor_id_gen)
+                              actor_name="dealers_l2",
+                              actor_size=static_params["n_dealers_l2"],
+                              params=static_params,
+                              actor_id_gen=distributor_id_gen)
 
     patterns.create_distribution_link(snd,
                                       from_actor_name="pos",
