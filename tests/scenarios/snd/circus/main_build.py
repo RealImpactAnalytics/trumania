@@ -140,4 +140,3 @@ if __name__ == "__main__":
 
     logging.info("created circus:\n{}".format(snd))
     snd.save_to_db(overwrite=True)
-

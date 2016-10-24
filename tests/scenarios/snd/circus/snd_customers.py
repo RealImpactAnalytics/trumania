@@ -167,6 +167,10 @@ def add_purchase_actions(circus, params):
                 # anything => we could add a re-try mechanism here
                 discard_empty=True),
 
+            sites.get_relationship("CELLS").ops.select_one(
+                from_field="SITE",
+                named_as="CELL_ID"),
+
             pos.get_relationship(product).ops.select_one(
                 from_field="POS",
                 named_as="INSTANCE_ID",
