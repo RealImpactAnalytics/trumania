@@ -56,6 +56,8 @@ class Converter {
         .load( sourceFile )
 
     df.registerTempTable( actorName )
+
+    df
   }
 
   def load_attribute( actorName: String, idField: String, attributeFileName: String, attributeName: String ) = {
@@ -81,6 +83,38 @@ class Converter {
     df.registerTempTable( tableName )
 
     sqlContext.sql( s"select $idField, $attributeName from $tableName" )
+  }
+
+  def loadRelationship( actorName: String, relationshipName: String ) = {
+
+    val sourceFile = s"$root_dimension_folder/$actorName/relationships/$relationshipName.csv"
+
+    import sqlContext.implicits._
+
+    val relationship_schema = StructType( Array(
+      StructField( "param", StringType, true ),
+      StructField( "rel_id", IntegerType, true ),
+      StructField( "variable", StringType, true ),
+      StructField( "value", StringType, true )
+    ) )
+
+    val df =
+      sqlContext
+        .read
+        .format( "com.databricks.spark.csv" )
+        .option( "header", "true" )
+        .schema( relationship_schema )
+        .option( "inferSchema", "false" )
+        .option( "delimiter", "," )
+        .load( sourceFile )
+
+    df.where( 'param === "table" )
+      .groupBy( 'rel_id )
+      .pivot( "variable" )
+      .agg( first( 'value ) )
+      .drop( 'rel_id )
+      .drop( 'table_index )
+
   }
 
   /**
@@ -164,6 +198,73 @@ class Converter {
 
     logTable( pos, "FixedPos" )
     writeDimension( pos, "FixedPos" )
+  }
+
+  def loadSites = {
+    import sqlContext.implicits._
+
+    // all POS attributes
+    val sites_attrs = loadActorAttributes(
+      actorName = "sites",
+      actorIdKey = "site_id", attributesMap = Map(
+      "GEO_LEVEL_1" -> "geo_level1_id",
+      "LATITUDE" -> "site_latitude",
+      "LONGITUDE" -> "site_longitude",
+      "URBAN" -> "site_urban"
+    )
+    )
+
+    val site_ids_df = registerIdFile(
+      s"$root_dimension_folder/sites/ids.csv", "site_ids", "site_id"
+    )
+
+    val sites_fixed = site_ids_df.select(
+      'site_id,
+      'site_id as "site_name",
+      lit( "gold" ) as "site_status",
+      lit( "owned-exclusive" ) as "site_ownership",
+      lit( 1000 ) as "site_population",
+      lit( "ACTIVE" ) as "site_operational_status"
+    )
+    val sites = sites_fixed.join( sites_attrs, usingColumn = "site_id" ).cache()
+
+    logTable( sites, "sites" )
+
+    sites
+  }
+
+  def convertGeo = {
+
+    import sqlContext.implicits._
+
+    val sites = loadSites
+    val cells_rel = loadRelationship( "sites", "CELLS" )
+
+    val cells = cells_rel.join( sites, joinExprs = 'from === 'site_id, "inner" )
+
+    val cells_all = cells.select(
+      'to as "cell_id",
+      'to as "cell_name",
+      lit( "net_id" ) as "cell_network_id",
+      lit( "NSN" ) as "cell_provider",
+      lit( 265.2 ) as "cell_orientation",
+      lit( "some_CGI" ) as "cell_cgi",
+      lit( 500 ) as "cell_population",
+      'site_id, 'site_name, 'site_urban,
+      'site_status, 'site_ownership,
+      'site_population,
+      'site_longitude, 'site_latitude, 'geo_level1_id,
+      lit( "3G" ) as "cell_technology",
+      lit( "ACTIVE" ) as "cell_operational_status",
+      lit( 172.7 ) as "cell_beam_start_angle",
+      lit( 198.1 ) as "cell_beam_end_angle",
+      'site_operational_status,
+      lit( 1 ) as "polygon_id"
+    ).cache
+
+    logTable( cells_all, "cells_all" )
+    writeDimension( cells_all, "Cell" )
+
   }
 
   def convertElectronicRecharge = {
@@ -307,14 +408,15 @@ class Converter {
   def convertDimensions = {
 
     // this is actually not required: we get the POS from the mobile_sync seed file
-    convertPos
+    //    convertPos
+    convertGeo
 
     // all products
-    convertElectronicRecharge
-    convertPhysicalRecharge
-    convertMfs
-    convertHandset
-    convertSim
+    //    convertElectronicRecharge
+    //    convertPhysicalRecharge
+    //    convertMfs
+    //    convertHandset
+    //    convertSim
   }
 
   /**
@@ -328,6 +430,7 @@ class Converter {
     transactionType: String,
     itemIdName: String
   ) = {
+
     import sqlContext.implicits._
 
     val sourceFile = s"$root_log_folder/$sourceFileName"
@@ -426,7 +529,7 @@ class Converter {
     target.mkdir()
 
     convertDimensions
-    convertLogs
+    //    convertLogs
 
   }
 
