@@ -3,8 +3,9 @@ package bi.ria.datamodules.sandbox
 import org.apache.spark.sql.{ DataFrame, SaveMode }
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{ SparkConf, SparkContext }
-import org.apache.spark.sql.types.{ StringType, StructField, StructType }
+import org.apache.spark.sql.types._
 import java.io.File
+import org.apache.spark.sql.functions._
 
 object ConvertSndData extends App {
   val converter = new Converter
@@ -14,9 +15,14 @@ object ConvertSndData extends App {
 class Converter {
 
   val root_dimension_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/_DB/snd_v2/actors"
+  val root_log_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/snd_output_logs/snd_v2"
+
   val target_folder = "/Users/svend/dev/RIA/snd_parquet"
 
-  val generationDates = List( "2016-10-19", "2016-10-20" )
+  // TODO: get the set of dates from the log dataset
+  val generationDates = List( "2016-09-13", "2016-09-14", "2016-09-15" )
+
+  val version = "0.0.1"
 
   val sparkConf = new SparkConf()
     .setMaster( "local[*]" )
@@ -90,8 +96,21 @@ class Converter {
   def writeDimension( actor: DataFrame, actorName: String ) =
     for ( generationDate <- generationDates ) {
       val fileName = s"$target_folder/dimensions/$actorName/0.1/$generationDate/resource.parquet"
+      println( s"outputting dimensions to $fileName" )
       actor.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
+
+  def writeLogs( logs: DataFrame, transactionType: String ) = {
+    import sqlContext.implicits._
+
+    for ( transactionDate <- generationDates ) {
+      val fileName = s"$target_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
+      println( s"outputting events to $fileName" )
+
+      val dayLogs = logs.where( 'transaction_time === transactionDate )
+      dayLogs.write.mode( SaveMode.Overwrite ).parquet( fileName )
+    }
+  }
 
   def deleteRecursively( file: File ): Unit = {
     if ( file.isDirectory )
@@ -108,7 +127,7 @@ class Converter {
 
   /**
    * *****************
-   * circus conversions
+   * circus dimension conversions
    * *****************
    */
 
@@ -118,12 +137,12 @@ class Converter {
     val pos_attrs = loadActorAttributes(
       actorName = "pos",
       actorIdKey = "agent_id", attributesMap = Map(
-        "AGENT_NAME" -> "agent_name",
-        "CONTACT_NAME" -> "agent_contact_name",
-        "CONTACT_PHONE" -> "agent_contact_phone",
-        "LATITUDE" -> "fixed_pos_latitude",
-        "LONGITUDE" -> "fixed_pos_longitude"
-      )
+      "AGENT_NAME" -> "agent_name",
+      "CONTACT_NAME" -> "agent_contact_name",
+      "CONTACT_PHONE" -> "agent_contact_phone",
+      "LATITUDE" -> "fixed_pos_latitude",
+      "LONGITUDE" -> "fixed_pos_longitude"
+    )
     )
 
     // all the generated pos attributes
@@ -152,7 +171,8 @@ class Converter {
     val er_attrs = loadActorAttributes(
       actorName = "ElectronicRecharge",
       actorIdKey = "product_id",
-      attributesMap = Map( "product_description" -> "product_description" ))
+      attributesMap = Map( "product_description" -> "product_description" )
+    )
 
     registerIdFile( s"$root_dimension_folder/ElectronicRecharge/ids.csv", "er_ids", "product_id" )
 
@@ -284,6 +304,111 @@ class Converter {
     writeDimension( sims, "Sim" )
   }
 
+  def convertDimensions = {
+
+    // this is actually not required: we get the POS from the mobile_sync seed file
+    convertPos
+
+    // all products
+    convertElectronicRecharge
+    convertPhysicalRecharge
+    convertMfs
+    convertHandset
+    convertSim
+  }
+
+  /**
+   * *****************
+   * circus events conversions
+   * *****************
+   */
+
+  def convertExternalTransaction(
+    sourceFileName: String,
+    transactionType: String,
+    itemIdName: String
+  ) = {
+    import sqlContext.implicits._
+
+    val sourceFile = s"$root_log_folder/$sourceFileName"
+
+    val attributeSchema = StructType( Array(
+      StructField( "CUST_ID", StringType, true ),
+      StructField( "SITE", StringType, true ),
+      StructField( "POS", StringType, true ),
+      StructField( "CELL_ID", StringType, true ),
+      StructField( "INSTANCE_ID", StringType, true ),
+      StructField( "PRODUCT_ID", StringType, true ),
+      StructField( "FAILED_SALE_OUT_OF_STOCK", BooleanType, true ),
+      StructField( "TX_ID", StringType, true ),
+      StructField( "VALUE", FloatType, true ),
+      StructField( "TIME", TimestampType, true )
+    ) )
+
+    val transaction_df =
+      sqlContext
+        .read
+        .format( "com.databricks.spark.csv" )
+        .option( "header", "true" )
+        .schema( attributeSchema )
+        .option( "inferSchema", "false" )
+        .option( "delimiter", "," )
+        .load( sourceFile )
+
+    transaction_df.registerTempTable( transactionType )
+
+    // it's ok to be ugly in plumbing code ^^ (says I)
+    var logs = transaction_df.select(
+      'TX_ID as "transaction_id",
+      'POS as "transaction_seller_agent_id",
+      'PRODUCT_ID as "transaction_product_id",
+      to_date( 'TIME ) as "transaction_date_id",
+      hour( 'TIME ) as "transaction_hour_id",
+      'TIME as "transaction_time",
+      expr( s"'$transactionType'" ) as "transaction_type",
+      'VALUE as "transaction_value",
+      'INSTANCE_ID as itemIdName,
+      'CELL_ID as "external_transaction_cell_id",
+      'CUST_ID as "external_transaction_customer_id"
+    ).cache
+
+    if ( itemIdName == "no_item_id" )
+      logs = logs.drop( 'itemIdName ).cache
+
+    writeLogs( logs, transactionType )
+    logTable( logs, transactionType )
+
+  }
+
+  def convertLogs = {
+
+    // it's ok to be ugly in plumbing code ^^ (says I)
+    Map(
+      "customer_ElectronicRecharge_purchase.csv" ->
+        ( "external_electronic_recharge", "no_item_id" ),
+
+      "customer_Handset_purchase.csv" ->
+        ( "external_handset", "handset_transaction_product_instance_id" ),
+
+      "customer_Mfs_purchase.csv" ->
+        ( "external_mfs", "no_item_id" ),
+
+      "customer_PhysicalRecharge_purchase.csv" ->
+        ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
+
+      "customer_Sim_purchase.csv" ->
+        ( "external_sim", "sim_transaction_product_instance_id" )
+    ).foreach {
+        case ( sourceFileName, ( transactionType, itemIdName ) ) => {
+          convertExternalTransaction(
+            sourceFileName = sourceFileName,
+            transactionType = transactionType,
+            itemIdName = itemIdName
+          )
+        }
+      }
+  }
+
   /**
    * *****************
    * main
@@ -300,15 +425,8 @@ class Converter {
     }
     target.mkdir()
 
-    // this is actually not required: we get the POS from the mobile_sync seed file
-    convertPos
-
-    // all products
-    convertElectronicRecharge
-    convertPhysicalRecharge
-    convertMfs
-    convertHandset
-    convertSim
+    convertDimensions
+    convertLogs
 
   }
 

@@ -64,7 +64,7 @@ class Clock(object):
         :param random: if True, the timestamps are randomly generated in [
         self.current_date, self.current_date+self.step_duration]
 
-        :type random: string
+        :type log_format: string
         :param log_format: string format of the generated timestamps
 
         :rtype: Pandas Series
@@ -72,7 +72,7 @@ class Clock(object):
         """
 
         if log_format is None:
-            log_format = "%Y%m%d %H:%M:%S"
+            log_format = "%Y-%m-%d %H:%M:%S"
 
         def make_ts(delta_secs):
             date = self.current_date + pd.Timedelta(seconds=delta_secs)
@@ -167,7 +167,6 @@ class CyclicTimerGenerator(DependentGenerator):
 
         # scaled weight profile, s.t. one clock step == one profile value
         profile_ser = profile_ser.resample(rule=clock.step_duration,
-#                                           how="sum",
                                            fill_method='pad')[:-1]
 
         self.n_time_bin = profile_ser.shape[0]
