@@ -15,6 +15,7 @@ object ConvertSndData extends App {
 class Converter {
 
   val root_dimension_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/_DB/snd_v2/actors"
+  val geography_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/geographies"
   val root_log_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/snd_output_logs/snd_v2"
 
   val target_folder = "/Users/svend/dev/RIA/snd_parquet"
@@ -233,7 +234,7 @@ class Converter {
     sites
   }
 
-  def convertGeo = {
+  def convertCells = {
 
     import sqlContext.implicits._
 
@@ -262,9 +263,24 @@ class Converter {
       lit( 1 ) as "polygon_id"
     ).cache
 
-    logTable( cells_all, "cells_all" )
+    logTable( cells_all, "Cell" )
     writeDimension( cells_all, "Cell" )
 
+  }
+
+  def convertGeo = {
+
+    val geo =
+      sqlContext
+        .read
+        .format( "com.databricks.spark.csv" )
+        .option( "header", "true" )
+        .option( "inferSchema", "true" )
+        .option( "delimiter", "," )
+        .load( s"$geography_folder/geography.csv" )
+
+    logTable( geo, "geo" )
+    writeDimension( geo, "Geo" )
   }
 
   def convertElectronicRecharge = {
@@ -316,6 +332,7 @@ class Converter {
 
     logTable( prs, "PhysicalRecharge" )
     writeDimension( prs, "PhysicalRecharge" )
+
   }
 
   def convertMfs = {
@@ -408,15 +425,16 @@ class Converter {
   def convertDimensions = {
 
     // this is actually not required: we get the POS from the mobile_sync seed file
-    //    convertPos
+    convertPos
+    convertCells
     convertGeo
 
     // all products
-    //    convertElectronicRecharge
-    //    convertPhysicalRecharge
-    //    convertMfs
-    //    convertHandset
-    //    convertSim
+    convertElectronicRecharge
+    convertPhysicalRecharge
+    convertMfs
+    convertHandset
+    convertSim
   }
 
   /**
@@ -529,7 +547,7 @@ class Converter {
     target.mkdir()
 
     convertDimensions
-    //    convertLogs
+    convertLogs
 
   }
 
