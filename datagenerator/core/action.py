@@ -82,6 +82,9 @@ class Action(object):
         all_ops = list(ops) + [self._MaybeBackToDefault(self)]
         self.operation_chain = operations.Chain(*all_ops)
 
+    def append_operations(self, *ops):
+        self.operation_chain.append(*ops)
+
     def get_param(self, param_name, ids):
         """
         :param param_name: either "activity" or ""back_to_default_probability""
