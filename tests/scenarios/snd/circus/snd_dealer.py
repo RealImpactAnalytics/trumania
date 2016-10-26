@@ -1,7 +1,6 @@
 from __future__ import division
 
 from datagenerator.core.circus import *
-from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
 import snd_constants
 import patterns
@@ -88,48 +87,53 @@ def add_telco_restock_actions(circus, params):
                                          "NEW_STOCK", "BULK_SIZE"]))
 
 
-def create_dealers(circus, actor_name, actor_size, params, actor_id_gen):
+def prepare_dealers(circus, params):
     """
-    Adds the dealers level 1, i.e between the telcos and dealers level 2
+    updates the dist_l1 and dist_l2 actors with product stock
+    and link from dist_l1 to telcos
     """
 
-    logging.info("creating {} actor".format(actor_name))
-    dealers = circus.create_actor(name=actor_name,
-                                  size=actor_size,
-                                  ids_gen=actor_id_gen)
-    pos_per_dealer = circus.actors["pos"].size / dealers.size
+    for level in ["l1", "l2"]:
 
-    dealers.create_attribute(
-        "AGENT_NAME",
-        init_gen=snd_constants.gen("POS_NAMES", circus.seeder.next()))
+        actor_name="dist_{}".format(level)
 
-    dealers.create_attribute(
-        "CONTACT_NAME",
-        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
+        logging.info("prepare {} actor".format(actor_name))
+        dealers = circus.actors[actor_name]
 
-    dealers.create_attribute(
-        "CONTACT_PHONE",
-        init_gen=FakerGenerator(method="phone_number",
-                                seed=circus.seeder.next()))
+        pos_per_dealer = circus.actors["pos"].size / dealers.size
 
-    dealers.create_attribute(
-        "DISTRIBUTOR_SALES_REP_NAME",
-        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
+        dealers.create_attribute(
+            "DISTRIBUTOR_SALES_REP_NAME",
+            init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
 
-    dealers.create_attribute(
-        "DISTRIBUTOR_SALES_REP_PHONE",
-        init_gen=FakerGenerator(method="phone_number",
-                                seed=circus.seeder.next()))
+        dealers.create_attribute(
+            "DISTRIBUTOR_SALES_REP_PHONE",
+            init_gen=FakerGenerator(method="phone_number",
+                                    seed=circus.seeder.next()))
 
-    for product, description in params["products"].items():
+        for product, description in params["products"].items():
 
-        logging.info("generating {} initial {} stock".format(actor_name, product))
-        init_stock_size_gen = patterns.scale_quantity_gen(
-                stock_size_gen=circus.generators["pos_{}_init_stock_size_gen".format(product)],
-                scale_factor=pos_per_dealer)
-        product_id_gen = circus.generators["{}_id_gen".format(product)]
-        stock_gen = init_stock_size_gen.flatmap(
-            DependentBulkGenerator(element_generator=product_id_gen))
+            logging.info("generating {} initial {} stock".format(actor_name, product))
+            init_stock_size_gen = patterns.scale_quantity_gen(
+                    stock_size_gen=circus.generators["pos_{}_init_stock_size_gen".format(product)],
+                    scale_factor=pos_per_dealer)
+            product_id_gen = circus.generators["{}_id_gen".format(product)]
+            stock_gen = init_stock_size_gen.flatmap(
+                DependentBulkGenerator(element_generator=product_id_gen))
 
-        dealers.create_stock_relationship_grp(name=product,
-                                              stock_bulk_gen=stock_gen)
+            dealers.create_stock_relationship_grp(name=product,
+                                                  stock_bulk_gen=stock_gen)
+
+    # no need to connect dist l2 to l1: that comes from the belgium component
+    logging.info("connecting all dist_l1 to telco, for each product")
+
+    telcos = circus.actors["telcos"]
+    dist_l1 = circus.actors["dist_l1"]
+
+    for product in params["products"].keys():
+        rel = dist_l1.create_relationship(name="{}__provider".format(product))
+
+        # TODO: this assumes we have only one telco (I guess it's ok...)
+        rel.add_relations(
+            from_ids=dist_l1.ids,
+            to_ids=telcos.ids[0])

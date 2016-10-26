@@ -3,7 +3,6 @@ from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 from datagenerator.core.util_functions import *
 from datagenerator.components import db
-import patterns
 
 
 import snd_constants
@@ -137,9 +136,9 @@ def add_attractiveness_evolution_action(circus):
     )
 
 
-def _add_pos_latlong(circus):
+def _add_pos_latlong(circus, params):
 
-    logging.info("Generating POS random lat/long coord from site lat/long")
+    logging.info("Generating POS attributes from Sites info (coord, dist l2)")
 
     pos = circus.actors["pos"]
     sites = circus.actors["sites"]
@@ -175,10 +174,32 @@ def _add_pos_latlong(circus):
                          f=np.add, f_args="series"),
     )
 
-    pos_lat_long, _ = pos_coord_act(Action.init_action_data("POS_ID", pos.ids))
+    # also looks up the dist l1 and dist l2 associated to the site
+    for product in params["products"].keys():
+        pos_coord_act.append(
+            sites.ops.lookup(
+                actor_id_field="SITE_ID",
+                select={
+                    "{}__dist_l2".format(product): "{}__provider".format(product),
+                    "{}__dist_l1".format(product): "{}__dist_l1".format(product),
+                }
+            ),
+        )
 
-    pos.create_attribute("LATITUDE", init_values=pos_lat_long["POS_LATITUDE"])
-    pos.create_attribute("LONGITUDE", init_values=pos_lat_long["POS_LONGITUDE"])
+    site_info, _ = pos_coord_act(Action.init_action_data("POS_ID", pos.ids))
+
+    pos.create_attribute("LATITUDE", init_values=site_info["POS_LATITUDE"])
+    pos.create_attribute("LONGITUDE", init_values=site_info["POS_LONGITUDE"])
+
+    # copies the dist l1 and l2 of the site to the pos
+    for product in params["products"].keys():
+        rel_l2 = pos.create_relationship(name="{}__provider".format(product))
+        rel_l2.add_relations(
+            from_ids=site_info["POS_ID"],
+            to_ids=site_info["{}__provider".format(product)]
+        )
+
+        # TODO. add attribute: dist_l1 (not a relationship)
 
 
 def add_pos(circus, params):
@@ -196,7 +217,8 @@ def add_pos(circus, params):
                                     a=circus.actors["sites"].ids)
     pos.create_attribute("SITE", init_gen=site_gen)
 
-    _add_pos_latlong(circus)
+    # generate a random pos location from around the SITE location
+    _add_pos_latlong(circus, params)
 
     pos.create_attribute(
         "AGENT_NAME",
@@ -259,7 +281,7 @@ def _init_pos_product(circus, product, description):
         name=product, stock_bulk_gen=stock_gen)
 
 
-def add_pos_stock_log_action(circus):
+def add_pos_stock_log_action(circus, params):
     """
     Adds am action recording the stock level of every pos every day,
     for debugging
@@ -279,15 +301,15 @@ def add_pos_stock_log_action(circus):
     stock_levels_logs.set_operations(
         circus.clock.ops.timestamp(named_as="TIME", random=False,
                                    log_format="%Y-%m-%d"),
+    )
 
-        pos.get_relationship("Sim").ops.get_neighbourhood_size(
+    for product in params["products"].keys():
+        stock_levels_logs.append_operations(
+        pos.get_relationship(product).ops.get_neighbourhood_size(
                 from_field="POS_ID",
-                named_as="SIM_STOCK_LEVEL"),
+                named_as="{}_stock_level".format(product)))
 
-        pos.get_relationship("ElectronicRecharge").ops.get_neighbourhood_size(
-                from_field="POS_ID",
-                named_as="ERS_STOCK_LEVEL"),
-
+    stock_levels_logs.append_operations(
         operations.FieldLogger(log_id="pos_stock_log")
     )
 

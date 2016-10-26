@@ -17,7 +17,7 @@ runtime_params = {
     "std_daily_fa_mobility_activity": .2,
 
     "products":  {
-        "Sim": {
+        "sim": {
             "customer_purchase_min_period_days": 60,
             "customer_purchase_max_period_days": 360,
 
@@ -28,7 +28,7 @@ runtime_params = {
             "item_prices": [10]
         },
 
-        "ElectronicRecharge": {
+        "electronic_recharge": {
             "customer_purchase_min_period_days": 1,
             "customer_purchase_max_period_days": 9,
 
@@ -40,7 +40,7 @@ runtime_params = {
             "item_prices": [5, 10, 15, 25, 45]
         },
 
-        "PhysicalRecharge": {
+        "physical_recharge": {
             "customer_purchase_min_period_days": 2,
             "customer_purchase_max_period_days": 15,
 
@@ -52,7 +52,7 @@ runtime_params = {
             "item_prices": [5, 10, 15, 25, 45]
         },
 
-        "Mfs": {
+        "mfs": {
             "customer_purchase_min_period_days": 1,
             "customer_purchase_max_period_days": 5,
 
@@ -64,7 +64,7 @@ runtime_params = {
             "item_prices": [1, 5, 10, 25, 50, 75, 100]
         },
 
-        "Handset": {
+        "handset": {
             "customer_purchase_min_period_days": 180,
             "customer_purchase_max_period_days": 1000,
 
@@ -90,23 +90,23 @@ if __name__ == "__main__":
     snd_customers.add_mobility_action(snd, runtime_params)
 
     snd_pos.add_attractiveness_evolution_action(snd)
-    snd_pos.add_pos_stock_log_action(snd)
+    snd_pos.add_pos_stock_log_action(snd, runtime_params)
 
     # restock action must be built in reverse order since they refer to each other
     # TODO: we should fix that since this also influence the order of the executions
     # => we'd like to re-stock directly, not with delays due to the size of the hierarchy
     snd_dealer.add_telco_restock_actions(snd, runtime_params)
     patterns.add_bulk_restock_actions(snd, runtime_params,
-                                      buyer_actor_name="dealers_l1",
+                                      buyer_actor_name="dist_l1",
                                       seller_actor_name="telcos")
 
     patterns.add_bulk_restock_actions(snd, runtime_params,
-                                      buyer_actor_name="dealers_l2",
-                                      seller_actor_name="dealers_l1")
+                                      buyer_actor_name="dist_l2",
+                                      seller_actor_name="dist_l1")
 
     patterns.add_bulk_restock_actions(snd, runtime_params,
                                       buyer_actor_name="pos",
-                                      seller_actor_name="dealers_l2")
+                                      seller_actor_name="dist_l2")
 
     snd_customers.add_purchase_actions(snd, runtime_params)
 
