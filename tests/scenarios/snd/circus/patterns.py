@@ -57,27 +57,6 @@ def scale_quantity_gen(stock_size_gen, scale_factor):
     return stock_size_gen
 
 
-def create_distribution_link(circus, from_actor_name, to_actor_name):
-    """
-    Create random links between vendors in the SND hierarchy,
-    e.g. "from pos to dealer L2", ...
-    """
-
-    logging.info("linking {} to {}".format(from_actor_name, to_actor_name))
-
-    chose_one_upper = util_functions.make_random_assign(
-        set1=circus.actors[from_actor_name].ids,
-        set2=circus.actors[to_actor_name].ids,
-        seed=circus.seeder.next())
-
-    rel = circus.actors[from_actor_name].create_relationship(
-        name=to_actor_name)
-
-    rel.add_relations(
-        from_ids=chose_one_upper["set1"],
-        to_ids=chose_one_upper["chosen_from_set2"])
-
-
 def add_bulk_restock_actions(circus, params,
                              buyer_actor_name, seller_actor_name):
 
@@ -116,9 +95,9 @@ def add_bulk_restock_actions(circus, params,
         build_purchase_action.set_operations(
             circus.clock.ops.timestamp(named_as="TIME"),
 
-            buyer.get_relationship(seller_actor_name).ops.select_one(
-                from_field="BUYER_ID",
-                named_as="SELLER_ID"),
+            buyer.get_relationship("{}__provider".format(product))\
+                .ops.select_one(from_field="BUYER_ID",
+                                named_as="SELLER_ID"),
 
             bulk_size_gen.ops.generate(named_as="REQUESTED_BULK_SIZE"),
 

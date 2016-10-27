@@ -23,7 +23,7 @@ def create_products(circus, params):
                 seed=circus.seeder.next())
         )
 
-    sims = circus.actors["Sim"]
+    sims = circus.actors["sim"]
 
     sims.create_attribute(
         "type",
@@ -34,7 +34,7 @@ def create_products(circus, params):
         init_gen=random_generators.FakerGenerator(
                 method="ean", seed=circus.seeder.next()))
 
-    handsets = circus.actors["Handset"]
+    handsets = circus.actors["handset"]
 
     handsets.create_attribute(
         "tac_id",

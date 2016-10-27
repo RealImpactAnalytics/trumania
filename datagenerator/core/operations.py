@@ -45,6 +45,12 @@ class Chain(Operation):
     def __init__(self, *operations):
         self.operations = list(operations)
 
+    def append(self, *operations):
+        """
+        adds operations to be executed at the end of this chain
+        """
+        self.operations += list(operations)
+
     @staticmethod
     def _execute_operation((action_data, prev_logs), operation):
         """

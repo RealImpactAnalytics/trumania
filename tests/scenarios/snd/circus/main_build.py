@@ -28,7 +28,7 @@ static_params = {
     "clock_start_date": "13 Sept 2016 12:00",
 
     "products": {
-        "Sim": {
+        "sim": {
             "pos_bulk_purchase_sizes": [5, 10, 15],
             "pos_bulk_purchase_sizes_dist": [.5, .3, .2],
             "telco_init_stock_customer_ratio": .05,
@@ -37,7 +37,7 @@ static_params = {
             "prefix": "SIM"
         },
 
-        "ElectronicRecharge": {
+        "electronic_recharge": {
             "pos_init_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
             "pos_bulk_purchase_sizes": [100, 200, 450],
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
@@ -47,7 +47,7 @@ static_params = {
             "prefix": "ER"
         },
 
-        "PhysicalRecharge": {
+        "physical_recharge": {
             "pos_bulk_purchase_sizes": [50, 100, 225],
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
             "telco_init_stock_customer_ratio": .5,
@@ -56,7 +56,7 @@ static_params = {
             "prefix": "PR"
         },
 
-        "Mfs": {
+        "mfs": {
             "pos_bulk_purchase_sizes": [50, 75, 200],
             "pos_bulk_purchase_sizes_dist": [.4, .4, .2],
             "telco_init_stock_customer_ratio": .2,
@@ -66,7 +66,7 @@ static_params = {
 
         },
 
-        "Handset": {
+        "handset": {
             "pos_bulk_purchase_sizes": [5, 10],
             "pos_bulk_purchase_sizes_dist": [.5, .5],
             "telco_init_stock_customer_ratio": .05,
@@ -107,34 +107,16 @@ if __name__ == "__main__":
 
     snd_products.create_products(snd, static_params)
 
-    logging.info("loading Belgium sites and cells")
-    sites = snd.load_actor(
-        namespace=static_params["geography"], actor_id="sites")
-    
+    logging.info("loading Belgium sites, cells and distribution network")
+    snd.load_actor(namespace=static_params["geography"], actor_id="sites")
+    snd.load_actor(namespace=static_params["geography"], actor_id="dist_l1")
+    snd.load_actor(namespace=static_params["geography"], actor_id="dist_l2")
+
     snd_customers.add_customers(snd, static_params)
 
     snd_pos.add_pos(snd, static_params)
     snd_dealer.add_telcos(snd, static_params, distributor_id_gen)
-    snd_dealer.create_dealers(snd,
-                              actor_name="dealers_l1",
-                              actor_size=static_params["n_dealers_l1"],
-                              params=static_params,
-                              actor_id_gen=distributor_id_gen)
-    snd_dealer.create_dealers(snd,
-                              actor_name="dealers_l2",
-                              actor_size=static_params["n_dealers_l2"],
-                              params=static_params,
-                              actor_id_gen=distributor_id_gen)
-
-    patterns.create_distribution_link(snd,
-                                      from_actor_name="pos",
-                                      to_actor_name="dealers_l2")
-    patterns.create_distribution_link(snd,
-                                      from_actor_name="dealers_l2",
-                                      to_actor_name="dealers_l1")
-    patterns.create_distribution_link(snd,
-                                      from_actor_name="dealers_l1",
-                                      to_actor_name="telcos")
+    snd_dealer.prepare_dealers(snd, params=static_params)
 
     snd_field_agents.create_field_agents(snd, static_params)
 
