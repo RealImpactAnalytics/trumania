@@ -108,12 +108,9 @@ if __name__ == "__main__":
     snd_products.create_products(snd, static_params)
 
     logging.info("loading Belgium sites, cells and distribution network")
-    sites = snd.load_actor(
-        namespace=static_params["geography"], actor_id="sites")
-    sites = snd.load_actor(
-        namespace=static_params["geography"], actor_id="dist_l1")
-    sites = snd.load_actor(
-        namespace=static_params["geography"], actor_id="dist_l2")
+    snd.load_actor(namespace=static_params["geography"], actor_id="sites")
+    snd.load_actor(namespace=static_params["geography"], actor_id="dist_l1")
+    snd.load_actor(namespace=static_params["geography"], actor_id="dist_l2")
 
     snd_customers.add_customers(snd, static_params)
 

@@ -186,17 +186,17 @@ def _add_pos_latlong(circus, params):
             ),
         )
 
-    site_info, _ = pos_coord_act(Action.init_action_data("POS_ID", pos.ids))
+    pos_info, _ = pos_coord_act(Action.init_action_data("POS_ID", pos.ids))
 
-    pos.create_attribute("LATITUDE", init_values=site_info["POS_LATITUDE"])
-    pos.create_attribute("LONGITUDE", init_values=site_info["POS_LONGITUDE"])
+    pos.create_attribute("LATITUDE", init_values=pos_info["POS_LATITUDE"])
+    pos.create_attribute("LONGITUDE", init_values=pos_info["POS_LONGITUDE"])
 
     # copies the dist l1 and l2 of the site to the pos
     for product in params["products"].keys():
         rel_l2 = pos.create_relationship(name="{}__provider".format(product))
         rel_l2.add_relations(
-            from_ids=site_info["POS_ID"],
-            to_ids=site_info["{}__provider".format(product)]
+            from_ids=pos_info["POS_ID"],
+            to_ids=pos_info["{}__provider".format(product)]
         )
 
         # TODO. add attribute: dist_l1 (not a relationship)
