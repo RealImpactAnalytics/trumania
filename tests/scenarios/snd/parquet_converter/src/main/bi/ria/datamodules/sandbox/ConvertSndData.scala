@@ -15,7 +15,7 @@ object ConvertSndData extends App {
 class Converter {
 
   val root_dimension_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/_DB/snd_v2/actors"
-  val geography_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/geographies"
+  val geography_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/geographies/source_data/geography"
   val root_log_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/snd_output_logs/snd_v2"
 
   val target_folder = "/Users/svend/dev/RIA/snd_parquet"
@@ -128,12 +128,16 @@ class Converter {
           attributeFileName = fName, attributeName = attName )
     }.reduce( _.join( _, usingColumn = actorIdKey ) )
 
-  def writeDimension( actor: DataFrame, actorName: String ) =
+  def writeDimension( dimensionDf: DataFrame, actorName: String, saveMode: SaveMode = SaveMode.Overwrite ) = {
+
+    val cached_dim = dimensionDf.cache
+
     for ( generationDate <- generationDates ) {
       val fileName = s"$target_folder/dimensions/$actorName/0.1/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
-      actor.write.mode( SaveMode.Overwrite ).parquet( fileName )
+      cached_dim.write.mode( saveMode ).parquet( fileName )
     }
+  }
 
   def writeLogs( logs: DataFrame, transactionType: String ) = {
     import sqlContext.implicits._
@@ -283,15 +287,85 @@ class Converter {
     writeDimension( geo, "Geo" )
   }
 
+  def convertDealer( level: String, distributorType: String, saveMode: SaveMode ) = {
+
+    import sqlContext.implicits._
+
+    val actor_name = s"dist_$level"
+
+    val dist_attrs = loadActorAttributes(
+      actorName = actor_name,
+      actorIdKey = "agent_id",
+      attributesMap = Map(
+        "NAME" -> "agent_name",
+        "CONTACT_NAME" -> "agent_contact_name",
+        "CONTACT_PHONE" -> "agent_contact_phone",
+        "DISTRIBUTOR_SALES_REP_NAME" -> "distributor_sales_rep_name",
+        "DISTRIBUTOR_SALES_REP_PHONE" -> "distributor_sales_rep_contact_number"
+      )
+    )
+
+    val id_table = registerIdFile(
+      s"$root_dimension_folder/$actor_name/ids.csv", s"${actor_name}_ids", "agent_id"
+    )
+
+    // hard-coded values for the rest
+    val dist_fixed = id_table.select(
+      'agent_id,
+      lit( "distributor" ) as "agent_class",
+      lit( distributorType ) as "distributor_type"
+    )
+
+    val dist = dist_fixed.join( dist_attrs, usingColumn = "agent_id" ).cache()
+
+    logTable( dist, "Distributor" )
+    writeDimension( dist, "Distributor", saveMode )
+
+  }
+
+  def convertDealers = {
+
+    import sqlContext.implicits._
+
+    convertDealer(
+      level = "l1",
+      distributorType = "mass distributor",
+      saveMode = SaveMode.Overwrite
+    )
+    convertDealer(
+      level = "l2",
+      distributorType = "dealer",
+      saveMode = SaveMode.Append
+    )
+
+    // all values of the telco are hard-coded, except the id
+    val telco_id_table = registerIdFile(
+      s"$root_dimension_folder/telcos/ids.csv", "telco_ids", "agent_id"
+    )
+
+    val telcosDf = telco_id_table.select(
+      'agent_id,
+      lit( "distributor" ) as "agent_class",
+      lit( "The telco" ) as "agent_name",
+      lit( "telco_contact" ) as "agent_contact_name",
+      lit( "telco_phone" ) as "agent_contact_phone",
+      lit( "origin" ) as "distributor_type",
+      lit( "telco_rep_name" ) as "distributor_sales_rep_name",
+      lit( "telco_rep_num" ) as "distributor_sales_rep_contact_number"
+    )
+
+    writeDimension( telcosDf, "Distributor", saveMode = SaveMode.Append )
+  }
+
   def convertElectronicRecharge = {
 
     val er_attrs = loadActorAttributes(
-      actorName = "ElectronicRecharge",
+      actorName = "electronic_recharge",
       actorIdKey = "product_id",
       attributesMap = Map( "product_description" -> "product_description" )
     )
 
-    registerIdFile( s"$root_dimension_folder/ElectronicRecharge/ids.csv", "er_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/electronic_recharge/ids.csv", "er_ids", "product_id" )
 
     val ers_fixed = sqlContext.sql( """
       SELECT
@@ -303,20 +377,19 @@ class Converter {
        FROM er_ids """ )
 
     val ers = ers_fixed.join( er_attrs, usingColumn = "product_id" ).cache()
-
-    logTable( ers, "ElectronicRecharge" )
+    logTable( ers, "electronic_recharge" )
     writeDimension( ers, "ElectronicRecharge" )
   }
 
   def convertPhysicalRecharge = {
 
     val pr_attrs = loadActorAttributes(
-      actorName = "PhysicalRecharge",
+      actorName = "physical_recharge",
       actorIdKey = "product_id",
       attributesMap = Map( "product_description" -> "product_description" )
     )
 
-    registerIdFile( s"$root_dimension_folder/PhysicalRecharge/ids.csv", "pr_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/physical_recharge/ids.csv", "pr_ids", "product_id" )
 
     val prs_fixed = sqlContext.sql( """
       SELECT
@@ -330,7 +403,7 @@ class Converter {
 
     val prs = prs_fixed.join( pr_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( prs, "PhysicalRecharge" )
+    logTable( prs, "physical_recharge" )
     writeDimension( prs, "PhysicalRecharge" )
 
   }
@@ -338,12 +411,12 @@ class Converter {
   def convertMfs = {
 
     val mfs_attrs = loadActorAttributes(
-      actorName = "Mfs",
+      actorName = "mfs",
       actorIdKey = "product_id",
       attributesMap = Map( "product_description" -> "product_description" )
     )
 
-    registerIdFile( s"$root_dimension_folder/Mfs/ids.csv", "mfs_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/mfs/ids.csv", "mfs_ids", "product_id" )
 
     val mfs_fixed = sqlContext.sql( """
       SELECT
@@ -355,14 +428,14 @@ class Converter {
 
     val mfs = mfs_fixed.join( mfs_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( mfs, "Mfs" )
+    logTable( mfs, "mfs" )
     writeDimension( mfs, "Mfs" )
   }
 
   def convertHandset = {
 
     val handsets_attrs = loadActorAttributes(
-      actorName = "Handset",
+      actorName = "handset",
       actorIdKey = "product_id",
       attributesMap = Map(
         "product_description" -> "product_description",
@@ -374,7 +447,7 @@ class Converter {
       )
     )
 
-    registerIdFile( s"$root_dimension_folder/Handset/ids.csv", "handsets_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/handset/ids.csv", "handsets_ids", "product_id" )
 
     val handsets_fixed = sqlContext.sql( """
       SELECT
@@ -388,14 +461,14 @@ class Converter {
 
     val handsets = handsets_fixed.join( handsets_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( handsets, "Handset" )
+    logTable( handsets, "handset" )
     writeDimension( handsets, "Handset" )
   }
 
   def convertSim = {
 
     val sim_attrs = loadActorAttributes(
-      actorName = "Sim",
+      actorName = "sim",
       actorIdKey = "product_id",
       attributesMap = Map(
         "product_description" -> "product_description",
@@ -404,7 +477,7 @@ class Converter {
       )
     )
 
-    registerIdFile( s"$root_dimension_folder/Sim/ids.csv", "sim_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/sim/ids.csv", "sim_ids", "product_id" )
 
     val sim_fixed = sqlContext.sql( """
       SELECT
@@ -424,10 +497,12 @@ class Converter {
 
   def convertDimensions = {
 
-    // this is actually not required: we get the POS from the mobile_sync seed file
+    // POS is actually not required: we get the POS from the mobile_sync seed file
     convertPos
+
     convertCells
     convertGeo
+    convertDealers
 
     // all products
     convertElectronicRecharge
@@ -505,19 +580,19 @@ class Converter {
 
     // it's ok to be ugly in plumbing code ^^ (says I)
     Map(
-      "customer_ElectronicRecharge_purchase.csv" ->
+      "customer_electronic_recharge_purchase.csv" ->
         ( "external_electronic_recharge", "no_item_id" ),
 
-      "customer_Handset_purchase.csv" ->
+      "customer_handset_purchase.csv" ->
         ( "external_handset", "handset_transaction_product_instance_id" ),
 
-      "customer_Mfs_purchase.csv" ->
+      "customer_mfs_purchase.csv" ->
         ( "external_mfs", "no_item_id" ),
 
-      "customer_PhysicalRecharge_purchase.csv" ->
+      "customer_physical_recharge_purchase.csv" ->
         ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
 
-      "customer_Sim_purchase.csv" ->
+      "customer_sim_purchase.csv" ->
         ( "external_sim", "sim_transaction_product_instance_id" )
     ).foreach {
         case ( sourceFileName, ( transactionType, itemIdName ) ) => {
