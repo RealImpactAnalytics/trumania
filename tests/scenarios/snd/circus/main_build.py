@@ -115,6 +115,7 @@ if __name__ == "__main__":
     snd_customers.add_customers(snd, static_params)
 
     snd_pos.add_pos(snd, static_params)
+
     snd_dealer.add_telcos(snd, static_params, distributor_id_gen)
     snd_dealer.prepare_dealers(snd, params=static_params)
 
@@ -122,3 +123,5 @@ if __name__ == "__main__":
 
     logging.info("created circus:\n{}".format(snd))
     snd.save_to_db(overwrite=True)
+    snd_pos.save_pos_as_mobile_sync_csv(snd)
+

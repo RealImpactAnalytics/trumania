@@ -333,3 +333,63 @@ def _bound_diff_to_max(max_stock):
     return _bound
 
 
+def save_pos_as_mobile_sync_csv(circus):
+
+    target_file = os.path.join(
+        db.namespace_folder(circus.name),
+        "pos.csv")
+
+    logging.info("generating a mobile-sync csv pos file in {}".format(target_file))
+
+    pos_df = circus.actors["pos"].to_dataframe().reset_index()
+    sites_df = circus.actors["sites"].to_dataframe()
+
+    pos_df = pd.merge(
+        left=pos_df, right=sites_df[["GEO_LEVEL_1"]],
+        left_on="SITE", right_index=True
+    )
+
+    pos_df = pos_df.rename(
+            columns={
+                "index": "id",
+                "AGENT_NAME": "name",
+                "CONTACT_NAME": "contact_name",
+                "CONTACT_PHONE": "contact_phone",
+                "LONGITUDE": "longitude",
+                "LATITUDE": "latitude",
+                "GEO_LEVEL_1": "geo_level1_id"
+            }
+        )\
+        .drop([
+            "ATTRACT_BASE", "ATTRACTIVENESS", "ATTRACT_DELTA",
+            "SITE"
+        ], axis=1)
+
+    pos_df["pos_type"] = "grocery store"
+    pos_df["pos_channel"] = "franchise"
+
+    for col in ["agent_code", "picture_uri",
+                "geo_level_2", "geo_level_3", "geo_level_4", "geo_level_5"
+                ]:
+        pos_df[col] = "some_{}".format(col)
+
+    for bcol in ["is_pos",
+                 "electronic_recharge_activity_flag",
+                 "physical_recharge_activity_flag",
+                 "sim_activity_flag",
+                 "handset_activity_flag", "mfs_activity_flag"]:
+        pos_df[bcol] = True
+
+    pos_df = pos_df.reindex_axis([
+            "id", "name", "latitude", "longitude", "agent_code",
+            "geo_level_1", "geo_level_2", "geo_level_3", "geo_level_4",
+            "geo_level_5", "is_pos", "contact_name",
+            "contact_phone_number", "pos_type", "pos_channel", "picture_uri",
+            "electronic_recharge_activity_flag",
+            "physical_recharge_activity_flag",
+            "sim_activity_flag", "handset_activity_flag",
+            "mfs_activity_flag"
+        ], axis=1
+    )
+
+    pos_df.to_csv(target_file, index=False)
