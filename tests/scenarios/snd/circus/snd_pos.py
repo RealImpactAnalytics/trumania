@@ -392,6 +392,4 @@ def save_pos_as_mobile_sync_csv(circus):
         ], axis=1
     )
 
-    print (pos_df)
-
     pos_df.to_csv(target_file, index=False)
