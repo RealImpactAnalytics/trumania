@@ -14,7 +14,7 @@ object ConvertSndData extends App {
 
 class Converter {
 
-  val root_dimension_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/_DB/snd_v2/actors"
+  val root_dimension_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/_DB/snd_v2"
   val geography_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/geographies/source_data/geography"
   val root_log_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/snd_output_logs/snd_v2"
 
@@ -63,7 +63,7 @@ class Converter {
 
   def load_attribute( actorName: String, idField: String, attributeFileName: String, attributeName: String ) = {
 
-    val sourceFile = s"$root_dimension_folder/$actorName/attributes/$attributeFileName.csv"
+    val sourceFile = s"$root_dimension_folder/actors/$actorName/attributes/$attributeFileName.csv"
     val tableName = s"${actorName}_${attributeFileName}"
 
     val attributeSchema = StructType( Array(
@@ -88,7 +88,7 @@ class Converter {
 
   def loadRelationship( actorName: String, relationshipName: String ) = {
 
-    val sourceFile = s"$root_dimension_folder/$actorName/relationships/$relationshipName.csv"
+    val sourceFile = s"$root_dimension_folder/actors/$actorName/relationships/$relationshipName.csv"
 
     import sqlContext.implicits._
 
@@ -131,6 +131,7 @@ class Converter {
   def writeDimension( dimensionDf: DataFrame, actorName: String, saveMode: SaveMode = SaveMode.Overwrite ) = {
 
     val cached_dim = dimensionDf.cache
+    logTable( cached_dim, actorName )
 
     for ( generationDate <- generationDates ) {
       val fileName = s"$target_folder/dimensions/$actorName/0.1/$generationDate/resource.parquet"
@@ -141,6 +142,8 @@ class Converter {
 
   def writeLogs( logs: DataFrame, transactionType: String ) = {
     import sqlContext.implicits._
+
+    logTable( logs, transactionType )
 
     for ( transactionDate <- generationDates ) {
       val fileName = s"$target_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
@@ -186,7 +189,7 @@ class Converter {
 
     // all the generated pos attributes
 
-    registerIdFile( s"$root_dimension_folder/pos/ids.csv", "pod_ids", "agent_id" )
+    registerIdFile( s"$root_dimension_folder/actors/pos/ids.csv", "pod_ids", "agent_id" )
 
     // hard-coded values for the rest
     val pos_fixed = sqlContext.sql( """
@@ -201,7 +204,6 @@ class Converter {
 
     val pos = pos_fixed.join( pos_attrs, usingColumn = "agent_id" ).cache()
 
-    logTable( pos, "FixedPos" )
     writeDimension( pos, "FixedPos" )
   }
 
@@ -220,7 +222,7 @@ class Converter {
     )
 
     val site_ids_df = registerIdFile(
-      s"$root_dimension_folder/sites/ids.csv", "site_ids", "site_id"
+      s"$root_dimension_folder/actors/sites/ids.csv", "site_ids", "site_id"
     )
 
     val sites_fixed = site_ids_df.select(
@@ -234,7 +236,6 @@ class Converter {
     val sites = sites_fixed.join( sites_attrs, usingColumn = "site_id" ).cache()
 
     logTable( sites, "sites" )
-
     sites
   }
 
@@ -267,9 +268,7 @@ class Converter {
       lit( 1 ) as "polygon_id"
     ).cache
 
-    logTable( cells_all, "Cell" )
     writeDimension( cells_all, "Cell" )
-
   }
 
   def convertGeo = {
@@ -283,7 +282,6 @@ class Converter {
         .option( "delimiter", "," )
         .load( s"$geography_folder/geography.csv" )
 
-    logTable( geo, "geo" )
     writeDimension( geo, "Geo" )
   }
 
@@ -306,7 +304,7 @@ class Converter {
     )
 
     val id_table = registerIdFile(
-      s"$root_dimension_folder/$actor_name/ids.csv", s"${actor_name}_ids", "agent_id"
+      s"$root_dimension_folder/actors/$actor_name/ids.csv", s"${actor_name}_ids", "agent_id"
     )
 
     // hard-coded values for the rest
@@ -318,8 +316,24 @@ class Converter {
 
     val dist = dist_fixed.join( dist_attrs, usingColumn = "agent_id" ).cache()
 
-    logTable( dist, "Distributor" )
     writeDimension( dist, "Distributor", saveMode )
+
+  }
+
+  def convertSiteProductPosTarget = {
+
+    val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
+
+    val siteProductPosTarget =
+      sqlContext
+        .read
+        .format( "com.databricks.spark.csv" )
+        .option( "header", "true" )
+        .option( "inferSchema", "true" )
+        .option( "delimiter", "," )
+        .load( sourceFile )
+
+    writeDimension( siteProductPosTarget, "SiteProductPosTarget" )
 
   }
 
@@ -340,7 +354,7 @@ class Converter {
 
     // all values of the telco are hard-coded, except the id
     val telco_id_table = registerIdFile(
-      s"$root_dimension_folder/telcos/ids.csv", "telco_ids", "agent_id"
+      s"$root_dimension_folder/actors/telcos/ids.csv", "telco_ids", "agent_id"
     )
 
     val telcosDf = telco_id_table.select(
@@ -365,7 +379,7 @@ class Converter {
       attributesMap = Map( "product_description" -> "product_description" )
     )
 
-    registerIdFile( s"$root_dimension_folder/electronic_recharge/ids.csv", "er_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/actors/electronic_recharge/ids.csv", "er_ids", "product_id" )
 
     val ers_fixed = sqlContext.sql( """
       SELECT
@@ -377,7 +391,7 @@ class Converter {
        FROM er_ids """ )
 
     val ers = ers_fixed.join( er_attrs, usingColumn = "product_id" ).cache()
-    logTable( ers, "electronic_recharge" )
+
     writeDimension( ers, "ElectronicRecharge" )
   }
 
@@ -389,7 +403,7 @@ class Converter {
       attributesMap = Map( "product_description" -> "product_description" )
     )
 
-    registerIdFile( s"$root_dimension_folder/physical_recharge/ids.csv", "pr_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/actors/physical_recharge/ids.csv", "pr_ids", "product_id" )
 
     val prs_fixed = sqlContext.sql( """
       SELECT
@@ -403,7 +417,6 @@ class Converter {
 
     val prs = prs_fixed.join( pr_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( prs, "physical_recharge" )
     writeDimension( prs, "PhysicalRecharge" )
 
   }
@@ -416,7 +429,7 @@ class Converter {
       attributesMap = Map( "product_description" -> "product_description" )
     )
 
-    registerIdFile( s"$root_dimension_folder/mfs/ids.csv", "mfs_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/actors/mfs/ids.csv", "mfs_ids", "product_id" )
 
     val mfs_fixed = sqlContext.sql( """
       SELECT
@@ -428,7 +441,6 @@ class Converter {
 
     val mfs = mfs_fixed.join( mfs_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( mfs, "mfs" )
     writeDimension( mfs, "Mfs" )
   }
 
@@ -447,7 +459,7 @@ class Converter {
       )
     )
 
-    registerIdFile( s"$root_dimension_folder/handset/ids.csv", "handsets_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/actors/handset/ids.csv", "handsets_ids", "product_id" )
 
     val handsets_fixed = sqlContext.sql( """
       SELECT
@@ -461,7 +473,6 @@ class Converter {
 
     val handsets = handsets_fixed.join( handsets_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( handsets, "handset" )
     writeDimension( handsets, "Handset" )
   }
 
@@ -477,7 +488,7 @@ class Converter {
       )
     )
 
-    registerIdFile( s"$root_dimension_folder/sim/ids.csv", "sim_ids", "product_id" )
+    registerIdFile( s"$root_dimension_folder/actors/sim/ids.csv", "sim_ids", "product_id" )
 
     val sim_fixed = sqlContext.sql( """
       SELECT
@@ -491,7 +502,6 @@ class Converter {
 
     val sims = sim_fixed.join( sim_attrs, usingColumn = "product_id" ).cache()
 
-    logTable( sims, "Sim" )
     writeDimension( sims, "Sim" )
   }
 
@@ -503,6 +513,7 @@ class Converter {
     convertCells
     convertGeo
     convertDealers
+    convertSiteProductPosTarget
 
     // all products
     convertElectronicRecharge
@@ -566,14 +577,12 @@ class Converter {
       'INSTANCE_ID as itemIdName,
       'CELL_ID as "external_transaction_cell_id",
       'CUST_ID as "external_transaction_customer_id"
-    ).cache
+    )
 
     if ( itemIdName == "no_item_id" )
-      logs = logs.drop( 'itemIdName ).cache
+      logs = logs.drop( 'itemIdName )
 
-    writeLogs( logs, transactionType )
-    logTable( logs, transactionType )
-
+    writeLogs( logs.cache, transactionType )
   }
 
   def convertLogs = {
