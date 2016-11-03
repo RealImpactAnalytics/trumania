@@ -40,6 +40,21 @@ class Converter {
    * *****************
    */
 
+  def loadCsvAsDf( sourceFile: String, schema: Option[StructType] = None ) = {
+    val df = sqlContext
+      .read
+      .format( "com.databricks.spark.csv" )
+      .option( "header", "true" )
+      .option( "delimiter", "," )
+
+    val df2 = schema match {
+      case Some( s ) => df.option( "inferSchema", "false" ).schema( s )
+      case None => df.option( "inferSchema", "true" )
+    }
+
+    df2.load( sourceFile )
+  }
+
   def registerIdFile( sourceFile: String, actorName: String, idField: String ) = {
 
     val idSchema = StructType( Array(
@@ -52,7 +67,7 @@ class Converter {
         .format( "com.databricks.spark.csv" )
         .option( "header", "false" )
         .schema( idSchema )
-        .option( "inferSchema", "false" )
+        .option( "inferSchema", "true" )
         .option( "delimiter", "," )
         .load( sourceFile )
 
@@ -71,18 +86,8 @@ class Converter {
       StructField( attributeName, StringType, true )
     ) )
 
-    val df =
-      sqlContext
-        .read
-        .format( "com.databricks.spark.csv" )
-        .option( "header", "true" )
-        .schema( attributeSchema )
-        .option( "inferSchema", "false" )
-        .option( "delimiter", "," )
-        .load( sourceFile )
-
+    val df = loadCsvAsDf( sourceFile, Some( attributeSchema ) )
     df.registerTempTable( tableName )
-
     sqlContext.sql( s"select $idField, $attributeName from $tableName" )
   }
 
@@ -99,15 +104,7 @@ class Converter {
       StructField( "value", StringType, true )
     ) )
 
-    val df =
-      sqlContext
-        .read
-        .format( "com.databricks.spark.csv" )
-        .option( "header", "true" )
-        .schema( relationship_schema )
-        .option( "inferSchema", "false" )
-        .option( "delimiter", "," )
-        .load( sourceFile )
+    val df = loadCsvAsDf( sourceFile, Some( relationship_schema ) )
 
     df.where( 'param === "table" )
       .groupBy( 'rel_id )
@@ -272,16 +269,7 @@ class Converter {
   }
 
   def convertGeo = {
-
-    val geo =
-      sqlContext
-        .read
-        .format( "com.databricks.spark.csv" )
-        .option( "header", "true" )
-        .option( "inferSchema", "true" )
-        .option( "delimiter", "," )
-        .load( s"$geography_folder/geography.csv" )
-
+    val geo = loadCsvAsDf( s"$geography_folder/geography.csv" )
     writeDimension( geo, "Geo" )
   }
 
@@ -315,26 +303,13 @@ class Converter {
     )
 
     val dist = dist_fixed.join( dist_attrs, usingColumn = "agent_id" ).cache()
-
     writeDimension( dist, "Distributor", saveMode )
-
   }
 
   def convertSiteProductPosTarget = {
-
     val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
-
-    val siteProductPosTarget =
-      sqlContext
-        .read
-        .format( "com.databricks.spark.csv" )
-        .option( "header", "true" )
-        .option( "inferSchema", "true" )
-        .option( "delimiter", "," )
-        .load( sourceFile )
-
+    val siteProductPosTarget = loadCsvAsDf( sourceFile )
     writeDimension( siteProductPosTarget, "SiteProductPosTarget" )
-
   }
 
   def convertDealers = {
@@ -552,15 +527,7 @@ class Converter {
       StructField( "TIME", TimestampType, true )
     ) )
 
-    val transaction_df =
-      sqlContext
-        .read
-        .format( "com.databricks.spark.csv" )
-        .option( "header", "true" )
-        .schema( attributeSchema )
-        .option( "inferSchema", "false" )
-        .option( "delimiter", "," )
-        .load( sourceFile )
+    val transaction_df = loadCsvAsDf( sourceFile, Some( attributeSchema ) )
 
     transaction_df.registerTempTable( transactionType )
 
@@ -583,6 +550,18 @@ class Converter {
       logs = logs.drop( 'itemIdName )
 
     writeLogs( logs.cache, transactionType )
+  }
+
+  def convertSellinSelloutTarget = {
+
+    val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
+    val siteProductPosTarget = loadCsvAsDf( sourceFile )
+
+    for ( generationDate <- generationDates ) {
+      val fileName = s"$target_folder/dimensions/DistributorProductSellinSelloutTarget/0.1/$generationDate/resource.parquet"
+      println( s"outputting dimensions to $fileName" )
+      siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
+    }
   }
 
   def convertLogs = {
@@ -612,6 +591,8 @@ class Converter {
           )
         }
       }
+
+    convertSellinSelloutTarget
   }
 
   /**
@@ -632,7 +613,5 @@ class Converter {
 
     convertDimensions
     convertLogs
-
   }
-
 }
