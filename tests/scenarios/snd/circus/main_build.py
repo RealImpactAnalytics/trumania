@@ -7,7 +7,7 @@ import snd_customers
 import snd_pos
 import snd_dealer
 import snd_field_agents
-import patterns
+import snd_geo
 import snd_products
 
 import pandas as pd
@@ -107,11 +107,7 @@ if __name__ == "__main__":
 
     snd_products.create_products(snd, static_params)
 
-    logging.info("loading Belgium sites, cells and distribution network")
-    snd.load_actor(namespace=static_params["geography"], actor_id="sites")
-    snd.load_actor(namespace=static_params["geography"], actor_id="dist_l1")
-    snd.load_actor(namespace=static_params["geography"], actor_id="dist_l2")
-
+    snd_geo.load_geo_actors(snd, static_params)
     snd_customers.add_customers(snd, static_params)
 
     snd_pos.add_pos(snd, static_params)
@@ -123,5 +119,9 @@ if __name__ == "__main__":
 
     logging.info("created circus:\n{}".format(snd))
     snd.save_to_db(overwrite=True)
+
+    # supplementary output required for SND but not for the simulation
     snd_pos.save_pos_as_mobile_sync_csv(snd)
+    snd_geo.build_site_product_pos_target(snd, static_params)
+
 
