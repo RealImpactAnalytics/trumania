@@ -31,7 +31,8 @@ def create_distl2_daily_targets(product, write_mode):
     mean_daily_sells = bulk_purchases\
         .groupby(["BUYER_ID", "day"])["BULK_SIZE"]\
         .agg({"target_units": len, "target_value": np.sum})\
-        .groupby(level=0).mean()
+        .groupby(level=0)\
+        .median()
 
     for direction in ["sellin", "sellout"]:
         for metric in ["target_units", "target_value"]:
@@ -53,7 +54,6 @@ def create_distl2_daily_targets(product, write_mode):
     mean_daily_sells.rename(columns={"BUYER_ID": "distributor_id"},
                             inplace=True)
 
-    print mean_daily_sells
     with open(target_file, write_mode) as of:
         mean_daily_sells.to_csv(of, index=False)
 
