@@ -76,10 +76,9 @@ static_params = {
         },
     },
 
-
-    # "geography": "belgium",
+    #"geography": "belgium",
     "geography": "belgium_5",
-    # "n_pos": 50000,
+    #"n_pos": 50000,
     "n_pos": 100,
 
     # "n_dealers_l2": 1000,
@@ -89,7 +88,7 @@ static_params = {
 
     "n_field_agents": 500,
 
-    # "n_customers": 5000000,
+    #"n_customers": 50000,
     "n_customers": 1000,
 }
 

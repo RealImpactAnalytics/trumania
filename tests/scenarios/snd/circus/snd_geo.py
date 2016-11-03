@@ -47,12 +47,12 @@ def build_site_product_pos_target(circus, params):
 
     target_df = pd.merge(left=target_df, right=products, on="cartesian_product")
 
-    target_df["fact"] = np.random.normal(1, .1, size=target_df.shape[0])
-    target_df["pos_count_target"] = target_df["pos_count_target"] * target_df["fact"]
+    fact = np.random.normal(1, .1, size=target_df.shape[0])
+    target_df["pos_count_target"] = target_df["pos_count_target"] * fact
     target_df["pos_count_target"] = target_df["pos_count_target"].astype(np.int)
 
     target_df.ix[target_df["pos_count_target"] < 10, "pos_count_target"] = 10
-    target_df.drop(["cp", "fact"], axis=1, inplace=True)
+    target_df.drop(["cartesian_product"], axis=1, inplace=True)
 
     target_df.to_csv(target_file, index=False)
 

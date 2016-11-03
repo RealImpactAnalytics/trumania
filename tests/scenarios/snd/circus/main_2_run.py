@@ -10,6 +10,9 @@ import patterns
 import snd_field_agents
 
 runtime_params = {
+
+    "circus_name": "snd_v2",
+
     "mean_daily_customer_mobility_activity": .2,
     "std_daily_customer_mobility_activity": .2,
 
@@ -84,7 +87,7 @@ if __name__ == "__main__":
 
     util_functions.setup_logging()
 
-    snd = circus.Circus.load_from_db(circus_name="snd_v2")
+    snd = circus.Circus.load_from_db(circus_name=runtime_params["circus_name"])
     logging.info("loaded circus:\n{}".format(snd))
 
     snd_customers.add_mobility_action(snd, runtime_params)
