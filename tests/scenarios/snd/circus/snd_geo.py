@@ -38,14 +38,14 @@ def build_site_product_pos_target(circus, params):
     _, logs = target_action(sites_df)
 
     target_df = logs["logs"]
-    target_df["cp"] = "cp"
+    target_df["cartesian_product"] = "cp"
 
     products = pd.DataFrame({
         "product_type_id": params["products"].keys(),
-        "cp": "cp"
+        "cartesian_product": "cp"
     })
 
-    target_df = pd.merge(left=target_df, right=products, on="cp")
+    target_df = pd.merge(left=target_df, right=products, on="cartesian_product")
 
     target_df["fact"] = np.random.normal(1, .1, size=target_df.shape[0])
     target_df["pos_count_target"] = target_df["pos_count_target"] * target_df["fact"]
