@@ -14,9 +14,12 @@ object ConvertSndData extends App {
 
 class Converter {
 
-  val root_dimension_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/_DB/snd_v2"
-  val geography_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/geographies/source_data/geography"
-  val root_log_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/snd_output_logs/snd_v2"
+  val generator_components_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/"
+  val python_gen_root = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/"
+  val circus_name = "snd_v2"
+
+  val root_dimension_folder = s"$generator_components_folder/_DB/$circus_name"
+  val root_log_folder = s"$python_gen_root/snd_output_logs/$circus_name"
 
   val target_folder = "/Users/svend/dev/RIA/snd_parquet"
 
@@ -123,15 +126,16 @@ class Converter {
       case ( fName, attName ) =>
         load_attribute( actorName = actorName, idField = actorIdKey,
           attributeFileName = fName, attributeName = attName )
-    }.reduce( _.join( _, usingColumn = actorIdKey ) )
+    }.reduce( _.join( _, usingColumn = actorIdKey ).cache )
 
-  def writeDimension( dimensionDf: DataFrame, actorName: String, saveMode: SaveMode = SaveMode.Overwrite ) = {
+  def writeDimension( dimensionDf: DataFrame, actorName: String,
+    version: String, saveMode: SaveMode = SaveMode.Overwrite ) = {
 
     val cached_dim = dimensionDf.cache
     logTable( cached_dim, actorName )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/dimensions/$actorName/0.1/$generationDate/resource.parquet"
+      val fileName = s"$target_folder/dimensions/$actorName/$version/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       cached_dim.write.mode( saveMode ).parquet( fileName )
     }
@@ -201,7 +205,7 @@ class Converter {
 
     val pos = pos_fixed.join( pos_attrs, usingColumn = "agent_id" ).cache()
 
-    writeDimension( pos, "FixedPos" )
+    writeDimension( pos, "FixedPos", version = "0.1" )
   }
 
   def loadSites = {
@@ -253,27 +257,24 @@ class Converter {
       lit( 265.2 ) as "cell_orientation",
       lit( "some_CGI" ) as "cell_cgi",
       lit( 500 ) as "cell_population",
-      'site_id, 'site_name, 'site_urban,
-      'site_status, 'site_ownership,
+      'site_id,
+      'site_name,
+      'site_urban,
+      'site_status,
+      'site_ownership,
       'site_population,
-      'site_longitude, 'site_latitude, 'geo_level1_id,
-      lit( "3G" ) as "cell_technology",
-      lit( "ACTIVE" ) as "cell_operational_status",
-      lit( 172.7 ) as "cell_beam_start_angle",
-      lit( 198.1 ) as "cell_beam_end_angle",
-      'site_operational_status,
-      lit( 1 ) as "polygon_id"
-    ).cache
+      'site_longitude, 'site_latitude,
+      'geo_level1_id)
 
-    writeDimension( cells_all, "Cell" )
+    writeDimension( cells_all, "cell", version = "0.2" )
   }
 
   def convertGeo = {
-    val geo = loadCsvAsDf( s"$geography_folder/geography.csv" )
-    writeDimension( geo, "Geo" )
+    val geo = loadCsvAsDf( s"$generator_components_folder/geographies/source_data/geography/geography.csv" )
+    writeDimension( geo, "geo", version = "0.2" )
   }
 
-  def convertDealer( level: String, distributorType: String, saveMode: SaveMode ) = {
+  def convertDistributor( level: String, distributorType: String, saveMode: SaveMode ) = {
 
     import sqlContext.implicits._
 
@@ -302,26 +303,35 @@ class Converter {
       lit( distributorType ) as "distributor_type"
     )
 
-    val dist = dist_fixed.join( dist_attrs, usingColumn = "agent_id" ).cache()
-    writeDimension( dist, "Distributor", saveMode )
+    val dist = dist_fixed.join( dist_attrs, usingColumn = "agent_id" )
+
+    val ordered = dist.select( 'agent_id, 'agent_class,
+      'agent_name, 'agent_contact_name, 'agent_contact_phone, 'distributor_type,
+      'distributor_sales_rep_name, 'distributor_sales_rep_contact_number )
+
+    writeDimension( ordered, "distributor", version = "0.1", saveMode )
   }
 
   def convertSiteProductPosTarget = {
+    import sqlContext.implicits._
+
     val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
-    writeDimension( siteProductPosTarget, "SiteProductPosTarget" )
+      .select('site_id, 'product_type_id, 'pos_count_target)
+
+    writeDimension( siteProductPosTarget, "SiteProductPosTarget", version = "0.1" )
   }
 
-  def convertDealers = {
+  def convertDistributors = {
 
     import sqlContext.implicits._
 
-    convertDealer(
+    convertDistributor(
       level = "l1",
       distributorType = "mass distributor",
       saveMode = SaveMode.Overwrite
     )
-    convertDealer(
+    convertDistributor(
       level = "l2",
       distributorType = "dealer",
       saveMode = SaveMode.Append
@@ -343,10 +353,28 @@ class Converter {
       lit( "telco_rep_num" ) as "distributor_sales_rep_contact_number"
     )
 
-    writeDimension( telcosDf, "Distributor", saveMode = SaveMode.Append )
+    val ordered = telcosDf.select( 'agent_id, 'agent_class,
+      'agent_name, 'agent_contact_name, 'agent_contact_phone, 'distributor_type,
+      'distributor_sales_rep_name, 'distributor_sales_rep_contact_number )
+
+    writeDimension( ordered, "distributor", saveMode = SaveMode.Append, version = "0.1" )
+  }
+
+  def convertDistributorJoins = {
+
+    import sqlContext.implicits._
+
+    val dgp = loadCsvAsDf( s"$generator_components_folder/geographies/source_data/relationships/distributor_geo_product.csv" )
+    writeDimension( dgp, "distributor_geo_product", version = "0.1" )
+
+    val dpp = loadCsvAsDf( s"$generator_components_folder/geographies/source_data/relationships/distributor_pos_product.csv" )
+      .select( 'distributor_id, 'agent_id, 'product_type_id )
+    writeDimension( dpp, "distributor_agent_product", version = "0.1" )
   }
 
   def convertElectronicRecharge = {
+
+    import sqlContext.implicits._
 
     val er_attrs = loadActorAttributes(
       actorName = "electronic_recharge",
@@ -361,16 +389,23 @@ class Converter {
         product_id AS product_id,
         product_id AS product_name,
         'electronic_recharge' AS product_type_id,
-        'electronic_recharge' AS product_type_name,
+        'Electronic Recharge' AS product_type_name,
         'evd_from_bank' AS electronic_recharge_type
        FROM er_ids """ )
 
     val ers = ers_fixed.join( er_attrs, usingColumn = "product_id" ).cache()
 
-    writeDimension( ers, "ElectronicRecharge" )
+    val ordered = ers.select(
+      'product_id, 'product_name, 'product_type_id,
+      'product_type_name, 'product_description, 'electronic_recharge_type
+    )
+
+    writeDimension( ordered, "electronic_recharge", version = "0.2" )
   }
 
   def convertPhysicalRecharge = {
+
+    import sqlContext.implicits._
 
     val pr_attrs = loadActorAttributes(
       actorName = "physical_recharge",
@@ -382,21 +417,28 @@ class Converter {
 
     val prs_fixed = sqlContext.sql( """
       SELECT
-        product_id AS product_id,
+        product_id,
         product_id AS product_name,
         'physical_recharge' AS product_type_id,
-        'physical_recharge' AS product_type_name,
+        'Physical Recharge' AS product_type_name,
         'scratch_card' AS physical_recharge_type,
-        20 AS physical_recharge_denomination
+        20.0 AS physical_recharge_denomination
        FROM pr_ids """ )
 
     val prs = prs_fixed.join( pr_attrs, usingColumn = "product_id" ).cache()
 
-    writeDimension( prs, "PhysicalRecharge" )
+    val ordered = prs.select(
+      'product_id, 'product_name, 'product_type_id, 'product_type_name,
+      'product_description, 'physical_recharge_type, 'physical_recharge_denomination
+    )
+
+    writeDimension( ordered, "physical_recharge", version = "0.2" )
 
   }
 
   def convertMfs = {
+
+    import sqlContext.implicits._
 
     val mfs_attrs = loadActorAttributes(
       actorName = "mfs",
@@ -408,18 +450,25 @@ class Converter {
 
     val mfs_fixed = sqlContext.sql( """
       SELECT
-        product_id AS product_id,
+        product_id,
         product_id AS product_name,
         'mfs' AS product_type_id,
-        'mfs' AS product_type_name
+        'MFS' AS product_type_name
        FROM mfs_ids """ )
 
     val mfs = mfs_fixed.join( mfs_attrs, usingColumn = "product_id" ).cache()
 
-    writeDimension( mfs, "Mfs" )
+    val ordered = mfs.select(
+      'product_id, 'product_name, 'product_type_id,
+      'product_type_name, 'product_description
+    )
+
+    writeDimension( ordered, "mfs", version = "0.2" )
   }
 
   def convertHandset = {
+
+    import sqlContext.implicits._
 
     val handsets_attrs = loadActorAttributes(
       actorName = "handset",
@@ -438,20 +487,28 @@ class Converter {
 
     val handsets_fixed = sqlContext.sql( """
       SELECT
-        product_id AS product_id,
+        product_id,
         product_id AS product_name,
         'handset' AS product_type_id,
-        'handset' AS product_type_name,
+        'Handset' AS product_type_name,
         'some_model' AS handset_model,
         'some_sku' AS handset_sku
        FROM handsets_ids """ )
 
     val handsets = handsets_fixed.join( handsets_attrs, usingColumn = "product_id" ).cache()
 
-    writeDimension( handsets, "Handset" )
+    val ordered = handsets.select(
+      'product_id, 'product_name, 'product_type_id, 'product_type_name, 'product_description,
+      'handset_tac_id, 'handset_category, 'handset_model, 'handset_internet_technology,
+      'handset_brand, 'handset_sku, 'handset_ean
+    )
+
+    writeDimension( ordered, "handset", version = "0.4" )
   }
 
   def convertSim = {
+
+    import sqlContext.implicits._
 
     val sim_attrs = loadActorAttributes(
       actorName = "sim",
@@ -467,28 +524,31 @@ class Converter {
 
     val sim_fixed = sqlContext.sql( """
       SELECT
-        product_id AS product_id,
+        product_id,
         product_id AS product_name,
         'sim' AS product_type_id,
-        'sim' AS product_type_name,
+        'SIM' AS product_type_name,
         'non-resident' AS sim_category,
         'some_sku' AS sim_sku
        FROM sim_ids """ )
 
     val sims = sim_fixed.join( sim_attrs, usingColumn = "product_id" ).cache()
 
-    writeDimension( sims, "Sim" )
+    val ordered = sims.select(
+      'product_id, 'product_name, 'product_type_id, 'product_type_name,
+      'product_description, 'sim_type, 'sim_category, 'sim_sku, 'sim_ean
+    )
+
+    writeDimension( ordered, "sim", version = "0.2" )
   }
 
   def convertDimensions = {
 
     // POS is actually not required: we get the POS from the mobile_sync seed file
-    convertPos
+    //    convertPos
 
-    convertCells
-    convertGeo
-    convertDealers
-    convertSiteProductPosTarget
+    convertDistributors
+    convertDistributorJoins
 
     // all products
     convertElectronicRecharge
@@ -496,6 +556,11 @@ class Converter {
     convertMfs
     convertHandset
     convertSim
+
+    convertGeo
+    convertCells
+    //    convertSiteProductPosTarget
+    //
   }
 
   /**
@@ -642,6 +707,6 @@ class Converter {
     target.mkdir()
 
     convertDimensions
-    convertEvents
+    //convertEvents
   }
 }
