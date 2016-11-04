@@ -592,36 +592,36 @@ class Converter {
 
   }
 
-  def convertLogs = {
+  def convertEvents = {
 
     // it's ok to be ugly in plumbing code ^^ (says I)
-    //        Map(
-    //          "customer_electronic_recharge_purchase.csv" ->
-    //            ( "external_electronic_recharge", "no_item_id" ),
-    //
-    //          "customer_handset_purchase.csv" ->
-    //            ( "external_handset", "handset_transaction_product_instance_id" ),
-    //
-    //          "customer_mfs_purchase.csv" ->
-    //            ( "external_mfs", "no_item_id" ),
-    //
-    //          "customer_physical_recharge_purchase.csv" ->
-    //            ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
-    //
-    //          "customer_sim_purchase.csv" ->
-    //            ( "external_sim", "sim_transaction_product_instance_id" )
-    //        ).foreach {
-    //            case ( sourceFileName, ( transactionType, itemIdName ) ) => {
-    //              convertExternalTransaction(
-    //                sourceFileName = sourceFileName,
-    //                transactionType = transactionType,
-    //                itemIdName = itemIdName
-    //              )
-    //            }
-    //          }
+    Map(
+      "customer_electronic_recharge_purchase.csv" ->
+        ( "external_electronic_recharge", "no_item_id" ),
 
-    //    convertSellinSelloutTargets
-    //    convertGeoSelloutTargets
+      "customer_handset_purchase.csv" ->
+        ( "external_handset", "handset_transaction_product_instance_id" ),
+
+      "customer_mfs_purchase.csv" ->
+        ( "external_mfs", "no_item_id" ),
+
+      "customer_physical_recharge_purchase.csv" ->
+        ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
+
+      "customer_sim_purchase.csv" ->
+        ( "external_sim", "sim_transaction_product_instance_id" )
+    ).foreach {
+        case ( sourceFileName, ( transactionType, itemIdName ) ) => {
+          convertExternalTransaction(
+            sourceFileName = sourceFileName,
+            transactionType = transactionType,
+            itemIdName = itemIdName
+          )
+        }
+      }
+
+    convertSellinSelloutTargets
+    convertGeoSelloutTargets
     convertStockLevels
   }
 
@@ -641,7 +641,7 @@ class Converter {
     }
     target.mkdir()
 
-    //    convertDimensions
-    convertLogs
+    convertDimensions
+    convertEvents
   }
 }
