@@ -117,6 +117,6 @@ if __name__ == "__main__":
     snd_field_agents.add_survey_action(snd)
 
     snd.run(
-        duration=pd.Timedelta("2 days"),
+        duration=pd.Timedelta("4 days"),
         log_output_folder="snd_output_logs/{}".format(snd.name),
         delete_existing_logs=True)

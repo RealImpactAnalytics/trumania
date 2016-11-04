@@ -85,6 +85,10 @@ class Actor(object):
             grouped_ids=stock_bulk_gen.generate(size=self.size))
 
     def get_relationship(self, name):
+        if name not in self.relationships:
+            raise KeyError("{} not found among relationships of actor :"
+                           "{}".format(name, self.relationships.keys()))
+
         return self.relationships[name]
 
     def create_attribute(self, name, **kwargs):
@@ -92,6 +96,11 @@ class Actor(object):
         return self.attributes[name]
 
     def get_attribute(self, attribute_name):
+        if attribute_name not in self.attributes:
+            raise KeyError("{} not found among attributes of actor :{}".format(
+                attribute_name, self.attributes.keys()
+            ))
+
         return self.attributes[attribute_name]
 
     def get_attribute_values(self, attribute_name, ids=None):

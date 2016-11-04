@@ -223,3 +223,5 @@ datagenerator/components/_DB/belgium_5/actors/sites/attributes/physical_recharge
 datagenerator/components/_DB/belgium_5/actors/sites/attributes/physical_recharge__dist_l2.csv filter=lfs diff=lfs merge=lfs -text
 datagenerator/components/_DB/belgium_5/actors/sites/attributes/sim__dist_l1.csv filter=lfs diff=lfs merge=lfs -text
 datagenerator/components/_DB/belgium_5/actors/sites/attributes/sim__dist_l2.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium/actors/sites/attributes/GEO_LEVEL_2.csv filter=lfs diff=lfs merge=lfs -text
+datagenerator/components/_DB/belgium_5/actors/sites/attributes/GEO_LEVEL_2.csv filter=lfs diff=lfs merge=lfs -text
