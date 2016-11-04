@@ -552,13 +552,25 @@ class Converter {
     writeLogs( logs.cache, transactionType )
   }
 
-  def convertSellinSelloutTarget = {
+  def convertSellinSelloutTargets = {
 
     val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
       val fileName = s"$target_folder/dimensions/DistributorProductSellinSelloutTarget/0.1/$generationDate/resource.parquet"
+      println( s"outputting dimensions to $fileName" )
+      siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
+    }
+  }
+
+  def convertGeoSelloutTargets = {
+
+    val sourceFile = s"$root_dimension_folder/distributor_product_geol2_sellout_target.csv"
+    val siteProductPosTarget = loadCsvAsDf( sourceFile )
+
+    for ( generationDate <- generationDates ) {
+      val fileName = s"$target_folder/dimensions/DistributorProductGeoLvl2SelloutTarget/0.1/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
@@ -592,7 +604,7 @@ class Converter {
         }
       }
 
-    convertSellinSelloutTarget
+    convertSellinSelloutTargets
   }
 
   /**
