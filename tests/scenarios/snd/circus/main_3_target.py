@@ -3,7 +3,21 @@ import numpy as np
 import logging
 import main_1_build
 from datagenerator.components import db
+from datagenerator.core import operations
 import os
+
+circus_name = main_1_build.static_params["circus_name"]
+
+
+def to_csv(df, target_file, write_mode):
+    with open(target_file, write_mode) as of:
+        df.to_csv(of, index=False)
+
+
+def noisified(df, col, lb, col_type=np.float):
+    fact = np.random.normal(1, .1, size=df.shape[0])
+    col2 = df[col].apply(operations.bound_value(lb=lb)) * fact
+    return col2.astype(col_type)
 
 
 def create_distl2_daily_targets(product, write_mode):
@@ -12,8 +26,6 @@ def create_distl2_daily_targets(product, write_mode):
         based on actual.
     """
 
-    circus_name = main_1_build.static_params["circus_name"]
-
     target_file = os.path.join(
         db.namespace_folder(circus_name),
         "distributor_product_sellin_sellout_target.csv")
@@ -21,7 +33,7 @@ def create_distl2_daily_targets(product, write_mode):
     logging.info(
         "producing distributor sellin sellout target in {}".format(target_file))
 
-    input_file_name = "snd_output_logs/{}/dist_l1_{}_bulk_purchase_.csv".format(
+    input_file_name = "snd_output_logs/{}/dist_l1_{}_bulk_purchase.csv".format(
         circus_name, product)
 
     bulk_purchases = pd.read_csv(input_file_name, parse_dates=[0])
@@ -36,16 +48,14 @@ def create_distl2_daily_targets(product, write_mode):
 
     for direction in ["sellin", "sellout"]:
         for metric in ["target_units", "target_value"]:
-            fact = np.random.normal(1, .1, size=mean_daily_sells.shape[0])
             col = "_".join([direction, metric])
-
-            mean_daily_sells[col] = mean_daily_sells[metric] * fact
-
             if metric == "target_units":
-                mean_daily_sells[col] = mean_daily_sells[col].astype(np.int)
-                mean_daily_sells.ix[mean_daily_sells[col] < 1, col] = 1
+                mean_daily_sells[col] = noisified(mean_daily_sells,
+                                                  col=metric, lb=1,
+                                                  col_type=np.int)
             else:
-                mean_daily_sells.ix[mean_daily_sells[col] < 100, col] = 100
+                mean_daily_sells[col] = noisified(mean_daily_sells, col=metric,
+                                                  lb=100)
 
     mean_daily_sells.drop(
             ["target_units", "target_value"], axis=1, inplace=True)
@@ -54,8 +64,50 @@ def create_distl2_daily_targets(product, write_mode):
     mean_daily_sells.rename(columns={"BUYER_ID": "distributor_id"},
                             inplace=True)
 
-    with open(target_file, write_mode) as of:
-        mean_daily_sells.to_csv(of, index=False)
+    to_csv(mean_daily_sells, target_file, write_mode)
+
+
+def create_distl2_daily_geo_targets(product, write_mode, nrows):
+    """
+    Create some fake daily geo_l2 target per product/distributor
+    """
+
+    target_file = os.path.join(
+        db.namespace_folder(circus_name),
+        "distributor_product_geol2_sellout_target.csv")
+
+    logging.info(
+        "producing distributor geo_l2 sellout target in {}".format(target_file))
+
+    input_file_name = "snd_output_logs/{}/customer_{}_purchase.csv".format(
+        circus_name, product)
+
+    customer_purchases = pd.read_csv(
+        input_file_name, parse_dates=[11], nrows=nrows)
+    customer_purchases["day"] = customer_purchases["TIME"].apply(
+        lambda s: s.strftime("%D"))
+
+    customer_purchases["product_type_id"] = product
+
+    mean_daily_sells = customer_purchases \
+        .groupby(["product_type_id", "distributor_l1",
+                  "geo_level2_id", "day"])["VALUE"] \
+        .agg({"sellout_target_units": len, "sellout_target_value": np.sum}) \
+        .groupby(level=[0, 1, 2]) \
+        .median()\
+        .reset_index()
+
+    mean_daily_sells = mean_daily_sells.rename(columns={
+        "distributor_l1": "distributor_id"
+    })
+
+    mean_daily_sells["sellout_target_units"] = noisified(
+        mean_daily_sells, col="sellout_target_units", lb=25, col_type=np.int)
+
+    mean_daily_sells["sellout_target_value"] = noisified(
+        mean_daily_sells, col="sellout_target_value", lb=100)
+
+    to_csv(mean_daily_sells, target_file, write_mode)
 
 
 if __name__ == "__main__":
@@ -63,6 +115,9 @@ if __name__ == "__main__":
     write_mode = "w"
 
     for product in main_1_build.static_params["products"].keys():
-        create_distl2_daily_targets("mfs", write_mode)
-        write_mode = "a"
+        product="mfs"
+        create_distl2_daily_targets(product , write_mode)
 
+        create_distl2_daily_geo_targets(product, write_mode, nrows=50000)
+        write_mode = "a"
+        break

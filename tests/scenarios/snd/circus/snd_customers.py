@@ -170,6 +170,15 @@ def add_purchase_actions(circus, params):
                 from_field="SITE",
                 named_as="CELL_ID"),
 
+            # injecting geo level 2 and distributor in purchase action:
+            # this is only required for approximating targets of that
+            # distributor
+            sites.ops.lookup(
+                actor_id_field="SITE",
+                select={"GEO_LEVEL_2" : "geo_level2_id",
+                        "{}__dist_l1".format(product): "distributor_l1"}
+            ),
+
             pos.get_relationship(product).ops.select_one(
                 from_field="POS",
                 named_as="INSTANCE_ID",
