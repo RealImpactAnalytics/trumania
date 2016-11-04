@@ -345,7 +345,7 @@ def add_agent_stock_log_action(circus, params):
                 # we go. I dare to find that pretty neat ^^
                 operations.FieldLogger(
                     log_id="agent_stock_log",
-                    cols=["product_id", "agent_id", "product_id",
+                    cols=["TIME", "product_id", "agent_id",
                           "stock_volume", "stock_value"]
                    )
         )

@@ -137,7 +137,7 @@ class Converter {
     }
   }
 
-  def writeLogs( logs: DataFrame, transactionType: String ) = {
+  def writeLogs( logs: DataFrame, transactionType: String, dateCol: Symbol ) = {
     import sqlContext.implicits._
 
     logTable( logs, transactionType )
@@ -146,7 +146,7 @@ class Converter {
       val fileName = s"$target_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
       println( s"outputting events to $fileName" )
 
-      val dayLogs = logs.where( 'transaction_time === transactionDate )
+      val dayLogs = logs.where( dateCol === transactionDate )
       dayLogs.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
@@ -549,7 +549,7 @@ class Converter {
     if ( itemIdName == "no_item_id" )
       logs = logs.drop( 'itemIdName )
 
-    writeLogs( logs.cache, transactionType )
+    writeLogs( logs.cache, transactionType, dateCol = 'transaction_time )
   }
 
   def convertSellinSelloutTargets = {
@@ -576,35 +576,53 @@ class Converter {
     }
   }
 
+  def convertStockLevels = {
+
+    import sqlContext.implicits._
+
+    val sourceFile = s"$root_log_folder/agent_stock_log.csv"
+    val stockLevels = loadCsvAsDf( sourceFile )
+
+    val levels = stockLevels.select(
+      'agent_id, 'product_id, 'stock_volume, 'stock_value,
+      to_date( 'TIME ) as "date", 'TIME.cast( TimestampType )
+    )
+
+    writeLogs( levels, transactionType = "stock_level", dateCol = 'date )
+
+  }
+
   def convertLogs = {
 
     // it's ok to be ugly in plumbing code ^^ (says I)
-    Map(
-      "customer_electronic_recharge_purchase.csv" ->
-        ( "external_electronic_recharge", "no_item_id" ),
+    //        Map(
+    //          "customer_electronic_recharge_purchase.csv" ->
+    //            ( "external_electronic_recharge", "no_item_id" ),
+    //
+    //          "customer_handset_purchase.csv" ->
+    //            ( "external_handset", "handset_transaction_product_instance_id" ),
+    //
+    //          "customer_mfs_purchase.csv" ->
+    //            ( "external_mfs", "no_item_id" ),
+    //
+    //          "customer_physical_recharge_purchase.csv" ->
+    //            ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
+    //
+    //          "customer_sim_purchase.csv" ->
+    //            ( "external_sim", "sim_transaction_product_instance_id" )
+    //        ).foreach {
+    //            case ( sourceFileName, ( transactionType, itemIdName ) ) => {
+    //              convertExternalTransaction(
+    //                sourceFileName = sourceFileName,
+    //                transactionType = transactionType,
+    //                itemIdName = itemIdName
+    //              )
+    //            }
+    //          }
 
-      "customer_handset_purchase.csv" ->
-        ( "external_handset", "handset_transaction_product_instance_id" ),
-
-      "customer_mfs_purchase.csv" ->
-        ( "external_mfs", "no_item_id" ),
-
-      "customer_physical_recharge_purchase.csv" ->
-        ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
-
-      "customer_sim_purchase.csv" ->
-        ( "external_sim", "sim_transaction_product_instance_id" )
-    ).foreach {
-        case ( sourceFileName, ( transactionType, itemIdName ) ) => {
-          convertExternalTransaction(
-            sourceFileName = sourceFileName,
-            transactionType = transactionType,
-            itemIdName = itemIdName
-          )
-        }
-      }
-
-    convertSellinSelloutTargets
+    //    convertSellinSelloutTargets
+    //    convertGeoSelloutTargets
+    convertStockLevels
   }
 
   /**
@@ -623,7 +641,7 @@ class Converter {
     }
     target.mkdir()
 
-    convertDimensions
+    //    convertDimensions
     convertLogs
   }
 }
