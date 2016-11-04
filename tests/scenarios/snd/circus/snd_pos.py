@@ -281,39 +281,74 @@ def _init_pos_product(circus, product, description):
         name=product, stock_bulk_gen=stock_gen)
 
 
-def add_pos_stock_log_action(circus, params):
+def add_agent_stock_log_action(circus, params):
     """
-    Adds am action recording the stock level of every pos every day,
-    for debugging
+    Adds an action per agent, recording the daily stock level and value of pos,
+    dist_l1 and dist_l2.
+
+    All those actions contribute to the same log_id
     """
 
-    pos = circus.actors["pos"]
+    for agent_name in ["pos", "dist_l1", "dist_l2"]:
 
-    stock_levels_logs = circus.create_action(
-        name="pos_stock_log",
-        initiating_actor=pos,
-        actorid_field="POS_ID",
+        agent = circus.actors[agent_name]
 
-        timer_gen=ConstantDependentGenerator(
-            value=circus.clock.n_iterations(duration=pd.Timedelta("24h")) - 1
-        ))
+        for product in params["products"].keys():
 
-    stock_levels_logs.set_operations(
-        circus.clock.ops.timestamp(named_as="TIME", random=False,
-                                   log_format="%Y-%m-%d"),
-    )
+            product_actor = circus.actors[product]
+            stock_ratio = 1 / product_actor.size
+            mean_price = np.mean(params["products"][product]["item_prices"])
 
-    for product in params["products"].keys():
-        stock_levels_logs.append_operations(
-        pos.get_relationship(product).ops.get_neighbourhood_size(
-                from_field="POS_ID",
-                named_as="{}_stock_level".format(product)))
+            stock_levels_logs = circus.create_action(
+                name="{}_{}_stock_log".format(agent_name, product),
+                initiating_actor=agent,
+                actorid_field="agent_id",
 
-    stock_levels_logs.append_operations(
-        operations.FieldLogger(log_id="pos_stock_log")
-    )
+                timer_gen=ConstantDependentGenerator(
+                    value=circus.clock.n_iterations(duration=pd.Timedelta("24h")) - 1
+                ))
 
-    return pos
+            stock_levels_logs.append_operations(
+
+                circus.clock.ops.timestamp(named_as="TIME"),
+
+                # We're supposed to report the stock level of every product id
+                # => what we actually do is counting the full stock accross
+                # all products and report randomly on one product id, scaling
+                # down the stock volume.
+                # It's ok if not all product id get reported every day
+                product_actor.ops.select_one(
+                    named_as="product_id"
+                ),
+
+                agent.get_relationship(product).ops.get_neighbourhood_size(
+                        from_field="agent_id",
+                        named_as="full_stock_volume"),
+
+                operations.Apply(
+                    source_fields="full_stock_volume",
+                    named_as="stock_volume",
+                    f=lambda v: (v * stock_ratio).astype(np.int),
+                    f_args="series"
+                ),
+
+                # estimate stock value based on stock volume
+                operations.Apply(
+                    source_fields="stock_volume",
+                    named_as="stock_value",
+                    f=lambda v: v*mean_price,
+                    f_args="series"
+                ),
+
+                # The log_id (=> the resulting file name) is the same for all
+                # actions => we just merge the stock level of all actors as
+                # we go. I dare to find that pretty neat ^^
+                operations.FieldLogger(
+                    log_id="agent_stock_log",
+                    cols=["TIME", "product_id", "agent_id",
+                          "stock_volume", "stock_value"]
+                   )
+        )
 
 
 def _bound_diff_to_max(max_stock):

@@ -137,7 +137,7 @@ class Converter {
     }
   }
 
-  def writeLogs( logs: DataFrame, transactionType: String ) = {
+  def writeLogs( logs: DataFrame, transactionType: String, dateCol: Symbol ) = {
     import sqlContext.implicits._
 
     logTable( logs, transactionType )
@@ -146,7 +146,7 @@ class Converter {
       val fileName = s"$target_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
       println( s"outputting events to $fileName" )
 
-      val dayLogs = logs.where( 'transaction_time === transactionDate )
+      val dayLogs = logs.where( dateCol === transactionDate )
       dayLogs.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
@@ -549,7 +549,7 @@ class Converter {
     if ( itemIdName == "no_item_id" )
       logs = logs.drop( 'itemIdName )
 
-    writeLogs( logs.cache, transactionType )
+    writeLogs( logs.cache, transactionType, dateCol = 'transaction_time )
   }
 
   def convertSellinSelloutTargets = {
@@ -576,7 +576,23 @@ class Converter {
     }
   }
 
-  def convertLogs = {
+  def convertStockLevels = {
+
+    import sqlContext.implicits._
+
+    val sourceFile = s"$root_log_folder/agent_stock_log.csv"
+    val stockLevels = loadCsvAsDf( sourceFile )
+
+    val levels = stockLevels.select(
+      'agent_id, 'product_id, 'stock_volume, 'stock_value,
+      to_date( 'TIME ) as "date", 'TIME.cast( TimestampType )
+    )
+
+    writeLogs( levels, transactionType = "stock_level", dateCol = 'date )
+
+  }
+
+  def convertEvents = {
 
     // it's ok to be ugly in plumbing code ^^ (says I)
     Map(
@@ -605,6 +621,8 @@ class Converter {
       }
 
     convertSellinSelloutTargets
+    convertGeoSelloutTargets
+    convertStockLevels
   }
 
   /**
@@ -624,6 +642,6 @@ class Converter {
     target.mkdir()
 
     convertDimensions
-    convertLogs
+    convertEvents
   }
 }
