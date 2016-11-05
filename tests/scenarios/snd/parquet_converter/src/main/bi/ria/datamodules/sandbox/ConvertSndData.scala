@@ -26,8 +26,6 @@ class Converter {
   // TODO: get the set of dates from the log dataset
   val generationDates = List( "2016-09-13", "2016-09-14", "2016-09-15" )
 
-  val version = "0.0.1"
-
   val sparkConf = new SparkConf()
     .setMaster( "local[*]" )
     .setAppName( "parquet_generator" )
@@ -141,7 +139,7 @@ class Converter {
     }
   }
 
-  def writeLogs( logs: DataFrame, transactionType: String, dateCol: Symbol ) = {
+  def writeEvents( logs: DataFrame, transactionType: String, dateCol: Symbol, version: String ) = {
     import sqlContext.implicits._
 
     logTable( logs, transactionType )
@@ -264,7 +262,8 @@ class Converter {
       'site_ownership,
       'site_population,
       'site_longitude, 'site_latitude,
-      'geo_level1_id)
+      'geo_level1_id
+    )
 
     writeDimension( cells_all, "cell", version = "0.2" )
   }
@@ -317,7 +316,7 @@ class Converter {
 
     val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
-      .select('site_id, 'product_type_id, 'pos_count_target)
+      .select( 'site_id, 'product_type_id, 'pos_count_target )
 
     writeDimension( siteProductPosTarget, "SiteProductPosTarget", version = "0.1" )
   }
@@ -572,7 +571,8 @@ class Converter {
   def convertExternalTransaction(
     sourceFileName: String,
     transactionType: String,
-    itemIdName: String
+    itemIdName: String,
+    version: String
   ) = {
 
     import sqlContext.implicits._
@@ -602,9 +602,9 @@ class Converter {
       'POS as "transaction_seller_agent_id",
       'PRODUCT_ID as "transaction_product_id",
       to_date( 'TIME ) as "transaction_date_id",
-      hour( 'TIME ) as "transaction_hour_id",
+      ( round( unix_timestamp( 'TIME ) / 3600 ) * 3600 ).cast( "timestamp" ) as "transaction_hour_id",
       'TIME as "transaction_time",
-      expr( s"'$transactionType'" ) as "transaction_type",
+      lit( "transactionType" ) as "transaction_type",
       'VALUE as "transaction_value",
       'INSTANCE_ID as itemIdName,
       'CELL_ID as "external_transaction_cell_id",
@@ -614,16 +614,16 @@ class Converter {
     if ( itemIdName == "no_item_id" )
       logs = logs.drop( 'itemIdName )
 
-    writeLogs( logs.cache, transactionType, dateCol = 'transaction_time )
+    writeEvents( logs.cache, transactionType, dateCol = 'transaction_time, version = version )
   }
 
   def convertSellinSelloutTargets = {
 
-    val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
+    val sourceFile = s"$root_dimension_folder/distributor_product_sellin_sellout_target.csv"
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/dimensions/DistributorProductSellinSelloutTarget/0.1/$generationDate/resource.parquet"
+      val fileName = s"$target_folder/events/DistributorProductSellinSelloutTarget/0.1/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
@@ -635,8 +635,8 @@ class Converter {
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/dimensions/DistributorProductGeoLvl2SelloutTarget/0.1/$generationDate/resource.parquet"
-      println( s"outputting dimensions to $fileName" )
+      val fileName = s"$target_folder/events/distributor_product_geo_lvl2_sellout_target/0.1/distributor_product_geo_lvl2_sellout_target/$generationDate/resource.parquet"
+      println( s"outputting events to to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
@@ -653,7 +653,7 @@ class Converter {
       to_date( 'TIME ) as "date", 'TIME.cast( TimestampType )
     )
 
-    writeLogs( levels, transactionType = "stock_level", dateCol = 'date )
+    writeEvents( levels, transactionType = "stock_level", dateCol = 'date, version = "0.1" )
 
   }
 
@@ -662,25 +662,26 @@ class Converter {
     // it's ok to be ugly in plumbing code ^^ (says I)
     Map(
       "customer_electronic_recharge_purchase.csv" ->
-        ( "external_electronic_recharge", "no_item_id" ),
+        ( "external_electronic_recharge_transaction", "no_item_id" ),
 
       "customer_handset_purchase.csv" ->
-        ( "external_handset", "handset_transaction_product_instance_id" ),
+        ( "external_handset_transaction", "handset_transaction_product_instance_id" ),
 
       "customer_mfs_purchase.csv" ->
-        ( "external_mfs", "no_item_id" ),
+        ( "external_mfs_transaction", "no_item_id" ),
 
       "customer_physical_recharge_purchase.csv" ->
-        ( "external_physical_recharge", "physical_recharge_transaction_product_instance_id" ),
+        ( "external_physical_recharge_transaction", "physical_recharge_transaction_product_instance_id" ),
 
       "customer_sim_purchase.csv" ->
-        ( "external_sim", "sim_transaction_product_instance_id" )
+        ( "external_sim_transaction", "sim_transaction_product_instance_id" )
     ).foreach {
         case ( sourceFileName, ( transactionType, itemIdName ) ) => {
           convertExternalTransaction(
             sourceFileName = sourceFileName,
             transactionType = transactionType,
-            itemIdName = itemIdName
+            itemIdName = itemIdName,
+            version = "0.4"
           )
         }
       }
@@ -706,7 +707,7 @@ class Converter {
     }
     target.mkdir()
 
-    convertDimensions
-    //convertEvents
+    // convertDimensions
+    convertEvents
   }
 }
