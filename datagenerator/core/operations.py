@@ -75,26 +75,55 @@ class FieldLogger(Operation):
     dataframe from it
     """
 
-    def __init__(self, log_id, cols=None):
+    def __init__(self, log_id, cols=None, exploded_cols=None):
         """
         :param log_id: the id of the logs in the dictionary of logs returned
         by the Circus, at the end of the simulation
         :param cols: sub-sets of fields from the action data that will be
         selected in order to build the logs
+        :param exploded_cols: name of one or several columns containing list of
+        values. If provided, we explode the action_data dataframe and log one per value
+        in that list (which is more that one line per row in action_data).
+        In each row, all lists must have the same length
         """
         self.log_id = log_id
+
+        if type(exploded_cols) == str:
+            self.exploded_cols = [exploded_cols]
+        else:
+            self.exploded_cols = [] if exploded_cols is None else exploded_cols
 
         if type(cols) == str:
             self.cols = [cols]
         else:
-            self.cols = cols
+            self.cols = [] if cols is None else cols
+
+        self.cols += self.exploded_cols
 
     def emit_logs(self, action_data):
 
-        if self.cols is None:
-            return {self.log_id: action_data}
+        # explode lists, cf constructor documentation
+        if self.exploded_cols:
+
+            def explo(df):
+                explosion_len = len(df[self.exploded_cols[0]])
+                df2 = pd.DataFrame(
+                    [df.drop(self.exploded_cols) for _ in range(explosion_len)])
+                for col in self.exploded_cols:
+                    df2[col] = df[col]
+
+                return df2
+
+            logged_data = pd.concat(explo(row)
+                                    for _, row in action_data.iterrows())
+
         else:
-            return {self.log_id: action_data[self.cols]}
+            logged_data = action_data
+
+        if not self.cols:
+            return {self.log_id: logged_data}
+        else:
+            return {self.log_id: logged_data[self.cols]}
 
 
 class SideEffectOnly(Operation):
