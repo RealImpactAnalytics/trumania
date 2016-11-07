@@ -153,3 +153,11 @@ def numpy_generators_read_from_disk_should_generate_same_sequence_as_original():
 
         assert tested.generate(size=10000) == reloaded.generate(size=10000)
 
+
+def test_sequencial_generator_must_not_change_format_when_size_is_float():
+
+    seq = SequencialGenerator(prefix="sq", max_length=2)
+
+    # bugfix: this was previously generating "sq00.0", "sq01.0",...
+    assert ["sq00", "sq01", "sq02"] == seq.generate(size=3.3)
+    assert ["sq03", "sq04", "sq05"] == seq.generate(size=3.3)
