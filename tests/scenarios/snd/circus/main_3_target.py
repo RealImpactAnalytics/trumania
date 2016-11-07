@@ -33,7 +33,8 @@ def create_distl2_daily_targets(product, write_mode):
     logging.info(
         "producing distributor sellin sellout target in {}".format(target_file))
 
-    input_file_name = "snd_output_logs/{}/dist_l1_{}_bulk_purchase.csv".format(
+    input_file_name = "snd_output_logs/{}/dist_l1_" \
+                      "{}_bulk_purchase_stock.csv".format(
         circus_name, product)
 
     bulk_purchases = pd.read_csv(input_file_name, parse_dates=[0])

@@ -86,6 +86,12 @@ def add_bulk_restock_actions(circus, params,
         item_types_gen = random_generators.DependentBulkGenerator(
             element_generator=item_type_gen)
 
+        tx_gen = random_generators.SequencialGenerator(
+            prefix="_".join(["TX", buyer_actor_name, product]))
+
+        tx_seq_gen = random_generators.DependentBulkGenerator(
+            element_generator=tx_gen)
+
         # trigger for another bulk purchase done by the seller if their own
         # stock get low
         seller_low_stock_bulk_purchase_trigger = random_generators.DependentTriggerGenerator(
@@ -169,10 +175,10 @@ def add_bulk_restock_actions(circus, params,
                 observed_field="BULK_SIZE"
             ),
 
-            random_generators.SequencialGenerator(
-                prefix="TX_{}_{}".format(buyer_actor_name,
-                                         product)).ops.generate(
-                named_as="TX_ID"),
+            tx_seq_gen.ops.generate(
+                named_as="TX_IDS",
+                observed_field="BULK_SIZE"
+            ),
 
             operations.FieldLogger(log_id="{}_stock".format(action_name),
                                    cols=["TIME", "BUYER_ID", "SELLER_ID",
@@ -181,7 +187,8 @@ def add_bulk_restock_actions(circus, params,
 
             operations.FieldLogger(log_id=action_name,
                                    cols=["TIME", "BUYER_ID", "SELLER_ID"],
-                                   exploded_cols=["ITEM_IDS", "ITEM_PRICES", "ITEM_TYPES"]),
+                                   exploded_cols=["TX_IDS", "ITEM_IDS",
+                                                  "ITEM_PRICES", "ITEM_TYPES"]),
 
             trigger_action_if_low_stock(
                 circus,

@@ -276,7 +276,9 @@ def _init_pos_product(circus, product, description):
     circus.attach_generator("{}_id_gen".format(product), product_id_gen)
 
     logging.info("Initializing POS {} stock".format(product))
-    stock_gen = init_stock_size_gen.flatmap(DependentBulkGenerator(element_generator=product_id_gen))
+    stock_gen = init_stock_size_gen.flatmap(DependentBulkGenerator(
+        element_generator=product_id_gen))
+
     circus.actors["pos"].create_stock_relationship_grp(
         name=product, stock_bulk_gen=stock_gen)
 

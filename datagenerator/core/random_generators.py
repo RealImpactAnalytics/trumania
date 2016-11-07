@@ -257,8 +257,12 @@ class SequencialGenerator(Generator):
         self.max_length = max_length
 
     def generate(self, size):
-        values = build_ids(size, self.counter, self.prefix, self.max_length)
-        self.counter += size
+        # forcing size as int, also making sure we never get floating point
+        # values in ids (can happen if size results from some scaling)
+        size_i = int(size)
+#        size_i = size
+        values = build_ids(size_i, self.counter, self.prefix, self.max_length)
+        self.counter += size_i
         return values
 
     def description(self):

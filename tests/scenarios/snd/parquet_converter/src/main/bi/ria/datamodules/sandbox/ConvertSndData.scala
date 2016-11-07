@@ -5,7 +5,11 @@ import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.sql.types._
 import java.io.File
+import java.nio.file.{ Files, Path, Paths }
+
 import org.apache.spark.sql.functions._
+
+import scala.reflect.internal.util.TableDef.Column
 
 object ConvertSndData extends App {
   val converter = new Converter
@@ -40,6 +44,11 @@ class Converter {
    * utils
    * *****************
    */
+
+  def to_hour_date( col: org.apache.spark.sql.Column ) = {
+    import sqlContext.implicits._
+    ( round( unix_timestamp( col ) / 3600 ) * 3600 ).cast( "timestamp" )
+  }
 
   def loadCsvAsDf( sourceFile: String, schema: Option[StructType] = None ) = {
     val df = sqlContext
@@ -142,14 +151,17 @@ class Converter {
   def writeEvents( logs: DataFrame, transactionType: String, dateCol: Symbol, version: String ) = {
     import sqlContext.implicits._
 
-    logTable( logs, transactionType )
+    val logs_cached = logs.cache
+
+    logTable( logs_cached, transactionType )
 
     for ( transactionDate <- generationDates ) {
       val fileName = s"$target_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
       println( s"outputting events to $fileName" )
 
-      val dayLogs = logs.where( dateCol === transactionDate )
-      dayLogs.write.mode( SaveMode.Overwrite ).parquet( fileName )
+      logs_cached
+        .where( dateCol === transactionDate )
+        .write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
 
@@ -161,7 +173,7 @@ class Converter {
   }
 
   def logTable( dataframe: DataFrame, name: String ): Unit = {
-    print( s"$name : " )
+    println( s"schema and some lines of $name: " )
     dataframe.printSchema()
     dataframe.take( 10 ).foreach( r => println( s" $name row: $r" ) )
   }
@@ -171,40 +183,6 @@ class Converter {
    * circus dimension conversions
    * *****************
    */
-
-  def convertPos = {
-
-    // all POS attributes
-    val pos_attrs = loadActorAttributes(
-      actorName = "pos",
-      actorIdKey = "agent_id", attributesMap = Map(
-      "AGENT_NAME" -> "agent_name",
-      "CONTACT_NAME" -> "agent_contact_name",
-      "CONTACT_PHONE" -> "agent_contact_phone",
-      "LATITUDE" -> "fixed_pos_latitude",
-      "LONGITUDE" -> "fixed_pos_longitude"
-    )
-    )
-
-    // all the generated pos attributes
-
-    registerIdFile( s"$root_dimension_folder/actors/pos/ids.csv", "pod_ids", "agent_id" )
-
-    // hard-coded values for the rest
-    val pos_fixed = sqlContext.sql( """
-      SELECT agent_id,
-        'pos' AS agent_class,
-        'grocery store' AS pos_type,
-        True AS pos_fixed,
-        'small_retail' AS pos_channel_id,
-        'will be added in OASD-2927' AS fixed_pos_geo_level1_id
-       FROM pod_ids
-    """ )
-
-    val pos = pos_fixed.join( pos_attrs, usingColumn = "agent_id" ).cache()
-
-    writeDimension( pos, "FixedPos", version = "0.1" )
-  }
 
   def loadSites = {
     import sqlContext.implicits._
@@ -543,9 +521,6 @@ class Converter {
 
   def convertDimensions = {
 
-    // POS is actually not required: we get the POS from the mobile_sync seed file
-    //    convertPos
-
     convertDistributors
     convertDistributorJoins
 
@@ -558,8 +533,8 @@ class Converter {
 
     convertGeo
     convertCells
-    //    convertSiteProductPosTarget
-    //
+    convertSiteProductPosTarget
+
   }
 
   /**
@@ -571,7 +546,7 @@ class Converter {
   def convertExternalTransaction(
     sourceFileName: String,
     transactionType: String,
-    itemIdName: String,
+    instanceIdName: String,
     version: String
   ) = {
 
@@ -579,11 +554,16 @@ class Converter {
 
     val sourceFile = s"$root_log_folder/$sourceFileName"
 
+    println( s"loading $sourceFile" )
+
+    // CUST_ID,SITE,POS,CELL_ID,geo_level2_id,distributor_l1,INSTANCE_ID,PRODUCT_ID,FAILED_SALE_OUT_OF_STOCK,TX_ID,VALUE,TIME
     val attributeSchema = StructType( Array(
       StructField( "CUST_ID", StringType, true ),
       StructField( "SITE", StringType, true ),
       StructField( "POS", StringType, true ),
       StructField( "CELL_ID", StringType, true ),
+      StructField( "geo_level2_id", StringType, true ),
+      StructField( "distributor_l1", StringType, true ),
       StructField( "INSTANCE_ID", StringType, true ),
       StructField( "PRODUCT_ID", StringType, true ),
       StructField( "FAILED_SALE_OUT_OF_STOCK", BooleanType, true ),
@@ -602,19 +582,62 @@ class Converter {
       'POS as "transaction_seller_agent_id",
       'PRODUCT_ID as "transaction_product_id",
       to_date( 'TIME ) as "transaction_date_id",
-      ( round( unix_timestamp( 'TIME ) / 3600 ) * 3600 ).cast( "timestamp" ) as "transaction_hour_id",
+      to_hour_date( 'TIME ) as "transaction_hour_id",
       'TIME as "transaction_time",
       lit( "transactionType" ) as "transaction_type",
       'VALUE as "transaction_value",
-      'INSTANCE_ID as itemIdName,
+      'INSTANCE_ID as instanceIdName,
       'CELL_ID as "external_transaction_cell_id",
       'CUST_ID as "external_transaction_customer_id"
     )
 
-    if ( itemIdName == "no_item_id" )
+    if ( instanceIdName == "no_item_id" )
       logs = logs.drop( 'itemIdName )
 
-    writeEvents( logs.cache, transactionType, dateCol = 'transaction_time, version = version )
+    writeEvents( logs, transactionType, dateCol = 'transaction_time, version = version )
+  }
+
+  def convertInternalTransaction(
+    buyerType: String,
+    transactionType: String,
+    instanceIdName: String,
+    version: String
+  ) = {
+
+    val sourceFileName = s"$root_log_folder/${buyerType}_${transactionType}_bulk_purchase.csv"
+
+    // on small generated dataset, some bulk purchases might not be present
+    if ( Files.exists( Paths.get( sourceFileName ) ) ) {
+
+      import sqlContext.implicits._
+      val transactions_df = loadCsvAsDf( sourceFileName )
+
+      val internalTransactionType = buyerType match {
+        case "pos" => "dealer_to_pos"
+        case "dist_l2" => "mass_distributor_to_dealer"
+        case "dist_l1" => "origin_to_mass_distributor"
+      }
+
+      var events = transactions_df.select(
+        'TIME,
+        'TX_IDS as "transaction_id",
+        'SELLER_ID as "transaction_seller_agent_id",
+        'ITEM_TYPES as "transaction_product_id",
+        to_date( 'TIME ) as "transaction_date_id",
+        to_hour_date( 'TIME ) as "transaction_hour_id",
+        'TIME as "transaction_time",
+        lit( transactionType ) as "transaction_type",
+        'ITEM_PRICES as "transaction_value",
+        'BUYER_ID as "internal_transaction_buyer_agent_id",
+        lit( internalTransactionType ) as "internal_transaction_type",
+        'ITEM_IDS as instanceIdName
+      )
+
+      if ( instanceIdName == "no_item_id" )
+        events = events.drop( instanceIdName )
+
+      writeEvents( events, s"${transactionType}_transaction", dateCol = 'transaction_time, version = version )
+    }
   }
 
   def convertSellinSelloutTargets = {
@@ -659,7 +682,6 @@ class Converter {
 
   def convertEvents = {
 
-    // it's ok to be ugly in plumbing code ^^ (says I)
     Map(
       "customer_electronic_recharge_purchase.csv" ->
         ( "external_electronic_recharge_transaction", "no_item_id" ),
@@ -680,15 +702,29 @@ class Converter {
           convertExternalTransaction(
             sourceFileName = sourceFileName,
             transactionType = transactionType,
-            itemIdName = itemIdName,
+            instanceIdName = itemIdName,
             version = "0.4"
           )
         }
       }
 
+    List( "pos", "dist_l1", "dist_l2" ).map {
+      buyerType =>
+        List( ( "electronic_recharge", "no", "0.4" ) ).map {
+          case ( transactionType, instanceIdName, version ) =>
+            convertInternalTransaction(
+              buyerType = buyerType,
+              transactionType = transactionType,
+              instanceIdName = instanceIdName,
+              version = version
+            )
+        }
+    }
+
     convertSellinSelloutTargets
     convertGeoSelloutTargets
     convertStockLevels
+
   }
 
   /**
@@ -707,7 +743,7 @@ class Converter {
     }
     target.mkdir()
 
-    // convertDimensions
+    convertDimensions
     convertEvents
   }
 }
