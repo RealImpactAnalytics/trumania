@@ -70,6 +70,22 @@ def add_bulk_restock_actions(circus, params,
 
         logging.info("creating {} action".format(action_name))
 
+        # generator of item prices and type
+        item_price_gen = random_generators.NumpyRandomGenerator(
+            method="choice", a=description["item_prices"],
+            seed=circus.seeder.next())
+
+        item_prices_gen = random_generators.DependentBulkGenerator(
+            element_generator=item_price_gen)
+
+        item_type_gen = random_generators.NumpyRandomGenerator(
+            method="choice",
+            a=circus.actors[product].ids,
+            seed=circus.seeder.next())
+
+        item_types_gen = random_generators.DependentBulkGenerator(
+            element_generator=item_type_gen)
+
         # trigger for another bulk purchase done by the seller if their own
         # stock get low
         seller_low_stock_bulk_purchase_trigger = random_generators.DependentTriggerGenerator(
@@ -112,7 +128,7 @@ def add_bulk_restock_actions(circus, params,
             seller.get_relationship(product).ops \
                 .select_many(
                     from_field="SELLER_ID",
-                    named_as="ITEMS_BULK",
+                    named_as="ITEM_IDS",
                     quantity_field="REQUESTED_BULK_SIZE",
 
                     # if an item is selected, it is removed from the dealer's stock
@@ -124,7 +140,7 @@ def add_bulk_restock_actions(circus, params,
             # and adding them to the buyer
             buyer.get_relationship(product).ops.add_grouped(
                 from_field="BUYER_ID",
-                grouped_items_field="ITEMS_BULK"),
+                grouped_items_field="ITEM_IDS"),
 
             # We do not track the old and new stock of the dealer since the result
             # is misleading: since all purchases are performed in parallel,
@@ -137,19 +153,35 @@ def add_bulk_restock_actions(circus, params,
                     named_as="NEW_BUYER_STOCK"),
 
             # actual number of bought items might be different due to out of stock
-            operations.Apply(source_fields="ITEMS_BULK",
+            operations.Apply(source_fields="ITEM_IDS",
                              named_as="BULK_SIZE",
                              f=lambda s: s.map(len), f_args="series"),
+
+            # Generate some item prices. Note that the same items will have a
+            # different price through the whole distribution chain
+            item_prices_gen.ops.generate(
+                named_as="ITEM_PRICES",
+                observed_field="BULK_SIZE"
+            ),
+
+            item_types_gen.ops.generate(
+                named_as="ITEM_TYPES",
+                observed_field="BULK_SIZE"
+            ),
 
             random_generators.SequencialGenerator(
                 prefix="TX_{}_{}".format(buyer_actor_name,
                                          product)).ops.generate(
                 named_as="TX_ID"),
 
-            operations.FieldLogger(log_id=action_name,
-                                   cols=["TIME",  "BUYER_ID", "SELLER_ID",
+            operations.FieldLogger(log_id="{}_stock".format(action_name),
+                                   cols=["TIME", "BUYER_ID", "SELLER_ID",
                                          "OLD_BUYER_STOCK", "NEW_BUYER_STOCK",
                                          "BULK_SIZE"]),
+
+            operations.FieldLogger(log_id=action_name,
+                                   cols=["TIME", "BUYER_ID", "SELLER_ID"],
+                                   exploded_cols=["ITEM_IDS", "ITEM_PRICES", "ITEM_TYPES"]),
 
             trigger_action_if_low_stock(
                 circus,
