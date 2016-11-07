@@ -95,7 +95,7 @@ def prepare_dealers(circus, params):
 
     for level in ["l1", "l2"]:
 
-        actor_name="dist_{}".format(level)
+        actor_name = "dist_{}".format(level)
 
         logging.info("prepare {} actor".format(actor_name))
         dealers = circus.actors[actor_name]

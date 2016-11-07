@@ -79,7 +79,7 @@ static_params = {
     "geography": "belgium_100",
     "n_pos": 1000,
 
-    "n_dealers_l2": 30,
+    "n_dealers_l2": 25,
     "n_dealers_l1": 2,
     "n_telcos": 1,
 
