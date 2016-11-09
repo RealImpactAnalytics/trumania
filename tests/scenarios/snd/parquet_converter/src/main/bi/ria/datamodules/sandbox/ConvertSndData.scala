@@ -583,9 +583,9 @@ class Converter {
       'PRODUCT_ID as "transaction_product_id",
       to_date( 'TIME ) as "transaction_date_id",
       to_hour_date( 'TIME ) as "transaction_hour_id",
-      'TIME as "transaction_time",
+      'TIME.cast( TimestampType ) as "transaction_time",
       lit( "transactionType" ) as "transaction_type",
-      'VALUE as "transaction_value",
+      'VALUE.cast( FloatType ) as "transaction_value",
       'INSTANCE_ID as instanceIdName,
       'CELL_ID as "external_transaction_cell_id",
       'CUST_ID as "external_transaction_customer_id"
@@ -619,15 +619,14 @@ class Converter {
       }
 
       var events = transactions_df.select(
-        'TIME,
         'TX_IDS as "transaction_id",
         'SELLER_ID as "transaction_seller_agent_id",
         'ITEM_TYPES as "transaction_product_id",
         to_date( 'TIME ) as "transaction_date_id",
         to_hour_date( 'TIME ) as "transaction_hour_id",
-        'TIME as "transaction_time",
+        'TIME.cast( TimestampType ) as "transaction_time",
         lit( transactionType ) as "transaction_type",
-        'ITEM_PRICES as "transaction_value",
+        'ITEM_PRICES.cast( FloatType ) as "transaction_value",
         'BUYER_ID as "internal_transaction_buyer_agent_id",
         lit( internalTransactionType ) as "internal_transaction_type",
         'ITEM_IDS as instanceIdName
@@ -636,7 +635,7 @@ class Converter {
       if ( instanceIdName == "no_item_id" )
         events = events.drop( instanceIdName )
 
-      writeEvents( events, s"${transactionType}_transaction", dateCol = 'transaction_time, version = version )
+      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_time, version = version )
     }
   }
 
@@ -646,7 +645,7 @@ class Converter {
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/events/DistributorProductSellinSelloutTarget/0.1/$generationDate/resource.parquet"
+      val fileName = s"$target_folder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
@@ -672,7 +671,7 @@ class Converter {
     val stockLevels = loadCsvAsDf( sourceFile )
 
     val levels = stockLevels.select(
-      'agent_id, 'product_id, 'stock_volume, 'stock_value,
+      'agent_id, 'product_id, 'stock_volume.cast( LongType ), 'stock_value,
       to_date( 'TIME ) as "date", 'TIME.cast( TimestampType )
     )
 
@@ -710,15 +709,21 @@ class Converter {
 
     List( "pos", "dist_l1", "dist_l2" ).map {
       buyerType =>
-        List( ( "electronic_recharge", "no", "0.4" ) ).map {
-          case ( transactionType, instanceIdName, version ) =>
-            convertInternalTransaction(
-              buyerType = buyerType,
-              transactionType = transactionType,
-              instanceIdName = instanceIdName,
-              version = version
-            )
-        }
+        List(
+          ( "electronic_recharge", "no_item_id", "0.1" ),
+          ( "handset", "handset_transaction_product_instance_id", "0.1" ),
+          ( "mfs", "no_item_id", "0.1" ),
+          ( "physical_recharge", "physical_recharge_transaction_product_instance_id", "0.1" ),
+          ( "sim", "sim_transaction_product_instance_id", "0.1" )
+        ).map {
+            case ( transactionType, instanceIdName, version ) =>
+              convertInternalTransaction(
+                buyerType = buyerType,
+                transactionType = transactionType,
+                instanceIdName = instanceIdName,
+                version = version
+              )
+          }
     }
 
     convertSellinSelloutTargets
