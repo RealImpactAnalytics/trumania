@@ -25,7 +25,7 @@ static_params = {
     # the clock step.
     "clock_time_step": "1h",
 
-    "clock_start_date": "13 Sept 2016 12:00",
+    "clock_start_date": "1 Jan 2016 00:00",
 
     "products": {
         "sim": {
@@ -61,7 +61,7 @@ static_params = {
             "pos_bulk_purchase_sizes_dist": [.4, .4, .2],
             "telco_init_stock_customer_ratio": .2,
 
-            "product_types_num": 5,
+            "product_types_num": 1,
             "prefix": "MFS"
 
         },
@@ -71,19 +71,19 @@ static_params = {
             "pos_bulk_purchase_sizes_dist": [.5, .5],
             "telco_init_stock_customer_ratio": .05,
 
-            "product_types_num": 1000,
+            "product_types_num": 100,
             "prefix": "HS"
         },
     },
 
-    "geography": "belgium_100",
-    "n_pos": 1000,
+    "geography": "belgium",
+    "n_pos": 10000,
 
     "n_dealers_l2": 25,
-    "n_dealers_l1": 2,
+    "n_dealers_l1": 4,
     "n_telcos": 1,
 
-    "n_field_agents": 500,
+    "n_field_agents": 100,
 
     "n_customers": 20000,
 }
