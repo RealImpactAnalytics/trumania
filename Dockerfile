@@ -10,9 +10,8 @@ USER ria
 
 RUN cp /home/ria/work/tests/test_scripts/run_tests.sh /home/ria/work/
 
+RUN export set PATH=$PATH:/home/ria/miniconda2/bin/
+RUN source activate workspace_py2.7
 RUN pip install -e /home/ria/work/
 
 ENTRYPOINT [ "/home/ria/work/run_tests.sh" ]
-
-
-
