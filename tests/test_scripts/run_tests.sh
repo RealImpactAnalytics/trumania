@@ -7,6 +7,7 @@
 export set PATH=$PATH:/home/ria/miniconda2/bin/
 source activate workspace_py2.7
 
+cd /home/ria/work
 py.test -s --teamcity
 #py.test -s tests/test_cdr.py
 #py.test -s tests/test_snd.py
