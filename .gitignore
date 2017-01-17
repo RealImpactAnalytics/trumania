@@ -3,7 +3,7 @@
 *.pyc
 .ipynb_checkpoints
 *.egg-info
-.idea/*
+.idea/
 .cache
 explore.ipynb
 cdr_output_logs/
