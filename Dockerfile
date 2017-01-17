@@ -12,4 +12,5 @@ RUN cp /home/ria/work/tests/test_scripts/run_tests.sh /home/ria/work/ && \
     source /home/ria/miniconda2/bin/activate workspace_py2.7 && \
     /home/ria/miniconda2/bin/pip install -e /home/ria/work/
 
+ENTRYPOINT []
 CMD [ "/home/ria/work/run_tests.sh" ]
