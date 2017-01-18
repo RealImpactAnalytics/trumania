@@ -1,4 +1,0 @@
-product_id,product_type_id,product_type_name,product_name,electronic_recharge_type
-ERECH0,electronic_recharge,Electronic Recharge,E-Recharge,EVD
-ERECH1,electronic_recharge,Electronic Recharge,Internet,INT
-ERECH2,electronic_recharge,Electronic Recharge,MFS Recharge,MFS

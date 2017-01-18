@@ -1,6 +1,0 @@
-product_id,product_type_id,product_type_name,product_name,sim_type
-SIMCA0,sim,SIM,3G,mini
-SIMCA1,sim,SIM,5G,micro
-SIMCA2,sim,SIM,3G,micro
-SIMCA3,sim,SIM,2G,pico
-SIMCA4,sim,SIM,3G,micro
