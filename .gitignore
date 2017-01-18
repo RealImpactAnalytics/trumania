@@ -1,4 +1,5 @@
-_DB/
+/datagenerator/components/_DB/
+/datagenerator/components/geographies/source_data/
 
 # python
 *.pyc

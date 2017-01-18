@@ -1,9 +1,7 @@
 # lab-data-generator
 
-The DB component are stored in git lfs
-=> installation steps required (on mac): 
+Some folders are stored on S3 :
 
-```
-brew install git-lfs
-git lfs install
-```
+`datagenerator/components/_DB` is on `s3://lab-data-generator-db`
+
+`datagenerator/components/geographies/source_data` is on `s3://lab-data-generator-geographies`
