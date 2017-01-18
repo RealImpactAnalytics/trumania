@@ -33,7 +33,7 @@ def create_distl2_daily_targets(product, write_mode):
     logging.info(
         "producing distributor sellin sellout target in {}".format(target_file))
 
-    input_file_name = "snd_output_logs/{}/dist_l1_" \
+    input_file_name = "output/{}/dist_l1_" \
                       "{}_bulk_purchase_stock.csv".format(
         circus_name, product)
 
@@ -80,7 +80,7 @@ def create_distl2_daily_geo_targets(product, write_mode, nrows):
     logging.info(
         "producing distributor geo_l2 sellout target in {}".format(target_file))
 
-    input_file_name = "snd_output_logs/{}/customer_{}_purchase.csv".format(
+    input_file_name = "output/{}/customer_{}_purchase.csv".format(
         circus_name, product)
 
     customer_purchases = pd.read_csv(
