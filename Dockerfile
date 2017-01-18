@@ -6,9 +6,9 @@ COPY . /home/ria/work/
 
 RUN mkdir /home/ria/output && \
     chmod 755 /home/ria/output && \
-    chown ria:ria /home/ria/output && \
+    chown ria /home/ria/output && \
     chmod 755 /home/ria/work && \
-    chown -R ria:ria /home/ria/work
+    chown -R ria /home/ria/work
 
 USER ria
 
