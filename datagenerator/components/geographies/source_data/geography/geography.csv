@@ -1,3 +1,590 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:b035245aa0fecd6530a01525732862c85bfdbd8eda51ae1ab05c36433bfbf266
-size 113313
+geo_level1_id,geo_level1_name,geo_level1_urban,geo_level1_population,geo_level1_longitude,geo_level1_latitude,geo_level2_id,geo_level2_name,geo_level2_urban,geo_level2_population,geo_level2_longitude,geo_level2_latitude,geo_level3_id,geo_level3_name,geo_level3_population,geo_level3_longitude,geo_level3_latitude,geo_level4_id,geo_level4_name,geo_level4_population,geo_level4_longitude,geo_level4_latitude,geo_level5_id,geo_level5_name,geo_level5_population,geo_level5_longitude,geo_level5_latitude
+LVL1_Anderlecht,Anderlecht,True,115178,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Auderghem,Auderghem,True,32560,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Berchem-Sainte-Agathe,Berchem-Sainte-Agathe,True,23690,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bruxelles,Bruxelles,True,170407,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Etterbeek,Etterbeek,True,46427,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Evere,Evere,True,37957,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Forest,Forest,True,54524,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ganshoren,Ganshoren,True,23836,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ixelles,Ixelles,True,83332,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Jette,Jette,True,50237,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Koekelberg,Koekelberg,True,21317,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Molenbeek-Saint-Jean,Molenbeek-Saint-Jean,True,94854,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Gilles,Saint-Gilles,True,50460,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Josse-ten-Noode,Saint-Josse-ten-Noode,True,27447,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Schaerbeek,Schaerbeek,True,131604,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Uccle,Uccle,True,81089,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Watermael-Boitsfort,Watermael-Boitsfort,True,24408,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Woluwe-Saint-Lambert,Woluwe-Saint-Lambert,True,53318,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Woluwe-Saint-Pierre,Woluwe-Saint-Pierre,True,40841,0.0,0.0,LVL2_Bruxelles-Capitale,Bruxelles-Capitale,True,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,Bruxelles-Capitale,Bruxelles-Capitale,1163486,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aartselaar,Aartselaar,True,14207,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Anvers,Anvers,True,510610,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Boechout,Boechout,True,12804,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Boom,Boom,True,17231,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Borsbeek,Borsbeek,True,10451,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Brasschaat,Brasschaat,True,37502,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Brecht,Brecht,True,28174,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Edegem,Edegem,True,21251,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Essen,Essen,True,18256,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hemiksem,Hemiksem,True,10866,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hove,Hove,True,8216,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kalmthout,Kalmthout,True,18165,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kapellen,Kapellen,True,26540,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kontich,Kontich,True,20913,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lint,Lint,True,8752,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Malle,Malle,True,15013,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mortsel,Mortsel,True,25242,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Niel,Niel,True,9833,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ranst,Ranst,True,18607,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rumst,Rumst,True,15025,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Schelle,Schelle,True,8183,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Schilde,Schilde,True,19400,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Schoten,Schoten,True,33871,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Stabroek,Stabroek,True,18304,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wijnegem,Wijnegem,True,9131,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wommelgem,Wommelgem,True,12467,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wuustwezel,Wuustwezel,True,19872,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zandhoven,Zandhoven,True,12729,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zoersel,Zoersel,True,21573,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zwijndrecht,Zwijndrecht,True,18952,0.0,0.0,LVL2_Anvers,Anvers,True,1022140,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Berlaar,Berlaar,False,11034,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bonheiden,Bonheiden,False,14778,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bornem,Bornem,False,20858,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Duffel,Duffel,False,17119,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Heist-op-den-Berg,Heist-op-den-Berg,False,41365,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lierre,Lierre,False,34368,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Malines,Malines,False,83194,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nijlen,Nijlen,False,22342,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Putte,Putte,False,17133,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Puurs,Puurs,False,16972,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Amands,Sint-Amands,False,8241,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Katelijne-Waver,Sint-Katelijne-Waver,False,20401,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Willebroek,Willebroek,False,25327,0.0,0.0,LVL2_Malines,Malines,False,333132,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Arendonk,Arendonk,True,12956,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Baerle-Duc,Baerle-Duc,True,2618,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Balen,Balen,True,21817,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beerse,Beerse,True,17550,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dessel,Dessel,True,9350,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Geel,Geel,True,38450,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Grobbendonk,Grobbendonk,True,11095,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herentals,Herentals,True,27637,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herenthout,Herenthout,True,8803,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herselt,Herselt,True,14439,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hoogstraten,Hoogstraten,True,20867,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hulshout,Hulshout,True,10254,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kasterlee,Kasterlee,True,17973,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Laakdal,Laakdal,True,15657,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lille,Lille,True,16407,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Meerhout,Meerhout,True,10086,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Merksplas,Merksplas,True,8637,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mol,Mol,True,35382,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Olen,Olen,True,12125,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oud-Turnhout,Oud-Turnhout,True,13040,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ravels,Ravels,True,14661,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Retie,Retie,True,10897,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rijkevorsel,Rijkevorsel,True,11535,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Turnhout,Turnhout,True,42281,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vorselaar,Vorselaar,True,7689,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vosselaar,Vosselaar,True,10747,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Westerlo,Westerlo,True,24494,0.0,0.0,LVL2_Turnhout,Turnhout,True,447447,0.0,0.0,Anvers,Anvers,1802719,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Affligem,Affligem,True,12953,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Asse,Asse,True,31754,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beersel,Beersel,True,24496,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Biévène,Biévène,True,2171,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dilbeek,Dilbeek,True,41034,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Drogenbos,Drogenbos,True,5093,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gammerages,Gammerages,True,8557,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gooik,Gooik,True,9198,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Grimbergen,Grimbergen,True,36524,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hal,Hal,True,37453,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herne,Herne,True,6565,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hoeilaart,Hoeilaart,True,10630,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kampenhout,Kampenhout,True,11517,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kapelle-op-den-Bos,Kapelle-op-den-Bos,True,9200,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kraainem,Kraainem,True,13570,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lennik,Lennik,True,8925,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Liedekerke,Liedekerke,True,12818,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Linkebeek,Linkebeek,True,4792,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Londerzeel,Londerzeel,True,18055,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Machelen,Machelen,True,14271,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Meise,Meise,True,18569,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Merchtem,Merchtem,True,15900,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Opwijk,Opwijk,True,13975,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Overijse,Overijse,True,24643,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Pepingen,Pepingen,True,4374,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rhode-Saint-Gense,Rhode-Saint-Gense,True,18005,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Roosdaal,Roosdaal,True,11277,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Pieters-Leeuw,Sint-Pieters-Leeuw,True,32933,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Steenokkerzeel,Steenokkerzeel,True,11744,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ternat,Ternat,True,15319,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vilvorde,Vilvorde,True,41843,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wemmel,Wemmel,True,15586,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wezembeek-Oppem,Wezembeek-Oppem,True,13894,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zaventem,Zaventem,True,32388,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zemst,Zemst,True,22587,0.0,0.0,LVL2_Hal-Vilvorde,Hal-Vilvorde,True,612613,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aarschot,Aarschot,True,29074,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Begijnendijk,Begijnendijk,True,9979,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bekkevoort,Bekkevoort,True,6094,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bertem,Bertem,True,9773,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bierbeek,Bierbeek,True,9800,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Boortmeerbeek,Boortmeerbeek,True,11971,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Boutersem,Boutersem,True,7974,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Diest,Diest,True,23219,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Geetbets,Geetbets,True,5944,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Glabbeek,Glabbeek,True,5300,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Haacht,Haacht,True,14204,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herent,Herent,True,20900,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hoegaarden,Hoegaarden,True,6732,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Holsbeek,Holsbeek,True,9871,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Huldenberg,Huldenberg,True,9668,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Keerbergen,Keerbergen,True,12879,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kortenaken,Kortenaken,True,7881,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kortenberg,Kortenberg,True,19557,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Landen,Landen,True,15783,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lau,Lau,True,8292,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Linter,Linter,True,7166,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Louvain,Louvain,True,98292,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lubbeek,Lubbeek,True,14127,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Montaigu-Zichem,Montaigu-Zichem,True,22751,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oud-Heverlee,Oud-Heverlee,True,10986,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rotselaar,Rotselaar,True,16169,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tervuren,Tervuren,True,21321,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tielt-Winge,Tielt-Winge,True,10659,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tirlemont,Tirlemont,True,33511,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tremelo,Tremelo,True,14776,0.0,0.0,LVL2_Louvain,Louvain,True,494653,0.0,0.0,Brabant Flamand,Brabant Flamand,1107266,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beernem,Beernem,False,15428,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Blankenberge,Blankenberge,False,19879,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bruges,Bruges,False,117377,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Damme,Damme,False,10845,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Jabbeke,Jabbeke,False,13857,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Knokke-Heist,Knokke-Heist,False,33556,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oostkamp,Oostkamp,False,23024,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Torhout,Torhout,False,20395,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zedelgem,Zedelgem,False,22299,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zuienkerke,Zuienkerke,False,2740,0.0,0.0,LVL2_Bruges,Bruges,False,279400,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Anzegem,Anzegem,False,14472,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Avelgem,Avelgem,False,9727,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Courtrai,Courtrai,False,75128,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Deerlijk,Deerlijk,False,11593,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Espierres-Helchin,Espierres-Helchin,False,2120,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Harelbeke,Harelbeke,False,27247,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kuurne,Kuurne,False,13105,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lendelede,Lendelede,False,5749,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Menin,Menin,False,32964,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Waregem,Waregem,False,37155,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wevelgem,Wevelgem,False,31063,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zwevegem,Zwevegem,False,24258,0.0,0.0,LVL2_Courtrai,Courtrai,False,284581,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dixmude,Dixmude,False,16542,0.0,0.0,LVL2_Dixmude,Dixmude,False,50698,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Houthulst,Houthulst,False,9895,0.0,0.0,LVL2_Dixmude,Dixmude,False,50698,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Koekelare,Koekelare,False,8664,0.0,0.0,LVL2_Dixmude,Dixmude,False,50698,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kortemark,Kortemark,False,12277,0.0,0.0,LVL2_Dixmude,Dixmude,False,50698,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lo-Reninge,Lo-Reninge,False,3320,0.0,0.0,LVL2_Dixmude,Dixmude,False,50698,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Alveringem,Alveringem,False,4952,0.0,0.0,LVL2_Furnes,Furnes,False,60839,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Furnes,Furnes,False,11396,0.0,0.0,LVL2_Furnes,Furnes,False,60839,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Koksijde,Koksijde,False,22228,0.0,0.0,LVL2_Furnes,Furnes,False,60839,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_La Panne,La Panne,False,10812,0.0,0.0,LVL2_Furnes,Furnes,False,60839,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nieuport,Nieuport,False,11451,0.0,0.0,LVL2_Furnes,Furnes,False,60839,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bredene,Bredene,False,16962,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_De Haan,De Haan,False,12577,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gistel,Gistel,False,11826,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ichtegem,Ichtegem,False,13929,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Middelkerke,Middelkerke,False,19177,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ostende,Ostende,False,70274,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oudenburg,Oudenburg,False,9217,0.0,0.0,LVL2_Ostende,Ostende,False,153962,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hooglede,Hooglede,False,10106,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ingelmunster,Ingelmunster,False,10789,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Izegem,Izegem,False,27364,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ledegem,Ledegem,False,9522,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lichtervelde,Lichtervelde,False,8625,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Moorslede,Moorslede,False,10962,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Roulers,Roulers,False,59714,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Staden,Staden,False,11068,0.0,0.0,LVL2_Roulers,Roulers,False,148150,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ardooie,Ardooie,False,9094,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dentergem,Dentergem,False,8340,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Meulebeke,Meulebeke,False,11078,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oostrozebeke,Oostrozebeke,False,7678,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Pittem,Pittem,False,6758,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ruiselede,Ruiselede,False,5253,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tielt,Tielt,False,19968,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wielsbeke,Wielsbeke,False,9367,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wingene,Wingene,False,14134,0.0,0.0,LVL2_Tielt,Tielt,False,91670,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Heuvelland,Heuvelland,False,7856,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Langemark-Poelkapelle,Langemark-Poelkapelle,False,8007,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Messines,Messines,False,1040,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Poperinge,Poperinge,False,19893,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vleteren,Vleteren,False,3668,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wervik,Wervik,False,18435,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ypres,Ypres,False,34930,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zonnebeke,Zonnebeke,False,12379,0.0,0.0,LVL2_Ypres,Ypres,False,106208,0.0,0.0,Flandre Occidentale,Flandre Occidentale,1175508,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Alost,Alost,False,83347,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Denderleeuw,Denderleeuw,False,19318,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Erpe-Mere,Erpe-Mere,False,19563,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Grammont,Grammont,False,32995,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Haaltert,Haaltert,False,17901,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herzele,Herzele,False,17433,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lede,Lede,False,18093,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ninove,Ninove,False,37658,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Lievens-Houtem,Sint-Lievens-Houtem,False,10083,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zottegem,Zottegem,False,25689,0.0,0.0,LVL2_Alost,Alost,False,282080,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Audenarde,Audenarde,False,30641,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Brakel,Brakel,False,14476,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Horebeke,Horebeke,False,2056,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kluisbergen,Kluisbergen,False,6395,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kruishoutem,Kruishoutem,False,8121,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lierde,Lierde,False,6579,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Maarkedal,Maarkedal,False,6332,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Renaix,Renaix,False,25629,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wortegem-Petegem,Wortegem-Petegem,False,6323,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zingem,Zingem,False,7459,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zwalm,Zwalm,False,8070,0.0,0.0,LVL2_Audenarde,Audenarde,False,122081,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Assenede,Assenede,False,13951,0.0,0.0,LVL2_Eeklo,Eeklo,False,83109,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Eeklo,Eeklo,False,20449,0.0,0.0,LVL2_Eeklo,Eeklo,False,83109,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kaprijke,Kaprijke,False,6298,0.0,0.0,LVL2_Eeklo,Eeklo,False,83109,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Maldegem,Maldegem,False,23263,0.0,0.0,LVL2_Eeklo,Eeklo,False,83109,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Laureins,Sint-Laureins,False,6649,0.0,0.0,LVL2_Eeklo,Eeklo,False,83109,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zelzate,Zelzate,False,12499,0.0,0.0,LVL2_Eeklo,Eeklo,False,83109,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aalter,Aalter,True,19987,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_De Pinte,De Pinte,True,10306,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Deinze,Deinze,True,29957,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Destelbergen,Destelbergen,True,17799,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Evergem,Evergem,True,34170,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gand,Gand,True,251133,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gavere,Gavere,True,12601,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Knesselare,Knesselare,True,8252,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lochristi,Lochristi,True,21909,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lovendegem,Lovendegem,True,9632,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Melle,Melle,True,11142,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Merelbeke,Merelbeke,True,23780,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Moerbeke,Moerbeke,True,6248,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nazareth,Nazareth,True,11447,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nevele,Nevele,True,11937,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oosterzele,Oosterzele,True,13489,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Martens-Latem,Sint-Martens-Latem,True,8439,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Waarschoot,Waarschoot,True,7870,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wachtebeke,Wachtebeke,True,7340,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zomergem,Zomergem,True,8302,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zulte,Zulte,True,15570,0.0,0.0,LVL2_Gand,Gand,True,541310,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beveren,Beveren,False,47192,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kruibeke,Kruibeke,False,16306,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lokeren,Lokeren,False,40332,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Nicolas,Saint-Nicolas,False,73716,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sint-Gillis-Waas,Sint-Gillis-Waas,False,19076,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Stekene,Stekene,False,17635,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tamise,Tamise,False,29073,0.0,0.0,LVL2_Saint-Nicolas,Saint-Nicolas,False,243330,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Berlare,Berlare,False,14790,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Buggenhout,Buggenhout,False,14389,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hamme,Hamme,False,24673,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Laarne,Laarne,False,12336,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lebbeke,Lebbeke,False,18635,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Termonde,Termonde,False,44768,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Waasmunster,Waasmunster,False,10641,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wetteren,Wetteren,False,24635,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wichelen,Wichelen,False,11442,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zele,Zele,False,20713,0.0,0.0,LVL2_Termonde,Termonde,False,197022,0.0,0.0,Flandre Orientale,Flandre Orientale,1468932,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_As,As,True,8020,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beringen,Beringen,True,44262,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bourg-Lopold,Bourg-Lopold,True,15210,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Diepenbeek,Diepenbeek,True,18666,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Genk,Genk,True,65399,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gingelom,Gingelom,True,8291,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Halen,Halen,True,9480,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ham,Ham,True,10574,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hasselt,Hasselt,True,75991,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herck-la-Ville,Herck-la-Ville,True,12390,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Heusden-Zolder,Heusden-Zolder,True,32381,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lummen,Lummen,True,14529,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nieuwerkerken,Nieuwerkerken,True,6748,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Opglabbeek,Opglabbeek,True,10194,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Trond,Saint-Trond,True,39840,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tessenderlo,Tessenderlo,True,18205,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zonhoven,Zonhoven,True,21139,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Zutendaal,Zutendaal,True,7109,0.0,0.0,LVL2_Hasselt,Hasselt,True,418428,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bocholt,Bocholt,False,12850,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bree,Bree,False,15547,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dilsen-Stokkem,Dilsen-Stokkem,False,20028,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hamont-Achel,Hamont-Achel,False,14265,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hechtel-Eksel,Hechtel-Eksel,False,12166,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Houthalen-Helchteren,Houthalen-Helchteren,False,30623,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kinrooi,Kinrooi,False,12373,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lommel,Lommel,False,33744,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Maaseik,Maaseik,False,24969,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Meeuwen-Gruitrode,Meeuwen-Gruitrode,False,13008,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Neerpelt,Neerpelt,False,16844,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Overpelt,Overpelt,False,14686,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Peer,Peer,False,16185,0.0,0.0,LVL2_Maaseik,Maaseik,False,237288,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Alken,Alken,False,11398,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bilzen,Bilzen,False,31460,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fourons,Fourons,False,4120,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Heers,Heers,False,7160,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herstappe,Herstappe,False,85,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hoeselt,Hoeselt,False,9627,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Kortessem,Kortessem,False,8393,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lanaken,Lanaken,False,25783,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Looz,Looz,False,10561,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Maasmechelen,Maasmechelen,False,37429,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Riemst,Riemst,False,16478,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tongres,Tongres,False,30655,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wellen,Wellen,False,7415,0.0,0.0,LVL2_Tongres,Tongres,False,200564,0.0,0.0,Limbourg,Limbourg,856280,0.0,0.0,Flandre,Flandre,6410705,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beauvechain,Beauvechain,False,6990,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Braine-l'Alleud,Braine-l'Alleud,False,39535,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Braine-le-Chteau,Braine-le-Chteau,False,10084,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chastre,Chastre,False,7288,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chaumont-Gistoux,Chaumont-Gistoux,False,11653,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Court-Saint-Etienne,Court-Saint-Etienne,False,10107,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Genappe,Genappe,False,15240,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Grez-Doiceau,Grez-Doiceau,False,12850,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hlcine,Hlcine,False,3299,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Incourt,Incourt,False,5088,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ittre,Ittre,False,6616,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Jodoigne,Jodoigne,False,13593,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_La Hulpe,La Hulpe,False,7383,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lasne,Lasne,False,14178,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mont-Saint-Guibert,Mont-Saint-Guibert,False,7172,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nivelles,Nivelles,False,27488,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Orp-Jauche,Orp-Jauche,False,8627,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ottignies-Louvain-la-Neuve,Ottignies-Louvain-la-Neuve,False,31247,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Perwez,Perwez,False,8644,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ramillies,Ramillies,False,6211,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rebecq,Rebecq,False,10808,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rixensart,Rixensart,False,21862,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tubize,Tubize,False,24824,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Villers-la-Ville,Villers-la-Ville,False,10316,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Walhain,Walhain,False,6716,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Waterloo,Waterloo,False,29649,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wavre,Wavre,False,33498,0.0,0.0,LVL2_Nivelles,Nivelles,False,390966,0.0,0.0,Brabant Wallon,Brabant Wallon,390966,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ath,Ath,False,28523,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beloeil,Beloeil,False,13897,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bernissart,Bernissart,False,11797,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Brugelette,Brugelette,False,3631,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chivres,Chivres,False,6821,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ellezelles,Ellezelles,False,5969,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Flobecq,Flobecq,False,3490,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Frasnes-lez-Anvaing,Frasnes-lez-Anvaing,False,11641,0.0,0.0,LVL2_Ath,Ath,False,85769,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aiseau-Presles,Aiseau-Presles,True,10863,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chapelle-lez-Herlaimont,Chapelle-lez-Herlaimont,True,14685,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Charleroi,Charleroi,True,202730,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chtelet,Chtelet,True,36390,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Courcelles,Courcelles,True,30735,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Farciennes,Farciennes,True,11260,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fleurus,Fleurus,True,22805,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fontaine-l'Evĺque,Fontaine-l'Evĺque,True,17508,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gerpinnes,Gerpinnes,True,12392,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Les Bons Villers,Les Bons Villers,True,9256,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Manage,Manage,True,22708,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Montigny-le-Tilleul,Montigny-le-Tilleul,True,10146,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Pont-č-celles,Pont-č-celles,True,17015,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Seneffe,Seneffe,True,10953,0.0,0.0,LVL2_Charleroi,Charleroi,True,429446,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Boussu,Boussu,False,19703,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Colfontaine,Colfontaine,False,20560,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dour,Dour,False,16840,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Frameries,Frameries,False,21617,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hensies,Hensies,False,6875,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Honnelles,Honnelles,False,5186,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Jurbise,Jurbise,False,10294,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lens,Lens,False,4342,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mons,Mons,False,95047,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Quaregnon,Quaregnon,False,18876,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Quvy,Quvy,False,8011,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Quivrain,Quivrain,False,6690,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Ghislain,Saint-Ghislain,False,22969,0.0,0.0,LVL2_Mons,Mons,False,257010,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Comines-Warneton,Comines-Warneton,False,18039,0.0,0.0,LVL2_Mouscron,Mouscron,False,74665,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mouscron,Mouscron,False,56626,0.0,0.0,LVL2_Mouscron,Mouscron,False,74665,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Braine-le-Comte,Braine-le-Comte,False,21337,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ecaussinnes,Ecaussinnes,False,10771,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Enghien,Enghien,False,13406,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_La Louvire,La Louvire,False,80172,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Le Roeulx,Le Roeulx,False,8338,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lessines,Lessines,False,18520,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Silly,Silly,False,8223,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Soignies,Soignies,False,26796,0.0,0.0,LVL2_Soignies,Soignies,False,187563,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Anderlues,Anderlues,False,11976,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beaumont,Beaumont,False,7036,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Binche,Binche,False,33187,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chimay,Chimay,False,9804,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Erquelinnes,Erquelinnes,False,9834,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Estinnes,Estinnes,False,7696,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Froidchapelle,Froidchapelle,False,3944,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ham-sur-Heure-Nalinnes,Ham-sur-Heure-Nalinnes,False,13665,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lobbes,Lobbes,False,5747,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Merbes-le-Chteau,Merbes-le-Chteau,False,4249,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Momignies,Momignies,False,5371,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Morlanwelz,Morlanwelz,False,19073,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sivry-Rance,Sivry-Rance,False,4879,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Thuin,Thuin,False,14530,0.0,0.0,LVL2_Thuin,Thuin,False,150991,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Antoing,Antoing,False,7744,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Brunehaut,Brunehaut,False,8069,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Celles,Celles,False,5591,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Estaimpuis,Estaimpuis,False,10098,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Leuze-en-Hainaut,Leuze-en-Hainaut,False,13537,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mont-de-l'Enclus,Mont-de-l'Enclus,False,3625,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Pecq,Pecq,False,5595,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Pruwelz,Pruwelz,False,17295,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rumes,Rumes,False,5202,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tournai,Tournai,False,69842,0.0,0.0,LVL2_Tournai,Tournai,False,146598,0.0,0.0,Hainaut,Hainaut,1332042,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Amay,Amay,False,14115,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Anthisnes,Anthisnes,False,4101,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Burdinne,Burdinne,False,3063,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Clavier,Clavier,False,4445,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Engis,Engis,False,5952,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ferrires,Ferrires,False,4811,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hamoir,Hamoir,False,3897,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hron,Hron,False,5130,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Huy,Huy,False,21249,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Marchin,Marchin,False,5366,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Modave,Modave,False,4110,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nandrin,Nandrin,False,5777,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ouffet,Ouffet,False,2771,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tinlot,Tinlot,False,2604,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Verlaine,Verlaine,False,4014,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Villers-le-Bouillet,Villers-le-Bouillet,False,6400,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wanze,Wanze,False,13503,0.0,0.0,LVL2_Huy,Huy,False,111308,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ans,Ans,True,28285,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Awans,Awans,True,9065,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aywaille,Aywaille,True,11914,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bassenge,Bassenge,True,8919,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beyne-Heusay,Beyne-Heusay,True,11966,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Blgny,Blgny,True,13159,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chaudfontaine,Chaudfontaine,True,21047,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Comblain-au-Pont,Comblain-au-Pont,True,5303,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dalhem,Dalhem,True,7083,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Esneux,Esneux,True,13120,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Flmalle,Flmalle,True,26098,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Flron,Flron,True,16435,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Grce-Hollogne,Grce-Hollogne,True,22084,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herstal,Herstal,True,39003,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Juprelle,Juprelle,True,9114,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lige,Lige,True,196291,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Neupr,Neupr,True,9899,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oupeye,Oupeye,True,24552,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Nicolas (Lige),Saint-Nicolas (Lige),True,23797,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Seraing,Seraing,True,63813,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Soumagne,Soumagne,True,16548,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sprimont,Sprimont,True,14241,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Trooz,Trooz,True,8188,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vis,Vis,True,17627,0.0,0.0,LVL2_Lige,Lige,True,617551,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Amblve,Amblve,False,5496,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aubel,Aubel,False,4178,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Baelen,Baelen,False,4300,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bullange,Bullange,False,5521,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Burg-Reuland,Burg-Reuland,False,3956,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Butgenbach,Butgenbach,False,5625,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dison,Dison,False,15157,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Eupen,Eupen,False,19063,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herve,Herve,False,17323,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Jalhay,Jalhay,False,8450,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_La Calamine,La Calamine,False,10869,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lierneux,Lierneux,False,3528,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Limbourg,Limbourg,False,5850,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lontzen,Lontzen,False,5582,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Malmedy,Malmedy,False,12336,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Olne,Olne,False,3895,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Pepinster,Pepinster,False,9759,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Plombires,Plombires,False,10034,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Raeren,Raeren,False,10631,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Vith,Saint-Vith,False,9530,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Spa,Spa,False,10451,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Stavelot,Stavelot,False,7090,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Stoumont,Stoumont,False,3109,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Theux,Theux,False,12070,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Thimister-Clermont,Thimister-Clermont,False,5631,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Trois-Ponts,Trois-Ponts,False,2525,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Verviers,Verviers,False,55463,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Waimes,Waimes,False,7309,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Welkenraedt,Welkenraedt,False,9791,0.0,0.0,LVL2_Verviers,Verviers,False,284522,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Berloz,Berloz,False,2973,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Braives,Braives,False,6097,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Crisne,Crisne,False,3135,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Donceel,Donceel,False,2997,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Faimes,Faimes,False,3837,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fexhe-le-Haut-Clocher,Fexhe-le-Haut-Clocher,False,3233,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Geer,Geer,False,3270,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hannut,Hannut,False,15838,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lincent,Lincent,False,3275,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Oreye,Oreye,False,3777,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Remicourt,Remicourt,False,5799,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Georges-sur-Meuse,Saint-Georges-sur-Meuse,False,6586,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Waremme,Waremme,False,14742,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wasseiges,Wasseiges,False,2794,0.0,0.0,LVL2_Waremme,Waremme,False,78353,0.0,0.0,Lige,Lige,1091734,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Arlon,Arlon,False,28759,0.0,0.0,LVL2_Arlon,Arlon,False,60284,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Attert,Attert,False,5285,0.0,0.0,LVL2_Arlon,Arlon,False,60284,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Aubange,Aubange,False,16325,0.0,0.0,LVL2_Arlon,Arlon,False,60284,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Martelange,Martelange,False,1759,0.0,0.0,LVL2_Arlon,Arlon,False,60284,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Messancy,Messancy,False,8156,0.0,0.0,LVL2_Arlon,Arlon,False,60284,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bastogne,Bastogne,False,15303,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bertogne,Bertogne,False,3291,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fauvillers,Fauvillers,False,2227,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gouvy,Gouvy,False,5036,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Houffalize,Houffalize,False,5134,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sainte-Ode,Sainte-Ode,False,2432,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vaux-sur-Sre,Vaux-sur-Sre,False,5369,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vielsalm,Vielsalm,False,7574,0.0,0.0,LVL2_Bastogne,Bastogne,False,46366,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Durbuy,Durbuy,False,11282,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ereze,Ereze,False,3240,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hotton,Hotton,False,5471,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_La Roche-en-Ardenne,La Roche-en-Ardenne,False,4201,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Manhay,Manhay,False,3293,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Marche-en-Famenne,Marche-en-Famenne,False,17387,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Nassogne,Nassogne,False,5365,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rendeux,Rendeux,False,2523,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tenneville,Tenneville,False,2770,0.0,0.0,LVL2_Marche-en-Famenne,Marche-en-Famenne,False,55532,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bertrix,Bertrix,False,8550,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bouillon,Bouillon,False,5413,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Daverdisse,Daverdisse,False,1428,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Herbeumont,Herbeumont,False,1595,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Lglise,Lglise,False,5039,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Libin,Libin,False,4996,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Libramont-Chevigny,Libramont-Chevigny,False,10869,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Neufchteau,Neufchteau,False,7343,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Paliseul,Paliseul,False,5304,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Hubert,Saint-Hubert,False,5619,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tellin,Tellin,False,2442,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Wellin,Wellin,False,2973,0.0,0.0,LVL2_Neufchteau,Neufchteau,False,61571,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Chiny,Chiny,False,5198,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Etalle,Etalle,False,5724,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Florenville,Florenville,False,5542,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Habay,Habay,False,8267,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Meix-devant-Virton,Meix-devant-Virton,False,2776,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Musson,Musson,False,4447,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rouvroy,Rouvroy,False,2096,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Saint-Lger,Saint-Lger,False,3475,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Tintigny,Tintigny,False,4099,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Virton,Virton,False,11469,0.0,0.0,LVL2_Virton,Virton,False,53093,0.0,0.0,Luxembourg,Luxembourg,276846,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Anhe,Anhe,False,7064,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Beauraing,Beauraing,False,8937,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Bivre,Bivre,False,3251,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ciney,Ciney,False,15949,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Dinant,Dinant,False,13551,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gedinne,Gedinne,False,4507,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hamois,Hamois,False,7175,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Hastire,Hastire,False,5882,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Havelange,Havelange,False,5035,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Houyet,Houyet,False,4743,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Onhaye,Onhaye,False,3088,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Rochefort,Rochefort,False,12476,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Somme-Leuze,Somme-Leuze,False,5204,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Vresse-sur-Semois,Vresse-sur-Semois,False,2706,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Yvoir,Yvoir,False,8892,0.0,0.0,LVL2_Dinant,Dinant,False,108460,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Andenne,Andenne,False,25892,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Assesse,Assesse,False,6834,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Egheze,Egheze,False,15649,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fernelmont,Fernelmont,False,7551,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Floreffe,Floreffe,False,7887,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Fosses-la-Ville,Fosses-la-Ville,False,10249,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gembloux,Gembloux,False,24996,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Gesves,Gesves,False,7004,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Jemeppe-sur-Sambre,Jemeppe-sur-Sambre,False,18729,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_La Bruyre,La Bruyre,False,8988,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Mettet,Mettet,False,12895,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Namur,Namur,False,110665,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Ohey,Ohey,False,4939,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Profondeville,Profondeville,False,11940,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sambreville,Sambreville,False,27684,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Sombreffe,Sombreffe,False,8226,0.0,0.0,LVL2_Namur,Namur,False,310128,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Cerfontaine,Cerfontaine,False,4832,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Couvin,Couvin,False,13958,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Doische,Doische,False,2927,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Florennes,Florennes,False,11188,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Philippeville,Philippeville,False,9130,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Viroinval,Viroinval,False,5795,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0
+LVL1_Walcourt,Walcourt,False,18319,0.0,0.0,LVL2_Philippeville,Philippeville,False,66149,0.0,0.0,Namur,Namur,484737,0.0,0.0,Wallonie,Wallonie,3576325,0.0,0.0,CO0000,Belgium,11150516,0.0,0.0

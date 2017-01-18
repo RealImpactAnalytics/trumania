@@ -1,3 +1,7 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:8e31ba2bd91fb53d71e181a7901c4b7932793a6b10518c9224c54758080bd32a
-size 487
+product_id,product_type_id,product_type_name,product_name,physical_recharge_type,physical_recharge_denomination
+PRECH0,physical_recharge,Physical Recharge,Scratch,scratch,5
+PRECH1,physical_recharge,Physical Recharge,Scratch,scratch,10
+PRECH2,physical_recharge,Physical Recharge,Scratch,scratch,20
+PRECH3,physical_recharge,Physical Recharge,Scratch,scratch,100
+PRECH4,physical_recharge,Physical Recharge,Scratch,scratch,500
+PRECH5,physical_recharge,Physical Recharge,Scratch,scratch,1000

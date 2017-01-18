@@ -1,3 +1,28 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:705dfbbcb10357b3bc64c6ee16eebf25d183daf8fe016c02ce304f968fcf611c
-size 2124
+agent_id,agent_class,agent_name,agent_contact_name,agent_contact_phone,distributor_type
+DIST0,distributor,DEVOS & LEMMENS DISTRIB 8268,Hermila Penfold,+32461176373,origin
+DIST1,distributor,HEINZ DISTRIB 6848,Cristopher Coles,+32433162415,dealer
+DIST2,distributor,AMORA DISTRIB 6189,Darron Craver,+32497416595,dealer
+DIST3,distributor,DEVOS & LEMMENS DISTRIB 3093,Cristopher Coles,+32434046530,dealer
+DIST4,distributor,DEVOS & LEMMENS DISTRIB 190,Adina Pacheo,+32495097646,dealer
+DIST5,distributor,LA WILLIAMS DISTRIB 7331,Coreen Hoxie,+32410717340,dealer
+DIST6,distributor,LA WILLIAMS DISTRIB 4101,Danika Gierlach,+32410526407,dealer
+DIST7,distributor,CALVE DISTRIB 730,Scarlet Champine,+32414549221,dealer
+DIST8,distributor,AMORA DISTRIB 76,Adolfo Fuselier,+32416587328,dealer
+DIST9,distributor,LA WILLIAMS DISTRIB 8016,Coreen Hoxie,+32455207577,dealer
+DIST10,distributor,AMORA DISTRIB 8944,Hermila Penfold,+32429142632,dealer
+DIST11,distributor,AMORA DISTRIB 4180,Kenton Demaio,+32422543185,dealer
+DIST12,distributor,CALVE DISTRIB 289,Shanna Jaffe,+32435942607,dealer
+DIST13,distributor,LA WILLIAMS DISTRIB 8514,Tonita Manley,+32454714858,dealer
+DIST14,distributor,LA WILLIAMS DISTRIB 3622,Lawanna Jess,+32488821697,dealer
+DIST15,distributor,CALVE DISTRIB 9111,Marth Wheeler,+32443141485,dealer
+DIST16,distributor,AMORA DISTRIB 522,Enola Rudder,+32483254431,dealer
+DIST17,distributor,LA WILLIAMS DISTRIB 4854,Olive Hessel,+32468301177,dealer
+DIST18,distributor,HEINZ DISTRIB 9239,Carin Maitland,+32402631921,dealer
+DIST19,distributor,AMORA DISTRIB 7828,Cristopher Coles,+32492600390,dealer
+DIST20,distributor,CALVE DISTRIB 6683,Olive Hessel,+32448825361,dealer
+DIST21,distributor,CALVE DISTRIB 9990,Carin Maitland,+32460651502,dealer
+DIST22,distributor,HEINZ DISTRIB 9829,Chassidy Horne,+32417601935,dealer
+DIST23,distributor,DEVOS & LEMMENS DISTRIB 3842,Adolfo Fuselier,+32480248307,dealer
+DIST24,distributor,HEINZ DISTRIB 6551,Tyree Widman,+32438368660,dealer
+DIST25,distributor,DEVOS & LEMMENS DISTRIB 223,Cristopher Coles,+32438749419,dealer
+DIST26,distributor,LA WILLIAMS DISTRIB 4657,Zonia Corns,+32457683663,dealer

@@ -1,3 +1,4 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:e9d845efb1762bf5b4fc7768ecc9d84284c3f8b348e13b3eb15e7f3fc1b9d1f7
-size 269
+product_id,product_type_id,product_type_name,product_name,electronic_recharge_type
+ERECH0,electronic_recharge,Electronic Recharge,E-Recharge,EVD
+ERECH1,electronic_recharge,Electronic Recharge,Internet,INT
+ERECH2,electronic_recharge,Electronic Recharge,MFS Recharge,MFS
