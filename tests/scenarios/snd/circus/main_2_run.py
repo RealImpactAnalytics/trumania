@@ -118,5 +118,5 @@ if __name__ == "__main__":
 
     snd.run(
         duration=pd.Timedelta("10 days"),
-        log_output_folder="snd_output_logs/{}".format(snd.name),
+        log_output_folder="output/{}".format(snd.name),
         delete_existing_logs=True)
