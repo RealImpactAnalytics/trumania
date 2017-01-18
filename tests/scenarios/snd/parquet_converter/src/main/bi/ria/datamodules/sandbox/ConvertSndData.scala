@@ -19,10 +19,11 @@ object ConvertSndData extends App {
 
   val root_dimension_folder = s"$DBFolder/$circus_name"
   val root_log_folder = s"$inputFolder/$circus_name"
+  val root_output_folder = s"$outputFolder/$circus_name"
 
-  println( s"converting from $root_dimension_folder and $root_log_folder into $outputFolder" )
+  println( s"converting from $root_dimension_folder and $root_log_folder into $root_output_folder" )
 
-  val target = new File( outputFolder )
+  val target = new File( root_output_folder )
   if ( target.exists() ) {
     println( "first deleting previous export..." )
     deleteRecursively( target )
@@ -167,7 +168,7 @@ object ConvertSndData extends App {
     logTable( cached_dim, actorName )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$outputFolder/dimensions/$actorName/$version/$generationDate/resource.parquet"
+      val fileName = s"$root_output_folder/dimensions/$actorName/$version/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       cached_dim.write.mode( saveMode ).parquet( fileName )
     }
@@ -181,7 +182,7 @@ object ConvertSndData extends App {
     logTable( logs_cached, transactionType )
 
     for ( transactionDate <- generationDates ) {
-      val fileName = s"$outputFolder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
+      val fileName = s"$root_output_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
       println( s"outputting events to $fileName" )
 
       logs_cached
@@ -670,7 +671,7 @@ object ConvertSndData extends App {
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$outputFolder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
+      val fileName = s"$root_output_folder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
@@ -682,7 +683,7 @@ object ConvertSndData extends App {
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$outputFolder/events/distributor_product_geo_lvl2_sellout_target/0.1/distributor_product_geo_lvl2_sellout_target/$generationDate/resource.parquet"
+      val fileName = s"$root_output_folder/events/distributor_product_geo_lvl2_sellout_target/0.1/distributor_product_geo_lvl2_sellout_target/$generationDate/resource.parquet"
       println( s"outputting events to to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
