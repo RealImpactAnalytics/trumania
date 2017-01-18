@@ -5,30 +5,29 @@ import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.sql.types._
 import java.io.File
-import java.nio.file.{ Files, Path, Paths }
+import java.nio.file.{ Files, Paths }
 
 import org.apache.spark.sql.functions._
 
-import scala.reflect.internal.util.TableDef.Column
-
 object ConvertSndData extends App {
-  val converter = new Converter
-  converter.generate()
-}
 
-class Converter {
+  val geographiesFolder = args( 0 )
+  val DBFolder = args( 1 )
+  val inputFolder = args( 2 )
+  val outputFolder = args( 3 )
+  val circus_name = args( 4 )
 
-  val generator_components_folder = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/datagenerator/components/"
-  val python_gen_root = "/Users/svend/dev/RIA/lab-data-volumes/data-generator/svv/main-volume-1.0.0/lab-data-generator/tests/scenarios/snd/circus/"
-  val circus_name = "snd_v2"
+  val root_dimension_folder = s"$DBFolder/$circus_name"
+  val root_log_folder = s"$inputFolder/$circus_name"
 
-  val root_dimension_folder = s"$generator_components_folder/_DB/$circus_name"
-  val root_log_folder = s"$python_gen_root/snd_output_logs/$circus_name"
+  println( s"converting from $root_dimension_folder and $root_log_folder into $outputFolder" )
 
-  val target_folder = "/Users/svend/dev/RIA/snd_parquet"
-
-  // TODO: get the set of dates from the log dataset
-  val generationDates = List( "2016-09-13", "2016-09-14", "2016-09-15" )
+  val target = new File( outputFolder )
+  if ( target.exists() ) {
+    println( "first deleting previous export..." )
+    deleteRecursively( target )
+  }
+  target.mkdir()
 
   val sparkConf = new SparkConf()
     .setMaster( "local[*]" )
@@ -39,14 +38,40 @@ class Converter {
   val sc: SparkContext = new SparkContext( sparkConf )
   val sqlContext: HiveContext = new HiveContext( sc )
 
+  val generationDates = getDates
+
+  convertDimensions()
+  convertEvents()
+
   /**
    * *****************
    * utils
    * *****************
    */
 
+  def getDates = {
+    val someTransactionFile = s"$root_log_folder/customer_handset_purchase.csv"
+
+    val attributeSchema = StructType( Array(
+      StructField( "CUST_ID", StringType, nullable = true ),
+      StructField( "SITE", StringType, nullable = true ),
+      StructField( "POS", StringType, nullable = true ),
+      StructField( "CELL_ID", StringType, nullable = true ),
+      StructField( "geo_level2_id", StringType, nullable = true ),
+      StructField( "distributor_l1", StringType, nullable = true ),
+      StructField( "INSTANCE_ID", StringType, nullable = true ),
+      StructField( "PRODUCT_ID", StringType, nullable = true ),
+      StructField( "FAILED_SALE_OUT_OF_STOCK", BooleanType, nullable = true ),
+      StructField( "TX_ID", StringType, nullable = true ),
+      StructField( "VALUE", FloatType, nullable = true ),
+      StructField( "TIME", TimestampType, nullable = true )
+    ) )
+
+    val transaction_df = loadCsvAsDf( someTransactionFile, Some( attributeSchema ) )
+    transaction_df.select( to_date( col( "TIME" ) ) as "date" ).dropDuplicates( Seq( "date" ) ).collect.map( _.get( 0 ).toString )
+  }
+
   def to_hour_date( col: org.apache.spark.sql.Column ) = {
-    import sqlContext.implicits._
     ( round( unix_timestamp( col ) / 3600 ) * 3600 ).cast( "timestamp" )
   }
 
@@ -68,7 +93,7 @@ class Converter {
   def registerIdFile( sourceFile: String, actorName: String, idField: String ) = {
 
     val idSchema = StructType( Array(
-      StructField( idField, StringType, true )
+      StructField( idField, StringType, nullable = true )
     ) )
 
     val df =
@@ -89,11 +114,11 @@ class Converter {
   def load_attribute( actorName: String, idField: String, attributeFileName: String, attributeName: String ) = {
 
     val sourceFile = s"$root_dimension_folder/actors/$actorName/attributes/$attributeFileName.csv"
-    val tableName = s"${actorName}_${attributeFileName}"
+    val tableName = s"${actorName}_$attributeFileName"
 
     val attributeSchema = StructType( Array(
-      StructField( idField, StringType, true ),
-      StructField( attributeName, StringType, true )
+      StructField( idField, StringType, nullable = true ),
+      StructField( attributeName, StringType, nullable = true )
     ) )
 
     val df = loadCsvAsDf( sourceFile, Some( attributeSchema ) )
@@ -108,10 +133,10 @@ class Converter {
     import sqlContext.implicits._
 
     val relationship_schema = StructType( Array(
-      StructField( "param", StringType, true ),
-      StructField( "rel_id", IntegerType, true ),
-      StructField( "variable", StringType, true ),
-      StructField( "value", StringType, true )
+      StructField( "param", StringType, nullable = true ),
+      StructField( "rel_id", IntegerType, nullable = true ),
+      StructField( "variable", StringType, nullable = true ),
+      StructField( "value", StringType, nullable = true )
     ) )
 
     val df = loadCsvAsDf( sourceFile, Some( relationship_schema ) )
@@ -142,7 +167,7 @@ class Converter {
     logTable( cached_dim, actorName )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/dimensions/$actorName/$version/$generationDate/resource.parquet"
+      val fileName = s"$outputFolder/dimensions/$actorName/$version/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       cached_dim.write.mode( saveMode ).parquet( fileName )
     }
@@ -156,7 +181,7 @@ class Converter {
     logTable( logs_cached, transactionType )
 
     for ( transactionDate <- generationDates ) {
-      val fileName = s"$target_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
+      val fileName = s"$outputFolder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
       println( s"outputting events to $fileName" )
 
       logs_cached
@@ -216,7 +241,7 @@ class Converter {
     sites
   }
 
-  def convertCells = {
+  def convertCells() = {
 
     import sqlContext.implicits._
 
@@ -246,8 +271,8 @@ class Converter {
     writeDimension( cells_all, "cell", version = "0.2" )
   }
 
-  def convertGeo = {
-    val geo = loadCsvAsDf( s"$generator_components_folder/geographies/source_data/geography/geography.csv" )
+  def convertGeo() = {
+    val geo = loadCsvAsDf( s"$geographiesFolder/source_data/geography/geography.csv" )
     writeDimension( geo, "geo", version = "0.2" )
   }
 
@@ -289,7 +314,7 @@ class Converter {
     writeDimension( ordered, "distributor", version = "0.1", saveMode )
   }
 
-  def convertSiteProductPosTarget = {
+  def convertSiteProductPosTarget() = {
     import sqlContext.implicits._
 
     val sourceFile = s"$root_dimension_folder/site_product_pos_target.csv"
@@ -299,7 +324,7 @@ class Converter {
     writeDimension( siteProductPosTarget, "SiteProductPosTarget", version = "0.1" )
   }
 
-  def convertDistributors = {
+  def convertDistributors() = {
 
     import sqlContext.implicits._
 
@@ -337,19 +362,19 @@ class Converter {
     writeDimension( ordered, "distributor", saveMode = SaveMode.Append, version = "0.1" )
   }
 
-  def convertDistributorJoins = {
+  def convertDistributorJoins() = {
 
     import sqlContext.implicits._
 
-    val dgp = loadCsvAsDf( s"$generator_components_folder/geographies/source_data/relationships/distributor_geo_product.csv" )
+    val dgp = loadCsvAsDf( s"$geographiesFolder/source_data/relationships/distributor_geo_product.csv" )
     writeDimension( dgp, "distributor_geo_product", version = "0.1" )
 
-    val dpp = loadCsvAsDf( s"$generator_components_folder/geographies/source_data/relationships/distributor_pos_product.csv" )
+    val dpp = loadCsvAsDf( s"$geographiesFolder/source_data/relationships/distributor_pos_product.csv" )
       .select( 'distributor_id, 'agent_id, 'product_type_id )
     writeDimension( dpp, "distributor_agent_product", version = "0.1" )
   }
 
-  def convertElectronicRecharge = {
+  def convertElectronicRecharge() = {
 
     import sqlContext.implicits._
 
@@ -380,7 +405,7 @@ class Converter {
     writeDimension( ordered, "electronic_recharge", version = "0.2" )
   }
 
-  def convertPhysicalRecharge = {
+  def convertPhysicalRecharge() = {
 
     import sqlContext.implicits._
 
@@ -413,7 +438,7 @@ class Converter {
 
   }
 
-  def convertMfs = {
+  def convertMfs() = {
 
     import sqlContext.implicits._
 
@@ -443,7 +468,7 @@ class Converter {
     writeDimension( ordered, "mfs", version = "0.2" )
   }
 
-  def convertHandset = {
+  def convertHandset() = {
 
     import sqlContext.implicits._
 
@@ -483,7 +508,7 @@ class Converter {
     writeDimension( ordered, "handset", version = "0.4" )
   }
 
-  def convertSim = {
+  def convertSim() = {
 
     import sqlContext.implicits._
 
@@ -519,21 +544,21 @@ class Converter {
     writeDimension( ordered, "sim", version = "0.2" )
   }
 
-  def convertDimensions = {
+  def convertDimensions() = {
 
-    convertDistributors
-    convertDistributorJoins
+    convertDistributors()
+    convertDistributorJoins()
 
     // all products
-    convertElectronicRecharge
-    convertPhysicalRecharge
-    convertMfs
-    convertHandset
-    convertSim
+    convertElectronicRecharge()
+    convertPhysicalRecharge()
+    convertMfs()
+    convertHandset()
+    convertSim()
 
-    convertGeo
-    convertCells
-    convertSiteProductPosTarget
+    convertGeo()
+    convertCells()
+    convertSiteProductPosTarget()
 
   }
 
@@ -558,18 +583,18 @@ class Converter {
 
     // CUST_ID,SITE,POS,CELL_ID,geo_level2_id,distributor_l1,INSTANCE_ID,PRODUCT_ID,FAILED_SALE_OUT_OF_STOCK,TX_ID,VALUE,TIME
     val attributeSchema = StructType( Array(
-      StructField( "CUST_ID", StringType, true ),
-      StructField( "SITE", StringType, true ),
-      StructField( "POS", StringType, true ),
-      StructField( "CELL_ID", StringType, true ),
-      StructField( "geo_level2_id", StringType, true ),
-      StructField( "distributor_l1", StringType, true ),
-      StructField( "INSTANCE_ID", StringType, true ),
-      StructField( "PRODUCT_ID", StringType, true ),
-      StructField( "FAILED_SALE_OUT_OF_STOCK", BooleanType, true ),
-      StructField( "TX_ID", StringType, true ),
-      StructField( "VALUE", FloatType, true ),
-      StructField( "TIME", TimestampType, true )
+      StructField( "CUST_ID", StringType, nullable = true ),
+      StructField( "SITE", StringType, nullable = true ),
+      StructField( "POS", StringType, nullable = true ),
+      StructField( "CELL_ID", StringType, nullable = true ),
+      StructField( "geo_level2_id", StringType, nullable = true ),
+      StructField( "distributor_l1", StringType, nullable = true ),
+      StructField( "INSTANCE_ID", StringType, nullable = true ),
+      StructField( "PRODUCT_ID", StringType, nullable = true ),
+      StructField( "FAILED_SALE_OUT_OF_STOCK", BooleanType, nullable = true ),
+      StructField( "TX_ID", StringType, nullable = true ),
+      StructField( "VALUE", FloatType, nullable = true ),
+      StructField( "TIME", TimestampType, nullable = true )
     ) )
 
     val transaction_df = loadCsvAsDf( sourceFile, Some( attributeSchema ) )
@@ -639,31 +664,31 @@ class Converter {
     }
   }
 
-  def convertSellinSelloutTargets = {
+  def convertSellinSelloutTargets() = {
 
     val sourceFile = s"$root_dimension_folder/distributor_product_sellin_sellout_target.csv"
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
+      val fileName = s"$outputFolder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
       println( s"outputting dimensions to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
 
-  def convertGeoSelloutTargets = {
+  def convertGeoSelloutTargets() = {
 
     val sourceFile = s"$root_dimension_folder/distributor_product_geol2_sellout_target.csv"
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$target_folder/events/distributor_product_geo_lvl2_sellout_target/0.1/distributor_product_geo_lvl2_sellout_target/$generationDate/resource.parquet"
+      val fileName = s"$outputFolder/events/distributor_product_geo_lvl2_sellout_target/0.1/distributor_product_geo_lvl2_sellout_target/$generationDate/resource.parquet"
       println( s"outputting events to to $fileName" )
       siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
 
-  def convertStockLevels = {
+  def convertStockLevels() = {
 
     import sqlContext.implicits._
 
@@ -679,7 +704,7 @@ class Converter {
 
   }
 
-  def convertEvents = {
+  def convertEvents() = {
 
     Map(
       "customer_electronic_recharge_purchase.csv" ->
@@ -697,17 +722,16 @@ class Converter {
       "customer_sim_purchase.csv" ->
         ( "external_sim_transaction", "sim_transaction_product_instance_id" )
     ).foreach {
-        case ( sourceFileName, ( transactionType, itemIdName ) ) => {
+        case ( sourceFileName, ( transactionType, itemIdName ) ) =>
           convertExternalTransaction(
             sourceFileName = sourceFileName,
             transactionType = transactionType,
             instanceIdName = itemIdName,
             version = "0.4"
           )
-        }
       }
 
-    List( "pos", "dist_l1", "dist_l2" ).map {
+    List( "pos", "dist_l1", "dist_l2" ).foreach {
       buyerType =>
         List(
           ( "electronic_recharge", "no_item_id", "0.1" ),
@@ -715,7 +739,7 @@ class Converter {
           ( "mfs", "no_item_id", "0.1" ),
           ( "physical_recharge", "physical_recharge_transaction_product_instance_id", "0.1" ),
           ( "sim", "sim_transaction_product_instance_id", "0.1" )
-        ).map {
+        ).foreach {
             case ( transactionType, instanceIdName, version ) =>
               convertInternalTransaction(
                 buyerType = buyerType,
@@ -726,29 +750,10 @@ class Converter {
           }
     }
 
-    convertSellinSelloutTargets
-    convertGeoSelloutTargets
-    convertStockLevels
+    convertSellinSelloutTargets()
+    convertGeoSelloutTargets()
+    convertStockLevels()
 
   }
 
-  /**
-   * *****************
-   * main
-   * *****************
-   */
-
-  def generate(): Unit = {
-    println( s"converting from $root_dimension_folder into $target_folder" )
-
-    val target = new File( target_folder )
-    if ( target.exists() ) {
-      println( "first deleting previous export..." )
-      deleteRecursively( target )
-    }
-    target.mkdir()
-
-    convertDimensions
-    convertEvents
-  }
 }
