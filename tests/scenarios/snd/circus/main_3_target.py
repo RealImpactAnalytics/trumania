@@ -20,10 +20,10 @@ def noisified(df, col, lb, col_type=np.float):
     return col2.astype(col_type)
 
 
-def create_distl2_daily_targets(product, write_mode):
+def create_distl1_daily_targets(product, write_mode):
     """
-        Create some fake sellin and sellout target per distributor l2
-        based on actual.
+    Create some fake sellin and sellout target per distributor l1
+    based on actual.
     """
 
     target_file = os.path.join(
@@ -31,8 +31,11 @@ def create_distl2_daily_targets(product, write_mode):
         "distributor_product_sellin_sellout_target.csv")
 
     logging.info(
-        "producing distributor sellin sellout target in {}".format(target_file))
+        "producing sellin sellout target for dist_l1s in {}"
+        .format(target_file))
 
+    # contains info on dist_l1 bulk purchases (dist_l1 buys from telco)
+    # TIME, BUYER_ID, SELLER_ID, OLD_BUYER_STOCK, NEW_BUYER_STOCK, BULK_SIZE
     input_file_name = "output/{}/dist_l1_" \
                       "{}_bulk_purchase_stock.csv".format(
         circus_name, product)
@@ -68,7 +71,7 @@ def create_distl2_daily_targets(product, write_mode):
     to_csv(mean_daily_sells, target_file, write_mode)
 
 
-def create_distl2_daily_geo_targets(product, write_mode, nrows):
+def create_distl1_daily_geo_targets(product, write_mode, nrows):
     """
     Create some fake daily geo_l2 target per product/distributor
     """
@@ -78,8 +81,12 @@ def create_distl2_daily_geo_targets(product, write_mode, nrows):
         "distributor_product_geol2_sellout_target.csv")
 
     logging.info(
-        "producing distributor geo_l2 sellout target in {}".format(target_file))
+        "producing geo_l2 sellout target for dist_l1s in {}"
+        .format(target_file))
 
+    # contains info on dist_l1 bulk purchases (dist_l1 buys from telco)
+    # CUST_ID, SITE, POS, CELL_ID, geo_level2_id, distributor_l1, INSTANCE_ID,
+    # PRODUCT_ID,FAILED_SALE_OUT_OF_STOCK,TX_ID,VALUE,TIME
     input_file_name = "output/{}/customer_{}_purchase.csv".format(
         circus_name, product)
 
@@ -117,8 +124,8 @@ if __name__ == "__main__":
 
     for product in main_1_build.static_params["products"].keys():
         product="mfs"
-        create_distl2_daily_targets(product , write_mode)
+        create_distl1_daily_targets(product , write_mode)
 
-        create_distl2_daily_geo_targets(product, write_mode, nrows=50000)
+        create_distl1_daily_geo_targets(product, write_mode, nrows=50000)
         write_mode = "a"
         break
