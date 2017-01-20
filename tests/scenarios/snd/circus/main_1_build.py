@@ -82,7 +82,8 @@ static_params = {
     # These are already declared in the geography
     # "n_dealers_l2": 25,
     # "n_dealers_l1": 4,
-    # "n_telcos": 1,
+
+    "n_telcos": 1,
 
     "n_field_agents": 100,
 
