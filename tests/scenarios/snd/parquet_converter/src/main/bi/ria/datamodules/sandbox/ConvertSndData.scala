@@ -714,7 +714,7 @@ object ConvertSndData extends App {
     val targets = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$root_output_folder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
+      val fileName = s"$root_output_folder/events/distributor_product_sellin_sellout_target/0.1/distributor_product_sellin_sellout_target/$generationDate/resource.parquet"
       println( s"outputting events to $fileName (${targets.count()} records)" )
       targets.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
