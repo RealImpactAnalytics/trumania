@@ -653,7 +653,7 @@ object ConvertSndData extends App {
       to_hour_date( 'TIME ) as "transaction_hour_id",
       'TIME.cast( TimestampType ) as "transaction_time",
       lit( "transactionType" ) as "transaction_type",
-      'VALUE.cast( FloatType ) as "transaction_value",
+      'VALUE.cast( DoubleType ) as "transaction_value",
       'INSTANCE_ID as instanceIdName,
       'CELL_ID as "external_transaction_cell_id",
       'CUST_ID as "external_transaction_customer_id"
@@ -695,7 +695,7 @@ object ConvertSndData extends App {
         to_hour_date( 'TIME ) as "transaction_hour_id",
         'TIME.cast( TimestampType ) as "transaction_time",
         lit( transactionType ) as "transaction_type",
-        'ITEM_PRICES.cast( FloatType ) as "transaction_value",
+        'ITEM_PRICES.cast( DoubleType ) as "transaction_value",
         'BUYER_ID as "internal_transaction_buyer_agent_id",
         lit( internalTransactionType ) as "internal_transaction_type",
         'ITEM_IDS as instanceIdName
