@@ -670,7 +670,7 @@ object ConvertSndData extends App {
       if ( instanceIdName == "no_item_id" )
         events = events.drop( instanceIdName )
 
-      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_date_id, version = version )
+      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_date_id, version = version, saveMode = saveMode )
     }
   }
 
