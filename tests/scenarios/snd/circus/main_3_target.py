@@ -4,6 +4,7 @@ import logging
 import main_1_build
 from datagenerator.components import db
 from datagenerator.core import operations
+from datagenerator.core import util_functions
 import os
 
 circus_name = main_1_build.static_params["circus_name"]
@@ -11,7 +12,7 @@ circus_name = main_1_build.static_params["circus_name"]
 
 def to_csv(df, target_file, write_mode):
     with open(target_file, write_mode) as of:
-        df.to_csv(of, index=False)
+        df.to_csv(of, index=False, header=(write_mode == "w"))
 
 
 def noisified(df, col, lb, col_type=np.float):
@@ -31,7 +32,7 @@ def create_distl1_daily_targets(product, write_mode):
         "distributor_product_sellin_sellout_target.csv")
 
     logging.info(
-        "producing sellin sellout target for dist_l1s in {}"
+        " producing sellin sellout target for dist_l1s in {}"
         .format(target_file))
 
     # contains info on dist_l1 bulk purchases (dist_l1 buys from telco)
@@ -71,7 +72,7 @@ def create_distl1_daily_targets(product, write_mode):
     to_csv(mean_daily_sells, target_file, write_mode)
 
 
-def create_distl1_daily_geo_targets(product, write_mode, nrows):
+def create_distl1_daily_geo_targets(product, write_mode, nrows=None):
     """
     Create some fake daily geo_l2 target per product/distributor
     """
@@ -81,7 +82,7 @@ def create_distl1_daily_geo_targets(product, write_mode, nrows):
         "distributor_product_geol2_sellout_target.csv")
 
     logging.info(
-        "producing geo_l2 sellout target for dist_l1s in {}"
+        " producing geo_l2 sellout target for dist_l1s in {}"
         .format(target_file))
 
     # contains info on dist_l1 bulk purchases (dist_l1 buys from telco)
@@ -120,12 +121,15 @@ def create_distl1_daily_geo_targets(product, write_mode, nrows):
 
 if __name__ == "__main__":
 
+    util_functions.setup_logging()
+
     write_mode = "w"
 
     for product in main_1_build.static_params["products"].keys():
-        product="mfs"
-        create_distl1_daily_targets(product , write_mode)
 
-        create_distl1_daily_geo_targets(product, write_mode, nrows=50000)
+        logging.info("computing targets for {}".format(product))
+
+        create_distl1_daily_targets(product, write_mode)
+        create_distl1_daily_geo_targets(product, write_mode)
+
         write_mode = "a"
-        break
