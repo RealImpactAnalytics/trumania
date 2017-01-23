@@ -613,7 +613,7 @@ object ConvertSndData extends App {
 
   def convertExternalTransaction(
     sourceFileName: String,
-    transactionType: String,
+    productType: String,
     instanceIdName: String,
     version: String
   ) = {
@@ -642,8 +642,6 @@ object ConvertSndData extends App {
 
     val transaction_df = loadCsvAsDf( sourceFile, Some( attributeSchema ) )
 
-    transaction_df.registerTempTable( transactionType )
-
     // it's ok to be ugly in plumbing code ^^ (says I)
     var logs = transaction_df.select(
       'TX_ID as "transaction_id",
@@ -652,7 +650,7 @@ object ConvertSndData extends App {
       to_date( 'TIME ) as "transaction_date_id",
       to_hour_date( 'TIME ) as "transaction_hour_id",
       'TIME.cast( TimestampType ) as "transaction_time",
-      lit( "transactionType" ) as "transaction_type",
+      lit( s"external_$productType" ) as "transaction_type",
       'VALUE.cast( DoubleType ) as "transaction_value",
       'INSTANCE_ID as instanceIdName,
       'CELL_ID as "external_transaction_cell_id",
@@ -662,18 +660,18 @@ object ConvertSndData extends App {
     if ( instanceIdName == "no_item_id" )
       logs = logs.drop( 'itemIdName )
 
-    writeEvents( logs, transactionType, dateCol = 'transaction_date_id, version = version )
+    writeEvents( logs, s"external_${productType}_transaction", dateCol = 'transaction_date_id, version = version )
   }
 
   def convertInternalTransaction(
     buyerType: String,
-    transactionType: String,
+    productType: String,
     instanceIdName: String,
     version: String,
     saveMode: SaveMode
   ) = {
 
-    val sourceFileName = s"$root_log_folder/${buyerType}_${transactionType}_bulk_purchase.csv"
+    val sourceFileName = s"$root_log_folder/${buyerType}_${productType}_bulk_purchase.csv"
 
     // on small generated dataset, some bulk purchases might not be present
     if ( Files.exists( Paths.get( sourceFileName ) ) ) {
@@ -694,7 +692,7 @@ object ConvertSndData extends App {
         to_date( 'TIME ) as "transaction_date_id",
         to_hour_date( 'TIME ) as "transaction_hour_id",
         'TIME.cast( TimestampType ) as "transaction_time",
-        lit( transactionType ) as "transaction_type",
+        lit( s"internal_$productType" ) as "transaction_type",
         'ITEM_PRICES.cast( DoubleType ) as "transaction_value",
         'BUYER_ID as "internal_transaction_buyer_agent_id",
         lit( internalTransactionType ) as "internal_transaction_type",
@@ -704,7 +702,7 @@ object ConvertSndData extends App {
       if ( instanceIdName == "no_item_id" )
         events = events.drop( instanceIdName )
 
-      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_date_id, version = version, saveMode = saveMode )
+      writeEvents( events, s"internal_${productType}_transaction", dateCol = 'transaction_date_id, version = version, saveMode = saveMode )
     }
   }
 
@@ -751,24 +749,24 @@ object ConvertSndData extends App {
 
     Map(
       "customer_electronic_recharge_purchase.csv" ->
-        ( "external_electronic_recharge_transaction", "no_item_id" ),
+        ( "electronic_recharge", "no_item_id" ),
 
       "customer_handset_purchase.csv" ->
-        ( "external_handset_transaction", "handset_transaction_product_instance_id" ),
+        ( "handset", "handset_transaction_product_instance_id" ),
 
       "customer_mfs_purchase.csv" ->
-        ( "external_mfs_transaction", "no_item_id" ),
+        ( "mfs", "no_item_id" ),
 
       "customer_physical_recharge_purchase.csv" ->
-        ( "external_physical_recharge_transaction", "physical_recharge_transaction_product_instance_id" ),
+        ( "physical_recharge", "physical_recharge_transaction_product_instance_id" ),
 
       "customer_sim_purchase.csv" ->
-        ( "external_sim_transaction", "sim_transaction_product_instance_id" )
+        ( "sim", "sim_transaction_product_instance_id" )
     ).foreach {
-        case ( sourceFileName, ( transactionType, itemIdName ) ) =>
+        case ( sourceFileName, ( productType, itemIdName ) ) =>
           convertExternalTransaction(
             sourceFileName = sourceFileName,
-            transactionType = transactionType,
+            productType = productType,
             instanceIdName = itemIdName,
             version = "0.4"
           )
@@ -783,10 +781,10 @@ object ConvertSndData extends App {
           ( "physical_recharge", "physical_recharge_transaction_product_instance_id", "0.1" ),
           ( "sim", "sim_transaction_product_instance_id", "0.1" )
         ).foreach {
-            case ( transactionType, instanceIdName, version ) =>
+            case ( productType, instanceIdName, version ) =>
               convertInternalTransaction(
                 buyerType = buyerType,
-                transactionType = transactionType,
+                productType = productType,
                 instanceIdName = instanceIdName,
                 version = version,
                 saveMode = saveMode
