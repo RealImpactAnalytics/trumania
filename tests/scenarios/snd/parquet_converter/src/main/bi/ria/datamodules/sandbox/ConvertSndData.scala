@@ -1,5 +1,7 @@
 package bi.ria.datamodules.sandbox
 
+import java.sql.Date
+
 import org.apache.spark.sql.{ DataFrame, SaveMode }
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{ SparkConf, SparkContext }
@@ -69,7 +71,11 @@ object ConvertSndData extends App {
     ) )
 
     val transaction_df = loadCsvAsDf( someTransactionFile, Some( attributeSchema ) )
-    transaction_df.select( to_date( col( "TIME" ) ) as "date" ).dropDuplicates( Seq( "date" ) ).collect.map( _.get( 0 ).toString )
+    transaction_df
+      .select( to_date( col( "TIME" ) ) as "date" )
+      .dropDuplicates( Seq( "date" ) )
+      .collect
+      .map( r => Date.valueOf( r.get( 0 ).toString ) )
   }
 
   def to_hour_date( col: org.apache.spark.sql.Column ) = {
