@@ -42,6 +42,8 @@ object ConvertSndData extends App {
   val sqlContext: HiveContext = new HiveContext( sc )
 
   val generationDates = getDates
+  println( s"running converter for the following dates :" )
+  println( generationDates.map( _.toString ).mkString( " * ", "\n * ", "" ) )
 
   convertDimensions()
   convertEvents()
@@ -625,7 +627,7 @@ object ConvertSndData extends App {
     if ( instanceIdName == "no_item_id" )
       logs = logs.drop( 'itemIdName )
 
-    writeEvents( logs, transactionType, dateCol = 'transaction_time, version = version )
+    writeEvents( logs, transactionType, dateCol = 'transaction_date_id, version = version )
   }
 
   def convertInternalTransaction(
@@ -666,7 +668,7 @@ object ConvertSndData extends App {
       if ( instanceIdName == "no_item_id" )
         events = events.drop( instanceIdName )
 
-      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_time, version = version )
+      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_date_id, version = version )
     }
   }
 
