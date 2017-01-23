@@ -2,7 +2,7 @@ package bi.ria.datamodules.sandbox
 
 import java.sql.Date
 
-import org.apache.spark.sql.{ DataFrame, SaveMode }
+import org.apache.spark.sql.{ SaveMode, DataFrame }
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.sql.types._
@@ -182,7 +182,8 @@ object ConvertSndData extends App {
     }
   }
 
-  def writeEvents( logs: DataFrame, transactionType: String, dateCol: Symbol, version: String ) = {
+  def writeEvents( logs: DataFrame, transactionType: String, dateCol: Symbol,
+    version: String, saveMode: SaveMode = SaveMode.Overwrite ) = {
     import sqlContext.implicits._
 
     val logs_cached = logs.cache
@@ -194,7 +195,7 @@ object ConvertSndData extends App {
       val logsCurrentDate = logs_cached.where( dateCol === transactionDate )
 
       println( s"outputting events to $fileName (${logsCurrentDate.count()} records)" )
-      logsCurrentDate.write.mode( SaveMode.Overwrite ).parquet( fileName )
+      logsCurrentDate.write.mode( saveMode ).parquet( fileName )
     }
   }
 
@@ -634,7 +635,8 @@ object ConvertSndData extends App {
     buyerType: String,
     transactionType: String,
     instanceIdName: String,
-    version: String
+    version: String,
+    saveMode: SaveMode
   ) = {
 
     val sourceFileName = s"$root_log_folder/${buyerType}_${transactionType}_bulk_purchase.csv"
@@ -668,7 +670,7 @@ object ConvertSndData extends App {
       if ( instanceIdName == "no_item_id" )
         events = events.drop( instanceIdName )
 
-      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_date_id, version = version )
+      writeEvents( events, s"internal_${transactionType}_transaction", dateCol = 'transaction_date_id, version = version, saveMode = saveMode )
     }
   }
 
@@ -738,8 +740,8 @@ object ConvertSndData extends App {
           )
       }
 
-    List( "pos", "dist_l1", "dist_l2" ).foreach {
-      buyerType =>
+    List( ( "pos", SaveMode.Overwrite ), ( "dist_l1", SaveMode.Append ), ( "dist_l2", SaveMode.Append ) ).foreach {
+      case ( buyerType, saveMode ) =>
         List(
           ( "electronic_recharge", "no_item_id", "0.1" ),
           ( "handset", "handset_transaction_product_instance_id", "0.1" ),
@@ -752,7 +754,8 @@ object ConvertSndData extends App {
                 buyerType = buyerType,
                 transactionType = transactionType,
                 instanceIdName = instanceIdName,
-                version = version
+                version = version,
+                saveMode = saveMode
               )
           }
     }
