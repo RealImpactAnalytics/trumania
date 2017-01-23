@@ -269,11 +269,11 @@ object ConvertSndData extends App {
       lit( 500 ) as "cell_population",
       'site_id,
       'site_name,
-      'site_urban,
+      'site_urban.cast( BooleanType ),
       'site_status,
       'site_ownership,
       'site_population,
-      'site_longitude, 'site_latitude,
+      'site_longitude.cast( DoubleType ), 'site_latitude.cast( DoubleType ),
       'geo_level1_id
     )
 
@@ -281,8 +281,42 @@ object ConvertSndData extends App {
   }
 
   def convertGeo() = {
+
+    import sqlContext.implicits._
+
     val geo = loadCsvAsDf( s"$geographiesFolder/source_data/geography/geography.csv" )
-    writeDimension( geo, "geo", version = "0.2" )
+
+    val geoTyped = geo.select(
+      'geo_level1_id,
+      'geo_level1_name,
+      'geo_level1_urban.cast( BooleanType ),
+      'geo_level1_population,
+      'geo_level1_longitude,
+      'geo_level1_latitude,
+      'geo_level2_id,
+      'geo_level2_name,
+      'geo_level2_urban.cast( BooleanType ),
+      'geo_level2_population,
+      'geo_level2_longitude,
+      'geo_level2_latitude,
+      'geo_level3_id,
+      'geo_level3_name,
+      'geo_level3_population,
+      'geo_level3_longitude,
+      'geo_level3_latitude,
+      'geo_level4_id,
+      'geo_level4_name,
+      'geo_level4_population,
+      'geo_level4_longitude,
+      'geo_level4_latitude,
+      'geo_level5_id,
+      'geo_level5_name,
+      'geo_level5_population,
+      'geo_level5_longitude,
+      'geo_level5_latitude
+    )
+
+    writeDimension( geoTyped, "geo", version = "0.2" )
   }
 
   def convertDistributor( level: String, distributorType: String, saveMode: SaveMode ) = {
@@ -680,7 +714,7 @@ object ConvertSndData extends App {
     val targets = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
-      val fileName = s"$root_output_folder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
+      val fileName = s"$root_output_folder/events/distributor_product_sellin_sellout_target/0.1/distributor_product_sellin_sellout_target/$generationDate/resource.parquet"
       println( s"outputting events to $fileName (${targets.count()} records)" )
       targets.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
