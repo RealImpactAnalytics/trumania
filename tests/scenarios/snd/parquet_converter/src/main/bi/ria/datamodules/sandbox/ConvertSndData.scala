@@ -169,7 +169,7 @@ object ConvertSndData extends App {
 
     for ( generationDate <- generationDates ) {
       val fileName = s"$root_output_folder/dimensions/$actorName/$version/$generationDate/resource.parquet"
-      println( s"outputting dimensions to $fileName" )
+      println( s"outputting dimensions to $fileName (${cached_dim.count()} records)" )
       cached_dim.write.mode( saveMode ).parquet( fileName )
     }
   }
@@ -183,11 +183,10 @@ object ConvertSndData extends App {
 
     for ( transactionDate <- generationDates ) {
       val fileName = s"$root_output_folder/events/$transactionType/$version/$transactionType/$transactionDate/resource.parquet"
-      println( s"outputting events to $fileName" )
+      val logsCurrentDate = logs_cached.where( dateCol === transactionDate )
 
-      logs_cached
-        .where( dateCol === transactionDate )
-        .write.mode( SaveMode.Overwrite ).parquet( fileName )
+      println( s"outputting events to $fileName (${logsCurrentDate.count()} records)" )
+      logsCurrentDate.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
 
@@ -322,7 +321,7 @@ object ConvertSndData extends App {
     val siteProductPosTarget = loadCsvAsDf( sourceFile )
       .select( 'site_id, 'product_type_id, 'pos_count_target )
 
-    writeDimension( siteProductPosTarget, "SiteProductPosTarget", version = "0.1" )
+    writeDimension( siteProductPosTarget, "site_product_pos_target", version = "0.1" )
   }
 
   def convertDistributors() = {
@@ -668,24 +667,24 @@ object ConvertSndData extends App {
   def convertSellinSelloutTargets() = {
 
     val sourceFile = s"$root_dimension_folder/distributor_product_sellin_sellout_target.csv"
-    val siteProductPosTarget = loadCsvAsDf( sourceFile )
+    val targets = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
       val fileName = s"$root_output_folder/events/distributor_product_sellin_sellout_target/0.1/$generationDate/resource.parquet"
-      println( s"outputting dimensions to $fileName" )
-      siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
+      println( s"outputting events to $fileName (${targets.count()} records)" )
+      targets.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
 
   def convertGeoSelloutTargets() = {
 
     val sourceFile = s"$root_dimension_folder/distributor_product_geol2_sellout_target.csv"
-    val siteProductPosTarget = loadCsvAsDf( sourceFile )
+    val targets = loadCsvAsDf( sourceFile )
 
     for ( generationDate <- generationDates ) {
       val fileName = s"$root_output_folder/events/distributor_product_geo_lvl2_sellout_target/0.1/distributor_product_geo_lvl2_sellout_target/$generationDate/resource.parquet"
-      println( s"outputting events to to $fileName" )
-      siteProductPosTarget.write.mode( SaveMode.Overwrite ).parquet( fileName )
+      println( s"outputting events to to $fileName (${targets.count()} records)" )
+      targets.write.mode( SaveMode.Overwrite ).parquet( fileName )
     }
   }
 
@@ -702,7 +701,6 @@ object ConvertSndData extends App {
     )
 
     writeEvents( levels, transactionType = "stock_level", dateCol = 'date, version = "0.1" )
-
   }
 
   def convertEvents() = {
