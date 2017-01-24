@@ -658,7 +658,7 @@ object ConvertSndData extends App {
     )
 
     if ( instanceIdName == "no_item_id" )
-      logs = logs.drop( 'itemIdName )
+      logs = logs.drop( instanceIdName )
 
     writeEvents( logs, s"external_${productType}_transaction", dateCol = 'transaction_date_id, version = version )
   }
