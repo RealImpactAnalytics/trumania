@@ -20,7 +20,7 @@ seed_dir = os.path.join(args.target_folder, "seed_tmp")
 if os.path.isdir(seed_dir):
     shutil.rmtree(seed_dir)
 
-mobile_sync_dir = os.path.join(seed_dir, "mobile_sync")
+mobile_sync_dir = os.path.join(seed_dir, "mobile_sync", "mobile_sync")
 os.makedirs(mobile_sync_dir)
 
 # Copy point_of_interest.csv to seed folder
