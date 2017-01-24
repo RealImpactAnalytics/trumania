@@ -8,4 +8,4 @@ pytest
 fake-factory
 jupyter
 rpy2
-bson
+pymongo
