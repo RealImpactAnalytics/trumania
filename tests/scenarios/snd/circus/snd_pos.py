@@ -384,7 +384,7 @@ def save_pos_as_mobile_sync_csv(circus):
     sites_df = circus.actors["sites"].to_dataframe()
 
     pos_df = pd.merge(
-        left=pos_df, right=sites_df[["GEO_LEVEL_1"]],
+        left=pos_df, right=sites_df[["GEO_LEVEL_1", "GEO_LEVEL_2"]],
         left_on="SITE", right_index=True
     )
 
@@ -394,10 +394,11 @@ def save_pos_as_mobile_sync_csv(circus):
                 "index": "agent_code",
                 "AGENT_NAME": "name",
                 "CONTACT_NAME": "contact_name",
-                "CONTACT_PHONE": "contact_phone",
+                "CONTACT_PHONE": "contact_phone_number",
                 "LONGITUDE": "longitude",
                 "LATITUDE": "latitude",
-                "GEO_LEVEL_1": "geo_level1_id"
+                "GEO_LEVEL_1": "geo_level_1",
+                "GEO_LEVEL_2": "geo_level_2"
             }
         )\
         .drop([
@@ -408,9 +409,8 @@ def save_pos_as_mobile_sync_csv(circus):
     pos_df["pos_type"] = "grocery store"
     pos_df["pos_channel"] = "franchise"
 
-    for col in ["agent_code", "picture_uri",
-                "geo_level_2", "geo_level_3", "geo_level_4", "geo_level_5"
-                ]:
+    for col in ["picture_uri",
+                "geo_level_3", "geo_level_4", "geo_level_5"]:
         pos_df[col] = "some_{}".format(col)
 
     for bcol in ["is_pos",
