@@ -376,7 +376,7 @@ def save_pos_as_mobile_sync_csv(circus):
 
     target_file = os.path.join(
         db.namespace_folder(circus.name),
-        "pos.csv")
+        "points_of_interest.csv")
 
     logging.info("generating a mobile-sync csv pos file in {}".format(target_file))
 
@@ -433,3 +433,37 @@ def save_pos_as_mobile_sync_csv(circus):
     )
 
     pos_df.to_csv(target_file, index=False)
+
+
+def save_pos_as_partial_ids_csv(circus, params):
+
+    target_file = os.path.join(
+        db.namespace_folder(circus.name),
+        "pos_id_msisdn.csv")
+
+    # Right now, all POS sell all products, so they will all appear for all
+    # products in the reference table for partial_ids
+    pos_df = circus.actors["pos"].to_dataframe().reset_index()
+
+    pos_df = pos_df.rename(
+            columns={
+                "MONGO_ID": "id",
+                "index": "partial_id",
+                "CONTACT_PHONE": "msisdn",
+            }
+        )[["id", "partial_id", "msisdn"]]
+
+    partial_ids_df = pd.DataFrame(
+        columns=["id", "partial_id", "msisdn", "product_type_id"])
+
+    for product in params["products"].keys():
+        tmp_df = pos_df
+        tmp_df["product_type_id"] = product
+        partial_ids_df = partial_ids_df.append(tmp_df)
+
+    partial_ids_df = partial_ids_df.reindex_axis([
+        "id", "product_type_id", "partial_id", "msisdn"
+    ], axis=1)
+
+    partial_ids_df.to_csv(target_file, index=False)
+

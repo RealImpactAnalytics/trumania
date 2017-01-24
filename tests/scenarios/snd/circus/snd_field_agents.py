@@ -154,9 +154,12 @@ def add_survey_action(circus):
             }
         ),
 
+        SequencialGenerator(prefix="TASK").ops.generate(named_as="TASK_ID"),
+        ConstantGenerator(value="Done").ops.generate(named_as="STATUS"),
+
         circus.clock.ops.timestamp(named_as="TIME"),
 
         FieldLogger(log_id="pos_surveys",
-                    cols=["FA_ID", "POS_ID", "POS_NAME",
-                          "POS_LATITUDE", "POS_LONGITUDE", "TIME"])
+                    cols=["TASK_ID", "FA_ID", "POS_ID", "POS_NAME",
+                          "POS_LATITUDE", "POS_LONGITUDE", "TIME", "STATUS"])
     )
