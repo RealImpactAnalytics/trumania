@@ -38,8 +38,10 @@ static_params = {
         },
 
         "electronic_recharge": {
-            "pos_init_distro": "stock_distro_notebook/max_stock500_bulk_100_200_450",
-            "pos_bulk_purchase_sizes": [100, 200, 450],
+            # "pos_init_distro":
+            # "stock_distro_notebook/max_stock500_bulk_100_200_450",
+            # "pos_bulk_purchase_sizes": [100, 200, 450],
+            "pos_bulk_purchase_sizes": [10, 20, 45],
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
             "telco_init_stock_customer_ratio": 1,
 
@@ -48,7 +50,8 @@ static_params = {
         },
 
         "physical_recharge": {
-            "pos_bulk_purchase_sizes": [50, 100, 225],
+            # "pos_bulk_purchase_sizes": [50, 100, 225],
+            "pos_bulk_purchase_sizes": [5, 10, 25],
             "pos_bulk_purchase_sizes_dist": [.4, .3, .3],
             "telco_init_stock_customer_ratio": .5,
 
@@ -57,7 +60,8 @@ static_params = {
         },
 
         "mfs": {
-            "pos_bulk_purchase_sizes": [50, 75, 200],
+            # "pos_bulk_purchase_sizes": [50, 75, 200],
+            "pos_bulk_purchase_sizes": [5, 7, 20],
             "pos_bulk_purchase_sizes_dist": [.4, .4, .2],
             "telco_init_stock_customer_ratio": .2,
 
