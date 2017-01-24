@@ -160,6 +160,6 @@ def add_survey_action(circus):
         circus.clock.ops.timestamp(named_as="TIME"),
 
         FieldLogger(log_id="pos_surveys",
-                    cols=["FA_ID", "POS_ID", "POS_NAME",
-                          "POS_LATITUDE", "POS_LONGITUDE", "TIME"])
+                    cols=["TASK_ID", "FA_ID", "POS_ID", "POS_NAME",
+                          "POS_LATITUDE", "POS_LONGITUDE", "TIME", "STATUS"])
     )
