@@ -220,6 +220,8 @@ def add_pos(circus, params):
     # generate a random pos location from around the SITE location
     _add_pos_latlong(circus, params)
 
+    pos.create_attribute("MONGO_ID", init_gen=MongoIdGenerator())
+
     pos.create_attribute(
         "AGENT_NAME",
         init_gen=snd_constants.gen("POS_NAMES", circus.seeder.next()))
@@ -388,7 +390,8 @@ def save_pos_as_mobile_sync_csv(circus):
 
     pos_df = pos_df.rename(
             columns={
-                "index": "id",
+                "MONGO_ID": "id",
+                "index": "agent_code",
                 "AGENT_NAME": "name",
                 "CONTACT_NAME": "contact_name",
                 "CONTACT_PHONE": "contact_phone",

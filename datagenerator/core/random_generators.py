@@ -1,5 +1,6 @@
 from itertools import islice
 from faker import Faker
+from bson.objectid import ObjectId
 import json
 
 from datagenerator.core.operations import *
@@ -366,6 +367,23 @@ class MSISDNGenerator(Generator):
                                      axis=0)
 
         return msisdns
+
+
+class MongoIdGenerator(Generator):
+    """
+    Generates a random ObjectId for MongoDB, from bson.objectid.ObjectID,
+    See http://api.mongodb.com/python/current/api/bson/objectid.html
+    """
+
+    def generate(self, size):
+        """returns a list of generated ObjectIds for a MongoDB.
+        Those ObjectIds cannot be generated again from this generator
+
+        :param size: int
+        :return: array of strings
+        """
+
+        return [ObjectId().__str__() for i in range(size)]
 
 
 class DependentGenerator(object):
