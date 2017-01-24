@@ -739,7 +739,7 @@ object ConvertSndData extends App {
 
     val levels = stockLevels.select(
       'agent_id, 'product_id, 'stock_volume.cast( LongType ), 'stock_value,
-      to_date( 'TIME ) as "date", 'TIME.cast( TimestampType )
+      to_date( 'TIME ) as "date", 'TIME.cast( TimestampType ) as "time"
     )
 
     writeEvents( levels, transactionType = "stock_level", dateCol = 'date, version = "0.1" )
