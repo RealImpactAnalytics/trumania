@@ -246,6 +246,18 @@ class Circus(object):
 
         logging.info("circus saved")
 
+    def save_params_to_db(self, params_type, params):
+        """
+        Saves the params object to the circus folder in the DB for future reference
+        :param params_type: "build", "run" or "target"
+        :param params: the params object
+        """
+        target_file = os.path.join(db.namespace_folder(self.name),
+                                   "params_{}.json".format(params_type))
+
+        with open(target_file, "w") as outfile:
+            json.dump(params, outfile)
+
     def description(self):
 
         return {

@@ -116,6 +116,7 @@ if __name__ == "__main__":
     snd_field_agents.add_mobility_action(snd, runtime_params)
     snd_field_agents.add_survey_action(snd)
 
+    snd.save_params_to_db("run", runtime_params)
     snd.run(
         duration=pd.Timedelta("10 days"),
         log_output_folder="output/{}".format(snd.name),
