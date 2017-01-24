@@ -120,6 +120,7 @@ if __name__ == "__main__":
 
     # supplementary output required for SND but not for the simulation
     snd_pos.save_pos_as_mobile_sync_csv(snd)
+    snd_pos.save_pos_as_partial_ids_csv(snd, static_params)
     snd_geo.build_site_product_pos_target(snd, static_params)
 
 
