@@ -658,7 +658,7 @@ object ConvertSndData extends App {
     )
 
     if ( instanceIdName == "no_item_id" )
-      logs = logs.drop( 'itemIdName )
+      logs = logs.drop( instanceIdName )
 
     writeEvents( logs, s"external_${productType}_transaction", dateCol = 'transaction_date_id, version = version )
   }
@@ -739,7 +739,7 @@ object ConvertSndData extends App {
 
     val levels = stockLevels.select(
       'agent_id, 'product_id, 'stock_volume.cast( LongType ), 'stock_value,
-      to_date( 'TIME ) as "date", 'TIME.cast( TimestampType )
+      to_date( 'TIME ) as "date", 'TIME.cast( TimestampType ) as "time"
     )
 
     writeEvents( levels, transactionType = "stock_level", dateCol = 'date, version = "0.1" )
