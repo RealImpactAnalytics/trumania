@@ -56,7 +56,7 @@ target_file = os.path.join(mobile_sync_dir, "tasks.csv")
 tasks.to_csv(target_file, index=False)
 
 # Compress archive
-subprocess.call(["tar", "-cvf",
+subprocess.call(["tar", "-czvf",
                  os.path.join(args.target_folder, "mobile_sync.tar.gz"),
                  "-C", seed_dir, "."])
 
