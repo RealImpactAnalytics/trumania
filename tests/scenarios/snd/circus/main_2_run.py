@@ -21,10 +21,13 @@ runtime_params = {
 
     "products":  {
         "sim": {
-            "customer_purchase_min_period_days": 60,
-            "customer_purchase_max_period_days": 360,
+            # "customer_purchase_min_period_days": 60,
+            # "customer_purchase_max_period_days": 360,
+            "customer_purchase_min_period_days": 1,
+            "customer_purchase_max_period_days": 9,
 
-            "max_pos_stock_triggering_pos_restock": 10,
+            # "max_pos_stock_triggering_pos_restock": 10,
+            "max_pos_stock_triggering_pos_restock": 100,
             "restock_sigmoid_shape": 5,
 
             "pos_max_stock": 35,
@@ -35,7 +38,8 @@ runtime_params = {
             "customer_purchase_min_period_days": 1,
             "customer_purchase_max_period_days": 9,
 
-            "max_pos_stock_triggering_pos_restock": 50,
+            # "max_pos_stock_triggering_pos_restock": 50,
+            "max_pos_stock_triggering_pos_restock": 100,
             "restock_sigmoid_shape": 2,
 
             "pos_max_stock": 500,
@@ -44,10 +48,13 @@ runtime_params = {
         },
 
         "physical_recharge": {
-            "customer_purchase_min_period_days": 2,
-            "customer_purchase_max_period_days": 15,
+            # "customer_purchase_min_period_days": 2,
+            # "customer_purchase_max_period_days": 15,
+            "customer_purchase_min_period_days": 1,
+            "customer_purchase_max_period_days": 9,
 
-            "max_pos_stock_triggering_pos_restock": 40,
+            # "max_pos_stock_triggering_pos_restock": 40,
+            "max_pos_stock_triggering_pos_restock": 100,
             "restock_sigmoid_shape": 2,
 
             "pos_max_stock": 300,
@@ -59,7 +66,8 @@ runtime_params = {
             "customer_purchase_min_period_days": 1,
             "customer_purchase_max_period_days": 5,
 
-            "max_pos_stock_triggering_pos_restock": 75,
+            # "max_pos_stock_triggering_pos_restock": 75,
+            "max_pos_stock_triggering_pos_restock": 100,
             "restock_sigmoid_shape": 2,
 
             "pos_max_stock": 500,
@@ -68,10 +76,13 @@ runtime_params = {
         },
 
         "handset": {
-            "customer_purchase_min_period_days": 180,
-            "customer_purchase_max_period_days": 1000,
+            # "customer_purchase_min_period_days": 180,
+            # "customer_purchase_max_period_days": 1000,
+            "customer_purchase_min_period_days": 1,
+            "customer_purchase_max_period_days": 9,
 
-            "max_pos_stock_triggering_pos_restock": 4,
+            # "max_pos_stock_triggering_pos_restock": 4,
+            "max_pos_stock_triggering_pos_restock": 100,
             "restock_sigmoid_shape": 2,
 
             "pos_max_stock": 10,
