@@ -406,14 +406,10 @@ object ConvertSndData extends App {
   }
 
   def convertDistributorJoins() = {
-
-    import sqlContext.implicits._
-
     val dgp = loadCsvAsDf( s"$geographiesFolder/source_data/relationships/distributor_geo_product.csv" )
     writeDimension( dgp, "distributor_geo_product", version = "0.1" )
 
-    val dpp = loadCsvAsDf( s"$geographiesFolder/source_data/relationships/distributor_pos_product.csv" )
-      .select( 'distributor_id, 'agent_id, 'product_type_id )
+    val dpp = loadCsvAsDf( s"$root_dimension_folder/distributor_agent_product.csv" )
     writeDimension( dpp, "distributor_agent_product", version = "0.1" )
   }
 
