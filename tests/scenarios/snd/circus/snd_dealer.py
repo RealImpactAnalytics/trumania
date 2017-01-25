@@ -137,3 +137,64 @@ def prepare_dealers(circus, params):
         rel.add_relations(
             from_ids=dist_l1.ids,
             to_ids=telcos.ids[0])
+
+
+def save_providers_csv(circus, params):
+
+    target_file = os.path.join(db.namespace_folder(circus.name),
+                               "distributor_agent_product.csv")
+
+    pos_df = circus.actors["pos"].to_dataframe().reset_index()
+
+    providers_df = pd.DataFrame(
+        columns=["distributor_id", "agent_id", "product_type_id"])
+
+    for product in params["products"].keys():
+
+        """Add LINK between POS and DIST_L1"""
+
+        pos_dist_l2 = circus.actors["pos"] \
+            .relationships["{}__provider".format(product)].get_relations(None)
+
+        dist_l2_dist_l1 = circus.actors["dist_l2"] \
+            .relationships["{}__provider".format(product)].get_relations(None)
+
+        # join dist_l1 responsible for pos
+        pos_dist_l1 = pd.merge(
+            left=pos_dist_l2, right=dist_l2_dist_l1[["from","to"]],
+            left_on="to", right_on="from", suffixes=('_pos', '_dist_l1')
+        )
+
+        # join pos mongo id
+        pos_dist_l1 = pd.merge(
+            left=pos_dist_l1, right=pos_df[["index", "MONGO_ID"]],
+            left_on="from_pos", right_on="index"
+        )
+
+        pos_dist_l1 = pos_dist_l1.rename(columns={
+            "MONGO_ID": "agent_id",
+            "to_dist_l1": "distributor_id"
+        })
+
+        pos_dist_l1["product_type_id"] = product
+
+        pos_dist_l1 = pos_dist_l1.reindex_axis(
+            ["distributor_id", "agent_id", "product_type_id"], axis=1)
+
+        providers_df = providers_df.append(pos_dist_l1)
+
+        """Add LINK between DIST_L2 and DIST_L1"""
+
+        dist_l2_dist_l1 = dist_l2_dist_l1.rename(columns={
+            "from": "agent_id",
+            "to": "distributor_id"
+        })
+
+        dist_l2_dist_l1["product_type_id"] = product
+
+        dist_l2_dist_l1 = dist_l2_dist_l1.reindex_axis(
+            ["distributor_id", "agent_id", "product_type_id"], axis=1)
+
+        providers_df = providers_df.append(dist_l2_dist_l1)
+
+    providers_df.to_csv(target_file, index=False)
