@@ -374,11 +374,11 @@ def _bound_diff_to_max(max_stock):
 
 def save_pos_as_mobile_sync_csv(circus):
 
-    target_file = os.path.join(
-        db.namespace_folder(circus.name),
-        "points_of_interest.csv")
+    target_file = os.path.join(db.namespace_folder(circus.name),
+                               "points_of_interest.csv")
 
-    logging.info("generating a mobile-sync csv pos file in {}".format(target_file))
+    logging.info("generating a mobile-sync csv pos file in {}"
+                 .format(target_file))
 
     pos_df = circus.actors["pos"].to_dataframe().reset_index()
     sites_df = circus.actors["sites"].to_dataframe()
@@ -437,9 +437,8 @@ def save_pos_as_mobile_sync_csv(circus):
 
 def save_pos_as_partial_ids_csv(circus, params):
 
-    target_file = os.path.join(
-        db.namespace_folder(circus.name),
-        "pos_id_msisdn.csv")
+    target_file = os.path.join(db.namespace_folder(circus.name),
+                               "pos_id_msisdn.csv")
 
     # Right now, all POS sell all products, so they will all appear for all
     # products in the reference table for partial_ids
@@ -466,4 +465,3 @@ def save_pos_as_partial_ids_csv(circus, params):
     ], axis=1)
 
     partial_ids_df.to_csv(target_file, index=False)
-
