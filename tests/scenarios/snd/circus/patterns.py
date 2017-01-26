@@ -249,7 +249,7 @@ def add_initial_stock_as_purchases(circus,
         log_stock.reset_timers()
 
         log_stock.set_operations(
-            circus.clock.ops.timestamp(named_as="TIME"),
+            circus.clock.ops.timestamp(named_as="TIME", random=False),
 
             buyer.get_relationship("{}__provider".format(product)).ops
                  .select_one(from_field="BUYER_ID", named_as="SELLER_ID"),
