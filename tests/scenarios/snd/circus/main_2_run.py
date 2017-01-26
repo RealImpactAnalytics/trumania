@@ -106,6 +106,9 @@ if __name__ == "__main__":
     snd_pos.add_attractiveness_evolution_action(snd)
     snd_pos.add_agent_stock_log_action(snd, runtime_params)
 
+    for buyer in ["pos", "dist_l2", "dist_l1"]:
+        patterns.add_initial_stock_as_purchases(snd, buyer, runtime_params)
+
     # restock action must be built in reverse order since they refer to each other
     # TODO: we should fix that since this also influence the order of the executions
     # => we'd like to re-stock directly, not with delays due to the size of the hierarchy

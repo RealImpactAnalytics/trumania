@@ -11,6 +11,7 @@ explore.ipynb
 cdr_output_logs/
 snd_output_logs/
 .venv
+/output/
 
 # scala
 metastore_db
