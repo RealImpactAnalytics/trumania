@@ -17,23 +17,45 @@ def add_customers(circus, params):
 
     mobility_rel = customers.create_relationship("POSSIBLE_SITES")
 
-    sites = circus.actors["sites"]
+    # probability of each site to be chosen, based on geo_level1 population
+    site_weight = circus.actors["sites"] \
+        .get_attribute("GEO_LEVEL_1_POPULATION") \
+        .get_values(None)
 
-    mobility_df = pd.DataFrame.from_records(
-        make_random_bipartite_data(
-            customers.ids,
-            sites.ids,
-            p=params["mean_known_sites_per_customer"]/sites.size,
-            seed=circus.seeder.next()),
-        columns=["CID", "SID"])
+    customer_gen = NumpyRandomGenerator(method="choice",
+                                        seed=circus.seeder.next(),
+                                        a=customers.ids,
+                                        replace=False)
+
+    site_gen = NumpyRandomGenerator(method="choice",
+                                    seed=circus.seeder.next(),
+                                    a=circus.actors["sites"].ids,
+                                    p=site_weight.values/sum(site_weight))
 
     mobility_weight_gen = NumpyRandomGenerator(
         method="exponential", scale=1., seed=circus.seeder.next())
 
+    # Everybody gets at least one site
     mobility_rel.add_relations(
-        from_ids=mobility_df["CID"],
-        to_ids=mobility_df["SID"],
-        weights=mobility_weight_gen.generate(mobility_df.shape[0]))
+        from_ids=customers.ids,
+        to_ids=site_gen.generate(customers.size),
+        weights=mobility_weight_gen.generate(customers.size))
+
+    # at each iteration, give a new site to a sample of people
+    # the sample will be of proportion p
+    p = 0.5
+
+    # to get an average site per customer of mean_known_sites_per_customer,
+    # if each iteration samples with p,
+    # we need mean_known_sites_per_customer/p iterations
+    #
+    # we remove one iteration that already happened for everybody here above
+    for i in range(int(params["mean_known_sites_per_customer"]/p) - 1):
+        sample = customer_gen.generate(customers.size*p)
+        mobility_rel.add_relations(
+            from_ids=sample,
+            to_ids=site_gen.generate(len(sample)),
+            weights=mobility_weight_gen.generate(len(sample)))
 
     logging.info(" assigning a first random site to each customer")
     customers.create_attribute(name="CURRENT_SITE",

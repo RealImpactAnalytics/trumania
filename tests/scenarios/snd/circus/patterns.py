@@ -1,6 +1,7 @@
 """
 Re-usable operation chains throughout the SND scenario
 """
+from datagenerator.core.action import Action
 import datagenerator.core.operations as operations
 import datagenerator.core.random_generators as random_generators
 import datagenerator.core.util_functions as util_functions
@@ -199,3 +200,97 @@ def add_bulk_restock_actions(circus, params,
             )
         )
 
+
+def add_initial_stock_as_purchases(circus,
+                                   buyer_actor_name,
+                                   params):
+
+    for product, description in params["products"].items():
+        action_name = "{}_{}_bulk_purchase".format(buyer_actor_name, product)
+
+        logging.info("adding initial {} stock of {} as purchases"
+                     .format(product, buyer_actor_name))
+
+        buyer = circus.actors[buyer_actor_name]
+
+        # generator of item prices and type
+        item_price_gen = random_generators.NumpyRandomGenerator(
+            method="choice", a=description["item_prices"],
+            seed=circus.seeder.next())
+
+        item_prices_gen = random_generators.DependentBulkGenerator(
+            element_generator=item_price_gen)
+
+        item_type_gen = random_generators.NumpyRandomGenerator(
+            method="choice",
+            a=circus.actors[product].ids,
+            seed=circus.seeder.next())
+
+        item_types_gen = random_generators.DependentBulkGenerator(
+            element_generator=item_type_gen)
+
+        tx_gen = random_generators.SequencialGenerator(
+            prefix="_".join(["TX_initial", buyer_actor_name, product]))
+
+        tx_seq_gen = random_generators.DependentBulkGenerator(
+            element_generator=tx_gen)
+
+        log_stock = circus.create_action(
+            name="initial_{}".format(action_name),
+            initiating_actor=buyer,
+            actorid_field="BUYER_ID",
+
+            # everybody executes this action once, at the beginning
+            timer_gen=random_generators.ConstantDependentGenerator(0),
+            auto_reset_timer=False
+        )
+
+        # reset timer once so that it executes once
+        log_stock.reset_timers()
+
+        log_stock.set_operations(
+            circus.clock.ops.timestamp(named_as="TIME"),
+
+            buyer.get_relationship("{}__provider".format(product)).ops
+                 .select_one(from_field="BUYER_ID", named_as="SELLER_ID"),
+
+            buyer.get_relationship(product).ops.select_all(
+                from_field="BUYER_ID",
+                named_as="ITEM_IDS"),
+
+            operations.Apply(source_fields="ITEM_IDS",
+                             named_as="BULK_SIZE",
+                             f=lambda s: s.map(len), f_args="series"),
+
+            item_prices_gen.ops.generate(
+                named_as="ITEM_PRICES",
+                observed_field="BULK_SIZE"
+            ),
+
+            item_types_gen.ops.generate(
+                named_as="ITEM_TYPES",
+                observed_field="BULK_SIZE"
+            ),
+
+            tx_seq_gen.ops.generate(
+                named_as="TX_IDS",
+                observed_field="BULK_SIZE"
+            ),
+
+            random_generators.ConstantGenerator(value=0)
+                             .ops.generate(named_as="OLD_BUYER_STOCK"),
+
+            operations.Apply(source_fields="BULK_SIZE",
+                             named_as="NEW_BUYER_STOCK",
+                             f=lambda s: s, f_args="series"),
+
+            operations.FieldLogger(log_id="{}_stock".format(action_name),
+                                   cols=["TIME", "BUYER_ID", "SELLER_ID",
+                                         "OLD_BUYER_STOCK", "NEW_BUYER_STOCK",
+                                         "BULK_SIZE"]),
+
+            operations.FieldLogger(log_id=action_name,
+                                   cols=["TIME", "BUYER_ID", "SELLER_ID"],
+                                   exploded_cols=["TX_IDS", "ITEM_IDS",
+                                                  "ITEM_PRICES", "ITEM_TYPES"])
+        )
