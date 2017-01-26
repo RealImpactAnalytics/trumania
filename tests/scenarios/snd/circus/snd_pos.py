@@ -212,9 +212,16 @@ def add_pos(circus, params):
     _create_attractiveness_attributes(circus, pos)
 
     logging.info("assigning a site to each POS")
+
+    # probability of each site to be chosen, based on geo_level1 population
+    site_weight = circus.actors["sites"] \
+        .get_attribute("GEO_LEVEL_1_POPULATION") \
+        .get_values(None)
+
     site_gen = NumpyRandomGenerator(method="choice",
                                     seed=circus.seeder.next(),
-                                    a=circus.actors["sites"].ids)
+                                    a=circus.actors["sites"].ids,
+                                    p=site_weight.values/sum(site_weight))
     pos.create_attribute("SITE", init_gen=site_gen)
 
     # generate a random pos location from around the SITE location
