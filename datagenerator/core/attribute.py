@@ -45,10 +45,9 @@ class Attribute(object):
                 raise ValueError("must provide either ids or relationship to "
                                  "initialize the attribute")
 
-            self._table = (actor.get_relationship(init_relationship)
-                           .select_one()
-                           .set_index("from", drop=True)
-                           .rename(columns={"to": "value"}))
+            self._table = actor.get_relationship(init_relationship).select_one()
+            self._table.set_index("from", drop=True, inplace=True)
+            self._table.rename(columns={"to": "value"}, inplace=True)
 
     def get_values(self, ids=None):
         """
