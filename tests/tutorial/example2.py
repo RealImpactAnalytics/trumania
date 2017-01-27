@@ -1,7 +1,7 @@
 from datagenerator.core import circus
 from datagenerator.core.circus import *
 from datagenerator.core.actor import *
-from datagenerator.core.util_functions import *
+import datagenerator.core.util_functions as util_functions
 
 
 def step1():
@@ -225,4 +225,5 @@ def step3():
 
 
 if __name__ == "__main__":
-    step3()
+    util_functions.setup_logging()
+    step1()
