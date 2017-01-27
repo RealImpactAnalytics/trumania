@@ -183,7 +183,13 @@ def step3():
         actorid_field="POS_ID",
 
         timer_gen=DefaultDailyTimerGenerator(example2.clock,
-                                             example2.seeder.next())
+                                             example2.seeder.next()),
+
+        # this is the default value, but is worth mentioning here: each pos will
+        # on average do one restock per duration of the timer period. Since the
+        # timer profile above is over 24, having activity 1 here means on
+        # average one restock per day.
+        activity_gen=ConstantGenerator(value=1.),
     )
 
     stock_size_gen = NumpyRandomGenerator(method="choice",
@@ -191,7 +197,8 @@ def step3():
                                           p=[0.1, 0.2, 0.5, 0.2],
                                           seed=example2.seeder.next())
 
-    item_bulk_gen = DependentBulkGenerator(example2.generators["items_gen"])
+    item_bulk_gen = DependentBulkGenerator(
+        element_generator=example2.generators["items_gen"])
 
     restock_action.set_operations(
         example2.clock.ops.timestamp(named_as="TIME",
@@ -220,10 +227,10 @@ def step3():
     with open("output/example2/report.csv") as f:
         print "Logged {} lines in report".format(len(f.readlines())-1)
 
-    with open("output/example2/report.csv") as f:
+    with open("output/example2/restock.csv") as f:
         print "Logged {} lines in restock".format(len(f.readlines())-1)
 
 
 if __name__ == "__main__":
     util_functions.setup_logging()
-    step1()
+    step3()
