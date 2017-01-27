@@ -484,9 +484,9 @@ def step7():
 
     def price(action_data):
 
-        result = pd.DataFrame(columns=["PRICE", "CURRENCY"])
+        result = pd.DataFrame(index=action_data.index)
 
-        result["PRICE"] = action_data["DURATION"].apply(lambda x: x*0.05)
+        result["PRICE"] = action_data["DURATION"]*0.05
         result["CURRENCY"] = "EUR"
 
         return result
