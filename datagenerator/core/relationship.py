@@ -71,7 +71,7 @@ class Relationship(object):
         unique_froms = np.unique(from_ids)
 
         counts = self.get_relations(unique_froms)[["from", "to"]]\
-            .groupby("from").count()["to"]
+            .groupby("from").count()["to"].astype(int)
 
         return counts.reindex(np.unique(unique_froms)).fillna(0)
 
@@ -343,7 +343,8 @@ class Relationship(object):
                 sizes = self.relationship.get_neighbourhood_size(
                     from_ids=requested_froms)
 
-                return pd.DataFrame({self.named_as: requested_froms.map(sizes)})
+                return pd.DataFrame(
+                    {self.named_as: requested_froms.map(sizes).astype(int)})
 
         def get_neighbourhood_size(self, from_field, named_as):
             return self.AddNeighbourhoodSize(self.relationship, from_field,
