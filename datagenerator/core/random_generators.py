@@ -306,15 +306,16 @@ class FakerGenerator(Generator):
     Generator wrapping Faker factory
     """
 
-    def __init__(self, seed, method):
+    def __init__(self, seed, method, **fakerKwargs):
         Generator.__init__(self)
         fake = Faker()
         fake.seed(seed)
 
         self.method = getattr(fake, method)
+        self.fakerKwargs = fakerKwargs
 
     def generate(self, size):
-        return [self.method() for _ in range(size)]
+        return [self.method(**self.fakerKwargs) for _ in range(size)]
 
 
 class MSISDNGenerator(Generator):
