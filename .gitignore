@@ -1,5 +1,6 @@
 /datagenerator/components/_DB/
 /datagenerator/components/geographies/source_data/
+tests/tutorial/output/
 
 # python
 *.pyc
