@@ -42,6 +42,8 @@ def save_generator(generator, namespace, gen_id):
 
 def list_generators(namespace):
     folder = _generators_folder(namespace)
+    if not os.path.exists(folder):
+        return []
 
     def _list():
         for gen_type in os.listdir(folder):
