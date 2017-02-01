@@ -39,7 +39,7 @@ class Actor(object):
 
         self.ops = self.ActorOps(self)
 
-    def create_relationship(self, name):
+    def create_relationship(self, name, seed=None):
         """
         creates an empty relationship from this actor
         """
@@ -48,7 +48,9 @@ class Actor(object):
             raise ValueError("cannot create a second relationship with "
                              "existing name {}".format(name))
 
-        self.relationships[name] = Relationship(seed=self.circus.seeder.next())
+        self.relationships[name] = Relationship(
+            seed=seed if seed else self.circus.seeder.next())
+
         return self.relationships[name]
 
     def create_stock_relationship(self, name, item_id_gen, n_items_per_actor):
