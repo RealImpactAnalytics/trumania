@@ -61,6 +61,7 @@ def add_song_actors(the_circus):
     songs.create_attribute(name="song_genre")
     songs.create_attribute(name="title")
     songs.create_attribute(name="duration_seconds")
+    songs.create_attribute(name="recording_year")
 
     song_id_gen = gen.SequencialGenerator(prefix="S_")
 
@@ -124,6 +125,10 @@ def add_song_actors(the_circus):
         # this works because the columns of init_attribute match exactly the
         # ones of the attributes of the actors
         songs.update(initialized_songs)
+
+    # makes sure year and duration are handled as integer
+    songs.get_attribute("recording_year").transform_inplace(int)
+    songs.get_attribute("duration_seconds").transform_inplace(int)
 
 
 def add_listener(the_circus):
