@@ -79,6 +79,12 @@ class Attribute(object):
 
         self._table.loc[to_add.index, "value"] = self._table.loc[to_add.index, "value"] + to_add
 
+    def transform_inplace(self, f):
+        """
+        transform the values of this attribute inplace with f
+        """
+        self._table["value"] = self._table["value"].map(f)
+
     ############
     # IO
     def save_to(self, file_path):
