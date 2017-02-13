@@ -3,6 +3,10 @@ from datagenerator.core.circus import *
 from datagenerator.core.actor import *
 import datagenerator.core.util_functions as util_functions
 
+# each step?() function below implement one step of the first example of the
+# tutorial documented at
+# https://realimpactanalytics.atlassian.net/wiki/display/LM/Data+generator+tutorial
+
 
 def step1():
 
