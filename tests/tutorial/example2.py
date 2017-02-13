@@ -159,54 +159,6 @@ def create_customer_actor(the_circus):
     customer.create_relationship(name="my_items")
 
 
-def add_inactive_restock_action(the_circus):
-    """
-    This is a copy-paste of add_periodic_restock_action(), but without the
-    timer nor the activity levels => as-is, this action never triggers
-    """
-    pos = the_circus.actors["point_of_sale"]
-
-    restock_action = the_circus.create_action(
-            name="restock",
-            initiating_actor=pos,
-            actorid_field="POS_ID")
-
-    stock_size_gen = gen.NumpyRandomGenerator(method="choice",
-                                              a=[5, 15, 20, 25],
-                                              p=[0.1, 0.2, 0.5, 0.2],
-                                              seed=the_circus.seeder.next())
-
-    item_bulk_gen = gen.DependentBulkGenerator(
-        element_generator=the_circus.generators["items_gen"])
-
-    restock_action.set_operations(
-        the_circus.clock.ops.timestamp(named_as="TIME"),
-
-        # include the POS NAME attribute as a field name "POS_NAME"
-        pos.ops.lookup(actor_id_field="POS_ID", select={"NAME": "POS_NAME"}),
-
-        pos.get_relationship("items").ops.get_neighbourhood_size(
-            from_field="POS_ID",
-            named_as="PREV_STOCK_LEVEL"),
-
-        stock_size_gen.ops.generate(named_as="RESTOCK_VOLUME"),
-
-        item_bulk_gen.ops.generate(named_as="NEW_ITEM_IDS",
-                                   observed_field="RESTOCK_VOLUME"),
-
-        pos.get_relationship("items").ops.add_grouped(from_field="POS_ID",
-                                           grouped_items_field="NEW_ITEM_IDS"),
-
-        pos.get_relationship("items").ops.get_neighbourhood_size(
-            from_field="POS_ID",
-            named_as="NEW_STOCK_LEVEL"),
-
-        ops.FieldLogger(log_id="restock",
-                        cols=["TIME", "POS_ID", "POS_NAME", "RESTOCK_VOLUME",
-                              "PREV_STOCK_LEVEL", "NEW_STOCK_LEVEL"])
-    )
-
-
 def create_purchase_action(the_circus):
 
     timer_gen = profilers.WorkHoursTimerGenerator(clock=the_circus.clock,
@@ -281,6 +233,54 @@ def create_purchase_action(the_circus):
 
         ops.FieldLogger(log_id="purchases")
 
+    )
+
+
+def add_inactive_restock_action(the_circus):
+    """
+    This is a copy-paste of add_periodic_restock_action(), but without the
+    timer nor the activity levels => as-is, this action never triggers
+    """
+    pos = the_circus.actors["point_of_sale"]
+
+    restock_action = the_circus.create_action(
+            name="restock",
+            initiating_actor=pos,
+            actorid_field="POS_ID")
+
+    stock_size_gen = gen.NumpyRandomGenerator(method="choice",
+                                              a=[5, 15, 20, 25],
+                                              p=[0.1, 0.2, 0.5, 0.2],
+                                              seed=the_circus.seeder.next())
+
+    item_bulk_gen = gen.DependentBulkGenerator(
+        element_generator=the_circus.generators["items_gen"])
+
+    restock_action.set_operations(
+        the_circus.clock.ops.timestamp(named_as="TIME"),
+
+        # include the POS NAME attribute as a field name "POS_NAME"
+        pos.ops.lookup(actor_id_field="POS_ID", select={"NAME": "POS_NAME"}),
+
+        pos.get_relationship("items").ops.get_neighbourhood_size(
+            from_field="POS_ID",
+            named_as="PREV_STOCK_LEVEL"),
+
+        stock_size_gen.ops.generate(named_as="RESTOCK_VOLUME"),
+
+        item_bulk_gen.ops.generate(named_as="NEW_ITEM_IDS",
+                                   observed_field="RESTOCK_VOLUME"),
+
+        pos.get_relationship("items").ops.add_grouped(from_field="POS_ID",
+                                           grouped_items_field="NEW_ITEM_IDS"),
+
+        pos.get_relationship("items").ops.get_neighbourhood_size(
+            from_field="POS_ID",
+            named_as="NEW_STOCK_LEVEL"),
+
+        ops.FieldLogger(log_id="restock",
+                        cols=["TIME", "POS_ID", "POS_NAME", "RESTOCK_VOLUME",
+                              "PREV_STOCK_LEVEL", "NEW_STOCK_LEVEL"])
     )
 
 
