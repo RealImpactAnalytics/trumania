@@ -68,26 +68,6 @@ def add_report_action(the_circus):
     )
 
 
-def create_customer_actor(the_circus):
-    """
-    Creates a customer actor and attach it to the circus
-    """
-    customer = the_circus.create_actor(
-        name="customer", size=2500,
-        ids_gen=gen.SequencialGenerator(prefix="CUS_"))
-
-    customer.create_attribute(
-        name="FIRST_NAME",
-        init_gen=gen.FakerGenerator(method="first_name",
-                                seed=the_circus.seeder.next()))
-    customer.create_attribute(
-        name="LAST_NAME",
-        init_gen=gen.FakerGenerator(method="last_name",
-                                seed=the_circus.seeder.next()))
-
-    customer.create_relationship(name="my_items")
-
-
 def add_items_to_pos_stock(the_circus):
     """
     Generates and add 5 items to the "items" relationship of each POS
@@ -157,6 +137,26 @@ def add_periodic_restock_action(the_circus):
         ops.FieldLogger(log_id="restock", cols=["TIME", "POS_ID", "POS_NAME",
                                                 "RESTOCK_VOLUME"])
     )
+
+
+def create_customer_actor(the_circus):
+    """
+    Creates a customer actor and attach it to the circus
+    """
+    customer = the_circus.create_actor(
+        name="customer", size=2500,
+        ids_gen=gen.SequencialGenerator(prefix="CUS_"))
+
+    customer.create_attribute(
+        name="FIRST_NAME",
+        init_gen=gen.FakerGenerator(method="first_name",
+                                    seed=the_circus.seeder.next()))
+    customer.create_attribute(
+        name="LAST_NAME",
+        init_gen=gen.FakerGenerator(method="last_name",
+                                    seed=the_circus.seeder.next()))
+
+    customer.create_relationship(name="my_items")
 
 
 def add_inactive_restock_action(the_circus):
