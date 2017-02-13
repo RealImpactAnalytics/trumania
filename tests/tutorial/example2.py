@@ -40,6 +40,34 @@ def create_pos_actor(the_circus):
     pos.create_relationship(name="items")
 
 
+def add_report_action(the_circus):
+    """
+    adds an operations that logs the stock level of each POS at the end of each
+    day
+    """
+
+    pos = the_circus.actors["point_of_sale"]
+    report_action = the_circus.create_action(
+        name="report",
+        initiating_actor=pos,
+        actorid_field="POS_ID",
+
+        timer_gen=gen.ConstantDependentGenerator(
+            value=the_circus.clock.n_iterations(duration=pd.Timedelta("24h")) - 1)
+    )
+
+    report_action.set_operations(
+        the_circus.clock.ops.timestamp(named_as="TIME", random=False,
+                                     log_format="%Y-%m-%d"),
+
+        pos.get_relationship("items").ops.get_neighbourhood_size(
+            from_field="POS_ID",
+            named_as="STOCK_LEVEL"),
+
+        ops.FieldLogger(log_id="report", cols=["TIME", "POS_ID", "STOCK_LEVEL"])
+    )
+
+
 def create_customer_actor(the_circus):
     """
     Creates a customer actor and attach it to the circus
@@ -73,34 +101,6 @@ def add_items_to_pos_stock(the_circus):
     pos.get_relationship("items").add_grouped_relations(
         from_ids=pos.ids,
         grouped_ids=item_arrays)
-
-
-def add_report_action(the_circus):
-    """
-    adds an operations that logs the stock level of each POS at the end of each
-    day
-    """
-
-    pos = the_circus.actors["point_of_sale"]
-    report_action = the_circus.create_action(
-        name="report",
-        initiating_actor=pos,
-        actorid_field="POS_ID",
-
-        timer_gen=gen.ConstantDependentGenerator(
-            value=the_circus.clock.n_iterations(duration=pd.Timedelta("24h")) - 1)
-    )
-
-    report_action.set_operations(
-        the_circus.clock.ops.timestamp(named_as="TIME", random=False,
-                                     log_format="%Y-%m-%d"),
-
-        pos.get_relationship("items").ops.get_neighbourhood_size(
-            from_field="POS_ID",
-            named_as="STOCK_LEVEL"),
-
-        ops.FieldLogger(log_id="report", cols=["TIME", "POS_ID", "STOCK_LEVEL"])
-    )
 
 
 def add_periodic_restock_action(the_circus):
