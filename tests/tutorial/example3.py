@@ -49,6 +49,150 @@ def add_songids_to_repos(the_circus):
         grouped_ids=added_songs)
 
 
+def add_listener(the_circus):
+
+    users = the_circus.create_actor(
+        name="user", size=1000,
+        ids_gen=gen.SequencialGenerator(prefix="user_"))
+
+    users.create_attribute(
+        name="FIRST_NAME",
+        init_gen=gen.FakerGenerator(method="first_name",
+                                    seed=the_circus.seeder.next()))
+    users.create_attribute(
+        name="LAST_NAME",
+        init_gen=gen.FakerGenerator(method="last_name",
+                                    seed=the_circus.seeder.next()))
+
+
+def add_listen_action(the_circus):
+
+    users = the_circus.actors["user"]
+
+    # using this timer means users only listen to songs during work hours
+    timer_gen = profilers.WorkHoursTimerGenerator(
+        clock=the_circus.clock, seed=the_circus.seeder.next())
+
+    # this generate activity level distributed as a "truncated normal
+    # distribution", i.e. very high and low activities are prevented.
+    bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
+        method="normal",
+        seed=the_circus.seeder.next(),
+        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
+        scale=5
+        ).map(ops.bound_value(lb=10, ub=30))
+
+    listen = the_circus.create_action(
+            name="listen_events",
+            initiating_actor=users,
+            actorid_field="UID",
+
+            timer_gen=timer_gen,
+            activity_gen=bounded_gaussian_activity_gen
+        )
+
+    repo = the_circus.actors["music_repository"]
+
+    listen.set_operations(
+
+        users.ops.lookup(
+            actor_id_field="UID",
+            select={
+                "FIRST_NAME": "USER_FIRST_NAME",
+                "LAST_NAME": "USER_LAST_NAME",
+            }
+        ),
+
+        # picks a genre at random
+        repo.ops.select_one(named_as="GENRE"),
+
+        # picks a song at random for that genre
+        repo.get_relationship("songs").ops.select_one(
+            from_field="GENRE",
+            named_as="SONG_ID"),
+
+        ops.FieldLogger("events")
+    )
+
+
+def add_listen_and_share_actions(the_circus):
+    """
+    This is essentially a copy-paste of add_listen_action, + the update for the
+    share action, in order to show the Chain re-usability clearly
+    """
+
+    users = the_circus.actors["user"]
+
+    # using this timer means users only listen to songs during work hours
+    timer_gen = profilers.WorkHoursTimerGenerator(
+        clock=the_circus.clock, seed=the_circus.seeder.next())
+
+    # this generate activity level distributed as a "truncated normal
+    # distribution", i.e. very high and low activities are prevented.
+    bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
+        method="normal",
+        seed=the_circus.seeder.next(),
+        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
+        scale=5
+        ).map(ops.bound_value(lb=10, ub=30))
+
+    listen = the_circus.create_action(
+            name="listen_events",
+            initiating_actor=users,
+            actorid_field="UID",
+
+            timer_gen=timer_gen,
+            activity_gen=bounded_gaussian_activity_gen
+        )
+
+    share = the_circus.create_action(
+            name="share_events",
+            initiating_actor=users,
+            actorid_field="UID",
+
+            timer_gen=timer_gen,
+            activity_gen=bounded_gaussian_activity_gen
+        )
+
+    repo = the_circus.actors["music_repository"]
+
+    select_genre_and_song = ops.Chain(
+
+        users.ops.lookup(
+            actor_id_field="UID",
+            select={
+                "FIRST_NAME": "USER_FIRST_NAME",
+                "LAST_NAME": "USER_LAST_NAME",
+            }
+        ),
+
+        # picks a genre at random
+        repo.ops.select_one(named_as="GENRE"),
+
+        # picks a song at random for that genre
+        repo.get_relationship("songs").ops.select_one(
+            from_field="GENRE",
+            named_as="SONG_ID"),
+    )
+
+    listen.set_operations(
+        select_genre_and_song,
+        ops.FieldLogger("listen_events")
+    )
+
+    share.set_operations(
+        select_genre_and_song,
+
+        # picks a user this song is shared to
+        users.ops.select_one(named_as="SHARED_TO_UID"),
+
+        # note we could post-check when user shared a song to their own uid
+        # here, in which case we can use DropRow to discard that share event
+
+        ops.FieldLogger("share_events")
+    )
+
+
 def add_song_actors(the_circus):
 
     songs = the_circus.create_actor(
@@ -131,152 +275,6 @@ def add_song_actors(the_circus):
     songs.get_attribute("duration_seconds").transform_inplace(int)
 
 
-def add_listener(the_circus):
-
-    users = the_circus.create_actor(
-        name="user", size=5,
-        ids_gen=gen.SequencialGenerator(prefix="user_"))
-
-    users.create_attribute(
-        name="FIRST_NAME",
-        init_gen=gen.FakerGenerator(method="first_name",
-                                    seed=the_circus.seeder.next()))
-    users.create_attribute(
-        name="LAST_NAME",
-        init_gen=gen.FakerGenerator(method="last_name",
-                                    seed=the_circus.seeder.next()))
-
-
-def add_listen_action(the_circus):
-
-    users = the_circus.actors["user"]
-
-    # using this timer means POS are more likely to trigger a re-stock during
-    # day hours rather that at night.
-    timer_gen = profilers.HighWeekDaysTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
-
-    # this generate activity level distributed as a "truncated normal
-    # distribution", i.e. very high and low activities are prevented.
-    bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
-        method="normal",
-        seed=the_circus.seeder.next(),
-        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
-        scale=5
-        ).map(ops.bound_value(lb=10, ub=30))
-
-    listen = the_circus.create_action(
-            name="listen_events",
-            initiating_actor=users,
-            actorid_field="UID",
-
-            timer_gen=timer_gen,
-            activity_gen=bounded_gaussian_activity_gen
-        )
-
-    repo = the_circus.actors["music_repository"]
-
-    listen.set_operations(
-
-        users.ops.lookup(
-            actor_id_field="UID",
-            select={
-                "FIRST_NAME": "USER_FIRST_NAME",
-                "LAST_NAME": "USER_LAST_NAME",
-            }
-        ),
-
-        # picks a genre at random
-        repo.ops.select_one(named_as="GENRE"),
-
-        # picks a song at random for that genre
-        repo.get_relationship("songs").ops.select_one(
-            from_field="GENRE",
-            named_as="SONG_ID"),
-
-        ops.FieldLogger("events")
-    )
-
-
-def add_listen_and_share_actions(the_circus):
-    """
-    This is essentially a copy-paste of add_listen_action, + the update for the
-    share action, in order to show the Chain re-usability clearly
-    """
-
-    users = the_circus.actors["user"]
-
-    # using this timer means POS are more likely to trigger a re-stock during
-    # day hours rather that at night.
-    timer_gen = profilers.HighWeekDaysTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
-
-    # this generate activity level distributed as a "truncated normal
-    # distribution", i.e. very high and low activities are prevented.
-    bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
-        method="normal",
-        seed=the_circus.seeder.next(),
-        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
-        scale=5
-        ).map(ops.bound_value(lb=10, ub=30))
-
-    listen = the_circus.create_action(
-            name="listen_events",
-            initiating_actor=users,
-            actorid_field="UID",
-
-            timer_gen=timer_gen,
-            activity_gen=bounded_gaussian_activity_gen
-        )
-
-    share = the_circus.create_action(
-            name="share_events",
-            initiating_actor=users,
-            actorid_field="UID",
-
-            timer_gen=timer_gen,
-            activity_gen=bounded_gaussian_activity_gen
-        )
-
-    repo = the_circus.actors["music_repository"]
-
-    select_genre_and_song = ops.Chain(
-
-        users.ops.lookup(
-            actor_id_field="UID",
-            select={
-                "FIRST_NAME": "USER_FIRST_NAME",
-                "LAST_NAME": "USER_LAST_NAME",
-            }
-        ),
-
-        # picks a genre at random
-        repo.ops.select_one(named_as="GENRE"),
-
-        # picks a song at random for that genre
-        repo.get_relationship("songs").ops.select_one(
-            from_field="GENRE",
-            named_as="SONG_ID"),
-    )
-
-    listen.set_operations(
-        select_genre_and_song,
-        ops.FieldLogger("listen_events")
-    )
-
-    share.set_operations(
-        select_genre_and_song,
-
-        # picks a user this song is shared to
-        users.ops.select_one(named_as="SHARED_TO_UID"),
-
-        # note we could post-check when user shared a song to their own uid
-        # here, in which case we can use DropRow to discard that share event
-
-        ops.FieldLogger("share_events")
-    )
-
-
 def add_listen_and_share_actions_with_details(the_circus):
     """
     This is again a copy-paste of add_listen_and_share_actions_with_details,
@@ -286,9 +284,8 @@ def add_listen_and_share_actions_with_details(the_circus):
 
     users = the_circus.actors["user"]
 
-    # using this timer means POS are more likely to trigger a re-stock during
-    # day hours rather that at night.
-    timer_gen = profilers.HighWeekDaysTimerGenerator(
+    # using this timer means users only listen to songs during work hours
+    timer_gen = profilers.WorkHoursTimerGenerator(
         clock=the_circus.clock, seed=the_circus.seeder.next())
 
     # this generate activity level distributed as a "truncated normal
