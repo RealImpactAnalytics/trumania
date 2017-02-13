@@ -105,7 +105,7 @@ def add_periodic_restock_action(the_circus):
             # Using a ConstantGenerator here means each POS will have the same
             # activity level of exactly one action per day on average. Since
             # the time itself is random, period between 2 restocks will on
-            # general not be exactly 24h
+            # general not be exactly 7days
             activity_gen=gen.ConstantGenerator(value=timer_gen.activity(
                 n_actions=1, per=pd.Timedelta("7 days")
             )),
