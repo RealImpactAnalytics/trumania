@@ -9,3 +9,4 @@ Faker
 jupyter
 rpy2
 pymongo
+path.py
