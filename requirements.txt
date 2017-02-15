@@ -5,7 +5,7 @@ scipy
 seaborn
 teamcity-messages
 pytest
-fake-factory
+Faker
 jupyter
 rpy2
 pymongo
