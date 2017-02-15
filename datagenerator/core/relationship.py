@@ -281,7 +281,7 @@ class Relationship(object):
         rows = self.get_relations(from_ids)
         groups = rows.set_index("to", drop=True).groupby("from", sort=False)
         df = pd.DataFrame(groups.groups.items(), columns=["from", named_as])
-        df[named_as] = df[named_as].apply(lambda s: s.tolist())
+        df[named_as] = df[named_as].apply(lambda s: [el for el in s])
         return df
 
     def remove(self, from_ids, to_ids):

@@ -116,7 +116,7 @@ class Action(object):
 
         def get_group(b):
             if b in split.groups:
-                return split.groups[b].tolist()
+                return [el for el in split.groups[b]]
             else:
                 return []
 
