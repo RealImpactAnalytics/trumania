@@ -280,7 +280,9 @@ class Relationship(object):
 
         rows = self.get_relations(from_ids)
         groups = rows.set_index("to", drop=True).groupby("from", sort=False)
-        return pd.DataFrame(groups.groups.items(), columns=["from", named_as])
+        df = pd.DataFrame(groups.groups.items(), columns=["from", named_as])
+        df[named_as] = df[named_as].apply(lambda s: s.tolist())
+        return df
 
     def remove(self, from_ids, to_ids):
         lines = self._table[self._table["from"].isin(from_ids) &

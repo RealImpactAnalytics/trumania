@@ -1,4 +1,3 @@
-import pandas as pd
 import path
 from datagenerator.core.random_generators import *
 
@@ -8,6 +7,7 @@ from datagenerator.core.attribute import Attribute
 
 tc = Circus("c", master_seed=1234, start=pd.Timestamp("1 Jan 2011"),
             step_duration=pd.Timedelta("1h"))
+
 
 def test_set_and_read_values_in_attribute_should_be_equal():
 

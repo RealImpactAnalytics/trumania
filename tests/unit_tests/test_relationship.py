@@ -5,7 +5,6 @@ import os
 
 setup_logging()
 
-
 oneto1 = Relationship(seed=1)
 oneto1.add_relations(from_ids=["a", "b", "c", "d", "e"],
                      to_ids=["ta", "tb", "tc", "td", "te"])
@@ -398,7 +397,7 @@ def test_select_all_should_return_all_values_of_requested_ids():
         "to": [["ya", "za"], ["yb", "zb"]]
         }
     )
-    assert all_to.equals(expected)
+    assert all_to.equals(expected), "dataframe\n {} should equal dataframe:\n {}".format(all_to, expected)
 
 
 def test_select_all_should_return_lists_even_for_one_to_one():
