@@ -139,6 +139,63 @@ def add_periodic_restock_action(the_circus):
     )
 
 
+def add_periodic_restock_action_with_combined_generator(the_circus):
+    """
+    This is a variation of add_periodic_restock_action that shows how
+    to obtain the same result by plugging generators into each other instead
+    of explicitly generating intermediary fields in the action_data.
+    """
+    pos = the_circus.actors["point_of_sale"]
+
+    # using this timer means POS are more likely to trigger a re-stock during
+    # day hours rather that at night.
+    timer_gen = profilers.DefaultDailyTimerGenerator(
+        clock=the_circus.clock, seed=the_circus.seeder.next())
+
+    restock_action = the_circus.create_action(
+            name="restock",
+            initiating_actor=pos,
+            actorid_field="POS_ID",
+
+            timer_gen=timer_gen,
+
+            # Using a ConstantGenerator here means each POS will have the same
+            # activity level of exactly one action per day on average. Since
+            # the time itself is random, period between 2 restocks will on
+            # general not be exactly 7days
+            activity_gen=gen.ConstantGenerator(value=timer_gen.activity(
+                n_actions=1, per=pd.Timedelta("7 days")
+            )),
+        )
+
+    stock_size_gen = gen.NumpyRandomGenerator(method="choice",
+                                              a=[5, 15, 20, 25],
+                                              p=[0.1, 0.2, 0.5, 0.2],
+                                              seed=the_circus.seeder.next())
+
+    item_bulk_gen = stock_size_gen.flatmap(
+        gen.DependentBulkGenerator(
+            element_generator=the_circus.generators["items_gen"])
+    )
+
+    restock_action.set_operations(
+        the_circus.clock.ops.timestamp(named_as="TIME",
+                                       log_format="%Y-%m-%d"),
+
+        # include the POS NAME attribute as a field name "POS_NAME"
+        pos.ops.lookup(actor_id_field="POS_ID", select={"NAME": "POS_NAME"}),
+
+        # stock_size_gen.ops.generate(named_as="RESTOCK_VOLUME"),
+
+        item_bulk_gen.ops.generate(named_as="NEW_ITEM_IDS"),
+
+        pos.get_relationship("items").ops.add_grouped(from_field="POS_ID",
+                                           grouped_items_field="NEW_ITEM_IDS"),
+
+        ops.FieldLogger(log_id="restock", cols=["TIME", "POS_ID", "POS_NAME"])
+    )
+
+
 def create_customer_actor(the_circus):
     """
     Creates a customer actor and attach it to the circus
@@ -377,6 +434,18 @@ def step3():
     run_and_report(example2)
 
 
+def step3_bis():
+
+    example2 = build_circus()
+
+    create_pos_actor(example2)
+    add_items_to_pos_stock(example2)
+    add_periodic_restock_action_with_combined_generator(example2)
+
+    add_report_action(example2)
+    run_and_report(example2)
+
+
 def step4():
 
     example2 = build_circus()
@@ -415,4 +484,4 @@ def step5():
 
 if __name__ == "__main__":
     util_functions.setup_logging()
-    step5()
+    step3_bis()
