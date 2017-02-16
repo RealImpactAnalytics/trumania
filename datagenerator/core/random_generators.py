@@ -58,7 +58,7 @@ class Generator(object):
                 samples = parent.generate(size=size)
 
                 if f_vect is not None:
-                    # makes sure the result type is an array and not a Series
+                    # makes sure the result type is array and not a Series
                     # (which may cause index mis-alignments)
                     return [i for i in f_vect(samples)]
 
