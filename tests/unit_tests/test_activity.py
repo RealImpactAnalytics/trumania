@@ -1,7 +1,6 @@
 import path
 from datagenerator.components.time_patterns.profilers import *
 
-from datagenerator.core.actor import Actor
 import datagenerator.core.operations as operations
 import datagenerator.core.util_functions as util_functions
 from datagenerator.core.circus import Circus
@@ -12,7 +11,6 @@ util_functions.setup_logging()
 def run_test_scenario_1(clock_step, simulation_duration,
                         n_actions, per,
                         log_folder):
-
 
     circus = Circus(name="tested_circus", master_seed=1,
                     start=pd.Timestamp("8 June 2016"),

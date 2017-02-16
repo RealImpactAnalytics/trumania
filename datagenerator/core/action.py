@@ -1,6 +1,3 @@
-from datagenerator.core.clock import *
-from datagenerator.core.random_generators import *
-from datagenerator.core.util_functions import *
 from datagenerator.components.time_patterns.profilers import  *
 from datagenerator.core import operations
 
@@ -119,7 +116,7 @@ class Action(object):
 
         def get_group(b):
             if b in split.groups:
-                return split.groups[b]
+                return [el for el in split.groups[b]]
             else:
                 return []
 
@@ -343,6 +340,3 @@ class Action(object):
 
             return self.TransitToState(self.action, actor_id_field,
                                        state_field, state, condition_field)
-
-
-

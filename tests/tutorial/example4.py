@@ -1,6 +1,5 @@
 from datagenerator.core import circus
 import datagenerator.core.actor as actor
-import datagenerator.core.relationship as rel
 import datagenerator.core.random_generators as gen
 import datagenerator.core.operations as ops
 import datagenerator.core.action as action
