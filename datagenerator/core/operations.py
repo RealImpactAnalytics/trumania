@@ -322,6 +322,8 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
     make sure that the curve actually reaches 0 and 1 at some point (e.g.
     probability of triggering an "restock" action must be 1 if stock is as
     low as 1).
+    
+    See /tests/notebooks/bounded_sigmoid.ipynb for examples
 
     :param x_min: lower bound of the x domain
     :param x_max: lower bound of the x domain
