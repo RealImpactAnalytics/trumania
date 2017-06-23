@@ -150,3 +150,19 @@ be generated
 
 ### Runtime parameters
 
+The `runtime_params` in `main_2_run.py` contains the parameters needed
+to run the circus. Here is a description of the different parameters:
+
+* `circus_name`: The name of the circus to run
+* `mean_daily_customer_mobility_activity` and
+`std_daily_customer_mobility_activity`
+* `mean_daily_fa_mobility_activity` and
+`std_daily_fa_mobility_activity`
+* `products`: One entry per product (typically: sim, handset, mfs,
+electronic_recharge, physical_recharge)
+* `products.X.customer_purchase_min_period_days` and
+`products.X.customer_purchase_max_period_days`
+* `products.X.max_pos_stock_triggering_pos_restock`
+* `products.X.restock_sigmoid_shape`
+* `products.X.pos_max_stock`
+* `products.X.item_prices`
