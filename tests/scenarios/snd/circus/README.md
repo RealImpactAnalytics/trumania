@@ -155,14 +155,19 @@ to run the circus. Here is a description of the different parameters:
 
 * `circus_name`: The name of the circus to run
 * `mean_daily_customer_mobility_activity` and
-`std_daily_customer_mobility_activity`
+`std_daily_customer_mobility_activity`: How often customers move
 * `mean_daily_fa_mobility_activity` and
-`std_daily_fa_mobility_activity`
+`std_daily_fa_mobility_activity`: How often field agents move
 * `products`: One entry per product (typically: sim, handset, mfs,
 electronic_recharge, physical_recharge)
 * `products.X.customer_purchase_min_period_days` and
-`products.X.customer_purchase_max_period_days`
-* `products.X.max_pos_stock_triggering_pos_restock`
-* `products.X.restock_sigmoid_shape`
-* `products.X.pos_max_stock`
-* `products.X.item_prices`
+`products.X.customer_purchase_max_period_days`: Min and max number of
+days in between purchases for a customer
+* `products.X.max_pos_stock_triggering_pos_restock`: Maximum stock
+amount after which POS won't restock
+* `products.X.restock_sigmoid_shape`: Shape of the restock sigmoid.
+If shape = 1, the probability to restock decreases linearly with the
+size of the stock. See
+[examples of shapes](https://github.com/RealImpactAnalytics/lab-data-generator/blob/develop/tests/notebooks/bounded_sigmoid.ipynb)
+* `products.X.pos_max_stock`: Maximum stock for a POS
+* `products.X.item_prices`: possible prices for this product
