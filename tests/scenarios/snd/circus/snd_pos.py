@@ -28,6 +28,7 @@ def _create_attractiveness_attributes(circus, pos):
         seed=circus.seeder.next())
     pos.create_attribute("ATTRACT_BASE", init_gen=attractiveness_base_gen)
 
+    # attractiveness itself is ATTRACT_BASE going through a sigmoid
     ac = _attractiveness_sigmoid()(pos.get_attribute_values("ATTRACT_BASE"))
     pos.create_attribute("ATTRACTIVENESS", init_values=ac)
 
