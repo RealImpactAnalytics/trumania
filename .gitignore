@@ -13,6 +13,7 @@ cdr_output_logs/
 snd_output_logs/
 .venv
 /output/
+/venv/
 
 # scala
 metastore_db
@@ -20,3 +21,6 @@ target
 *.class
 derby.log
 run.log
+
+# mac
+.DS_Store
