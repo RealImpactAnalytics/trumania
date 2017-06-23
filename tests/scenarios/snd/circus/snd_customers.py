@@ -51,7 +51,7 @@ def add_customers(circus, params):
     #
     # we remove one iteration that already happened for everybody here above
     for i in range(int(params["mean_known_sites_per_customer"]/p) - 1):
-        sample = customer_gen.generate(customers.size*p)
+        sample = customer_gen.generate(int(customers.size*p))
         mobility_rel.add_relations(
             from_ids=sample,
             to_ids=site_gen.generate(len(sample)),
