@@ -1,0 +1,29 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[dev-packages]
+
+
+
+[packages]
+
+networkx = "==1.11"
+pandas = "==0.19"
+numpy = "*"
+scipy = "*"
+seaborn = "*"
+teamcity-messages = "*"
+pytest = "*"
+faker = "*"
+jupyter = "*"
+pymongo = "*"
+"path.py" = "*"
+
+
+[requires]
+
+python_version = "2.7"
