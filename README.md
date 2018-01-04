@@ -1,10 +1,10 @@
-# data-generator
+# Trumania
 
 ## Documentation and tutorial
 
-See https://realimpactanalytics.atlassian.net/wiki/display/LM/Data+generator+tutorial
+See the [wiki](https://github.com/RealImpactAnalytics/trumania/wiki) in this repo for the detailed documentation of the generator. 
 
-You can also have a look at the S&D example Scenario here in `tests/scenarios/snd`
+You can also have a look at the S&D example Scenario here in `tests/scenarios/snd`.
 
 ## How to install 
 
