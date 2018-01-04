@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3f80844caf734793f1782bcd5fde0df219317f3f4027bcd5dabdec8d768307de"
+            "sha256": "9be6886a734038254611fd3657152002968907c3bf30346dce1559cbe33627b2"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -9,12 +9,12 @@
             "os_name": "posix",
             "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
-            "platform_release": "4.10.0-42-generic",
-            "platform_system": "Linux",
-            "platform_version": "#46~16.04.1-Ubuntu SMP Mon Dec 4 15:57:59 UTC 2017",
-            "python_full_version": "2.7.12",
+            "platform_release": "17.3.0",
+            "platform_system": "Darwin",
+            "platform_version": "Darwin Kernel Version 17.3.0: Thu Nov  9 18:09:22 PST 2017; root:xnu-4570.31.3~1/RELEASE_X86_64",
+            "python_full_version": "2.7.14",
             "python_version": "2.7",
-            "sys_platform": "linux2"
+            "sys_platform": "darwin"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -29,6 +29,14 @@
         ]
     },
     "default": {
+        "appnope": {
+            "hashes": [
+                "sha256:5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0",
+                "sha256:8b995ffe925347a2138d7ac0fe77155e4311a0ea6d6da4f5128fe4b3cbe5ed71"
+            ],
+            "markers": "sys_platform == 'darwin'",
+            "version": "==0.1.0"
+        },
         "attrs": {
             "hashes": [
                 "sha256:a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450",
@@ -202,10 +210,10 @@
         },
         "jupyter-client": {
             "hashes": [
-                "sha256:dc00ed35d43f2959a459bdda3ea061f6b9afb2f65a797a170a6e4e0acb274d03",
-                "sha256:ca30cf1786047925ebacd6f6faa3a993efaa004b584f7d83bc8b807f7cd3f6bb"
+                "sha256:ce1434979e7d1c0a4db351bc263b4da80de20f6515dc6059a8b05106b8eb0187",
+                "sha256:462790d46b244f0a631ea5e3cd5cdbad6874d5d24cc0ff512deb7c16cdf8653d"
             ],
-            "version": "==5.2.0"
+            "version": "==5.2.1"
         },
         "jupyter-console": {
             "hashes": [
@@ -273,13 +281,9 @@
         },
         "networkx": {
             "hashes": [
-                "sha256:3fbc044a40bc847ae28b65850b759f3d6c697ee7ff459a02dc8f8bc4d849dc7e",
-                "sha256:1b229b54fe9ccb009cee4de02a88552191497a542a7d5d34adab216b9f15c1ff",
-                "sha256:38e6bd32c0a2ad26439489d9b51e2684c01f352b536aaabbe499a3ad8c89f52b",
-                "sha256:0d0e70e10dfb47601cbb3425a00e03e2a2e97477be6f80638fef91d54dd1e4b8",
-                "sha256:b3e0144d5fe6b7479b694e1b598a5545a38f3fc6f1e3c09173eb30f0c7a5770e"
+                "sha256:cd5ff8f75d92c79237f067e2f0876824645d37f017cfffa5b7c9678cae1454aa"
             ],
-            "version": "==1.11"
+            "version": "==2.0"
         },
         "notebook": {
             "hashes": [
@@ -318,7 +322,7 @@
         },
         "pandas": {
             "hashes": [],
-            "version": "==0.19"
+            "version": "==0.22"
         },
         "pandocfilters": {
             "hashes": [
@@ -375,6 +379,7 @@
                 "sha256:e8c43b5eee76b2083a9badde89fd1bbce6c8942d1045146e100b7b5e014f4f1a",
                 "sha256:e64193f0047ad603b71f202332ab5527c5e52aa7c8b609704fc28c0dc20c4365"
             ],
+            "markers": "os_name != 'nt'",
             "version": "==0.5.2"
         },
         "py": {
