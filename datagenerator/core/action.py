@@ -170,7 +170,7 @@ class Action(object):
             activity = self.get_param("activity", ids)
             new_timer = self.time_generator.generate(observations=activity)
 
-            condition = new_timer == activity
+            condition = new_timer.isin(list(activity))
 
             # replacing any generated timer with -1 for fully inactive actors
             new_timer = new_timer.where(cond=condition, other=-1)
