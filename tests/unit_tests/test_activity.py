@@ -16,7 +16,8 @@ def run_test_scenario_1(clock_step, simulation_duration,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta(clock_step))
 
-    actor = circus.create_actor(name="a",
+    actor = circus.create_actor(
+        name="a",
         size=1000,
         ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
