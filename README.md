@@ -31,25 +31,31 @@ pipenv install
 
 See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies.
 
-## How to execute one scenario
 
+## Where and how to create a scenario
 
-Spawn a pipenv shell: 
-```sh 
-pipenv shell
-```
-
-Then launch a scenario:
-```sh
-pipenv run python tests/tutorial/example1.py  
-```
-
-## Run unit tests locally
+To create a scenario, simply create another python project that depends on trumania: 
 
 ```sh
-# if necessary, spawn a pipenv shell as described above
-# then launch all unit tests: 
-py.test -s 
+mkdir -p /path/to/your/project
+cd /path/to/your/project
+
+# then simply add a dependency towards the location where you downloaded trumania:
+pipenv install -e /path/to/trumania/
+```
+
+You can then create your scenario in python, let's call it `burbanks_and_friends_talking.py`.  In order to execute it, simply launch it from pipenv: 
+
+```sh
+pipenv run python burbanks_and_friends_talking.py  
+```
+
+## Running Trumania unit tests locally
+
+
+```sh
+# make sure you are not inside another pipenv shell when running this
+pipenv run py.test -s 
 ```
 
 ## Test data
