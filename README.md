@@ -31,17 +31,24 @@ pipenv install
 
 See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies.
 
+## How to execute one scenario
 
-## Run unit tests locally
 
-Enter the virtual env of the project: 
-
+Spawn a pipenv shell: 
 ```sh 
 pipenv shell
 ```
 
-Then execute the unit tests: 
+Then launch a scenario:
 ```sh
+pipenv run python tests/tutorial/example1.py  
+```
+
+## Run unit tests locally
+
+```sh
+# if necessary, spawn a pipenv shell as described above
+# then launch all unit tests: 
 py.test -s 
 ```
 
