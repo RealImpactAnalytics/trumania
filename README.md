@@ -34,7 +34,7 @@ See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about ho
 ## How to execute one scenario
 
 
-Spawn a pipen shell: 
+Spawn a pipenv shell: 
 ```sh 
 pipenv shell
 ```
