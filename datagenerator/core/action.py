@@ -112,15 +112,9 @@ class Action(object):
         """
         :return: 2 sets of actor ids: the one active at this turn and the others
         """
-        split = self.timer["remaining"].groupby(self.timer["remaining"] == 0)
 
-        def get_group(b):
-            if b in split.groups:
-                return [el for el in split.groups[b]]
-            else:
-                return []
-
-        return get_group(True), get_group(False)
+        active_idx = self.timer["remaining"] == 0
+        return self.timer.index[active_idx], self.timer.index[~active_idx]
 
     def timer_tick(self, actor_ids):
 
