@@ -114,7 +114,7 @@ class Action(object):
         """
 
         active_idx = self.timer["remaining"] == 0
-        return self.timer.index[active_idx], self.timer.index[~active_idx]
+        return self.timer.index[active_idx].tolist(), self.timer.index[~active_idx].tolist()
 
     def timer_tick(self, actor_ids):
 
