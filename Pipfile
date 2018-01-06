@@ -11,8 +11,8 @@ name = "pypi"
 
 [packages]
 
-networkx = "==1.11"
-pandas = "==0.19"
+networkx = "*"
+pandas = "==*"
 numpy = "*"
 scipy = "*"
 seaborn = "*"

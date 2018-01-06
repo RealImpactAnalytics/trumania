@@ -166,8 +166,7 @@ class CyclicTimerGenerator(DependentGenerator):
                                 index=profile_idx)
 
         # scaled weight profile, s.t. one clock step == one profile value
-        profile_ser = profile_ser.resample(rule=clock.step_duration,
-                                           fill_method='pad')[:-1]
+        profile_ser = profile_ser.resample(rule=clock.step_duration).pad()[:-1]
 
         self.n_time_bin = profile_ser.shape[0]
 

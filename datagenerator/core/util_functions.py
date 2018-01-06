@@ -31,15 +31,17 @@ def make_random_bipartite_data(group1, group2, p, seed):
     if len(group1) == 0 or len(group2) == 0 or p == 0:
         return []
 
-    bp = pd.DataFrame.from_records(bipartite.random_graph(len(group1), len(group2), p, seed).edges(),columns=["from","to"])
+    bp = pd.DataFrame.from_records(list(bipartite.random_graph(len(group1), len(group2), p, seed).edges()),
+                                   columns=["from", "to"])
     logging.info("  (bipartite index created, now resolving item values)")
 
-    # as all "to" nodes are from the second group, but numbered by networkx in range(len(group1),len(group1)+len(group2))
+    # as all "to" nodes are from the second group,
+    # but numbered by networkx in range(len(group1),len(group1)+len(group2))
     # we need to deduct len(group1) to have proper indexes.
     bp["to"] -= len(group1)
 
-    bp["from"] = bp.apply(lambda x: group1[x["from"]],axis=1)
-    bp["to"] = bp.apply(lambda x: group2[x["to"]],axis=1)
+    bp["from"] = bp.apply(lambda x: group1[x["from"]], axis=1)
+    bp["to"] = bp.apply(lambda x: group2[x["to"]], axis=1)
     logging.info("  (resolution done, now converting to tuples)")
     out = [tuple(x) for x in bp.to_records(index=False)]
     logging.info("  (exiting bipartite)")

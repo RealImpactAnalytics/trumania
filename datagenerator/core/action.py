@@ -165,7 +165,7 @@ class Action(object):
             new_timer = self.time_generator.generate(observations=activity)
 
             # replacing any generated timer with -1 for fully inactive actors
-            new_timer = new_timer.where(cond=activity, other=-1)
+            new_timer = new_timer.where(cond=activity != 0, other=-1)
 
             self.timer.loc[ids, "remaining"] = new_timer
 
