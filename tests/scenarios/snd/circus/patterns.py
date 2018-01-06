@@ -1,10 +1,10 @@
 """
 Re-usable operation chains throughout the SND scenario
 """
-from datagenerator.core.action import Action
-import datagenerator.core.operations as operations
-import datagenerator.core.random_generators as random_generators
-import datagenerator.core.util_functions as util_functions
+from trumania.core.action import Action
+import trumania.core.operations as operations
+import trumania.core.random_generators as random_generators
+import trumania.core.util_functions as util_functions
 import logging
 
 

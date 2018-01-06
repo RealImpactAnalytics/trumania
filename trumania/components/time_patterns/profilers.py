@@ -1,4 +1,4 @@
-from datagenerator.core.clock import *
+from trumania.core.clock import *
 
 
 class HighWeekDaysTimerGenerator(CyclicTimerGenerator):

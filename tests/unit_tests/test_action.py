@@ -1,8 +1,8 @@
-from datagenerator.core.action import Action
-from datagenerator.core.actor import Actor
+from trumania.core.action import Action
+from trumania.core.actor import Actor
 from tests.mocks.operations import *
 from tests.mocks.random_generators import *
-from datagenerator.core.random_generators import *
+from trumania.core.random_generators import *
 
 
 def test_empty_action_should_do_nothing_and_not_crash():

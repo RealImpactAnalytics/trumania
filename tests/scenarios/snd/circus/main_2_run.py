@@ -1,5 +1,5 @@
-from datagenerator.core import circus
-from datagenerator.core import util_functions
+from trumania.core import circus
+from trumania.core import util_functions
 import logging
 import pandas as pd
 

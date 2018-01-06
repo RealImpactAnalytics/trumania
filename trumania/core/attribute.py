@@ -1,4 +1,4 @@
-from datagenerator.core.operations import *
+from trumania.core.operations import *
 
 
 class Attribute(object):

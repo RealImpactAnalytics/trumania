@@ -2,8 +2,8 @@ import logging
 import numpy as np
 import pandas as pd
 import os
-from datagenerator.components import db
-import datagenerator.core.operations as operations
+from trumania.components import db
+import trumania.core.operations as operations
 
 
 def load_geo_actors(circus, params):

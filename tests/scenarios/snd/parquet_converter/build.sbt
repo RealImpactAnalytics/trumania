@@ -1,6 +1,6 @@
 import sbtassembly.MergeStrategy
 
-name := "data_generator"
+name := "trumania"
 
 organization := "bi.ria"
 

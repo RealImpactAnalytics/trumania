@@ -1,5 +1,5 @@
-from datagenerator.components.time_patterns.profilers import  *
-from datagenerator.core import operations
+from trumania.components.time_patterns.profilers import  *
+from trumania.core import operations
 
 
 class Action(object):

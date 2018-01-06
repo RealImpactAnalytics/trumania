@@ -1,11 +1,11 @@
 from __future__ import division
 
-from datagenerator.components.social_networks.erdos_renyi import *
-from datagenerator.components.geographies.random_geo import *
-from datagenerator.components.time_patterns.profilers import *
-from datagenerator.components.geographies.uganda import *
+from trumania.components.social_networks.erdos_renyi import *
+from trumania.components.geographies.random_geo import *
+from trumania.components.time_patterns.profilers import *
+from trumania.components.geographies.uganda import *
 
-from datagenerator.core import operations
+from trumania.core import operations
 
 from datetime import datetime
 

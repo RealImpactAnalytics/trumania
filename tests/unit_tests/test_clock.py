@@ -1,4 +1,4 @@
-from datagenerator.components.time_patterns.profilers import *
+from trumania.components.time_patterns.profilers import *
 
 
 def test_clock_tick_per_day():

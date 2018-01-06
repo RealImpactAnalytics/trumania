@@ -1,7 +1,7 @@
 from __future__ import division
 
-from datagenerator.core.random_generators import *
-from datagenerator.core.util_functions import *
+from trumania.core.random_generators import *
+from trumania.core.util_functions import *
 import logging
 
 

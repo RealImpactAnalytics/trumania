@@ -5,8 +5,8 @@ The loaded Actor has a LATITUDE and a LONGITUDE attribute
 See https://realimpactanalytics.atlassian.net/wiki/x/J4A6Bg to read more on how
 the dataset was generated.
 """
-from datagenerator.components import db
-from datagenerator.core.circus import Circus
+from trumania.components import db
+from trumania.core.circus import Circus
 import logging
 
 

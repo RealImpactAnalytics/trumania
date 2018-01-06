@@ -1,5 +1,5 @@
-from datagenerator.core.relationship import Relationship
-from datagenerator.core.util_functions import *
+from trumania.core.relationship import Relationship
+from trumania.core.util_functions import *
 import path
 import os
 

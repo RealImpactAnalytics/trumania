@@ -1,9 +1,9 @@
 import path
-from datagenerator.core.random_generators import *
+from trumania.core.random_generators import *
 
-from datagenerator.core.actor import Actor
-from datagenerator.core.circus import Circus
-from datagenerator.core.attribute import Attribute
+from trumania.core.actor import Actor
+from trumania.core.circus import Circus
+from trumania.core.attribute import Attribute
 
 tc = Circus("c", master_seed=1234, start=pd.Timestamp("1 Jan 2011"),
             step_duration=pd.Timedelta("1h"))

@@ -1,7 +1,7 @@
 from __future__ import division
-from datagenerator.core.circus import *
-from datagenerator.core.actor import *
-from datagenerator.core.util_functions import *
+from trumania.core.circus import *
+from trumania.core.actor import *
+from trumania.core.util_functions import *
 import patterns
 import pandas as pd
 

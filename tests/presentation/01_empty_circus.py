@@ -1,6 +1,6 @@
-from datagenerator.core import circus
-import datagenerator.core.util_functions as util_functions
-from datagenerator.core.actor import *
+from trumania.core import circus
+import trumania.core.util_functions as util_functions
+from trumania.core.actor import *
 
 
 util_functions.setup_logging()

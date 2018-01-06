@@ -1,4 +1,4 @@
-from datagenerator.core.random_generators import *
+from trumania.core.random_generators import *
 import path
 
 

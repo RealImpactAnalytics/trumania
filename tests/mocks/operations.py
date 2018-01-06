@@ -1,4 +1,4 @@
-from datagenerator.core import operations
+from trumania.core import operations
 
 
 class FakeOp(operations.Operation):

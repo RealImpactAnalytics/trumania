@@ -1,6 +1,6 @@
-from datagenerator.core.attribute import *
-from datagenerator.core.relationship import *
-from datagenerator.core import random_generators
+from trumania.core.attribute import *
+from trumania.core.relationship import *
+from trumania.core import random_generators
 
 
 class Actor(object):

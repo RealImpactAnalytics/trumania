@@ -8,7 +8,7 @@ You can also have a look at the S&D example Scenario here in `tests/scenarios/sn
 
 ## How to install 
 
-The data-generator is not (yet) packaged in any special way, the way it is used at the moment is simply to have the code, the required dependencies, and execute the necessary python script directly. 
+Trumania is not (yet) packaged in any special way, the way it is used at the moment is simply to have the code, the required dependencies, and execute the necessary python script directly. 
 
 Make sure you have python 2.7 and pip installed.
 
@@ -61,16 +61,16 @@ pipenv run py.test -s
 ## Test data
 Some folders are stored on S3:
 
-`datagenerator/components/_DB` is on `s3://lab-data-generator-db`
+`trumania/components/_DB` is on `s3://lab-data-generator-db`
 
-`datagenerator/components/geographies/source_data` is on `s3://lab-data-generator-geographies`
+`trumania/components/geographies/source_data` is on `s3://lab-data-generator-geographies`
 
 You can download them with aws-cli:
 
 ```sh
 pip install awscli
-mkdir datagenerator/components/_DB
-cd datagenerator/components/_DB
+mkdir trumania/components/_DB
+cd trumania/components/_DB
 # make sure you have your AWS env variables set
 aws s3 cp s3://lab-data-generator-db . --recursive
 ```
