@@ -164,10 +164,8 @@ class Action(object):
             activity = self.get_param("activity", ids)
             new_timer = self.time_generator.generate(observations=activity)
 
-            inactive_idx = list(activity.loc[lambda x: x == 0].index)
-
             # replacing any generated timer with -1 for fully inactive actors
-            new_timer.loc[inactive_idx] = -1
+            new_timer = new_timer.where(cond=activity != 0, other=-1)
 
             self.timer.loc[ids, "remaining"] = new_timer
 
