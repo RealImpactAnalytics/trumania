@@ -5,10 +5,10 @@ This is a
 
 from __future__ import division
 
-from datagenerator.core.relationship import *
-from datagenerator.core.circus import *
-from datagenerator.components.time_patterns.profilers import *
-from datagenerator.components.geographies.random_geo import *
+from trumania.core.relationship import *
+from trumania.core.circus import *
+from trumania.components.time_patterns.profilers import *
+from trumania.components.geographies.random_geo import *
 
 # AgentA: has stock of SIMs
 # AgentB: has stock of SIMs

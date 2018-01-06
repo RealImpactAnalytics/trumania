@@ -1,11 +1,11 @@
 """
 This is just an illustration of how to persist various scenario components
 """
-from datagenerator.core.actor import *
-from datagenerator.core import operations
-from datagenerator.components import db
-from datagenerator.core.circus import Circus
-from datagenerator.components.time_patterns.profilers import *
+from trumania.core.actor import *
+from trumania.core import operations
+from trumania.components import db
+from trumania.core.circus import Circus
+from trumania.components.time_patterns.profilers import *
 import logging
 
 

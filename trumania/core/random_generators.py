@@ -3,7 +3,7 @@ from faker import Faker
 from bson.objectid import ObjectId
 import json
 
-from datagenerator.core.operations import *
+from trumania.core.operations import *
 
 
 def seed_provider(master_seed):

@@ -1,7 +1,7 @@
-from datagenerator.core import circus
-from datagenerator.core.circus import *
-from datagenerator.core.actor import *
-import datagenerator.core.util_functions as util_functions
+from trumania.core import circus
+from trumania.core.circus import *
+from trumania.core.actor import *
+import trumania.core.util_functions as util_functions
 from tabulate import tabulate
 
 

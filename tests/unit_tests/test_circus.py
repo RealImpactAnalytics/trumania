@@ -1,8 +1,8 @@
 from __future__ import division
-from datagenerator.core.circus import Circus
-from datagenerator.components.time_patterns.profilers import *
+from trumania.core.circus import Circus
+from trumania.components.time_patterns.profilers import *
 import pytest
-from datagenerator.core.random_generators import *
+from trumania.core.random_generators import *
 
 
 def test_create_action_get_action_should_work_as_expected():

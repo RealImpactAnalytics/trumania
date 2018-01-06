@@ -1,9 +1,9 @@
-from datagenerator.core.action import *
-from datagenerator.core import actor
+from trumania.core.action import *
+from trumania.core import actor
 import logging
 import os
 import json
-from datagenerator.components import db
+from trumania.components import db
 
 
 class Circus(object):

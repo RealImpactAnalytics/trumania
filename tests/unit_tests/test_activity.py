@@ -1,9 +1,9 @@
 import path
-from datagenerator.components.time_patterns.profilers import *
+from trumania.components.time_patterns.profilers import *
 
-import datagenerator.core.operations as operations
-import datagenerator.core.util_functions as util_functions
-from datagenerator.core.circus import Circus
+import trumania.core.operations as operations
+import trumania.core.util_functions as util_functions
+from trumania.core.circus import Circus
 
 util_functions.setup_logging()
 

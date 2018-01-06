@@ -1,8 +1,8 @@
-from datagenerator.core import circus
-import datagenerator.core.random_generators as gen
-import datagenerator.core.operations as ops
-import datagenerator.components.time_patterns.profilers as profilers
-import datagenerator.core.util_functions as util_functions
+from trumania.core import circus
+import trumania.core.random_generators as gen
+import trumania.core.operations as ops
+import trumania.components.time_patterns.profilers as profilers
+import trumania.core.util_functions as util_functions
 
 import pandas as pd
 

@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 import logging
 import main_1_build
-from datagenerator.components import db
-from datagenerator.core import operations
-from datagenerator.core import util_functions
+from trumania.components import db
+from trumania.core import operations
+from trumania.core import util_functions
 import os
 
 circus_name = main_1_build.static_params["circus_name"]

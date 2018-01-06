@@ -12,9 +12,9 @@ A namespace defines a place where to put objects that belong together
 # TODO: would be cool to also be able to store empirical probability
 # distribution here, for the random generators...
 
-from datagenerator.core.actor import Actor
-import datagenerator.core.clock as clock
-from datagenerator.core.random_generators import *
+from trumania.core.actor import Actor
+import trumania.core.clock as clock
+from trumania.core.random_generators import *
 
 
 def save_actor(actor, namespace, actor_id):

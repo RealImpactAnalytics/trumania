@@ -1,4 +1,4 @@
-from datagenerator.core import random_generators
+from trumania.core import random_generators
 import snd_constants
 
 

@@ -1,7 +1,7 @@
 import path
-from datagenerator.core.random_generators import *
+from trumania.core.random_generators import *
 
-from datagenerator.core.actor import Actor
+from trumania.core.actor import Actor
 
 dummy_actor = Actor(circus=None,
                     size=10,

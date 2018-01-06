@@ -2,7 +2,7 @@ from __future__ import division
 from scipy import stats
 from abc import ABCMeta, abstractmethod
 
-from datagenerator.core.util_functions import *
+from trumania.core.util_functions import *
 
 
 class Operation(object):

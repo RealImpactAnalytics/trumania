@@ -1,6 +1,6 @@
-from datagenerator.core.circus import Circus
-from datagenerator.core.actor import Actor
-from datagenerator.core.random_generators import *
+from trumania.core.circus import Circus
+from trumania.core.actor import Actor
+from trumania.core.random_generators import *
 
 import pandas as pd
 

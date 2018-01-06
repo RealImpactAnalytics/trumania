@@ -1,8 +1,8 @@
 from __future__ import division
 import logging
 import networkx as nx
-import datagenerator.core.random_generators as rg
-from datagenerator.core.circus import Circus
+import trumania.core.random_generators as rg
+from trumania.core.circus import Circus
 
 import pandas as pd
 

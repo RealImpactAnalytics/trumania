@@ -1,7 +1,7 @@
-import datagenerator.core as operations
+import trumania.core as operations
 import tests.mocks.operations as mockops
-from datagenerator.core.util_functions import *
-from datagenerator.core import operations
+from trumania.core.util_functions import *
+from trumania.core import operations
 import numpy as np
 
 
