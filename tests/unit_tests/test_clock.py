@@ -27,7 +27,7 @@ def test_init_cyclictimergenerator():
     timer_gen = CyclicTimerGenerator(
         clock=clock,
         config=CyclicTimerProfile(
-            profile=range(1, 13) + range(12, 0, -1),
+            profile=list(range(1, 13)) + list(range(12, 0, -1)),
             profile_time_steps="1H",
             start_date=pd.Timestamp("1 January 2014 00:00:00"),
         ),
@@ -75,7 +75,7 @@ def test_activity_level_should_be_scaled_according_to_profile_duration():
     one_day_timer = CyclicTimerGenerator(
         clock=clock,
         config=CyclicTimerProfile(
-            profile=range(1, 13) + range(12, 0, -1),
+            profile=list(range(24)),
             profile_time_steps="1H",
             start_date=pd.Timestamp("1 January 2014 00:00:00"),
         ),

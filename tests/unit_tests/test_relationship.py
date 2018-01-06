@@ -1,5 +1,6 @@
 from trumania.core.relationship import Relationship
 from trumania.core.util_functions import *
+import functools
 import path
 import os
 
@@ -458,7 +459,7 @@ def test_select_many_should_return_subsets_of_relationships():
     selection["selected_sets"].apply(len).tolist() == [4, 5, 6, 7, 8]
 
     # every chosen elemnt should be persent at most once
-    s = reduce(lambda s1, s2: set(s1) | set(s2), selection["selected_sets"])
+    s = functools.reduce(lambda s1, s2: set(s1) | set(s2), selection["selected_sets"])
     assert len(s) == np.sum([4, 5, 6, 7, 8])
 
     # selecting the same thing => should return the same result since
@@ -624,7 +625,7 @@ def test_select_many_operation_should_join_subsets_of_relationships():
     selection["found"].apply(len).tolist() == [4, 5, 6, 7, 8]
 
     # every chosen element should be present at most once
-    s = reduce(lambda s1, s2: set(s1) | set(s2), selection["found"])
+    s = functools.reduce(lambda s1, s2: set(s1) | set(s2), selection["found"])
     assert len(s) == np.sum([4, 5, 6, 7, 8])
 
     # all relationships in wh00 must come from a

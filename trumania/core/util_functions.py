@@ -6,6 +6,7 @@ from numpy.random import RandomState
 import pandas as pd
 import numpy as np
 import os
+import functools
 from networkx.algorithms import bipartite
 import logging
 
@@ -124,11 +125,11 @@ def merge_dicts(dicts, merge_func=None):
     # check if the input list or iterator is empty
     dict_backup, test = tee(iter(dicts))
     try:
-        test.next()
+        next(test)
     except StopIteration:
         return {}
 
-    return reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dict_backup)
+    return functools.reduce(lambda d1, d2: merge_2_dicts(d1, d2, merge_func), dict_backup)
 
 
 def setup_logging():
@@ -139,9 +140,11 @@ def setup_logging():
 
 # stolen from http://stackoverflow.com/questions/1835018/python-check-if-an-object-is-a-list-or-tuple-but-not-string#answer-1835259
 def is_sequence(arg):
-    return (not hasattr(arg, "strip") and
-            hasattr(arg, "__getitem__") or
-            hasattr(arg, "__iter__"))
+    return type(arg) is list or type(arg) is tuple or type(arg) is set
+
+#    return (not hasattr(arg, "strip") and
+#            hasattr(arg, "__getitem__") or
+#            hasattr(arg, "__iter__"))
 
 
 def build_ids(size, id_start=0, prefix="id_", max_length=10):
