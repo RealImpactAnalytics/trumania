@@ -2,6 +2,7 @@ from trumania.core.operations import *
 import pandas as pd
 import functools
 
+
 class Relationship(object):
     """
         One-to-many relationship between actors.

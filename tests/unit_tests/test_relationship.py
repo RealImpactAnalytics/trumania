@@ -389,7 +389,7 @@ def test_select_all_function_from_empty_relationship_should_return_empty():
 
 def test_select_all_should_return_all_values_of_requested_ids():
 
-    all_to = two_per_from.select_all(from_ids=["a", "b"])
+    all_to = two_per_from.select_all(from_ids=["a", "b"]).sort_values(by="from").reset_index(drop=True)
 
     # there is no relationship from "non_existing", so we should have an
     # empty list for it (not an absence of row)
@@ -397,20 +397,22 @@ def test_select_all_should_return_all_values_of_requested_ids():
         "from": ["a", "b"],
         "to": [["ya", "za"], ["yb", "zb"]]
         }
-    )
-    assert all_to.equals(expected), "dataframe\n {} should equal dataframe:\n {}".format(all_to, expected)
+    ).sort_values(by="from").reset_index(drop=True)
+
+    assert all_to.sort_values(by="from").equals(expected.sort_values(by="from")), "dataframe\n {} should equal dataframe:\n {}".format(all_to, expected)
 
 
 def test_select_all_should_return_lists_even_for_one_to_one():
 
-    all_to = oneto1.select_all(from_ids=["a", "b"])
+    all_to = oneto1.select_all(from_ids=["a", "b"]).sort_values(by="from").reset_index(drop=True)
 
     expected = pd.DataFrame({
         "from": ["a", "b"],
         "to": [["ta"], ["tb"]]
         }
-    )
-    assert all_to.equals(expected)
+    ).sort_values(by="from").reset_index(drop=True)
+
+    assert all_to.sort_values(by="from").equals(expected)
 
 
 def test_select_all_operation():
