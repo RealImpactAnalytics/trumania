@@ -1,4 +1,6 @@
-from trumania.core.operations import *
+import pandas as pd
+import logging
+from trumania.core.operations import SideEffectOnly
 
 
 class Attribute(object):
@@ -164,4 +166,3 @@ class Attribute(object):
 
         def subtract(self, actor_id_field, subtracted_value_field):
             return self.Add(self.attribute, actor_id_field, subtracted_value_field, subtract=True)
-

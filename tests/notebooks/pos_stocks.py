@@ -19,7 +19,7 @@ def post_pad(vect, target_size):
     """
     pads the end of this vectors with 0s s.t. it is as long as T_size
     """
-    return np.pad(vect, [0, target_size- len(vect)], "constant", constant_values=0)
+    return np.pad(vect, [0, target_size - len(vect)], "constant", constant_values=0)
 
 
 def pre_pad(vect, n_pads):
@@ -45,7 +45,9 @@ def build_heatmap(transition_matrix, **kwargs):
     convenience method to show a heatmap representing this transition matrix
     """
     return sns.heatmap(transition_matrix,
-                xticklabels=False, yticklabels=False, **kwargs)
+                       xticklabels=False,
+                       yticklabels=False,
+                       **kwargs)
 
 
 def compute_stationary(transition_matrix):

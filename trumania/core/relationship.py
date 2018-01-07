@@ -1,5 +1,10 @@
-from trumania.core.operations import *
 import pandas as pd
+from numpy.random import RandomState
+import numpy as np
+import logging
+
+from trumania.core.util_functions import cap_to_total
+from trumania.core.operations import AddColumns, Operation, SideEffectOnly
 
 
 class Relationship(object):
@@ -75,7 +80,8 @@ class Relationship(object):
 
         return counts.reindex(np.unique(unique_froms)).fillna(0)
 
-    def _maybe_add_nones(self, should_inject_nones, from_ids, selected):
+    @staticmethod
+    def _maybe_add_nones(should_inject_nones, from_ids, selected):
         """
         if should_inject_Nones, this adds (from_id -> None) selection entries
         for any from_id present in the from_ids series but not found in this
@@ -83,9 +89,11 @@ class Relationship(object):
         """
         if should_inject_nones and selected.shape[0] != len(from_ids):
             missing_index = from_ids.index.difference(selected.index)
-            missing_values = pd.DataFrame({
+            missing_values = pd.DataFrame(
+                {
                     "from": from_ids.loc[missing_index],
-                    "to": [None] * missing_index.shape[0]},
+                    "to": [None] * missing_index.shape[0]
+                },
                 index=missing_index)
 
             return pd.concat([selected, missing_values], copy=False)
@@ -291,7 +299,8 @@ class Relationship(object):
         self._table.drop(lines.index, inplace=True)
 
     ######################
-    ## IO
+    # IO                 #
+    ######################
 
     def save_to(self, file_path):
 

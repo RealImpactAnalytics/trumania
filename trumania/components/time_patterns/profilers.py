@@ -1,4 +1,6 @@
-from trumania.core.clock import *
+import pandas as pd
+
+from trumania.core.clock import CyclicTimerGenerator, CyclicTimerProfile
 
 
 class HighWeekDaysTimerGenerator(CyclicTimerGenerator):

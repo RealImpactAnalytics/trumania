@@ -1,8 +1,11 @@
+import logging
+import pandas as pd
+
 from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
 import trumania.core.util_functions as util_functions
-from tabulate import tabulate
+from trumania.core.operations import FieldLogger
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
+from trumania.core.random_generators import ConstantDependentGenerator, ConstantGenerator
 
 
 util_functions.setup_logging()
@@ -46,13 +49,8 @@ hello_world = example.create_action(
 )
 
 hello_world.set_operations(
-
-    ConstantGenerator(value="hello world")
-        .ops
-        .generate(named_as="MESSAGE"),
-
+    ConstantGenerator(value="hello world").ops.generate(named_as="MESSAGE"),
     FieldLogger(log_id="hello")
-
 )
 
 example.run(
@@ -63,9 +61,3 @@ example.run(
 
 with open("output/example3/hello.csv") as log:
     logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
-
-
-
-
-
-

@@ -1,7 +1,8 @@
+import logging
+import pandas as pd
+
 from trumania.core import circus
 import trumania.core.util_functions as util_functions
-from trumania.core.actor import *
-
 
 util_functions.setup_logging()
 

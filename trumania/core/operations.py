@@ -1,8 +1,10 @@
 from __future__ import division
 from scipy import stats
 from abc import ABCMeta, abstractmethod
+import pandas as pd
+import numpy as np
 
-from trumania.core.util_functions import *
+from trumania.core.util_functions import merge_dicts, df_concat
 
 
 class Operation(object):
@@ -349,10 +351,12 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
 
         if incrementing:
             return stats.beta.cdf((x_b - x_min) / (x_max - x_min),
-                                   a=shape, b=shape)
+                                  a=shape,
+                                  b=shape)
         else:
             return stats.beta.sf((x_b - x_min) / (x_max - x_min),
-                                  a=shape, b=shape)
+                                 a=shape,
+                                 b=shape)
 
     return np.frompyfunc(f, 1, 1)
 

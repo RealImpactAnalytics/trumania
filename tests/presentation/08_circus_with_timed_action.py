@@ -1,8 +1,11 @@
+import logging
+import pandas as pd
+
 from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
 import trumania.core.util_functions as util_functions
-from tabulate import tabulate
+from trumania.core.operations import FieldLogger
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
+from trumania. components.time_patterns.profilers import WorkHoursTimerGenerator
 
 
 util_functions.setup_logging()
@@ -51,41 +54,43 @@ hello_world = the_circus.create_action(
 
     # action now only tiggers during office hours
     timer_gen=WorkHoursTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock,
+        seed=the_circus.seeder.next())
 )
 
 hello_world.set_operations(
 
     # adding a random timestamp, within the current clock step
     the_circus.clock
-        .ops
-        .timestamp(named_as="TIME"),
+    .ops
+    .timestamp(named_as="TIME"),
 
     # message is now a random sentence from Faker
     FakerGenerator(method="sentence",
                    nb_words=6, variable_nb_words=True,
                    seed=the_circus.seeder.next()
-        ).ops
-        .generate(named_as="MESSAGE"),
+                   )
+    .ops
+    .generate(named_as="MESSAGE"),
 
     # selecting a random "other person"
     the_circus.actors["person"]
-        .ops
-        .select_one(named_as="OTHER_PERSON"),
+    .ops
+    .select_one(named_as="OTHER_PERSON"),
 
     the_circus.actors["person"]
-        .ops
-        .lookup(actor_id_field="PERSON_ID",
-                select={"NAME": "EMITTER_NAME"}),
+    .ops
+    .lookup(actor_id_field="PERSON_ID",
+            select={"NAME": "EMITTER_NAME"}),
 
     the_circus.actors["person"]
-        .ops
-        .lookup(actor_id_field="OTHER_PERSON",
-                select={"NAME": "RECEIVER_NAME"}),
+    .ops
+    .lookup(actor_id_field="OTHER_PERSON",
+            select={"NAME": "RECEIVER_NAME"}),
 
     # specifying which fields to put in the log
     FieldLogger(log_id="hello",
-        cols=["TIME", "EMITTER_NAME", "RECEIVER_NAME", "MESSAGE"]
+                cols=["TIME", "EMITTER_NAME", "RECEIVER_NAME", "MESSAGE"]
                 )
 
 )
@@ -98,9 +103,3 @@ the_circus.run(
 
 with open("output/example8/hello.csv") as log:
     logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
-
-
-
-
-
-

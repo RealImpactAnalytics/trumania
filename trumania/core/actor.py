@@ -1,5 +1,12 @@
-from trumania.core.attribute import *
-from trumania.core.relationship import *
+import pandas as pd
+import logging
+import numpy as np
+import os
+
+from trumania.core.operations import AddColumns, SideEffectOnly
+from trumania.core.relationship import Relationship
+from trumania.core.attribute import Attribute
+from trumania.core.util_functions import make_random_assign, ensure_non_existing_dir, is_sequence
 from trumania.core import random_generators
 
 
@@ -368,7 +375,6 @@ class Actor(object):
             particular relation is required, we just sample one id randomly
 
             :param named_as: the name of the field added to the action_data
-            :param seed: seed of the random generator
             """
 
             gen = random_generators.NumpyRandomGenerator(

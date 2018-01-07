@@ -1,8 +1,6 @@
 from trumania.core.circus import Circus
 from trumania.core.actor import Actor
-from trumania.core.random_generators import *
-
-import pandas as pd
+from trumania.core.random_generators import FakerGenerator
 
 
 class WithRandomGeo(Circus):

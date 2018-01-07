@@ -7,7 +7,7 @@ name = "pypi"
 
 [dev-packages]
 
-
+flake8 = "*"
 
 [packages]
 

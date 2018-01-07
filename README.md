@@ -58,6 +58,9 @@ pipenv run python burbanks_and_friends_talking.py
 pipenv run py.test -s 
 ```
 
+## Python linting
+Run `flake8 --ignore E501,W391 .`. If nothing is returned, the correct styling has been applied.
+
 ## Test data
 Some folders are stored on S3:
 

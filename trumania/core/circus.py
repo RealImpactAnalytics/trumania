@@ -1,9 +1,14 @@
-from trumania.core.action import *
-from trumania.core import actor
 import logging
 import os
 import json
+import pandas as pd
+
+from trumania.core import actor
 from trumania.components import db
+from trumania.core.random_generators import seed_provider
+from trumania.core.util_functions import ensure_non_existing_dir
+from trumania.core.clock import Clock
+from trumania.core.action import Action
 
 
 class Circus(object):
@@ -148,8 +153,8 @@ class Circus(object):
         dictated by the clock)
         :type duration: pd.TimeDelta
 
-        :param output_folder: folder where to write the logs.
-        :type output_folder: string
+        :param log_output_folder: folder where to write the logs.
+        :type log_output_folder: string
 
         :param delete_existing_logs:
         """
@@ -157,7 +162,8 @@ class Circus(object):
         n_iterations = self.clock.n_iterations(duration)
         logging.info("Starting circus for {} iterations of {} for a "
                      "total duration of {}".format(
-            n_iterations, self.clock.step_duration, duration))
+                        n_iterations, self.clock.step_duration, duration
+                     ))
 
         if os.path.exists(log_output_folder):
             if delete_existing_logs:

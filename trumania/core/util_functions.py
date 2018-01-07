@@ -1,5 +1,5 @@
-"""Collection of utility functions
-
+"""
+Collection of utility functions
 """
 
 from numpy.random import RandomState

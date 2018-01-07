@@ -1,8 +1,11 @@
+import logging
+import pandas as pd
+
 from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
 import trumania.core.util_functions as util_functions
-from tabulate import tabulate
+from trumania.core.operations import FieldLogger
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
+from trumania.core.random_generators import ConstantDependentGenerator
 
 
 util_functions.setup_logging()
@@ -38,8 +41,9 @@ def create_circus_with_actor():
 def add_quotes(the_circus):
 
     quote_generator = FakerGenerator(method="sentence",
-                       nb_words=6, variable_nb_words=True,
-                       seed=the_circus.seeder.next())
+                                     nb_words=6,
+                                     variable_nb_words=True,
+                                     seed=the_circus.seeder.next())
 
     person = the_circus.actors["person"]
 
@@ -67,34 +71,34 @@ hello_world.set_operations(
 
     # adding a random timestamp, within the current clock step
     the_circus.clock
-        .ops
-        .timestamp(named_as="TIME"),
+    .ops
+    .timestamp(named_as="TIME"),
 
     # message is now selected from the favourite quotes of the speaker
     the_circus.actors["person"].get_relationship("quotes")
-        .ops
-        .select_one(
-            from_field="PERSON_ID",
-            named_as="MESSAGE"),
+    .ops
+    .select_one(
+        from_field="PERSON_ID",
+        named_as="MESSAGE"),
 
     # selecting a random "other person"
     the_circus.actors["person"]
-        .ops
-        .select_one(named_as="OTHER_PERSON"),
+    .ops
+    .select_one(named_as="OTHER_PERSON"),
 
     the_circus.actors["person"]
-        .ops
-        .lookup(actor_id_field="PERSON_ID",
-                select={"NAME": "EMITTER_NAME"}),
+    .ops
+    .lookup(actor_id_field="PERSON_ID",
+            select={"NAME": "EMITTER_NAME"}),
 
     the_circus.actors["person"]
-        .ops
-        .lookup(actor_id_field="OTHER_PERSON",
-                select={"NAME": "RECEIVER_NAME"}),
+    .ops
+    .lookup(actor_id_field="OTHER_PERSON",
+            select={"NAME": "RECEIVER_NAME"}),
 
     # specifying which fields to put in the log
     FieldLogger(log_id="hello",
-        cols=["TIME", "EMITTER_NAME", "RECEIVER_NAME", "MESSAGE"])
+                cols=["TIME", "EMITTER_NAME", "RECEIVER_NAME", "MESSAGE"])
 
 )
 
@@ -106,9 +110,3 @@ the_circus.run(
 
 with open("output/example4/hello.csv") as log:
     logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
-
-
-
-
-
-
