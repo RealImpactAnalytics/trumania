@@ -20,6 +20,7 @@ faker = "*"
 pymongo = "*"
 "path.py" = "*"
 bson = "*"
+tabulate = "*"
 "e1839a8" = {path = ".", editable = true}
 
 

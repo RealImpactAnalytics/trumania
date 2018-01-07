@@ -22,13 +22,13 @@ person = example.create_actor(
 person.create_attribute(
     "NAME",
     init_gen=FakerGenerator(method="name",
-                            seed=example.seeder.next()))
+                            seed=next(example.seeder)))
 
 person.create_attribute(
     "age",
     init_gen=NumpyRandomGenerator(
-        method="normal", loc="35", scale="5",
-        seed=example.seeder.next()))
+        method="normal", loc=35, scale=5,
+        seed=next(example.seeder)))
 
 example.run(
     duration=pd.Timedelta("48h"),
@@ -40,6 +40,3 @@ example.run(
 logging.info("10 first persons: \n" +
     tabulate(person.to_dataframe().head(10),
              headers='keys', tablefmt='psql'))
-
-
-
