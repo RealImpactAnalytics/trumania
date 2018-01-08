@@ -1,7 +1,10 @@
+import pandas as pd
+
 from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
-import trumania.core.util_functions as util_functions
+from trumania.core.util_functions import make_random_bipartite_data, setup_logging
+from trumania.core.operations import FieldLogger, Apply
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
+from trumania.core.random_generators import ConstantDependentGenerator, ConstantGenerator
 
 # each step?() function below implement one step of the first example of the
 # tutorial documented at
@@ -540,7 +543,7 @@ def step7():
         allowed_sites.ops.select_one(from_field="COUNTERPART_ID",
                                      named_as="COUNTERPART_SITE"),
 
-        operations.Apply(
+        Apply(
             source_fields=["DURATION", "SITE", "COUNTERPART_SITE"],
             named_as=["PRICE", "CURRENCY"],
             f=price, f_args="dataframe"),
@@ -561,5 +564,5 @@ def step7():
 
 
 if __name__ == "__main__":
-    util_functions.setup_logging()
+    setup_logging()
     step7()
