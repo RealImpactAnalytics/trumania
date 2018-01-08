@@ -142,10 +142,6 @@ def setup_logging():
 def is_sequence(arg):
     return type(arg) is list or type(arg) is tuple or type(arg) is set
 
-#    return (not hasattr(arg, "strip") and
-#            hasattr(arg, "__getitem__") or
-#            hasattr(arg, "__iter__"))
-
 
 def build_ids(size, id_start=0, prefix="id_", max_length=10):
     """
@@ -244,4 +240,3 @@ def load_all_logs(folder):
         all_logs[log_id] = logs
 
     return all_logs
-

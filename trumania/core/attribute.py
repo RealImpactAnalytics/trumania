@@ -164,4 +164,3 @@ class Attribute(object):
 
         def subtract(self, actor_id_field, subtracted_value_field):
             return self.Add(self.attribute, actor_id_field, subtracted_value_field, subtract=True)
-

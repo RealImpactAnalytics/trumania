@@ -95,7 +95,3 @@ def test_activity_level_should_be_scaled_according_to_profile_duration():
 
     assert 1./360 - one_day_timer.activity(
         n_actions=1, per=pd.Timedelta("360 days")) < 1e-10
-
-
-
-

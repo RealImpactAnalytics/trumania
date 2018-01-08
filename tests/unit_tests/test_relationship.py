@@ -687,7 +687,3 @@ def test_io_round_trip():
         assert four_to_plenty._table.index.equals(retrieved._table.index)
         assert four_to_plenty._table.columns.equals(retrieved._table.columns)
         assert four_to_plenty._table.equals(retrieved._table)
-
-
-
-

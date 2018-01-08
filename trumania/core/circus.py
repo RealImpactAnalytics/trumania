@@ -63,10 +63,10 @@ class Circus(object):
         if namespace is None:
             namespace = self.name
 
-        actor = db.load_actor(namespace=namespace, actor_id=actor_id,
+        loaded_actor = db.load_actor(namespace=namespace, actor_id=actor_id,
                               circus=self)
-        self.actors[actor_id] = actor
-        return actor
+        self.actors[actor_id] = loaded_actor
+        return loaded_actor
 
     def create_action(self, name, **action_params):
         """
@@ -148,8 +148,8 @@ class Circus(object):
         dictated by the clock)
         :type duration: pd.TimeDelta
 
-        :param output_folder: folder where to write the logs.
-        :type output_folder: string
+        :param log_output_folder: folder where to write the logs.
+        :type log_output_folder: string
 
         :param delete_existing_logs:
         """

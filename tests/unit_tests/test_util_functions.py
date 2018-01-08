@@ -230,4 +230,4 @@ def test_random_bipartite_network_generation_returns_bipartite_network():
     all_edges = [(1,5),(1,6),(2,5),(2,6)]
     bp = make_random_bipartite_data([1,2],[5,6],1.,1234)
 
-    assert functools. reduce(lambda x, y: x & y, [e in bp for e in all_edges])
+    assert functools.reduce(lambda x, y: x & y, [e in bp for e in all_edges])
