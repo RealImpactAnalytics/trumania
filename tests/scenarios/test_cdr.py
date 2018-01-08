@@ -140,7 +140,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         can be topped up.
         """
 
-        npgen = RandomState(seed=self.seeder.next())
+        npgen = RandomState(seed=next(self.seeder))
 
         # subs are empty here but will receive a "CELLS" and "EXCITABILITY"
         # attributes later on
@@ -164,7 +164,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # Dataframe with 4 columns for the 1rst, 2nd,... operator of each subs.
         # Since subs_operators_list don't all have the size, some entries of this
         # dataframe contains None, which are just discarded by the stack() below
-        subs_operators_df = pd.DataFrame(subs_operators_list, index=subs.ids)
+        subs_operators_df = pd.DataFrame(data=list(subs_operators_list), index=subs.ids)
 
         # same info, vertically: the index contains the sub id (with duplicates)
         # and "operator" one of the operators of this subs
@@ -188,7 +188,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         msisdn_gen = MSISDNGenerator(countrycode="0032",
                                      prefix_list=["472", "473", "475", "476",
                                                   "477", "478", "479"],
-                                     length=6, seed=self.seeder.next())
+                                     length=6, seed=next(self.seeder))
         sims.create_attribute(name="MSISDN", init_gen=msisdn_gen)
 
         # Finally, adding one more relationship that defines the set of possible
@@ -200,14 +200,14 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         agents = build_ids(self.params["n_agents"], prefix="AGENT_", max_length=3)
 
         agent_df = pd.DataFrame.from_records(
-            make_random_bipartite_data(sims.ids, agents, 0.3, seed=self.seeder.next()),
+            make_random_bipartite_data(sims.ids, agents, 0.3, seed=next(self.seeder)),
             columns=["SIM_ID", "AGENT"])
 
         logging.info(" creating random sim/agent relationship ")
         sims_agents_rel = sims.create_relationship("POSSIBLE_AGENTS")
 
         agent_weight_gen = NumpyRandomGenerator(
-            method="exponential", scale=1., seed=self.seeder.next())
+            method="exponential", scale=1., seed=next(self.seeder))
 
         sims_agents_rel.add_relations(
             from_ids=agent_df["SIM_ID"],
@@ -229,7 +229,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                     1., 1., 5., 10., 5., 1., 1., 1., 1.]
         mobility_time_gen = CyclicTimerGenerator(
             clock=self.clock,
-            seed=self.seeder.next(),
+            seed=next(self.seeder),
             config=CyclicTimerProfile(
                 profile=mov_prof,
                 profile_time_steps="1H",
@@ -240,14 +240,14 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # Mobility network, i.e. choice of cells per user, i.e. these are the
         # weighted "used cells" (as in "most used cells) for each user
         mobility_weight_gen = NumpyRandomGenerator(
-            method="exponential", scale=1., seed=self.seeder.next())
+            method="exponential", scale=1., seed=next(self.seeder))
 
         mobility_rel = subs.create_relationship("POSSIBLE_CELLS")
 
         logging.info(" creating bipartite graph ")
         mobility_df = pd.DataFrame.from_records(
             make_random_bipartite_data(subs.ids, cells.ids, 0.4,
-                                       seed=self.seeder.next()),
+                                       seed=next(self.seeder)),
             columns=["USER_ID", "CELL"])
 
         logging.info(" adding mobility relationships to customer")
@@ -351,36 +351,36 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         # generators for topups and call duration
         voice_duration_generator = NumpyRandomGenerator(
-            method="choice", a=range(20, 240), seed=self.seeder.next())
+            method="choice", a=range(20, 240), seed=next(self.seeder))
 
         # call and sms timer generator, depending on the day of the week
         call_timegen = HighWeekDaysTimerGenerator(clock=self.clock,
-                                                  seed=self.seeder.next())
+                                                  seed=next(self.seeder))
 
         # probability of doing a topup, with high probability when the depended
         # variable (i.e. the main account value, see below) gets close to 0
         recharge_trigger = DependentTriggerGenerator(
             value_to_proba_mapper=operations.logistic(k=-0.01, x0=1000),
-            seed=self.seeder.next())
+            seed=next(self.seeder))
 
         # call activity level, under normal and "excited" states
         normal_call_activity = ParetoGenerator(xmin=10, a=1.2,
-                                               seed=self.seeder.next())
+                                               seed=next(self.seeder))
         excited_call_activity = ParetoGenerator(xmin=100, a=1.1,
-                                                seed=self.seeder.next())
+                                                seed=next(self.seeder))
 
         # after a call or SMS, excitability is the probability of getting into
         # "excited" mode (i.e., having a shorted expected delay until next call
         excitability_gen = NumpyRandomGenerator(method="beta", a=7, b=3,
-                                                seed=self.seeder.next())
+                                                seed=next(self.seeder))
 
         subs.create_attribute(name="EXCITABILITY", init_gen=excitability_gen)
 
         # same "basic" trigger, without any value mapper
-        flat_trigger = DependentTriggerGenerator(seed=self.seeder.next())
+        flat_trigger = DependentTriggerGenerator(seed=next(self.seeder))
 
         back_to_normal_prob = NumpyRandomGenerator(method="beta", a=3, b=7,
-                                                   seed=self.seeder.next())
+                                                   seed=next(self.seeder))
 
         # Calls and SMS actions themselves
         calls = self.create_action(
@@ -604,7 +604,7 @@ def run_cdr_scenario(params):
 
     execution_time = pd.Timestamp(datetime.now())
 
-    for logid, lg in logs.iteritems():
+    for logid, lg in logs.items():
         logging.info(" - some {}:\n{}\n\n".format(logid, lg.head(
             15).to_string()))
 
@@ -624,7 +624,7 @@ def run_cdr_scenario(params):
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))
 
-    for logid, lg in logs.iteritems():
+    for logid, lg in logs.items():
         logging.info(" {} {} logs".format(len(lg), logid))
 
     logging.info("""\nexecution times: "

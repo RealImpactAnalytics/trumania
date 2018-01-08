@@ -58,11 +58,11 @@ def add_listener(the_circus):
     users.create_attribute(
         name="FIRST_NAME",
         init_gen=gen.FakerGenerator(method="first_name",
-                                    seed=the_circus.seeder.next()))
+                                    seed=next(the_circus.seeder)))
     users.create_attribute(
         name="LAST_NAME",
         init_gen=gen.FakerGenerator(method="last_name",
-                                    seed=the_circus.seeder.next()))
+                                    seed=next(the_circus.seeder)))
 
 
 def add_listen_action(the_circus):
@@ -71,13 +71,13 @@ def add_listen_action(the_circus):
 
     # using this timer means users only listen to songs during work hours
     timer_gen = profilers.WorkHoursTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 
     # this generate activity level distributed as a "truncated normal
     # distribution", i.e. very high and low activities are prevented.
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
-        seed=the_circus.seeder.next(),
+        seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
         ).map(ops.bound_value(lb=10, ub=30))
@@ -125,13 +125,13 @@ def add_listen_and_share_actions(the_circus):
 
     # using this timer means users only listen to songs during work hours
     timer_gen = profilers.WorkHoursTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 
     # this generate activity level distributed as a "truncated normal
     # distribution", i.e. very high and low activities are prevented.
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
-        seed=the_circus.seeder.next(),
+        seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
         ).map(ops.bound_value(lb=10, ub=30))
@@ -215,24 +215,24 @@ def add_song_actors(the_circus):
         method="choice",
         a=gen.FakerGenerator(
             method="name",
-            seed=the_circus.seeder.next()).generate(size=200),
-        seed=the_circus.seeder.next())
+            seed=next(the_circus.seeder)).generate(size=200),
+        seed=next(the_circus.seeder))
 
     title_gen = gen.FakerGenerator(method="sentence",
-                                   seed=the_circus.seeder.next(),
+                                   seed=next(the_circus.seeder),
                                    nb_words=4,
                                    variable_nb_words=True)
 
     # generates recording years within a desired date range
     year_gen = gen.FakerGenerator(
             method="date_time_between_dates",
-            seed=the_circus.seeder.next(),
+            seed=next(the_circus.seeder),
             datetime_start=pd.Timestamp("1910-10-20"),
             datetime_end=pd.Timestamp("2016-12-02")) \
         .map(f=lambda d: d.year)
 
     duration_gen = gen.ParetoGenerator(xmin=60,
-                                       seed=the_circus.seeder.next(),
+                                       seed=next(the_circus.seeder),
                                        force_int=True,
                                        a=1.2)
 
@@ -286,13 +286,13 @@ def add_listen_and_share_actions_with_details(the_circus):
 
     # using this timer means users only listen to songs during work hours
     timer_gen = profilers.WorkHoursTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 
     # this generate activity level distributed as a "truncated normal
     # distribution", i.e. very high and low activities are prevented.
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
-        seed=the_circus.seeder.next(),
+        seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
         ).map(ops.bound_value(lb=10, ub=30))

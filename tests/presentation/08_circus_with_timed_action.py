@@ -24,13 +24,13 @@ def create_circus_with_actor():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example_circus.seeder.next()))
+                                seed=next(example_circus.seeder)))
 
     person.create_attribute(
         "age",
         init_gen=NumpyRandomGenerator(
-            method="normal", loc="35", scale="5",
-            seed=example_circus.seeder.next()))
+            method="normal", loc=35, scale=5,
+            seed=next(example_circus.seeder)))
 
     return example_circus
 
@@ -46,12 +46,12 @@ hello_world = the_circus.create_action(
     # trigger of this action per week
     activity_gen=NumpyRandomGenerator(
         method="choice", a=[10, 20, 30],
-        seed=the_circus.seeder.next()
+        seed=next(the_circus.seeder)
     ),
 
     # action now only tiggers during office hours
     timer_gen=WorkHoursTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 )
 
 hello_world.set_operations(
@@ -64,7 +64,7 @@ hello_world.set_operations(
     # message is now a random sentence from Faker
     FakerGenerator(method="sentence",
                    nb_words=6, variable_nb_words=True,
-                   seed=the_circus.seeder.next()
+                   seed=next(the_circus.seeder)
         ).ops
         .generate(named_as="MESSAGE"),
 
@@ -97,10 +97,4 @@ the_circus.run(
 )
 
 with open("output/example8/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
-
-
-
-
-
-
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(100000)[:10]))

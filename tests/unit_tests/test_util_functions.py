@@ -1,4 +1,5 @@
 from trumania.core.util_functions import *
+import functools
 
 
 def test_merge_two_empty_dict_should_return_empty_dict():
@@ -201,7 +202,7 @@ def test_if_networkx_bipartite_keeps_actual_structure():
     # is always in the first group, and the second node is always in the second group
     RB = bipartite.random_graph(5, 10, 0.9, 1234)
 
-    assert reduce(lambda x, y: x & y, [e[0] < 5 for e in RB.edges()])
+    assert functools.reduce(lambda x, y: x & y, [e[0] < 5 for e in RB.edges()])
 
 
 def test_random_bipartite_network_generation_returns_empty_list_if_first_entry_is_empty():
@@ -229,4 +230,4 @@ def test_random_bipartite_network_generation_returns_bipartite_network():
     all_edges = [(1,5),(1,6),(2,5),(2,6)]
     bp = make_random_bipartite_data([1,2],[5,6],1.,1234)
 
-    assert reduce(lambda x, y: x & y, [e in bp for e in all_edges])
+    assert functools.reduce(lambda x, y: x & y, [e in bp for e in all_edges])

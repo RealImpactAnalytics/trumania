@@ -203,8 +203,8 @@ class CyclicTimerGenerator(DependentGenerator):
         levels. The higher the level of activity, the shorter the waiting
         times will be
 
-        :type activities: Pandas Series
-        :param activities: contains an array of floats
+        :type observations: Pandas Series
+        :param observations: contains an array of floats
         :return: Pandas Series
         """
 

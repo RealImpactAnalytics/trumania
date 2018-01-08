@@ -1,6 +1,6 @@
 from trumania.core.random_generators import *
 import path
-
+import functools
 
 def test_constant_generator_should_produce_constant_values():
     tested = ConstantGenerator(value="c")
@@ -54,7 +54,7 @@ def test_sequencial_generator_should_create_unique_values():
     sets = [set(tested.generate(size)) for size in sizes]
 
     # generated values should be unique within each set
-    all_values = reduce(lambda s1, s2: s1 | s2,  sets)
+    all_values = functools.reduce(lambda s1, s2: s1 | s2,  sets)
 
     assert len(all_values) == np.sum(sizes)
 

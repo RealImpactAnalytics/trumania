@@ -1,5 +1,6 @@
 from trumania.core.operations import *
 import pandas as pd
+import functools
 
 
 class Relationship(object):
@@ -254,7 +255,7 @@ class Relationship(object):
 
             # "pop" option: any selected relation is now removed
             if remove_selected:
-                all_removed_idx = reduce(lambda l1, l2: l1 + l2,
+                all_removed_idx = functools.reduce(lambda l1, l2: l1 + l2,
                                          selected_tidx.iloc[:, 0])
                 self._table.drop(all_removed_idx, axis=0, inplace=True)
 
@@ -280,7 +281,7 @@ class Relationship(object):
 
         rows = self.get_relations(from_ids)
         groups = rows.set_index("to", drop=True).groupby("from", sort=False)
-        df = pd.DataFrame(groups.groups.items(), columns=["from", named_as])
+        df = pd.DataFrame(data=list(groups.groups.items()), columns=["from", named_as])
         df[named_as] = df[named_as].apply(lambda s: [el for el in s])
         return df
 

@@ -279,8 +279,3 @@ def test_bounded_generator_should_limnit_with_both_bound():
     assert bound_f(12) == 12
     assert bound_f(15) == 15
     assert bound_f(20) == 15
-
-
-
-
-

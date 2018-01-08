@@ -79,7 +79,7 @@ def add_song_to_repo(repo_actor):
                                        a=1.2)
 
     repo_genre_rel = repo_actor.get_attribute("genre_name")
-    for genre_id, genre_name in repo_genre_rel.get_values().iteritems():
+    for genre_id, genre_name in repo_genre_rel.get_values().items():
 
         # an operation capable of creating songs of that genre
         init_attribute = ops.Chain(
@@ -135,11 +135,11 @@ def add_listener(the_circus):
     users.create_attribute(
         name="FIRST_NAME",
         init_gen=gen.FakerGenerator(method="first_name",
-                                    seed=the_circus.seeder.next()))
+                                    seed=next(the_circus.seeder)))
     users.create_attribute(
         name="LAST_NAME",
         init_gen=gen.FakerGenerator(method="last_name",
-                                    seed=the_circus.seeder.next()))
+                                    seed=next(the_circus.seeder)))
 
 
 def add_listen_and_share_actions_with_details(the_circus):
@@ -149,13 +149,13 @@ def add_listen_and_share_actions_with_details(the_circus):
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
     timer_gen = profilers.HighWeekDaysTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 
     # this generate activity level distributed as a "truncated normal
     # distribution", i.e. very high and low activities are prevented.
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
-        seed=the_circus.seeder.next(),
+        seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
         ).map(ops.bound_value(lb=10, ub=30))

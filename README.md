@@ -15,18 +15,19 @@ Make sure you have python 2.7 and pip installed.
 Then, if pipenv is not yet present on your laptop, install it: 
 
 ```sh
-pip install --user pipenv
+# make sure you're using pip from a python 3 installation 
+pip3 install --user pipenv
 ```
 
 Otherwise, make sure you have the latest version:
 
 ```sh
-pipenv --update
+pipenv update
 ```
 
 then install all dependencies for this project: 
 ```sh
-pipenv install
+pipenv install --three
 ```
 
 See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies.

@@ -62,6 +62,3 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
         flying.create_action(name="the_action",
                                initiating_actor=customers,
                                actorid_field="actor_id")
-
-
-

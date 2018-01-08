@@ -27,14 +27,14 @@ def create_pos_actor(the_circus):
         name="point_of_sale", size=100,
         ids_gen=gen.SequencialGenerator(prefix="POS_"))
 
-    name_gen = gen.FakerGenerator(method="name", seed=the_circus.seeder.next())
+    name_gen = gen.FakerGenerator(method="name", seed=next(the_circus.seeder))
     pos.create_attribute("NAME", init_gen=name_gen)
 
-    city_gen = gen.FakerGenerator(method="city", seed=the_circus.seeder.next())
+    city_gen = gen.FakerGenerator(method="city", seed=next(the_circus.seeder))
     pos.create_attribute("CITY", init_gen=city_gen)
 
     company_gen = gen.FakerGenerator(method="company",
-                                     seed=the_circus.seeder.next())
+                                     seed=next(the_circus.seeder))
     pos.create_attribute("COMPANY", init_gen=company_gen)
 
     pos.create_relationship(name="items")
@@ -93,7 +93,7 @@ def add_periodic_restock_action(the_circus):
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
     timer_gen = profilers.DefaultDailyTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 
     restock_action = the_circus.create_action(
             name="restock",
@@ -114,7 +114,7 @@ def add_periodic_restock_action(the_circus):
     stock_size_gen = gen.NumpyRandomGenerator(method="choice",
                                               a=[5, 15, 20, 25],
                                               p=[0.1, 0.2, 0.5, 0.2],
-                                              seed=the_circus.seeder.next())
+                                              seed=next(the_circus.seeder))
 
     item_bulk_gen = gen.DependentBulkGenerator(
         element_generator=the_circus.generators["items_gen"])
@@ -150,7 +150,7 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
     timer_gen = profilers.DefaultDailyTimerGenerator(
-        clock=the_circus.clock, seed=the_circus.seeder.next())
+        clock=the_circus.clock, seed=next(the_circus.seeder))
 
     restock_action = the_circus.create_action(
             name="restock",
@@ -171,7 +171,7 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
     stock_size_gen = gen.NumpyRandomGenerator(method="choice",
                                               a=[5, 15, 20, 25],
                                               p=[0.1, 0.2, 0.5, 0.2],
-                                              seed=the_circus.seeder.next())
+                                              seed=next(the_circus.seeder))
 
     item_bulk_gen = stock_size_gen.flatmap(
         gen.DependentBulkGenerator(
@@ -207,11 +207,11 @@ def create_customer_actor(the_circus):
     customer.create_attribute(
         name="FIRST_NAME",
         init_gen=gen.FakerGenerator(method="first_name",
-                                    seed=the_circus.seeder.next()))
+                                    seed=next(the_circus.seeder)))
     customer.create_attribute(
         name="LAST_NAME",
         init_gen=gen.FakerGenerator(method="last_name",
-                                    seed=the_circus.seeder.next()))
+                                    seed=next(the_circus.seeder)))
 
     customer.create_relationship(name="my_items")
 
@@ -219,7 +219,7 @@ def create_customer_actor(the_circus):
 def create_purchase_action(the_circus):
 
     timer_gen = profilers.WorkHoursTimerGenerator(clock=the_circus.clock,
-                                                  seed=the_circus.seeder.next())
+                                                  seed=next(the_circus.seeder))
 
     customers = the_circus.actors["customer"]
 
@@ -238,7 +238,7 @@ def create_purchase_action(the_circus):
                 method="exponential",
                 scale=timer_gen.activity(
                     n_actions=1, per=pd.Timedelta("24h")
-                    ), seed=the_circus.seeder.next())
+                    ), seed=next(the_circus.seeder))
         )
 
     customers_items = customers.get_relationship("my_items")
@@ -308,7 +308,7 @@ def add_inactive_restock_action(the_circus):
     stock_size_gen = gen.NumpyRandomGenerator(method="choice",
                                               a=[5, 15, 20, 25],
                                               p=[0.1, 0.2, 0.5, 0.2],
-                                              seed=the_circus.seeder.next())
+                                              seed=next(the_circus.seeder))
 
     item_bulk_gen = gen.DependentBulkGenerator(
         element_generator=the_circus.generators["items_gen"])
@@ -369,7 +369,7 @@ def update_purchase_action(the_circus):
     #   - dependent, i.e. as a function of action_data field at execution time
     trigger_gen = gen.DependentTriggerGenerator(
         value_to_proba_mapper=trigger_prop_func,
-        seed=the_circus.seeder.next())
+        seed=next(the_circus.seeder))
 
     # since those operations are added after the FieldLogger, the fields they
     # create will not be appended to the action_data
@@ -400,7 +400,7 @@ def run_and_report(the_circus):
     )
 
     with open("output/example2/report.csv") as f:
-        print "Logged {} lines".format(len(f.readlines()) - 1)
+        print ("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step1():

@@ -192,7 +192,7 @@ def test_actors_during_default_daily():
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
         mobility_time_gen = DefaultDailyTimerGenerator(
-            clock=circus.clock, seed=circus.seeder.next())
+            clock=circus.clock, seed=next(circus.seeder))
 
         gaussian_activity = NumpyRandomGenerator(
             method="normal", loc=5,
@@ -238,7 +238,7 @@ def test_actors_during_working_hours():
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
         mobility_time_gen = WorkHoursTimerGenerator(
-            clock=circus.clock, seed=circus.seeder.next())
+            clock=circus.clock, seed=next(circus.seeder))
 
         five_per_day = mobility_time_gen.activity(
             n_actions=5, per=pd.Timedelta("1day"))
