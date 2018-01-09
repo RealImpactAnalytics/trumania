@@ -1,4 +1,4 @@
-from trumania.core.random_generators import *
+from trumania.core.random_generators import Generator
 
 
 class ConstantsMockGenerator(Generator):

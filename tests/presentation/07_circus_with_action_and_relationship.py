@@ -43,7 +43,7 @@ def add_quotes(the_circus):
     quote_generator = FakerGenerator(method="sentence",
                                      nb_words=6,
                                      variable_nb_words=True,
-                                     seed=the_circus.seeder.next())
+                                     seed=next(the_circus.seeder))
 
     person = the_circus.actors["person"]
 

@@ -109,12 +109,12 @@ def prepare_dealers(circus, params):
 
         dealers.create_attribute(
             "DISTRIBUTOR_SALES_REP_NAME",
-            init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
+            init_gen=snd_constants.gen("CONTACT_NAMES", next(circus.seeder)))
 
         dealers.create_attribute(
             "DISTRIBUTOR_SALES_REP_PHONE",
             init_gen=FakerGenerator(method="phone_number",
-                                    seed=circus.seeder.next()))
+                                    seed=next(circus.seeder)))
 
         for product, description in params["products"].items():
 

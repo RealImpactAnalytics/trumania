@@ -72,7 +72,7 @@ def add_bulk_restock_actions(circus, params,
         # generator of item prices and type
         item_price_gen = random_generators.NumpyRandomGenerator(
             method="choice", a=description["item_prices"],
-            seed=circus.seeder.next())
+            seed=next(circus.seeder))
 
         item_prices_gen = random_generators.DependentBulkGenerator(
             element_generator=item_price_gen)
@@ -80,7 +80,7 @@ def add_bulk_restock_actions(circus, params,
         item_type_gen = random_generators.NumpyRandomGenerator(
             method="choice",
             a=circus.actors[product].ids,
-            seed=circus.seeder.next())
+            seed=next(circus.seeder))
 
         item_types_gen = random_generators.DependentBulkGenerator(
             element_generator=item_type_gen)
@@ -214,7 +214,7 @@ def add_initial_stock_as_purchases(circus,
         # generator of item prices and type
         item_price_gen = random_generators.NumpyRandomGenerator(
             method="choice", a=description["item_prices"],
-            seed=circus.seeder.next())
+            seed=next(circus.seeder))
 
         item_prices_gen = random_generators.DependentBulkGenerator(
             element_generator=item_price_gen)
@@ -222,7 +222,7 @@ def add_initial_stock_as_purchases(circus,
         item_type_gen = random_generators.NumpyRandomGenerator(
             method="choice",
             a=circus.actors[product].ids,
-            seed=circus.seeder.next())
+            seed=next(circus.seeder))
 
         item_types_gen = random_generators.DependentBulkGenerator(
             element_generator=item_type_gen)

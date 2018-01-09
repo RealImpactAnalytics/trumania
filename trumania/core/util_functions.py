@@ -53,7 +53,7 @@ def assign_random_proportions(name1, name2, group1, group2, seed):
 
     state = RandomState(seed)
     assignments = state.rand(len(group1), len(group2))
-    assignments = assignments/assignments.sum(axis=1, keepdims=True)
+    assignments = assignments / assignments.sum(axis=1, keepdims=True)
     data = pd.DataFrame(assignments, index=group1,
                         columns=group2).stack().reset_index(level=[0, 1])
     data.rename(columns={"level_0": name1,

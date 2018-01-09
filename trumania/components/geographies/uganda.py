@@ -41,9 +41,9 @@ class WithUganda(Circus):
                                                     "cell_repair_timer_profile")
 
         repair_n_fix_timer = CyclicTimerGenerator(
-                clock=self.clock,
-                seed=next(self.seeder),
-                config=timer_config)
+            clock=self.clock,
+            seed=next(self.seeder),
+            config=timer_config)
 
         unhealthy_level_gen = build_unhealthy_level_gen(next(seeder))
         healthy_level_gen = build_healthy_level_gen(next(seeder))

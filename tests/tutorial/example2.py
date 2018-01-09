@@ -190,7 +190,7 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
         item_bulk_gen.ops.generate(named_as="NEW_ITEM_IDS"),
 
         pos.get_relationship("items").ops.add_grouped(from_field="POS_ID",
-                                           grouped_items_field="NEW_ITEM_IDS"),
+                                                      grouped_items_field="NEW_ITEM_IDS"),
 
         ops.FieldLogger(log_id="restock", cols=["TIME", "POS_ID", "POS_NAME"])
     )
@@ -238,7 +238,8 @@ def create_purchase_action(the_circus):
                 method="exponential",
                 scale=timer_gen.activity(
                     n_actions=1, per=pd.Timedelta("24h")
-                    ), seed=next(the_circus.seeder))
+                ),
+                seed=next(the_circus.seeder))
         )
 
     customers_items = customers.get_relationship("my_items")
@@ -329,7 +330,7 @@ def add_inactive_restock_action(the_circus):
                                    observed_field="RESTOCK_VOLUME"),
 
         pos.get_relationship("items").ops.add_grouped(from_field="POS_ID",
-                                           grouped_items_field="NEW_ITEM_IDS"),
+                                                      grouped_items_field="NEW_ITEM_IDS"),
 
         pos.get_relationship("items").ops.get_neighbourhood_size(
             from_field="POS_ID",

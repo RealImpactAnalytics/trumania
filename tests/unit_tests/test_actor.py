@@ -144,11 +144,13 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
     current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
     assert current.tolist() == [10, 39, 23]
 
-    update = pd.DataFrame({
+    update = pd.DataFrame(
+        {
             "age": [139, 123],
             "city": ["city_7", "city_9"]
-            },
-        index=["a_7", "a_9"])
+        },
+        index=["a_7", "a_9"]
+    )
 
     tested_actor.update(update)
 
@@ -176,11 +178,13 @@ def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_va
     current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
     assert current.tolist() == [10, 39, 23]
 
-    update = pd.DataFrame({
+    update = pd.DataFrame(
+        {
             "age": [139, 123, 54, 25],
             "city": ["city_7", "city_9", "city_11", "city_10"]
-            },
-        index=["a_7", "a_9", "a_11", "a_10"])
+        },
+        index=["a_7", "a_9", "a_11", "a_10"]
+    )
 
     tested_actor.update(update)
 
@@ -206,12 +210,14 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
     tested_actor.create_attribute("city", init_values=city)
 
-    action_data = pd.DataFrame({
+    action_data = pd.DataFrame(
+        {
             "the_new_age": [139, 123, 1, 2],
             "location": ["city_7", "city_9", "city_11", "city_10"],
             "updated_actors": ["a_7", "a_9", "a_11", "a_10"]
-            },
-        index=["d_1", "d_2", "d_4", "d_3"])
+        },
+        index=["d_1", "d_2", "d_4", "d_3"]
+    )
 
     update_op = tested_actor.ops.update(
         actor_id_field="updated_actors",

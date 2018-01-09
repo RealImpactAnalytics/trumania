@@ -1,7 +1,13 @@
 from __future__ import division
-from trumania.core.circus import *
-from trumania.core.actor import *
-from trumania.core.util_functions import *
+import logging
+import numpy as np
+import pandas as pd
+import os
+
+from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantDependentGenerator
+from trumania.core.random_generators import MongoIdGenerator, FakerGenerator, DependentBulkGenerator
+from trumania.core.operations import FieldLogger, logistic, Apply, Chain
+from trumania.core.action import Action
 from trumania.components import db
 
 
@@ -14,7 +20,7 @@ def _attractiveness_sigmoid():
      into attractiveness in [0, 1], which are used to influence the choice
      of customers
     """
-    return operations.logistic(k=.15)
+    return logistic(k=.15)
 
 
 def _create_attractiveness_attributes(circus, pos):
@@ -25,7 +31,7 @@ def _create_attractiveness_attributes(circus, pos):
     attractiveness_base_gen = NumpyRandomGenerator(
         method="choice",
         a=range(-50, 50),
-        seed=circus.seeder.next())
+        seed=next(circus.seeder))
     pos.create_attribute("ATTRACT_BASE", init_gen=attractiveness_base_gen)
 
     # attractiveness itself is ATTRACT_BASE going through a sigmoid
@@ -37,7 +43,7 @@ def _create_attractiveness_attributes(circus, pos):
         method="choice",
         a=[-2, -1, 0, 1, 2],
         p=[.1, .25, .3, .25, .1],
-        seed=circus.seeder.next())
+        seed=next(circus.seeder))
 
     pos.create_attribute("ATTRACT_DELTA", init_gen=attractiveness_delta_gen)
 
@@ -73,7 +79,7 @@ def add_attractiveness_evolution_action(circus):
             }
         ),
 
-        operations.Apply(
+        Apply(
             source_fields=["ATTRACT_BASE", "ATTRACT_DELTA"],
             named_as="NEW_ATTRACT_BASE",
             f=update_attract_base,
@@ -84,7 +90,7 @@ def add_attractiveness_evolution_action(circus):
             copy_from_field="NEW_ATTRACT_BASE"
         ),
 
-        operations.Apply(
+        Apply(
             source_fields=["ATTRACT_BASE"],
             named_as="NEW_ATTRACTIVENESS",
             f=_attractiveness_sigmoid(), f_args="series"
@@ -101,7 +107,7 @@ def add_attractiveness_evolution_action(circus):
     )
 
     delta_updater = NumpyRandomGenerator(method="choice", a=[-1, 0, 1],
-                                         seed=circus.seeder.next())
+                                         seed=next(circus.seeder))
 
     # random walk around of the attractiveness delta, once per week
     attractiveness_delta_evolution = circus.create_action(
@@ -121,7 +127,7 @@ def add_attractiveness_evolution_action(circus):
 
         delta_updater.ops.generate(named_as="DELTA_UPDATE"),
 
-        operations.Apply(
+        Apply(
             source_fields=["ATTRACT_DELTA", "DELTA_UPDATE"],
             named_as="NEW_ATTRACT_DELTA",
             f=np.add, f_args="series"),
@@ -145,8 +151,8 @@ def _add_pos_latlong(circus, params):
     sites = circus.actors["sites"]
 
     # 1 deg is about 1km at 40 degree north => standard deviation of about 200m
-    coord_noise = NumpyRandomGenerator(method="normal", loc=0, scale=1/(85*5),
-                                       seed=circus.seeder.next())
+    coord_noise = NumpyRandomGenerator(method="normal", loc=0, scale=1 / (85 * 5),
+                                       seed=next(circus.seeder))
 
     # using an at build time to generate random values :)
     pos_coord_act = Chain(
@@ -166,13 +172,13 @@ def _add_pos_latlong(circus, params):
         coord_noise.ops.generate(named_as="LAT_NOISE"),
         coord_noise.ops.generate(named_as="LONG_NOISE"),
 
-        operations.Apply(source_fields=["SITE_LATITUDE", "LAT_NOISE"],
-                         named_as="POS_LATITUDE",
-                         f=np.add, f_args="series"),
+        Apply(source_fields=["SITE_LATITUDE", "LAT_NOISE"],
+              named_as="POS_LATITUDE",
+              f=np.add, f_args="series"),
 
-        operations.Apply(source_fields=["SITE_LONGITUDE", "LONG_NOISE"],
-                         named_as="POS_LONGITUDE",
-                         f=np.add, f_args="series"),
+        Apply(source_fields=["SITE_LONGITUDE", "LONG_NOISE"],
+              named_as="POS_LONGITUDE",
+              f=np.add, f_args="series"),
     )
 
     # also looks up the dist l1 and dist l2 associated to the site
@@ -220,9 +226,9 @@ def add_pos(circus, params):
         .get_values(None)
 
     site_gen = NumpyRandomGenerator(method="choice",
-                                    seed=circus.seeder.next(),
+                                    seed=next(circus.seeder),
                                     a=circus.actors["sites"].ids,
-                                    p=site_weight.values/sum(site_weight))
+                                    p=site_weight.values / sum(site_weight))
     pos.create_attribute("SITE", init_gen=site_gen)
 
     # generate a random pos location from around the SITE location
@@ -232,16 +238,16 @@ def add_pos(circus, params):
 
     pos.create_attribute(
         "AGENT_NAME",
-        init_gen=snd_constants.gen("POS_NAMES", circus.seeder.next()))
+        init_gen=snd_constants.gen("POS_NAMES", next(circus.seeder)))
 
     pos.create_attribute(
         "CONTACT_NAME",
-        init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
+        init_gen=snd_constants.gen("CONTACT_NAMES", next(circus.seeder)))
 
     pos.create_attribute(
         "CONTACT_PHONE",
         init_gen=FakerGenerator(method="phone_number",
-                                seed=circus.seeder.next()))
+                                seed=next(circus.seeder)))
 
     logging.info("recording the list POS per site in site relationship")
     pos_rel = circus.actors["sites"].create_relationship("POS")
@@ -263,7 +269,7 @@ def _init_pos_product(circus, product, description):
         method="choice",
         a=description["pos_bulk_purchase_sizes"],
         p=description["pos_bulk_purchase_sizes_dist"],
-        seed=circus.seeder.next())
+        seed=next(circus.seeder))
     circus.attach_generator("pos_{}_bulk_size_gen".format(product), bulk_size_gen)
 
     logging.info("Building a generators of {} POS initial stock size".format(product))
@@ -275,7 +281,7 @@ def _init_pos_product(circus, product, description):
         init_stock_size_gen = db.load_empirical_discrete_generator(
             namespace=gen_namespace,
             gen_id=gen_id,
-            seed=circus.seeder.next())
+            seed=next(circus.seeder))
     else:
         logging.info(" using bulk size distribution")
         init_stock_size_gen = bulk_size_gen
@@ -337,7 +343,7 @@ def add_agent_stock_log_action(circus, params):
                         from_field="agent_id",
                         named_as="full_stock_volume"),
 
-                operations.Apply(
+                Apply(
                     source_fields="full_stock_volume",
                     named_as="stock_volume",
                     f=lambda v: (v * stock_ratio).astype(np.int),
@@ -345,22 +351,22 @@ def add_agent_stock_log_action(circus, params):
                 ),
 
                 # estimate stock value based on stock volume
-                operations.Apply(
+                Apply(
                     source_fields="stock_volume",
                     named_as="stock_value",
-                    f=lambda v: v*mean_price,
+                    f=lambda v: v * mean_price,
                     f_args="series"
                 ),
 
                 # The log_id (=> the resulting file name) is the same for all
                 # actions => we just merge the stock level of all actors as
                 # we go. I dare to find that pretty neat ^^
-                operations.FieldLogger(
+                FieldLogger(
                     log_id="agent_stock_log",
                     cols=["TIME", "product_id", "agent_id",
                           "stock_volume", "stock_value"]
                    )
-        )
+            )
 
 
 def _bound_diff_to_max(max_stock):

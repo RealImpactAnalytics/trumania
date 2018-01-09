@@ -129,8 +129,8 @@ class CyclicTimerGenerator(DependentGenerator):
     It's mostly a super class, normally only its child classes should be used.
 
     The goal of a TimeProfiler is to keep a track of the expected level of activity of users over a cyclic time range
-    It will store a vector with probabilities of activity per time step, as well as a cumulative sum of the probabilities
-    starting with the current time step.
+    It will store a vector with probabilities of activity per time step, as well as a cumulative sum of the
+    probabilities starting with the current time step.
 
     This allows to quickly produce random waiting times until the next event for the users
 

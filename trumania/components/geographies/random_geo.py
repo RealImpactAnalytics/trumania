@@ -15,8 +15,8 @@ class WithRandomGeo(Circus):
 
         cells = Actor(size=n_cells)
 
-        latitude_generator = FakerGenerator(method="latitude", seed=self.seeder.next())
-        longitude_generator = FakerGenerator(method="longitude", seed=self.seeder.next())
+        latitude_generator = FakerGenerator(method="latitude", seed=next(self.seeder))
+        longitude_generator = FakerGenerator(method="longitude", seed=next(self.seeder))
 
         cells.create_attribute("latitude", init_gen=latitude_generator)
         cells.create_attribute("longitude", init_gen=longitude_generator)

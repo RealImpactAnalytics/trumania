@@ -1,8 +1,10 @@
 from __future__ import division
-from trumania.core.circus import Circus
-from trumania.components.time_patterns.profilers import *
 import pytest
-from trumania.core.random_generators import *
+import pandas as pd
+
+from trumania.core.random_generators import SequencialGenerator
+from trumania.core.circus import Circus
+from trumania.components.time_patterns.profilers import DefaultDailyTimerGenerator
 
 
 def test_create_action_get_action_should_work_as_expected():
@@ -12,9 +14,9 @@ def test_create_action_get_action_should_work_as_expected():
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
-    customers = flying.create_actor("teste", size=100,
-                      ids_gen=SequencialGenerator(prefix="a"))
-
+    customers = flying.create_actor(
+        "teste", size=100,
+        ids_gen=SequencialGenerator(prefix="a"))
 
     mobility_time_gen = DefaultDailyTimerGenerator(flying.clock, seed=1)
 
@@ -51,14 +53,15 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
-    customers = flying.create_actor(name="tested", size=100,
-                      ids_gen=SequencialGenerator(prefix="a"))
+    customers = flying.create_actor(
+        name="tested", size=100,
+        ids_gen=SequencialGenerator(prefix="a"))
 
     flying.create_action(name="the_action",
-                               initiating_actor=customers,
-                               actorid_field="actor_id")
+                         initiating_actor=customers,
+                         actorid_field="actor_id")
 
     with pytest.raises(ValueError):
         flying.create_action(name="the_action",
-                               initiating_actor=customers,
-                               actorid_field="actor_id")
+                             initiating_actor=customers,
+                             actorid_field="actor_id")

@@ -264,7 +264,7 @@ class Relationship(object):
             # "pop" option: any selected relation is now removed
             if remove_selected:
                 all_removed_idx = functools.reduce(lambda l1, l2: l1 + l2,
-                                         selected_tidx.iloc[:, 0])
+                                                   selected_tidx.iloc[:, 0])
                 self._table.drop(all_removed_idx, axis=0, inplace=True)
 
         # "discard_empty" option: return empty result (instead of nothing) for
@@ -323,7 +323,7 @@ class Relationship(object):
     @staticmethod
     def load_from(file_path):
         saved_df = pd.read_csv(file_path, index_col=[0, 1, 2])
-        seed = int(saved_df.loc[("seed")].values[0][0])
+        seed = int(saved_df.loc["seed"].values[0][0])
 
         table = saved_df.loc[("table", slice(None), slice(None))].unstack()
         table.columns = table.columns.droplevel(level=0)

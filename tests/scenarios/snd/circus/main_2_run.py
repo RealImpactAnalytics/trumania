@@ -19,7 +19,7 @@ runtime_params = {
     "mean_daily_fa_mobility_activity": 1,
     "std_daily_fa_mobility_activity": .2,
 
-    "products":  {
+    "products": {
         "sim": {
             # "customer_purchase_min_period_days": 60,
             # "customer_purchase_max_period_days": 360,

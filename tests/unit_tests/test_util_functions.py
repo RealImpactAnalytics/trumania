@@ -1,5 +1,8 @@
-from trumania.core.util_functions import *
+import pandas as pd
 import functools
+
+from trumania.core.util_functions import merge_2_dicts, merge_dicts, is_sequence, make_random_assign, cap_to_total
+from trumania.core.util_functions import build_ids, latest_date_before, bipartite, make_random_bipartite_data
 
 
 def test_merge_two_empty_dict_should_return_empty_dict():
@@ -37,12 +40,12 @@ def test_merge_non_overlapping_dict_should_return_all_values():
 def test_merge_dict_to_itself_should_return_doubled_values():
 
     d1 = {"a": 1, "b": 2}
-    assert {"a": 2, "b": 4} == merge_2_dicts(d1, d1, lambda a, b: a+b)
+    assert {"a": 2, "b": 4} == merge_2_dicts(d1, d1, lambda a, b: a + b)
 
 
 def test_merging_one_dictionary_should_yield_itself():
     d1 = {"a": 1, "b": 2}
-    assert d1 == merge_dicts([d1], lambda a, b: a+b)
+    assert d1 == merge_dicts([d1], lambda a, b: a + b)
 
 
 def test_merging_an_empty_list_of_dicts_should_yield_empty_dict():
@@ -61,7 +64,7 @@ def test_merging_many_dictionary_should_yield_expected_result():
     d4 = {"b": 200, "z": 1000}
     d5 = {"z": -10}
 
-    merged = merge_dicts([d1, d2, d3, d4, d5], lambda a, b: a+b)
+    merged = merge_dicts([d1, d2, d3, d4, d5], lambda a, b: a + b)
 
     assert {"a": 110, "b": 220, "c": 30, "z": 990} == merged
 
@@ -75,7 +78,7 @@ def test_merging_many_dictionary_from_gen_should_yield_expected_result():
 
     dicts_gens = (d for d in ds)
 
-    merged = merge_dicts(dicts_gens, lambda a, b: a+b)
+    merged = merge_dicts(dicts_gens, lambda a, b: a + b)
 
     assert {"a": 110, "b": 220, "c": 30, "z": 990} == merged
 

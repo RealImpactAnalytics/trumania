@@ -73,11 +73,11 @@ class DefaultDailyTimerGenerator(CyclicTimerGenerator):
                                       clock=clock,
                                       seed=seed,
                                       config=CyclicTimerProfile(
-                                          profile=[1, .5, .2, .15, .2, .4, 3.8,
-                                                   7.2, 8.4, 9.1, 9.0, 8.3, 8.1,
-                                                   7.7, 7.4, 7.8, 8.0, 7.9, 9.7,
-                                                   10.4, 10.5, 8.8, 5.7, 2.8],
-                                          profile_time_steps="1h",
-                                          start_date=start_date,
-                                          ),
+                                                  profile=[1, .5, .2, .15, .2, .4, 3.8,
+                                                           7.2, 8.4, 9.1, 9.0, 8.3, 8.1,
+                                                           7.7, 7.4, 7.8, 8.0, 7.9, 9.7,
+                                                           10.4, 10.5, 8.8, 5.7, 2.8],
+                                                  profile_time_steps="1h",
+                                                  start_date=start_date,
+                                              ),
                                       )

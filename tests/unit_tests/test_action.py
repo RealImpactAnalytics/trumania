@@ -427,7 +427,7 @@ def test_action_autoreset_false_not_dropping_rows_should_reset_all_timers():
     # executing once more: the previously at -1 should still be there, and the
     # just executed at this stage should be there too
     action.execute()
-    expected_timers = pd.Series([-1]*10, index=actor.ids)
+    expected_timers = pd.Series([-1] * 10, index=actor.ids)
     assert action.timer["remaining"].equals(expected_timers)
 
 
@@ -486,7 +486,7 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
     # executing once more: the previously at -1 should still be there, and the
     # just executed at this stage should be there too
     action.execute()
-    expected_timers = pd.Series([-1]*10, index=actor.ids)
+    expected_timers = pd.Series([-1] * 10, index=actor.ids)
     assert action.timer["remaining"].equals(expected_timers)
 
 
