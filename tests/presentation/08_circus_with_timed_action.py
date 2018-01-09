@@ -27,13 +27,13 @@ def create_circus_with_actor():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example_circus.seeder.next()))
+                                seed=next(example_circus.seeder)))
 
     person.create_attribute(
         "age",
         init_gen=NumpyRandomGenerator(
-            method="normal", loc="35", scale="5",
-            seed=example_circus.seeder.next()))
+            method="normal", loc=35, scale=5,
+            seed=next(example_circus.seeder)))
 
     return example_circus
 
@@ -49,44 +49,44 @@ hello_world = the_circus.create_action(
     # trigger of this action per week
     activity_gen=NumpyRandomGenerator(
         method="choice", a=[10, 20, 30],
-        seed=the_circus.seeder.next()
+        seed=next(the_circus.seeder)
     ),
 
     # action now only tiggers during office hours
     timer_gen=WorkHoursTimerGenerator(
         clock=the_circus.clock,
-        seed=the_circus.seeder.next())
+        seed=next(the_circus.seeder))
 )
 
 hello_world.set_operations(
 
     # adding a random timestamp, within the current clock step
     the_circus.clock
-    .ops
-    .timestamp(named_as="TIME"),
+        .ops
+        .timestamp(named_as="TIME"),
 
     # message is now a random sentence from Faker
     FakerGenerator(method="sentence",
                    nb_words=6, variable_nb_words=True,
-                   seed=the_circus.seeder.next()
+                   seed=next(the_circus.seeder)
                    )
-    .ops
-    .generate(named_as="MESSAGE"),
+        .ops
+        .generate(named_as="MESSAGE"),
 
     # selecting a random "other person"
     the_circus.actors["person"]
-    .ops
-    .select_one(named_as="OTHER_PERSON"),
+        .ops
+        .select_one(named_as="OTHER_PERSON"),
 
     the_circus.actors["person"]
-    .ops
-    .lookup(actor_id_field="PERSON_ID",
-            select={"NAME": "EMITTER_NAME"}),
+        .ops
+        .lookup(actor_id_field="PERSON_ID",
+                select={"NAME": "EMITTER_NAME"}),
 
     the_circus.actors["person"]
-    .ops
-    .lookup(actor_id_field="OTHER_PERSON",
-            select={"NAME": "RECEIVER_NAME"}),
+        .ops
+        .lookup(actor_id_field="OTHER_PERSON",
+                select={"NAME": "RECEIVER_NAME"}),
 
     # specifying which fields to put in the log
     FieldLogger(log_id="hello",

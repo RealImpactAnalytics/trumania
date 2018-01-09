@@ -42,11 +42,11 @@ class WithUganda(Circus):
 
         repair_n_fix_timer = CyclicTimerGenerator(
                 clock=self.clock,
-                seed=self.seeder.next(),
-                config=timer_config)
+                seed=next(self.seeder),
+                config=timer_config )
 
-        unhealthy_level_gen = build_unhealthy_level_gen(seeder.next())
-        healthy_level_gen = build_healthy_level_gen(seeder.next())
+        unhealthy_level_gen = build_unhealthy_level_gen(next(seeder))
+        healthy_level_gen = build_healthy_level_gen(next(seeder))
 
         # tendency is inversed in case of broken cell: it's probability of
         # accepting a call is much lower
@@ -65,7 +65,7 @@ class WithUganda(Circus):
 
             # fault activity is very low: most cell tend never to break down (
             # hopefully...)
-            activity_gen=ParetoGenerator(xmin=5, a=1.4, seed=self.seeder.next())
+            activity_gen=ParetoGenerator(xmin=5, a=1.4, seed=next(self.seeder))
         )
 
         cell_repair_action = self.create_action(
@@ -78,7 +78,7 @@ class WithUganda(Circus):
 
             # repair activity is much higher
             activity_gen=ParetoGenerator(xmin=100, a=1.2,
-                                         seed=self.seeder.next()),
+                                         seed=next(self.seeder)),
 
             # repair is not re-scheduled at the end of a repair, but only triggered
             # from a "break-down" action
@@ -126,30 +126,30 @@ def build_uganda_actors(circus):
                                 ids_gen=SequencialGenerator(prefix="CELL_"),
                                 size=200)
     latitude_generator = FakerGenerator(method="latitude",
-                                        seed=seeder.next())
+                                        seed=next(seeder))
     cells.create_attribute("latitude", init_gen=latitude_generator)
 
     longitude_generator = FakerGenerator(method="longitude",
-                                         seed=seeder.next())
+                                         seed=next(seeder))
     cells.create_attribute("longitude", init_gen=longitude_generator)
 
     # the cell "health" is its probability of accepting a call. By default
     # let's says it's one expected failure every 1000 calls
-    healthy_level_gen = build_healthy_level_gen(seeder.next())
+    healthy_level_gen = build_healthy_level_gen(next(seeder))
 
     cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
-    city_gen = FakerGenerator(method="city", seed=seeder.next())
+    city_gen = FakerGenerator(method="city", seed=next(seeder))
     cities = circus.create_actor(name="cities", size=200, ids_gen=city_gen)
 
     cell_city_rel = cities.create_relationship("CELLS")
 
-    cell_city_df = make_random_assign(cells.ids, cities.ids, seeder.next())
+    cell_city_df = make_random_assign(cells.ids, cities.ids, next(seeder))
     cell_city_rel.add_relations(
         from_ids=cell_city_df["chosen_from_set2"],
         to_ids=cell_city_df["set1"])
 
-    pop_gen = ParetoGenerator(xmin=10000, a=1.4, seed=seeder.next())
+    pop_gen = ParetoGenerator(xmin=10000, a=1.4, seed=next(seeder))
     cities.create_attribute("population", init_gen=pop_gen)
 
     timer_config = CyclicTimerProfile(

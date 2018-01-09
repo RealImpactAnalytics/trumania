@@ -19,12 +19,12 @@ class WithErdosRenyi(Circus):
         logging.info("Creating the social network ")
 
         # create a random A to B symmetric relationship
-        network_weight_gen = rg.ParetoGenerator(xmin=1., a=1.2, seed=self.seeder.next())
+        network_weight_gen = rg.ParetoGenerator(xmin=1., a=1.2, seed=next(self.seeder))
 
         social_network_values = create_er_social_network(
             customer_ids=actor.ids,
             p=average_degree / n_subscribers,
-            seed=self.seeder.next())
+            seed=next(self.seeder))
 
         social_network = actor.create_relationship(relationship_name)
         social_network.add_relations(

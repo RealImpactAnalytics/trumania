@@ -45,7 +45,7 @@ def step1():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 def step2():
@@ -63,7 +63,7 @@ def step2():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example1.seeder.next()))
+                                seed=next(example1.seeder)))
 
     hello_world = example1.create_action(
         name="hello_world",
@@ -92,7 +92,7 @@ def step2():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 def step3():
@@ -110,7 +110,7 @@ def step3():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example1.seeder.next()))
+                                seed=next(example1.seeder)))
 
     hello_world = example1.create_action(
         name="hello_world",
@@ -123,11 +123,11 @@ def step3():
     )
 
     duration_gen = NumpyRandomGenerator(method="exponential", scale=60,
-                                        seed=example1.seeder.next())
+                                        seed=next(example1.seeder))
 
     sites = SequencialGenerator(prefix="SITE_").generate(1000)
     random_site_gen = NumpyRandomGenerator(method="choice", a=sites,
-                                           seed=example1.seeder.next())
+                                           seed=next(example1.seeder))
 
     hello_world.set_operations(
         person.ops.lookup(
@@ -152,7 +152,7 @@ def step3():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 def step4():
@@ -173,11 +173,11 @@ def step4():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example1.seeder.next()))
+                                seed=next(example1.seeder)))
 
     sites = SequencialGenerator(prefix="SITE_").generate(1000)
     random_site_gen = NumpyRandomGenerator(method="choice", a=sites,
-                                           seed=example1.seeder.next())
+                                           seed=next(example1.seeder))
 
     allowed_sites = person.create_relationship(name="sites")
     for i in range(5):
@@ -196,7 +196,7 @@ def step4():
     )
 
     duration_gen = NumpyRandomGenerator(method="exponential", scale=60,
-                                        seed=example1.seeder.next())
+                                        seed=next(example1.seeder))
 
     hello_world.set_operations(
         person.ops.lookup(
@@ -222,7 +222,7 @@ def step4():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 def step5():
@@ -240,11 +240,11 @@ def step5():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example1.seeder.next()))
+                                seed=next(example1.seeder)))
 
     sites = SequencialGenerator(prefix="SITE_").generate(1000)
     random_site_gen = NumpyRandomGenerator(method="choice", a=sites,
-                                           seed=example1.seeder.next())
+                                           seed=next(example1.seeder))
 
     allowed_sites = person.create_relationship(name="sites")
 
@@ -276,7 +276,7 @@ def step5():
     )
 
     duration_gen = NumpyRandomGenerator(method="exponential", scale=60,
-                                        seed=example1.seeder.next())
+                                        seed=next(example1.seeder))
 
     hello_world.set_operations(
         person.ops.lookup(
@@ -302,7 +302,7 @@ def step5():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 def step6():
@@ -320,15 +320,15 @@ def step6():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example1.seeder.next()))
+                                seed=next(example1.seeder)))
     person.create_attribute(
         "POPULARITY",
         init_gen=NumpyRandomGenerator(
-            method="uniform", low=0, high=1, seed=example1.seeder.next()))
+            method="uniform", low=0, high=1, seed=next(example1.seeder)))
 
     sites = SequencialGenerator(prefix="SITE_").generate(1000)
     random_site_gen = NumpyRandomGenerator(method="choice", a=sites,
-                                           seed=example1.seeder.next())
+                                           seed=next(example1.seeder))
 
     allowed_sites = person.create_relationship(name="sites")
 
@@ -361,7 +361,7 @@ def step6():
             person.ids,
             p=0.005,  # probability for a node to be connected to
                       # another one : 5 friends on average = 5/1000
-            seed=example1.seeder.next()),
+            seed=next(example1.seeder)),
         columns=["A", "B"])
 
     friends.add_relations(
@@ -381,7 +381,7 @@ def step6():
     )
 
     duration_gen = NumpyRandomGenerator(method="exponential", scale=60,
-                                        seed=example1.seeder.next())
+                                        seed=next(example1.seeder))
 
     hello_world.set_operations(
         person.ops.lookup(
@@ -421,7 +421,7 @@ def step6():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 def step7():
@@ -439,15 +439,15 @@ def step7():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example1.seeder.next()))
+                                seed=next(example1.seeder)))
     person.create_attribute(
         "POPULARITY",
         init_gen=NumpyRandomGenerator(
-            method="uniform", low=0, high=1, seed=example1.seeder.next()))
+            method="uniform", low=0, high=1, seed=next(example1.seeder)))
 
     sites = SequencialGenerator(prefix="SITE_").generate(1000)
     random_site_gen = NumpyRandomGenerator(method="choice", a=sites,
-                                           seed=example1.seeder.next())
+                                           seed=next(example1.seeder))
 
     allowed_sites = person.create_relationship(name="sites")
 
@@ -480,7 +480,7 @@ def step7():
             person.ids,
             p=0.005,  # probability for a node to be connected to
                       # another one : 5 friends on average = 5/1000
-            seed=example1.seeder.next()),
+            seed=next(example1.seeder)),
         columns=["A", "B"])
 
     friends.add_relations(
@@ -511,7 +511,7 @@ def step7():
     )
 
     duration_gen = NumpyRandomGenerator(method="exponential", scale=60,
-                                        seed=example1.seeder.next())
+                                        seed=next(example1.seeder))
 
     hello_world.set_operations(
         person.ops.lookup(
@@ -560,7 +560,7 @@ def step7():
     )
 
     with open("output/example1/hello.csv") as f:
-        print "Logged {} lines".format(len(f.readlines())-1)
+        print ("Logged {} lines".format(len(f.readlines())-1))
 
 
 if __name__ == "__main__":

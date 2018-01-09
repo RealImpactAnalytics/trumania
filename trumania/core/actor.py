@@ -56,7 +56,7 @@ class Actor(object):
                              "existing name {}".format(name))
 
         self.relationships[name] = Relationship(
-            seed=seed if seed else self.circus.seeder.next())
+            seed=seed if seed else next(self.circus.seeder))
 
         return self.relationships[name]
 
@@ -75,7 +75,7 @@ class Actor(object):
         assigned_items = make_random_assign(
             set1=item_id_gen.generate(size=n_items_per_actor * self.size),
             set2=self.ids,
-            seed=self.circus.seeder.next())
+            seed=next(self.circus.seeder))
 
         rel_to_items.add_relations(
             from_ids=assigned_items["chosen_from_set2"],
@@ -153,7 +153,7 @@ class Actor(object):
         new_ids = values_dedup.index.difference(self.ids)
         self.ids = self.ids | new_ids
 
-        for att_name, values in values_dedup.iteritems():
+        for att_name, values in values_dedup.items():
             self.get_attribute(att_name).update(values)
 
     def to_dataframe(self):
@@ -201,14 +201,14 @@ class Actor(object):
 
         if len(self.attributes) > 0:
             os.mkdir(attribute_dir)
-            for name, attr in self.attributes.iteritems():
+            for name, attr in self.attributes.items():
                 file_path = os.path.join(attribute_dir, name + ".csv")
                 attr.save_to(file_path)
 
         if len(self.relationships) > 0:
             relationships_dir = os.path.join(actor_dir, "relationships")
             os.mkdir(relationships_dir)
-            for name, rel in self.relationships.iteritems():
+            for name, rel in self.relationships.items():
                 file_path = os.path.join(relationships_dir, name + ".csv")
                 rel.save_to(file_path)
 
@@ -300,7 +300,7 @@ class Actor(object):
                 id_lists = action_data[self.actor_id_field]
 
                 # unique actor ids of the attribute to look up
-                actor_ids = np.unique(reduce(lambda l1, l2: l1 + l2, id_lists))
+                actor_ids = np.unique(functools.reduce(lambda l1, l2: l1 + l2, id_lists))
 
                 output = pd.DataFrame(index=action_data.index)
                 for attribute, named_as in self.select_dict.items():
@@ -380,6 +380,6 @@ class Actor(object):
             gen = random_generators.NumpyRandomGenerator(
                 method="choice",
                 a=self.actor.ids,
-                seed=self.actor.circus.seeder.next())
+                seed=next(self.actor.circus.seeder))
 
             return gen.ops.generate(named_as=named_as)

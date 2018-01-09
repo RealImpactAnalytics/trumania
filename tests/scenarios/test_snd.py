@@ -72,7 +72,7 @@ class SndScenario(WithRandomGeo, Circus):
         sim_generator = SequencialGenerator(prefix="SIM_", max_length=30)
         sim_ids = sim_generator.generate(params["n_init_sims_distributor"])
         sims_dist = make_random_assign(set1=sim_ids, set2=distributors.ids,
-                                       seed=self.seeder.next())
+                                       seed=next(self.seeder))
         sims.add_relations(from_ids=sims_dist["chosen_from_set2"],
                            to_ids=sims_dist["set1"])
 
@@ -138,7 +138,7 @@ class SndScenario(WithRandomGeo, Circus):
         sims = dealers.create_relationship(name="SIM")
         sim_ids = build_ids(size=params["n_init_sims_dealer"], prefix="SIM_")
         sims_dealer = make_random_assign(set1=sim_ids, set2=dealers.ids,
-                                         seed=self.seeder.next())
+                                         seed=next(self.seeder))
         sims.add_relations(from_ids=sims_dealer["chosen_from_set2"],
                            to_ids=sims_dealer["set1"])
 
@@ -169,7 +169,7 @@ class SndScenario(WithRandomGeo, Circus):
         agents.create_relationship(name="SIM")
 
         agents.create_attribute(name="AGENT_NAME",
-                                init_gen=FakerGenerator(seed=self.seeder.next(),
+                                init_gen=FakerGenerator(seed=next(self.seeder),
                                                         method="name"))
 
         # note: the SIM multi-attribute is not initialized with any SIM: agents
@@ -190,7 +190,7 @@ class SndScenario(WithRandomGeo, Circus):
 
         agent_customer_df = pd.DataFrame.from_records(
             make_random_bipartite_data(agents.ids, dealers.ids, deg_prob,
-                                       seed=self.seeder.next()),
+                                       seed=next(self.seeder)),
             columns=["AGENT", "DEALER"])
 
         agent_customer_rel = agents.create_relationship(name="DEALERS")
@@ -212,7 +212,7 @@ class SndScenario(WithRandomGeo, Circus):
         # let's be simple: each dealer has only one provider
         distributor_rel = dealers.create_relationship("DISTRIBUTOR")
 
-        state = np.random.RandomState(self.seeder.next())
+        state = np.random.RandomState(next(self.seeder))
         assigned = state.choice(a=distributors.ids, size=dealers.size, replace=True)
 
         distributor_rel.add_relations(from_ids=dealers.ids, to_ids=assigned)
@@ -220,7 +220,7 @@ class SndScenario(WithRandomGeo, Circus):
         # We're also adding a "bulk buy size" attribute to each dealer that defines
         # how many SIM are bought at one from the distributor.
         bulk_gen = ParetoGenerator(xmin=500, a=1.5, force_int=True,
-                                   seed=self.seeder.next())
+                                   seed=next(self.seeder))
 
         dealers.create_attribute("BULK_BUY_SIZE", init_gen=bulk_gen)
 
@@ -232,7 +232,7 @@ class SndScenario(WithRandomGeo, Circus):
         logging.info("Creating bulk purchase action")
 
         timegen = HighWeekDaysTimerGenerator(clock=self.clock,
-                                             seed=self.seeder.next())
+                                             seed=next(self.seeder))
 
         purchase_activity_gen = ConstantGenerator(value=100)
 
@@ -297,10 +297,10 @@ class SndScenario(WithRandomGeo, Circus):
         logging.info("Creating purchase action")
 
         timegen = HighWeekDaysTimerGenerator(clock=self.clock,
-                                             seed=self.seeder.next())
+                                             seed=next(self.seeder))
 
         purchase_activity_gen = NumpyRandomGenerator(
-            method="choice", a=range(1, 4), seed=self.seeder.next())
+            method="choice", a=range(1, 4), seed=next(self.seeder))
 
         # TODO: if we merge profiler and generator, we could have higher probs here
         # based on calendar
@@ -379,17 +379,17 @@ class SndScenario(WithRandomGeo, Circus):
         # We could call this YearProfile though the internal mechanics would be
         # different than week and day profiler
         holiday_time_gen = HighWeekDaysTimerGenerator(clock=self.clock,
-                                                      seed=self.seeder.next())
+                                                      seed=next(self.seeder))
 
         # TODO: we'd obviously have to adapt those weight to longer periods
         # thought this interface is not very intuitive
         # => create a method where can can specify the expected value of the
         # inter-event interval, and convert that into an activity
         holiday_start_activity = ParetoGenerator(xmin=.25, a=1.2,
-                                                 seed=self.seeder.next())
+                                                 seed=next(self.seeder))
 
         holiday_end_activity = ParetoGenerator(xmin=150, a=1.2,
-                                               seed=self.seeder.next())
+                                               seed=next(self.seeder))
 
         going_on_holidays = self.create_action(
             name="agent_start_holidays",
@@ -441,10 +441,10 @@ class SndScenario(WithRandomGeo, Circus):
         """
 
         timegen = HighWeekDaysTimerGenerator(clock=self.clock,
-                                             seed=self.seeder.next())
+                                             seed=next(self.seeder))
 
         review_activity_gen = NumpyRandomGenerator(
-            method="choice", a=range(1, 4), seed=self.seeder.next())
+            method="choice", a=range(1, 4), seed=next(self.seeder))
 
         # the system starts with no reviews
         review_actor = self.create_actor(name="rev", size=0)
@@ -462,7 +462,7 @@ class SndScenario(WithRandomGeo, Circus):
         )
 
         review_id_gen = SequencialGenerator(start=0, prefix="REVIEW_ID")
-        text_id_gen = FakerGenerator(method="text", seed=self.seeder.next())
+        text_id_gen = FakerGenerator(method="text", seed=next(self.seeder))
 
         reviews.set_operations(
             self.clock.ops.timestamp(named_as="DATETIME"),
@@ -499,7 +499,7 @@ def test_snd_scenario():
                  log_output_folder=params["output_folder"])
     logs = load_all_logs(params["output_folder"])
 
-    for logid, lg in logs.iteritems():
+    for logid, lg in logs.items():
         log_dataframe_sample(" - some {}".format(logid), lg)
 
     purchases = logs["purchases"]
@@ -513,7 +513,7 @@ def test_snd_scenario():
     all_logs_size = np.sum(df.shape[0] for df in logs.values())
     logging.info("\ntotal number of logs: {}".format(all_logs_size))
 
-    for logid, lg in logs.iteritems():
+    for logid, lg in logs.items():
         logging.info(" {} {} logs".format(len(lg), logid))
 
     # broke dealer should have maximum 3 successful sales

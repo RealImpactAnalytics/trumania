@@ -1,10 +1,10 @@
-from __future__ import division
 from scipy import stats
 from abc import ABCMeta, abstractmethod
 import pandas as pd
 import numpy as np
 
 from trumania.core.util_functions import merge_dicts, df_concat
+import functools
 
 
 class Operation(object):
@@ -54,7 +54,7 @@ class Chain(Operation):
         self.operations += list(operations)
 
     @staticmethod
-    def _execute_operation((action_data, prev_logs), operation):
+    def _execute_operation(action_data__prev_logs, operation):
         """
 
         executes this operation and merges its logs with the previous one
@@ -62,13 +62,15 @@ class Chain(Operation):
         :return: the merged action data and logs
         """
 
+        (action_data, prev_logs) = action_data__prev_logs
+
         output, supp_logs = operation(action_data)
         # merging the logs of each operation of this action.
         return output, merge_dicts([prev_logs, supp_logs], df_concat)
 
     def __call__(self, action_data):
         init = [(action_data, {})]
-        return reduce(self._execute_operation, init + self.operations)
+        return functools.reduce(self._execute_operation, init + self.operations)
 
 
 class FieldLogger(Operation):
@@ -274,7 +276,7 @@ def bound_value(lb=None, ub=None):
     """
 
     def _f(value):
-        limited = max(lb, value)
+        limited = value if lb is None else max(lb, value)
         if ub is not None:
             limited = min(ub, limited)
         return limited

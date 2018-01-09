@@ -12,19 +12,18 @@ flake8 = "*"
 [packages]
 
 networkx = "*"
-pandas = "==*"
+pandas = "*"
 numpy = "*"
 scipy = "*"
-seaborn = "*"
-teamcity-messages = "*"
 pytest = "*"
 faker = "*"
-jupyter = "*"
 pymongo = "*"
 "path.py" = "*"
+bson = "*"
+tabulate = "*"
 "e1839a8" = {path = ".", editable = true}
 
 
 [requires]
 
-python_version = "2.7"
+python_version = "3.5"

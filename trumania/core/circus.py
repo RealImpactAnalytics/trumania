@@ -41,7 +41,7 @@ class Circus(object):
         self.clock_params = clock_params
 
         self.seeder = seed_provider(master_seed=master_seed)
-        self.clock = Clock(seed=self.seeder.next(), **clock_params)
+        self.clock = Clock(seed=next(self.seeder), **clock_params)
         self.actions = []
         self.actors = {}
         self.generators = {}
@@ -68,10 +68,10 @@ class Circus(object):
         if namespace is None:
             namespace = self.name
 
-        actor = db.load_actor(namespace=namespace, actor_id=actor_id,
+        loaded_actor = db.load_actor(namespace=namespace, actor_id=actor_id,
                               circus=self)
-        self.actors[actor_id] = actor
-        return actor
+        self.actors[actor_id] = loaded_actor
+        return loaded_actor
 
     def create_action(self, name, **action_params):
         """
@@ -91,12 +91,12 @@ class Circus(object):
                              "identical name is already in the circus".format(name))
 
     def get_action(self, action_name):
-        found = filter(lambda a: a.name == action_name, self.actions)
-        if len(found) == 0:
+        remaining_actions = filter(lambda a: a.name == action_name, self.actions)
+        try:
+            return next(remaining_actions)
+        except StopIteration:
             logging.warn("action not found: {}".format(action_name))
             return None
-        else:
-            return found[0]
 
     def get_actor_of(self, action_name):
         return self.get_action(action_name).triggering_actor
@@ -177,7 +177,7 @@ class Circus(object):
             logging.info("step : {}".format(step_number))
 
             for action in self.actions:
-                for log_id, logs in action.execute().iteritems():
+                for log_id, logs in action.execute().items():
                     self.save_logs(log_id, logs, log_output_folder)
 
             self.clock.increment()

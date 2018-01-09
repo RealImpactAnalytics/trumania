@@ -27,13 +27,13 @@ def create_circus_with_actor():
     person.create_attribute(
         "NAME",
         init_gen=FakerGenerator(method="name",
-                                seed=example_circus.seeder.next()))
+                                seed=next(example_circus.seeder)))
 
     person.create_attribute(
         "age",
         init_gen=NumpyRandomGenerator(
-            method="normal", loc="35", scale="5",
-            seed=example_circus.seeder.next()))
+            method="normal", loc=35, scale=5,
+            seed=next(example_circus.seeder)))
 
     return example_circus
 
