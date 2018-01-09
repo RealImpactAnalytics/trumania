@@ -10,7 +10,7 @@ You can also have a look at the S&D example Scenario here in `tests/scenarios/sn
 
 Trumania is not (yet) packaged in any special way, the way it is used at the moment is simply to have the code, the required dependencies, and execute the necessary python script directly. 
 
-Make sure you have python 2.7 and pip installed.
+Make sure you have python 3 and pip installed.
 
 Then, if pipenv is not yet present on your laptop, install it: 
 
