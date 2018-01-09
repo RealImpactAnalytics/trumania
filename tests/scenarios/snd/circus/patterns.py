@@ -1,10 +1,8 @@
 """
 Re-usable operation chains throughout the SND scenario
 """
-from trumania.core.action import Action
 import trumania.core.operations as operations
 import trumania.core.random_generators as random_generators
-import trumania.core.util_functions as util_functions
 import logging
 
 
@@ -118,31 +116,31 @@ def add_bulk_restock_actions(circus, params,
         build_purchase_action.set_operations(
             circus.clock.ops.timestamp(named_as="TIME"),
 
-            buyer.get_relationship("{}__provider".format(product))\
-                .ops.select_one(from_field="BUYER_ID",
-                                named_as="SELLER_ID"),
+            buyer.get_relationship("{}__provider".format(product))
+                 .ops.select_one(from_field="BUYER_ID",
+                                 named_as="SELLER_ID"),
 
             bulk_size_gen.ops.generate(named_as="REQUESTED_BULK_SIZE"),
 
-            buyer.get_relationship(product).ops\
-                .get_neighbourhood_size(
-                    from_field="BUYER_ID",
-                    named_as="OLD_BUYER_STOCK"),
+            buyer.get_relationship(product).ops
+                 .get_neighbourhood_size(
+                     from_field="BUYER_ID",
+                     named_as="OLD_BUYER_STOCK"),
 
             # TODO: the perfect case would prevent to go over max_stock at this point
 
             # selecting and removing Sims from dealers
             seller.get_relationship(product).ops \
-                .select_many(
-                    from_field="SELLER_ID",
-                    named_as="ITEM_IDS",
-                    quantity_field="REQUESTED_BULK_SIZE",
+                  .select_many(
+                       from_field="SELLER_ID",
+                       named_as="ITEM_IDS",
+                       quantity_field="REQUESTED_BULK_SIZE",
 
-                    # if an item is selected, it is removed from the dealer's stock
-                    pop=True,
+                       # if an item is selected, it is removed from the dealer's stock
+                       pop=True,
 
-                    # TODO: put this back to False and log the failed purchases
-                    discard_missing=True),
+                       # TODO: put this back to False and log the failed purchases
+                       discard_missing=True),
 
             # and adding them to the buyer
             buyer.get_relationship(product).ops.add_grouped(
@@ -154,10 +152,10 @@ def add_bulk_restock_actions(circus, params,
             # if a dealer is selected several times, its stock level after the
             # select_many() is the level _after_ all purchases are done, which is
             # typically not what we want to include in the log.
-            buyer.get_relationship(product).ops\
-                .get_neighbourhood_size(
-                    from_field="BUYER_ID",
-                    named_as="NEW_BUYER_STOCK"),
+            buyer.get_relationship(product).ops \
+                 .get_neighbourhood_size(
+                     from_field="BUYER_ID",
+                     named_as="NEW_BUYER_STOCK"),
 
             # actual number of bought items might be different due to out of stock
             operations.Apply(source_fields="ITEM_IDS",

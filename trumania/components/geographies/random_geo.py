@@ -22,6 +22,3 @@ class WithRandomGeo(Circus):
         cells.create_attribute("longitude", init_gen=longitude_generator)
 
         return cells
-
-
-

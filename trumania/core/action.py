@@ -2,7 +2,7 @@ import pandas as pd
 import logging
 import numpy as np
 
-from trumania.core.operations import SideEffectOnly
+from trumania.core.operations import SideEffectOnly, Chain
 from trumania.core.random_generators import ConstantGenerator, ConstantDependentGenerator, NumpyRandomGenerator
 from trumania.core.util_functions import merge_2_dicts
 
@@ -74,15 +74,15 @@ class Action(object):
 
         # in case self.operations is not called, at least we have a basic
         # selection
-        self.operation_chain = operations.Chain()
+        self.operation_chain = Chain()
 
     def set_operations(self, *ops):
         """
-        :param operations: sequence of operations to be executed at each step
+        :param ops: sequence of operations to be executed at each step
         """
 
         all_ops = list(ops) + [self._MaybeBackToDefault(self)]
-        self.operation_chain = operations.Chain(*all_ops)
+        self.operation_chain = Chain(*all_ops)
 
     def append_operations(self, *ops):
         self.operation_chain.append(*ops)

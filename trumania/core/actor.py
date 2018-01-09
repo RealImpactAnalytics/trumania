@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 import numpy as np
 import os
+import functools
 
 from trumania.core.operations import AddColumns, SideEffectOnly
 from trumania.core.relationship import Relationship
@@ -282,7 +283,8 @@ class Actor(object):
 
                 for attribute, named_as in self.select_dict.items():
                     vals = pd.DataFrame(
-                    self.actor.get_attribute_values(attribute, actor_ids))
+                        self.actor.get_attribute_values(attribute, actor_ids))
+
                     vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
@@ -307,7 +309,10 @@ class Actor(object):
                     vals = self.actor.get_attribute_values(attribute, actor_ids)
 
                     def attributes_of_ids(ids):
-                        "return: list of attribute values for those actor ids"
+                        """
+                        :param ids:
+                        :return: list of attribute values for those actor ids
+                        """
                         return vals.loc[ids].tolist()
 
                     output[named_as] = id_lists.map(attributes_of_ids)

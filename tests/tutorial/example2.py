@@ -58,7 +58,7 @@ def add_report_action(the_circus):
 
     report_action.set_operations(
         the_circus.clock.ops.timestamp(named_as="TIME", random=False,
-                                     log_format="%Y-%m-%d"),
+                                       log_format="%Y-%m-%d"),
 
         pos.get_relationship("items").ops.get_neighbourhood_size(
             from_field="POS_ID",
@@ -132,7 +132,7 @@ def add_periodic_restock_action(the_circus):
                                    observed_field="RESTOCK_VOLUME"),
 
         pos.get_relationship("items").ops.add_grouped(from_field="POS_ID",
-                                           grouped_items_field="NEW_ITEM_IDS"),
+                                                      grouped_items_field="NEW_ITEM_IDS"),
 
         ops.FieldLogger(log_id="restock", cols=["TIME", "POS_ID", "POS_NAME",
                                                 "RESTOCK_VOLUME"])

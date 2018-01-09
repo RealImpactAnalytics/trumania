@@ -297,4 +297,3 @@ def step2():
 if __name__ == "__main__":
     util_functions.setup_logging()
     step2()
-

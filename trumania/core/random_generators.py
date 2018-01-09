@@ -529,4 +529,3 @@ class DependentBulkGenerator(DependentGenerator):
             return self.element_generator.generate(bulk_size)
 
         return pd.Series([f(observation) for observation in observations])
-

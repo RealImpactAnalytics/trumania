@@ -27,7 +27,7 @@ def make_random_bipartite_data(group1, group2, p, seed):
     """
     logging.info("  creating a bipartite graph between {} items in group1, {} "
                  "items in group2 and edge probability {}".format(
-                   len(group1), len(group2), p))
+                    len(group1), len(group2), p))
 
     if len(group1) == 0 or len(group2) == 0 or p == 0:
         return []
@@ -138,7 +138,8 @@ def setup_logging():
         level=logging.INFO)
 
 
-# stolen from http://stackoverflow.com/questions/1835018/python-check-if-an-object-is-a-list-or-tuple-but-not-string#answer-1835259
+# stolen from http://stackoverflow.com/questions/1835018/
+# python-check-if-an-object-is-a-list-or-tuple-but-not-string#answer-1835259
 def is_sequence(arg):
     return type(arg) is list or type(arg) is tuple or type(arg) is set
 

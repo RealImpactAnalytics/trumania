@@ -1,8 +1,14 @@
-from trumania.core.action import Action
+import pandas as pd
+import numpy as np
+
+from trumania.core.operations import Operation
+from trumania.core.random_generators import SequencialGenerator
 from trumania.core.actor import Actor
-from tests.mocks.operations import *
-from tests.mocks.random_generators import *
-from trumania.core.random_generators import *
+from trumania.core.action import Action
+
+from tests.mocks.random_generators import MockTimerGenerator, ConstantsMockGenerator, ConstantDependentGenerator
+from tests.mocks.random_generators import ConstantGenerator
+from tests.mocks.operations import MockDropOp, FakeRecording
 
 
 def test_empty_action_should_do_nothing_and_not_crash():
@@ -156,7 +162,7 @@ def test_get_activity_should_be_aligned_for_each_state():
     assert expected_activity[2:7] == action.get_param("activity",
                                                       actor.ids[2:7]).tolist()
 
-    assert [1, 10] == action.get_param("activity",actor.ids[-2:]).tolist()
+    assert [1, 10] == action.get_param("activity", actor.ids[-2:]).tolist()
 
     expected_probs = [1, 1, .3, 1, 1, .3, 1, 1, 1, .3]
     assert expected_probs == action.get_param("back_to_default_probability",
@@ -580,4 +586,3 @@ def test_bugfix_force_actors_should_only_act_once():
     action.execute()
     assert recording_op.last_seen_actor_ids == ["ac_0", "ac_2", "ac_4"]
     assert action.timer["remaining"].tolist() == [2, 0, 2, 0, 2, 2, 2, 3, 3, 3]
-

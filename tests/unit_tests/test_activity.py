@@ -1,11 +1,16 @@
 import path
-from trumania.components.time_patterns.profilers import *
+import pandas as pd
+import logging
+import os
 
-import trumania.core.operations as operations
-import trumania.core.util_functions as util_functions
+from trumania.core.util_functions import setup_logging, load_all_logs
+from trumania.core.clock import CyclicTimerProfile, CyclicTimerGenerator
+from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantGenerator
 from trumania.core.circus import Circus
+from trumania.core.operations import FieldLogger, bound_value
+from trumania.components.time_patterns.profilers import DefaultDailyTimerGenerator, WorkHoursTimerGenerator
 
-util_functions.setup_logging()
+setup_logging()
 
 
 def run_test_scenario_1(clock_step, simulation_duration,
@@ -46,7 +51,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
 
     action.set_operations(
         circus.clock.ops.timestamp(named_as="TIME"),
-        operations.FieldLogger(log_id="the_logs")
+        FieldLogger(log_id="the_logs")
     )
 
     circus.run(duration=pd.Timedelta(simulation_duration), log_output_folder=log_folder)
@@ -69,7 +74,7 @@ def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days():
                             log_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         # 2 days of simulation should produce 1000 * 12 * 2 == 24k logs
         logging.info("number of produced logs: {} logs".format(logs.shape[0]))
@@ -93,7 +98,7 @@ def test_1000_actors_with_activity_12perday_should_yield_60k_logs_in_5days():
                             log_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
@@ -119,7 +124,7 @@ def test_1000_actors_with_low_activity():
                             log_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
@@ -145,7 +150,7 @@ def test_1000_actors_with_low_activity2():
                             log_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         # 2 days of simulation should produce 1000 * 15 * 1/5 == 3000 logs
         assert 2600 <= logs.shape[0] <= 3400
@@ -169,7 +174,7 @@ def test_1000_actors_with_activity_one_per_cycle():
                             log_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
@@ -187,7 +192,8 @@ def test_actors_during_default_daily():
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
-        field_agents = circus.create_actor(name="fa",
+        field_agents = circus.create_actor(
+            name="fa",
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
@@ -209,13 +215,13 @@ def test_actors_during_default_daily():
 
         action.set_operations(
             circus.clock.ops.timestamp(named_as="TIME"),
-            operations.FieldLogger(log_id="the_logs")
+            FieldLogger(log_id="the_logs")
         )
 
         circus.run(duration=pd.Timedelta("30 days"), log_output_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 
@@ -233,7 +239,8 @@ def test_actors_during_working_hours():
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
-        field_agents = circus.create_actor(name="fa",
+        field_agents = circus.create_actor(
+            name="fa",
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
 
@@ -261,13 +268,13 @@ def test_actors_during_working_hours():
 
         action.set_operations(
             circus.clock.ops.timestamp(named_as="TIME"),
-            operations.FieldLogger(log_id="the_logs")
+            FieldLogger(log_id="the_logs")
         )
 
         circus.run(duration=pd.Timedelta("30 days"), log_output_folder=log_folder)
 
         logging.info("loading produced logs")
-        logs = util_functions.load_all_logs(log_folder)["the_logs"]
+        logs = load_all_logs(log_folder)["the_logs"]
 
         logging.info("number of produced logs: {} logs".format(logs.shape[0]))
 

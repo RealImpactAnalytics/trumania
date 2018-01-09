@@ -12,6 +12,7 @@ import logging
 
 class WithBelgium(Circus):
 
+    @staticmethod
     def add_belgium_geography(self):
         """
         Loads the sites definition from Belgium
@@ -19,5 +20,3 @@ class WithBelgium(Circus):
         logging.info(" adding Belgium Geography")
 
         return db.load_actor(namespace="belgium", actor_id="sites")
-
-

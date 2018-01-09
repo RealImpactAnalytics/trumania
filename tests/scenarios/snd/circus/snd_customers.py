@@ -1,9 +1,12 @@
 from __future__ import division
-from trumania.core.circus import *
-from trumania.core.actor import *
-from trumania.core.util_functions import *
-import patterns
+import logging
 import pandas as pd
+import patterns
+
+from trumania.core.operations import FieldLogger, bound_value, bounded_sigmoid, Apply
+from trumania.core.random_generators import SequencialGenerator, DependentTriggerGenerator, NumpyRandomGenerator
+from trumania.components.time_patterns.profilers import DefaultDailyTimerGenerator
+from trumania.core.clock import CyclicTimerGenerator, CyclicTimerProfile
 
 
 def add_customers(circus, params):
@@ -119,9 +122,9 @@ def add_mobility_action(circus, params):
         circus.clock.ops.timestamp(named_as="TIME"),
 
         # create mobility logs
-        operations.FieldLogger(log_id="customer_mobility_logs",
-                               cols=["TIME", "CUST_ID", "PREV_SITE",
-                                     "NEW_SITE"]),
+        FieldLogger(log_id="customer_mobility_logs",
+                    cols=["TIME", "CUST_ID", "PREV_SITE",
+                          "NEW_SITE"]),
     )
 
 
@@ -140,12 +143,12 @@ def add_purchase_actions(circus, params):
         max_activity = purchase_timer_gen.activity(
             n_actions=1,
             per=pd.Timedelta(
-            days=description["customer_purchase_min_period_days"]))
+                days=description["customer_purchase_min_period_days"]))
 
         min_activity = purchase_timer_gen.activity(
             n_actions=1,
             per=pd.Timedelta(
-            days=description["customer_purchase_max_period_days"]))
+                days=description["customer_purchase_max_period_days"]))
 
         purchase_activity_gen = NumpyRandomGenerator(
             method="uniform",
@@ -154,7 +157,7 @@ def add_purchase_actions(circus, params):
             seed=circus.seeder.next()).map(f=lambda per: 1 / per)
 
         low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
-            value_to_proba_mapper=operations.bounded_sigmoid(
+            value_to_proba_mapper=bounded_sigmoid(
                 x_min=1,
                 x_max=description["max_pos_stock_triggering_pos_restock"],
                 shape=description["restock_sigmoid_shape"],
@@ -197,7 +200,7 @@ def add_purchase_actions(circus, params):
             # distributor
             sites.ops.lookup(
                 actor_id_field="SITE",
-                select={"GEO_LEVEL_2" : "geo_level2_id",
+                select={"GEO_LEVEL_2": "geo_level2_id",
                         "{}__dist_l1".format(product): "distributor_l1"}
             ),
 
@@ -211,9 +214,9 @@ def add_purchase_actions(circus, params):
 
             circus.actors[product].ops.select_one(named_as="PRODUCT_ID"),
 
-            operations.Apply(source_fields="INSTANCE_ID",
-                             named_as="FAILED_SALE_OUT_OF_STOCK",
-                             f=pd.isnull, f_args="series"),
+            Apply(source_fields="INSTANCE_ID",
+                  named_as="FAILED_SALE_OUT_OF_STOCK",
+                  f=pd.isnull, f_args="series"),
 
             SequencialGenerator(prefix="TX_CUST_{}".format(product)).ops.generate(
                 named_as="TX_ID"),

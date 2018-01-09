@@ -39,7 +39,8 @@ def create_distl1_daily_targets(product, write_mode):
     # TIME, BUYER_ID, SELLER_ID, OLD_BUYER_STOCK, NEW_BUYER_STOCK, BULK_SIZE
     input_file_name = "output/{}/dist_l1_" \
                       "{}_bulk_purchase_stock.csv".format(
-        circus_name, product)
+                          circus_name, product
+                      )
 
     bulk_purchases = pd.read_csv(input_file_name, parse_dates=[0])
     bulk_purchases["day"] = bulk_purchases["TIME"].apply(

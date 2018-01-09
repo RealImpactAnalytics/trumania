@@ -19,4 +19,3 @@ example1.run(
     log_output_folder="output/example1",
     delete_existing_logs=True
 )
-

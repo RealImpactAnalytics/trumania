@@ -238,7 +238,7 @@ def add_song_actors(the_circus):
 
     repo = the_circus.actors["music_repository"]
     repo_genre_rel = repo.get_attribute("genre_name")
-    for genre_id, genre_name in repo_genre_rel.get_values().iteritems():
+    for genre_id, genre_name in repo_genre_rel.get_values().items():
 
         # an operation capable of creating songs of that genre
         init_attribute = ops.Chain(
@@ -408,6 +408,7 @@ def step4():
     add_listener(example3)
     add_listen_and_share_actions_with_details(example3)
     run(example3)
+
 
 if __name__ == "__main__":
     util_functions.setup_logging()
