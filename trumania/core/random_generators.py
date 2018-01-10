@@ -2,8 +2,14 @@ from itertools import islice
 from faker import Faker
 from bson.objectid import ObjectId
 import json
+import pandas as pd
+import logging
+from abc import ABCMeta, abstractmethod
+import numpy as np
+from numpy.random import RandomState
 
-from trumania.core.operations import *
+from trumania.core.operations import AddColumns, identity
+from trumania.core.util_functions import merge_2_dicts, build_ids
 
 
 def seed_provider(master_seed):
@@ -128,7 +134,7 @@ class Generator(object):
                     values = [list(islice(flat_vals, size)) for size in qties]
 
                 return pd.DataFrame({self.named_as: values},
-                                     index=action_data.index)
+                                    index=action_data.index)
 
         def generate(self, named_as, quantity_field=None):
             return self.RandomValues(self.generator, named_as=named_as,
@@ -216,6 +222,7 @@ class NumpyRandomGenerator(Generator):
             gen.state.set_state(np_state)
             return gen
 
+
 Generator.file_loaders["NumpyRandomGenerator"] = NumpyRandomGenerator.load_from
 
 
@@ -299,6 +306,7 @@ class SequencialGenerator(Generator):
                 start=state["counter"],
                 prefix=state["prefix"],
                 max_length=state["max_length"])
+
 
 Generator.file_loaders["SequencialGenerator"] = SequencialGenerator.load_from
 
@@ -453,7 +461,6 @@ class DependentGenerator(object):
                                               observed_field)
 
 
-
 class ConstantDependentGenerator(ConstantGenerator, DependentGenerator):
     """
     Dependent generator ignoring the observations and producing a constant
@@ -522,4 +529,3 @@ class DependentBulkGenerator(DependentGenerator):
             return self.element_generator.generate(bulk_size)
 
         return pd.Series([f(observation) for observation in observations])
-

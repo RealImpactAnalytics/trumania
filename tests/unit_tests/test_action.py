@@ -1,8 +1,13 @@
-from trumania.core.action import Action
+import pandas as pd
+import numpy as np
+
+from trumania.core.operations import Operation
+from trumania.core.random_generators import SequencialGenerator, ConstantGenerator, ConstantDependentGenerator
 from trumania.core.actor import Actor
-from tests.mocks.operations import *
-from tests.mocks.random_generators import *
-from trumania.core.random_generators import *
+from trumania.core.action import Action
+
+from tests.mocks.random_generators import MockTimerGenerator, ConstantsMockGenerator
+from tests.mocks.operations import MockDropOp, FakeRecording
 
 
 def test_empty_action_should_do_nothing_and_not_crash():
@@ -156,7 +161,7 @@ def test_get_activity_should_be_aligned_for_each_state():
     assert expected_activity[2:7] == action.get_param("activity",
                                                       actor.ids[2:7]).tolist()
 
-    assert [1, 10] == action.get_param("activity",actor.ids[-2:]).tolist()
+    assert [1, 10] == action.get_param("activity", actor.ids[-2:]).tolist()
 
     expected_probs = [1, 1, .3, 1, 1, .3, 1, 1, 1, .3]
     assert expected_probs == action.get_param("back_to_default_probability",
@@ -280,7 +285,7 @@ def test_scenario_transiting_to_state_with_1_back_to_default_prob_should_go_back
     assert logs == {}
 
     # this time, all actors should have transited back to "normal" at the end
-    print (action.timer["state"].tolist())
+    print(action.timer["state"].tolist())
     assert ["default"] * 10 == action.timer["state"].tolist()
 
 
@@ -421,7 +426,7 @@ def test_action_autoreset_false_not_dropping_rows_should_reset_all_timers():
     # executing once more: the previously at -1 should still be there, and the
     # just executed at this stage should be there too
     action.execute()
-    expected_timers = pd.Series([-1]*10, index=actor.ids)
+    expected_timers = pd.Series([-1] * 10, index=actor.ids)
     assert action.timer["remaining"].equals(expected_timers)
 
 
@@ -480,7 +485,7 @@ def test_action_autoreset_false_and_dropping_rows_should_reset_all_timers():
     # executing once more: the previously at -1 should still be there, and the
     # just executed at this stage should be there too
     action.execute()
-    expected_timers = pd.Series([-1]*10, index=actor.ids)
+    expected_timers = pd.Series([-1] * 10, index=actor.ids)
     assert action.timer["remaining"].equals(expected_timers)
 
 
@@ -569,7 +574,7 @@ def test_bugfix_force_actors_should_only_act_once():
 
     action.execute()
     assert recording_op.last_seen_actor_ids == ["ac_1", "ac_3", "ac_7", "ac_8", "ac_9"]
-    print (action.timer["remaining"].tolist())
+    print(action.timer["remaining"].tolist())
     assert action.timer["remaining"].tolist() == [1, 2, 1, 2, 1, 4, 4, 5, 5, 5]
     recording_op.reset()
 
@@ -580,4 +585,3 @@ def test_bugfix_force_actors_should_only_act_once():
     action.execute()
     assert recording_op.last_seen_actor_ids == ["ac_0", "ac_2", "ac_4"]
     assert action.timer["remaining"].tolist() == [2, 0, 2, 0, 2, 2, 2, 3, 3, 3]
-

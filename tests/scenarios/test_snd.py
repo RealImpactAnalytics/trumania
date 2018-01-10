@@ -1,14 +1,16 @@
-"""
-This is a
-
-"""
-
 from __future__ import division
+import pandas as pd
+import logging
+import numpy as np
 
-from trumania.core.relationship import *
-from trumania.core.circus import *
-from trumania.components.time_patterns.profilers import *
-from trumania.components.geographies.random_geo import *
+from trumania.core.util_functions import setup_logging, load_all_logs, build_ids, make_random_bipartite_data
+from trumania.core.util_functions import make_random_assign, log_dataframe_sample
+from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantGenerator
+from trumania.core.random_generators import ParetoGenerator, FakerGenerator
+from trumania.core.circus import Circus
+from trumania.components.geographies.random_geo import WithRandomGeo
+from trumania.components.time_patterns.profilers import HighWeekDaysTimerGenerator
+from trumania.core import operations
 
 # AgentA: has stock of SIMs
 # AgentB: has stock of SIMs
@@ -61,11 +63,12 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating distributors and their SIM stock  ")
 
-        distributors = self.create_actor(name="distros",
-                                         size=params["n_distributors"],
-                                ids_gen=SequencialGenerator(
-                                 prefix="DISTRIBUTOR_",
-                                 max_length=1))
+        distributors = self.create_actor(
+            name="distros",
+            size=params["n_distributors"],
+            ids_gen=SequencialGenerator(
+                prefix="DISTRIBUTOR_",
+                max_length=1))
 
         sims = distributors.create_relationship(name="SIM")
 
@@ -131,8 +134,8 @@ class SndScenario(WithRandomGeo, Circus):
         dealers = self.create_actor(name="dealers",
                                     size=params["n_dealers"],
                                     ids_gen=SequencialGenerator(
-                                    prefix="DEALER_",
-                                    max_length=3))
+                                        prefix="DEALER_",
+                                        max_length=3))
 
         # SIM relationship to maintain some stock
         sims = dealers.create_relationship(name="SIM")
@@ -519,4 +522,3 @@ def test_snd_scenario():
     # broke dealer should have maximum 3 successful sales
     ok_sales_of_broke = sales_of_broke[~sales_of_broke["FAILED_SALE"]]
     assert ok_sales_of_broke.shape[0] <= 3
-

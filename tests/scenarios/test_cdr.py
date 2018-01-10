@@ -1,13 +1,21 @@
 from __future__ import division
-
-from trumania.components.social_networks.erdos_renyi import *
-from trumania.components.geographies.random_geo import *
-from trumania.components.time_patterns.profilers import *
-from trumania.components.geographies.uganda import *
-
-from trumania.core import operations
-
+import pandas as pd
+import logging
 from datetime import datetime
+from numpy.random import RandomState
+import numpy as np
+
+from trumania.core.util_functions import setup_logging, load_all_logs, build_ids, make_random_bipartite_data
+from trumania.core.clock import CyclicTimerProfile, CyclicTimerGenerator
+from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantGenerator
+from trumania.core.random_generators import MSISDNGenerator, ParetoGenerator, DependentTriggerGenerator
+from trumania.core.circus import Circus
+from trumania.core.operations import Chain
+from trumania.components.geographies.uganda import WithUganda
+from trumania.components.geographies.random_geo import WithRandomGeo
+from trumania.components.social_networks.erdos_renyi import WithErdosRenyi
+from trumania.components.time_patterns.profilers import HighWeekDaysTimerGenerator
+from trumania.core import operations
 
 
 # couple of utility methods called in Apply of this scenario
@@ -41,8 +49,7 @@ def compute_cdr_type(action_data):
     """
 
     def onnet(row):
-        return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"]
-                                                      == "OPERATOR_0")
+        return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"] == "OPERATOR_0")
 
     result = pd.DataFrame(action_data.apply(onnet, axis=1),
                           columns=["result_b"])
@@ -235,7 +242,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                 profile_time_steps="1H",
                 start_date=pd.Timestamp("12 September 2016 00:00.00")
             )
-            )
+        )
 
         # Mobility network, i.e. choice of cells per user, i.e. these are the
         # weighted "used cells" (as in "most used cells) for each user

@@ -1,8 +1,9 @@
-import trumania.core as operations
-import tests.mocks.operations as mockops
-from trumania.core.util_functions import *
-from trumania.core import operations
+import pandas as pd
 import numpy as np
+
+import tests.mocks.operations as mockops
+from trumania.core import operations
+from trumania.core.util_functions import build_ids
 
 
 def test_apply_should_delegate_to_single_col_dataframe_function_correctly():
@@ -113,7 +114,7 @@ def test_one_execution_should_merge_2_ops_correctly():
 
     cdrs = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
     input = pd.DataFrame(np.random.rand(10, 2), columns=["C", "D"])
-    op = mockops.FakeOp(input, {"cdrs" :cdrs})
+    op = mockops.FakeOp(input, {"cdrs": cdrs})
 
     output, logs = operations.Chain._execute_operation(
         (init, {"mobility": mobility_logs}), op)
@@ -125,13 +126,13 @@ def test_one_execution_should_merge_2_ops_correctly():
 def test_chain_of_3_operation_should_return_merged_logs():
 
     cdrs1 = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
-    op1 = mockops.FakeOp(input, {"cdrs1" :cdrs1})
+    op1 = mockops.FakeOp(input, {"cdrs1": cdrs1})
 
     cdrs2 = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
-    op2 = mockops.FakeOp(input, {"cdrs2" :cdrs2})
+    op2 = mockops.FakeOp(input, {"cdrs2": cdrs2})
 
     cdrs3 = pd.DataFrame(np.random.rand(12, 3), columns=["A", "B", "duration"])
-    op3 = mockops.FakeOp(input, {"cdrs3" :cdrs3})
+    op3 = mockops.FakeOp(input, {"cdrs3": cdrs3})
 
     chain = operations.Chain(op1, op2, op3)
 

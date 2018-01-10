@@ -2,10 +2,10 @@ from trumania.core import random_generators
 
 consts = {
     "POS_NAMES": ["WEBCALLCENTER", "RI-GROUP", "DATA UNICORN", "CALAOS", "QINZ",
-                 "OINOI", "CLIXXO", "ACTION TREE", "6OMEGA", "DATAMATIAN",
-                 "QUICK-BEE", "GUIDED-ANALYTICS", "RI-ANALYTICS", "BLUE STAG",
-                 "DATA-SAPIENS", "TINY TREE", "OROCANTO", "CLIXXO", "XEBI",
-                 "PREGASUS", "HELIXIRE", "ALICANTIO", "PIXABYTES", "KUNOOZ"],
+                  "OINOI", "CLIXXO", "ACTION TREE", "6OMEGA", "DATAMATIAN",
+                  "QUICK-BEE", "GUIDED-ANALYTICS", "RI-ANALYTICS", "BLUE STAG",
+                  "DATA-SAPIENS", "TINY TREE", "OROCANTO", "CLIXXO", "XEBI",
+                  "PREGASUS", "HELIXIRE", "ALICANTIO", "PIXABYTES", "KUNOOZ"],
 
     "CONTACT_NAMES": [
         "Angella Prisco",
@@ -60,15 +60,15 @@ consts = {
         "Adolfo Fuselier"],
 
     "INTERNAL_TRANSACTION_TYPES": ["origin_to_mass_distributor",
-                              "mass_distributor_to_dealer",
-                              "mass_distributor_to_pos",
-                              "dealer_to_dealer",
-                              "dealer_to_pos",
-                              "origin_to_retail",
-                              "retail_to_pos"],
+                                   "mass_distributor_to_dealer",
+                                   "mass_distributor_to_pos",
+                                   "dealer_to_dealer",
+                                   "dealer_to_pos",
+                                   "origin_to_retail",
+                                   "retail_to_pos"],
 
     "DISTRIBUTOR_NAMES": ["DEVOS & LEMMENS DISTRIB", "LA WILLIAMS DISTRIB",
-                     "HEINZ DISTRIB", "AMORA DISTRIB", "CALVE DISTRIB"],
+                          "HEINZ DISTRIB", "AMORA DISTRIB", "CALVE DISTRIB"],
 
     "HANDSET_CATEGORY": ["basic", "feature", "smartphone"],
 
@@ -83,5 +83,3 @@ consts = {
 def gen(source, seed):
     return random_generators.NumpyRandomGenerator(
         method="choice", seed=seed, a=consts[source])
-
-

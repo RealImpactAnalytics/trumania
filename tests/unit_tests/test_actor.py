@@ -1,6 +1,8 @@
 import path
-from trumania.core.random_generators import *
+import pandas as pd
+import os
 
+from trumania.core.random_generators import SequencialGenerator
 from trumania.core.actor import Actor
 
 dummy_actor = Actor(circus=None,
@@ -142,11 +144,13 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
     current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
     assert current.tolist() == [10, 39, 23]
 
-    update = pd.DataFrame({
+    update = pd.DataFrame(
+        {
             "age": [139, 123],
             "city": ["city_7", "city_9"]
-            },
-        index=["a_7", "a_9"])
+        },
+        index=["a_7", "a_9"]
+    )
 
     tested_actor.update(update)
 
@@ -163,7 +167,8 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
 def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_values():
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(circus=None, size=10,
+    tested_actor = Actor(
+        circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
@@ -173,11 +178,13 @@ def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_va
     current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
     assert current.tolist() == [10, 39, 23]
 
-    update = pd.DataFrame({
+    update = pd.DataFrame(
+        {
             "age": [139, 123, 54, 25],
             "city": ["city_7", "city_9", "city_11", "city_10"]
-            },
-        index=["a_7", "a_9", "a_11", "a_10"])
+        },
+        index=["a_7", "a_9", "a_11", "a_10"]
+    )
 
     tested_actor.update(update)
 
@@ -195,19 +202,22 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     # same as test above but triggered as an Operation on action data
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(circus=None, size=10,
+    tested_actor = Actor(
+        circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     tested_actor.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
     tested_actor.create_attribute("city", init_values=city)
 
-    action_data = pd.DataFrame({
+    action_data = pd.DataFrame(
+        {
             "the_new_age": [139, 123, 1, 2],
             "location": ["city_7", "city_9", "city_11", "city_10"],
             "updated_actors": ["a_7", "a_9", "a_11", "a_10"]
-            },
-        index=["d_1", "d_2", "d_4", "d_3"])
+        },
+        index=["d_1", "d_2", "d_4", "d_3"]
+    )
 
     update_op = tested_actor.ops.update(
         actor_id_field="updated_actors",
@@ -244,16 +254,16 @@ def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible(
     a.create_attribute("att2")
 
     dynamically_created = pd.DataFrame({
-            "att1": [1,2,3],
-            "att2": [11,12,13],
+            "att1": [1, 2, 3],
+            "att2": [11, 12, 13],
         }, index=["ac1", "ac2", "ac3"]
     )
 
     a.update(dynamically_created)
 
     assert a.ids.tolist() == ["ac1", "ac2", "ac3"]
-    assert a.get_attribute_values("att1", ["ac1", "ac2", "ac3"]).tolist() == [1,2,3]
-    assert a.get_attribute_values("att2", ["ac1", "ac2", "ac3"]).tolist() == [11,12,13]
+    assert a.get_attribute_values("att1", ["ac1", "ac2", "ac3"]).tolist() == [1, 2, 3]
+    assert a.get_attribute_values("att2", ["ac1", "ac2", "ac3"]).tolist() == [11, 12, 13]
 
 
 def test_io_round_trip():
@@ -278,7 +288,3 @@ def test_io_round_trip():
             assert dummy_actor.get_relationship(rel_name)._table.equals(
                 retrieved.get_relationship(rel_name)._table
             )
-
-
-
-

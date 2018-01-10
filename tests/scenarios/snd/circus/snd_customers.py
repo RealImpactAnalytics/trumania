@@ -1,9 +1,12 @@
 from __future__ import division
-from trumania.core.circus import *
-from trumania.core.actor import *
-from trumania.core.util_functions import *
-import patterns
+import logging
 import pandas as pd
+import patterns
+
+from trumania.core.operations import FieldLogger, bound_value, bounded_sigmoid, Apply
+from trumania.core.random_generators import SequencialGenerator, DependentTriggerGenerator, NumpyRandomGenerator
+from trumania.components.time_patterns.profilers import DefaultDailyTimerGenerator
+from trumania.core.clock import CyclicTimerGenerator, CyclicTimerProfile
 
 
 def add_customers(circus, params):
@@ -23,17 +26,17 @@ def add_customers(circus, params):
         .get_values(None)
 
     customer_gen = NumpyRandomGenerator(method="choice",
-                                        seed=circus.seeder.next(),
+                                        seed=next(circus.seeder),
                                         a=customers.ids,
                                         replace=False)
 
     site_gen = NumpyRandomGenerator(method="choice",
-                                    seed=circus.seeder.next(),
+                                    seed=next(circus.seeder),
                                     a=circus.actors["sites"].ids,
-                                    p=site_weight.values/sum(site_weight))
+                                    p=site_weight.values / sum(site_weight))
 
     mobility_weight_gen = NumpyRandomGenerator(
-        method="exponential", scale=1., seed=circus.seeder.next())
+        method="exponential", scale=1., seed=next(circus.seeder))
 
     # Everybody gets at least one site
     mobility_rel.add_relations(
@@ -50,8 +53,8 @@ def add_customers(circus, params):
     # we need mean_known_sites_per_customer/p iterations
     #
     # we remove one iteration that already happened for everybody here above
-    for i in range(int(params["mean_known_sites_per_customer"]/p) - 1):
-        sample = customer_gen.generate(int(customers.size*p))
+    for i in range(int(params["mean_known_sites_per_customer"] / p) - 1):
+        sample = customer_gen.generate(int(customers.size * p))
         mobility_rel.add_relations(
             from_ids=sample,
             to_ids=site_gen.generate(len(sample)),
@@ -71,7 +74,7 @@ def add_mobility_action(circus, params):
                 1., 1., 5., 10., 5., 1., 1., 1., 1.]
     mobility_time_gen = CyclicTimerGenerator(
         clock=circus.clock,
-        seed=circus.seeder.next(),
+        seed=next(circus.seeder),
         config=CyclicTimerProfile(
             profile=mov_prof,
             profile_time_steps="1H",
@@ -82,7 +85,7 @@ def add_mobility_action(circus, params):
     gaussian_activity = NumpyRandomGenerator(
         method="normal", loc=params["mean_daily_customer_mobility_activity"],
         scale=params["std_daily_customer_mobility_activity"],
-        seed=circus.seeder.next())
+        seed=next(circus.seeder))
 
     mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=.5))
 
@@ -119,9 +122,9 @@ def add_mobility_action(circus, params):
         circus.clock.ops.timestamp(named_as="TIME"),
 
         # create mobility logs
-        operations.FieldLogger(log_id="customer_mobility_logs",
-                               cols=["TIME", "CUST_ID", "PREV_SITE",
-                                     "NEW_SITE"]),
+        FieldLogger(log_id="customer_mobility_logs",
+                    cols=["TIME", "CUST_ID", "PREV_SITE",
+                          "NEW_SITE"]),
     )
 
 
@@ -135,26 +138,26 @@ def add_purchase_actions(circus, params):
 
         logging.info("creating customer {} purchase action".format(product))
         purchase_timer_gen = DefaultDailyTimerGenerator(circus.clock,
-                                                        circus.seeder.next())
+                                                        next(circus.seeder))
 
         max_activity = purchase_timer_gen.activity(
             n_actions=1,
             per=pd.Timedelta(
-            days=description["customer_purchase_min_period_days"]))
+                days=description["customer_purchase_min_period_days"]))
 
         min_activity = purchase_timer_gen.activity(
             n_actions=1,
             per=pd.Timedelta(
-            days=description["customer_purchase_max_period_days"]))
+                days=description["customer_purchase_max_period_days"]))
 
         purchase_activity_gen = NumpyRandomGenerator(
             method="uniform",
             low=1 / max_activity,
             high=1 / min_activity,
-            seed=circus.seeder.next()).map(f=lambda per: 1 / per)
+            seed=next(circus.seeder)).map(f=lambda per: 1 / per)
 
         low_stock_bulk_purchase_trigger = DependentTriggerGenerator(
-            value_to_proba_mapper=operations.bounded_sigmoid(
+            value_to_proba_mapper=bounded_sigmoid(
                 x_min=1,
                 x_max=description["max_pos_stock_triggering_pos_restock"],
                 shape=description["restock_sigmoid_shape"],
@@ -162,7 +165,7 @@ def add_purchase_actions(circus, params):
 
         item_price_gen = NumpyRandomGenerator(
             method="choice", a=description["item_prices"],
-            seed=circus.seeder.next())
+            seed=next(circus.seeder))
 
         action_name = "customer_{}_purchase".format(product)
         purchase_action = circus.create_action(
@@ -197,7 +200,7 @@ def add_purchase_actions(circus, params):
             # distributor
             sites.ops.lookup(
                 actor_id_field="SITE",
-                select={"GEO_LEVEL_2" : "geo_level2_id",
+                select={"GEO_LEVEL_2": "geo_level2_id",
                         "{}__dist_l1".format(product): "distributor_l1"}
             ),
 
@@ -211,9 +214,9 @@ def add_purchase_actions(circus, params):
 
             circus.actors[product].ops.select_one(named_as="PRODUCT_ID"),
 
-            operations.Apply(source_fields="INSTANCE_ID",
-                             named_as="FAILED_SALE_OUT_OF_STOCK",
-                             f=pd.isnull, f_args="series"),
+            Apply(source_fields="INSTANCE_ID",
+                  named_as="FAILED_SALE_OUT_OF_STOCK",
+                  f=pd.isnull, f_args="series"),
 
             SequencialGenerator(prefix="TX_CUST_{}".format(product)).ops.generate(
                 named_as="TX_ID"),

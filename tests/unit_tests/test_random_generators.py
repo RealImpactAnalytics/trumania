@@ -1,6 +1,13 @@
-from trumania.core.random_generators import *
+import os
 import path
 import functools
+from itertools import islice
+import pandas as pd
+import numpy as np
+
+from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantGenerator, seed_provider
+from trumania.core.random_generators import DependentTriggerGenerator, FakerGenerator, Generator
+
 
 def test_constant_generator_should_produce_constant_values():
     tested = ConstantGenerator(value="c")
@@ -35,7 +42,7 @@ def test_depend_trigger_should_trigger_given_constant_value():
 
     # returns 6 hard-coded 1 and zero
     def fake_mapper(x):
-        return [1,1,0,0,1,0]
+        return [1, 1, 0, 0, 1, 0]
 
     g = DependentTriggerGenerator(value_to_proba_mapper=fake_mapper)
 
@@ -54,7 +61,7 @@ def test_sequencial_generator_should_create_unique_values():
     sets = [set(tested.generate(size)) for size in sizes]
 
     # generated values should be unique within each set
-    all_values = functools.reduce(lambda s1, s2: s1 | s2,  sets)
+    all_values = functools.reduce(lambda s1, s2: s1 | s2, sets)
 
     assert len(all_values) == np.sum(sizes)
 

@@ -38,5 +38,3 @@ class MockDropOp(operations.Operation):
 
     def __call__(self, action_data):
         return action_data.iloc[self.from_idx: self.to_idx, :], {}
-
-

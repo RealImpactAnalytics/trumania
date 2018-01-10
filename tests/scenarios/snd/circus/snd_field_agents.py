@@ -1,7 +1,11 @@
-from trumania.core.circus import *
-from trumania.core.actor import *
-from trumania.core.util_functions import *
 import pandas as pd
+import logging
+import numpy as np
+
+from trumania.core.util_functions import make_random_bipartite_data
+from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantGenerator
+from trumania.core.operations import FieldLogger, bound_value
+from trumania.components.time_patterns.profilers import WorkHoursTimerGenerator
 
 
 def create_field_agents(circus, params):
@@ -21,11 +25,11 @@ def create_field_agents(circus, params):
         make_random_bipartite_data(field_agents.ids,
                                    circus.actors["sites"].ids,
                                    0.4,
-                                   seed=circus.seeder.next()),
+                                   seed=next(circus.seeder)),
         columns=["FA_ID", "SID"])
 
     mobility_weight_gen = NumpyRandomGenerator(
-        method="exponential", scale=1., seed=circus.seeder.next())
+        method="exponential", scale=1., seed=next(circus.seeder))
 
     mobility_rel.add_relations(
         from_ids=mobility_df["FA_ID"],
@@ -46,7 +50,7 @@ def add_mobility_action(circus, params):
 
     # Field agents move only during the work hours
     mobility_time_gen = WorkHoursTimerGenerator(clock=circus.clock,
-                                                seed=circus.seeder.next())
+                                                seed=next(circus.seeder))
 
     fa_mean_weekly_activity = mobility_time_gen.activity(
         n_actions=params["mean_daily_fa_mobility_activity"],
@@ -58,7 +62,7 @@ def add_mobility_action(circus, params):
 
     gaussian_activity = NumpyRandomGenerator(
         method="normal", loc=fa_mean_weekly_activity, scale=fa_weekly_std,
-        seed=circus.seeder.next())
+        seed=next(circus.seeder))
 
     mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=1))
 
@@ -96,9 +100,9 @@ def add_mobility_action(circus, params):
         circus.clock.ops.timestamp(named_as="TIME"),
 
         # create mobility logs
-        operations.FieldLogger(log_id="field_agent_mobility_logs",
-                               cols=["TIME", "FA_ID", "PREV_SITE",
-                                     "NEW_SITE"]),
+        FieldLogger(log_id="field_agent_mobility_logs",
+                    cols=["TIME", "FA_ID", "PREV_SITE",
+                          "NEW_SITE"]),
     )
 
 
@@ -110,7 +114,7 @@ def add_survey_action(circus):
 
     # Surveys only happen during work hours
     survey_timer_gen = WorkHoursTimerGenerator(clock=circus.clock,
-                                               seed=circus.seeder.next())
+                                               seed=next(circus.seeder))
 
     min_activity = survey_timer_gen.activity(
         n_actions=10, per=pd.Timedelta("7 days"),)
@@ -119,7 +123,7 @@ def add_survey_action(circus):
 
     survey_activity_gen = NumpyRandomGenerator(
         method="choice", a=np.arange(min_activity, max_activity),
-        seed=circus.seeder.next())
+        seed=next(circus.seeder))
 
     survey_action = circus.create_action(
         name="pos_surveys",

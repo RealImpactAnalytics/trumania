@@ -7,7 +7,7 @@ name = "pypi"
 
 [dev-packages]
 
-
+flake8 = "*"
 
 [packages]
 
@@ -26,4 +26,4 @@ tabulate = "*"
 
 [requires]
 
-python_version = "3.5"
+python_version = "3.6.3"

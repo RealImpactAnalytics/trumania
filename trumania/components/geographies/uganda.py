@@ -1,12 +1,16 @@
 """
 This is just an illustration of how to persist various scenario components
 """
-from trumania.core.actor import *
+import logging
+import pandas as pd
+
 from trumania.core import operations
 from trumania.components import db
 from trumania.core.circus import Circus
-from trumania.components.time_patterns.profilers import *
-import logging
+from trumania.core.util_functions import make_random_assign, setup_logging
+from trumania.core.random_generators import NumpyRandomGenerator, ParetoGenerator, seed_provider, SequencialGenerator
+from trumania.core.random_generators import FakerGenerator
+from trumania.core.clock import CyclicTimerGenerator, CyclicTimerProfile
 
 
 def build_unhealthy_level_gen(seed):
@@ -34,13 +38,12 @@ class WithUganda(Circus):
             uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
             uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
             timer_config = db.load_timer_gen_config("uganda",
-                                                "cell_repair_timer_profile")
-
+                                                    "cell_repair_timer_profile")
 
         repair_n_fix_timer = CyclicTimerGenerator(
-                clock=self.clock,
-                seed=next(self.seeder),
-                config=timer_config )
+            clock=self.clock,
+            seed=next(self.seeder),
+            config=timer_config)
 
         unhealthy_level_gen = build_unhealthy_level_gen(next(seeder))
         healthy_level_gen = build_healthy_level_gen(next(seeder))
@@ -50,7 +53,6 @@ class WithUganda(Circus):
 
         # same profiler for breakdown and repair: they are both related to
         # typical human activity
-
 
         logging.info(" adding Uganda Geography6")
         cell_break_down_action = self.create_action(
@@ -115,13 +117,14 @@ class WithUganda(Circus):
 
         return uganda_cells, uganda_cities
 
+
 def build_uganda_actors(circus):
 
     seeder = seed_provider(12345)
 
     cells = circus.create_actor(name="cells",
-                              ids_gen=SequencialGenerator(prefix="CELL_"),
-                              size=200)
+                                ids_gen=SequencialGenerator(prefix="CELL_"),
+                                size=200)
     latitude_generator = FakerGenerator(method="latitude",
                                         seed=next(seeder))
     cells.create_attribute("latitude", init_gen=latitude_generator)
@@ -174,15 +177,11 @@ if __name__ == "__main__":
 
     setup_logging()
 
-    cells, cities, timer_config  = build_uganda_actors()
+    cells, cities, timer_config = build_uganda_actors()
 
     db.remove_namespace("uganda")
     db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
     db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
 
-    db.save_timer_gen(timer_gen=timer_config , namespace="uganda",
+    db.save_timer_gen(timer_gen=timer_config, namespace="uganda",
                       timer_gen_id="cell_repair_timer_profile")
-
-
-
-

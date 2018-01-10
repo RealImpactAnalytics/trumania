@@ -80,7 +80,7 @@ def add_listen_action(the_circus):
         seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
-        ).map(ops.bound_value(lb=10, ub=30))
+    ).map(ops.bound_value(lb=10, ub=30))
 
     listen = the_circus.create_action(
             name="listen_events",
@@ -134,7 +134,7 @@ def add_listen_and_share_actions(the_circus):
         seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
-        ).map(ops.bound_value(lb=10, ub=30))
+    ).map(ops.bound_value(lb=10, ub=30))
 
     listen = the_circus.create_action(
             name="listen_events",
@@ -238,7 +238,7 @@ def add_song_actors(the_circus):
 
     repo = the_circus.actors["music_repository"]
     repo_genre_rel = repo.get_attribute("genre_name")
-    for genre_id, genre_name in repo_genre_rel.get_values().iteritems():
+    for genre_id, genre_name in repo_genre_rel.get_values().items():
 
         # an operation capable of creating songs of that genre
         init_attribute = ops.Chain(
@@ -295,7 +295,7 @@ def add_listen_and_share_actions_with_details(the_circus):
         seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
-        ).map(ops.bound_value(lb=10, ub=30))
+    ).map(ops.bound_value(lb=10, ub=30))
 
     listen = the_circus.create_action(
             name="listen_events",
@@ -408,6 +408,7 @@ def step4():
     add_listener(example3)
     add_listen_and_share_actions_with_details(example3)
     run(example3)
+
 
 if __name__ == "__main__":
     util_functions.setup_logging()

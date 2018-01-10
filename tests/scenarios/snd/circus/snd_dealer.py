@@ -1,9 +1,13 @@
 from __future__ import division
-
-from trumania.core.circus import *
-from trumania.core.util_functions import *
-import snd_constants
+import logging
+import pandas as pd
 import patterns
+import snd_constants
+import os
+
+from trumania.core.operations import FieldLogger
+from trumania.core.random_generators import ConstantGenerator, DependentBulkGenerator, FakerGenerator
+import trumania.components.db as db
 
 
 def add_telcos(circus, params, distributor_id_gen):
@@ -31,6 +35,7 @@ def add_telco_restock_actions(circus, params):
     they just create them).
 
     :param circus:
+    :param params:
     :return:
     """
 
@@ -65,9 +70,9 @@ def add_telco_restock_actions(circus, params):
 
             bulk_size_gen.ops.generate(named_as="BULK_SIZE"),
 
-            telcos.get_relationship(product).ops\
-                .get_neighbourhood_size(from_field="TELCO",
-                                        named_as="OLD_STOCK"),
+            telcos.get_relationship(product).ops
+                  .get_neighbourhood_size(from_field="TELCO",
+                                          named_as="OLD_STOCK"),
 
             bulk_gen.ops.generate(named_as="ITEMS_BULK",
                                   observed_field="BULK_SIZE"),
@@ -78,13 +83,13 @@ def add_telco_restock_actions(circus, params):
                 grouped_items_field="ITEMS_BULK"),
 
             telcos.get_relationship(product).ops \
-                .get_neighbourhood_size(
-                from_field="TELCO",
-                named_as="NEW_STOCK"),
+                  .get_neighbourhood_size(
+                        from_field="TELCO",
+                        named_as="NEW_STOCK"),
 
-            operations.FieldLogger(log_id=action_name,
-                                   cols=["TIME", "TELCO", "OLD_STOCK",
-                                         "NEW_STOCK", "BULK_SIZE"]))
+            FieldLogger(log_id=action_name,
+                        cols=["TIME", "TELCO", "OLD_STOCK",
+                              "NEW_STOCK", "BULK_SIZE"]))
 
 
 def prepare_dealers(circus, params):
@@ -104,12 +109,12 @@ def prepare_dealers(circus, params):
 
         dealers.create_attribute(
             "DISTRIBUTOR_SALES_REP_NAME",
-            init_gen=snd_constants.gen("CONTACT_NAMES", circus.seeder.next()))
+            init_gen=snd_constants.gen("CONTACT_NAMES", next(circus.seeder)))
 
         dealers.create_attribute(
             "DISTRIBUTOR_SALES_REP_PHONE",
             init_gen=FakerGenerator(method="phone_number",
-                                    seed=circus.seeder.next()))
+                                    seed=next(circus.seeder)))
 
         for product, description in params["products"].items():
 
@@ -161,7 +166,7 @@ def save_providers_csv(circus, params):
 
         # join dist_l1 responsible for pos
         pos_dist_l1 = pd.merge(
-            left=pos_dist_l2, right=dist_l2_dist_l1[["from","to"]],
+            left=pos_dist_l2, right=dist_l2_dist_l1[["from", "to"]],
             left_on="to", right_on="from", suffixes=('_pos', '_dist_l1')
         )
 

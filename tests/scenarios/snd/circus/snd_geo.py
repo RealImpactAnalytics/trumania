@@ -55,11 +55,3 @@ def build_site_product_pos_target(circus, params):
     target_df.drop(["cartesian_product"], axis=1, inplace=True)
 
     target_df.to_csv(target_file, index=False)
-
-
-
-
-
-
-
-

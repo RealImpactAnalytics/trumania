@@ -1,4 +1,6 @@
-from trumania.core.clock import *
+import pandas as pd
+
+from trumania.core.clock import CyclicTimerGenerator, CyclicTimerProfile
 
 
 class HighWeekDaysTimerGenerator(CyclicTimerGenerator):
@@ -36,9 +38,9 @@ class WorkHoursTimerGenerator(CyclicTimerGenerator):
 
         # if start_hour = 0, before_work is empty
         before_work = [0] * start_hour
-        during_work = [1.] * (end_hour-start_hour+1)
+        during_work = [1.] * (end_hour - start_hour + 1)
         # if end_hour = 23, after_work is empty
-        after_work = [0] * (23-end_hour)
+        after_work = [0] * (23 - end_hour)
 
         # the sum of before_work, during_work and after_work is always 24
         week_day_profile = before_work + during_work + after_work
@@ -51,9 +53,9 @@ class WorkHoursTimerGenerator(CyclicTimerGenerator):
                                       clock=clock,
                                       seed=seed,
                                       config=CyclicTimerProfile(
-                                        profile=week_profile,
-                                        profile_time_steps="1h",
-                                        start_date=start_date))
+                                          profile=week_profile,
+                                          profile_time_steps="1h",
+                                          start_date=start_date))
 
 
 class DefaultDailyTimerGenerator(CyclicTimerGenerator):
@@ -71,11 +73,11 @@ class DefaultDailyTimerGenerator(CyclicTimerGenerator):
                                       clock=clock,
                                       seed=seed,
                                       config=CyclicTimerProfile(
-                                        profile=[1, .5, .2, .15, .2, .4, 3.8,
-                                                 7.2, 8.4, 9.1, 9.0, 8.3, 8.1,
-                                                 7.7, 7.4, 7.8, 8.0, 7.9, 9.7,
-                                                 10.4, 10.5, 8.8, 5.7, 2.8],
-                                        profile_time_steps="1h",
-                                        start_date=start_date,
-                                        ),
+                                                  profile=[1, .5, .2, .15, .2, .4, 3.8,
+                                                           7.2, 8.4, 9.1, 9.0, 8.3, 8.1,
+                                                           7.7, 7.4, 7.8, 8.0, 7.9, 9.7,
+                                                           10.4, 10.5, 8.8, 5.7, 2.8],
+                                                  profile_time_steps="1h",
+                                                  start_date=start_date,
+                                              ),
                                       )

@@ -1,8 +1,13 @@
-from trumania.core.relationship import Relationship
-from trumania.core.util_functions import *
-import functools
 import path
+import pandas as pd
+import logging
 import os
+import numpy as np
+import functools
+
+from trumania.core.util_functions import setup_logging
+from trumania.core.util_functions import build_ids
+from trumania.core.relationship import Relationship
 
 setup_logging()
 
@@ -176,7 +181,7 @@ def test_seeded_relationship_should_always_return_same_selection():
                 "c", "c", "c"]
     to_ids = ["af1", "af2", "af3",
               "bf1", "bf2", "bf3",
-              "cf1", "cf2", "cf3", ]
+              "cf1", "cf2", "cf3"]
 
     # two relationship seeded identically
     tested1 = Relationship(seed=1345)
@@ -208,9 +213,9 @@ def test_weighted_relationship_should_take_weights_into_account():
     # everywhere except to y
     one_to_three_weighted = Relationship(seed=1234)
     one_to_three_weighted.add_relations(
-        from_ids=["a"]*3 + ["b"]*3 + ["c"]*3,
-        to_ids=["x", "y", "z"]*3,
-        weights=[0, 1, 0]*3
+        from_ids=["a"] * 3 + ["b"] * 3 + ["c"] * 3,
+        to_ids=["x", "y", "z"] * 3,
+        weights=[0, 1, 0] * 3
     )
 
     selected = one_to_three_weighted.select_one()
@@ -226,9 +231,9 @@ def test_weighted_relationship_should_take_overridden_weights_into_account():
     # everywhere except to y
     one_to_three_weighted = Relationship(seed=1234)
     one_to_three_weighted.add_relations(
-        from_ids=["a"]*3 + ["b"]*3 + ["c"]*3,
-        to_ids=["x", "y", "z"]*3,
-        weights=[0, 1, 0]*3
+        from_ids=["a"] * 3 + ["b"] * 3 + ["c"] * 3,
+        to_ids=["x", "y", "z"] * 3,
+        weights=[0, 1, 0] * 3
     )
 
     # if we override the weight, we can only specify one value per "to" value
@@ -273,8 +278,9 @@ def test_pop_one_relationship_should_remove_element():
 
     # selecting the same again without discarding empty relationship should
     # now return a size 2 dataframe with Nones
-    selected = oneto1_copy.select_one(from_ids=["a", "d"], remove_selected=True,
-                                 discard_empty=False)
+    selected = oneto1_copy.select_one(
+        from_ids=["a", "d"], remove_selected=True,
+        discard_empty=False)
     assert selected.shape[0] == 2
     assert sorted(selected.columns.tolist()) == ["from", "to"]
     assert selected["to"].tolist() == [None, None]
@@ -335,7 +341,7 @@ def test_select_one_to_one_should_not_return_duplicates_2():
 
 
 def test_select_one_to_one_among_no_data_should_return_nothing():
-    #(instead of crashing...)
+    # (instead of crashing...)
 
     op = four_to_one.ops.select_one("A", "B", one_to_one=True)
     empty_data = pd.DataFrame(columns=["A", "B"])
@@ -356,8 +362,9 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
 
     # Many customer selected the same dealer and want to get a sim from them.
     # We expect each of the 2 selected dealer to sell a different SIM to each
-    action_data = pd.DataFrame({
-        "DEALER": ["a", "a", "b", "a", "b", "a", "b", "a", "a", "a"],
+    action_data = pd.DataFrame(
+        {
+            "DEALER": ["a", "a", "b", "a", "b", "a", "b", "a", "a", "a"],
         },
         index=build_ids(size=10, prefix="c", max_length=2)
     )
@@ -393,22 +400,25 @@ def test_select_all_should_return_all_values_of_requested_ids():
 
     # there is no relationship from "non_existing", so we should have an
     # empty list for it (not an absence of row)
-    expected = pd.DataFrame({
-        "from": ["a", "b"],
-        "to": [["ya", "za"], ["yb", "zb"]]
+    expected = pd.DataFrame(
+        {
+            "from": ["a", "b"],
+            "to": [["ya", "za"], ["yb", "zb"]]
         }
     ).sort_values(by="from").reset_index(drop=True)
 
-    assert all_to.sort_values(by="from").equals(expected.sort_values(by="from")), "dataframe\n {} should equal dataframe:\n {}".format(all_to, expected)
+    assert all_to.sort_values(by="from").equals(
+        expected.sort_values(by="from")), "dataframe\n {} should equal dataframe:\n {}".format(all_to, expected)
 
 
 def test_select_all_should_return_lists_even_for_one_to_one():
 
     all_to = oneto1.select_all(from_ids=["a", "b"]).sort_values(by="from").reset_index(drop=True)
 
-    expected = pd.DataFrame({
-        "from": ["a", "b"],
-        "to": [["ta"], ["tb"]]
+    expected = pd.DataFrame(
+        {
+            "from": ["a", "b"],
+            "to": [["ta"], ["tb"]]
         }
     ).sort_values(by="from").reset_index(drop=True)
 
@@ -419,7 +429,7 @@ def test_select_all_operation():
 
     op = two_per_from.ops.select_all(from_field="A", named_as="CELLS")
 
-    action_data = pd.DataFrame({"A": ["a",  "d"]})
+    action_data = pd.DataFrame({"A": ["a", "d"]})
     action_data = action_data.set_index("A", drop=False)
     output, logs = op(action_data)
 
@@ -458,7 +468,7 @@ def test_select_many_should_return_subsets_of_relationships():
     assert selection.columns.tolist() == ["selected_sets"]
 
     # no capping should have occured: four_to_plenty has largely enough
-    selection["selected_sets"].apply(len).tolist() == [4, 5, 6, 7, 8]
+    assert sorted(selection["selected_sets"].apply(len).tolist()) == [4, 5, 6, 7, 8]
 
     # every chosen elemnt should be persent at most once
     s = functools.reduce(lambda s1, s2: set(s1) | set(s2), selection["selected_sets"])
@@ -624,7 +634,7 @@ def test_select_many_operation_should_join_subsets_of_relationships():
     assert selection.columns.tolist() == ["how_many", "let", "found"]
 
     # no capping should have occurred: four_to_plenty has largely enough
-    selection["found"].apply(len).tolist() == [4, 5, 6, 7, 8]
+    assert selection["found"].apply(len).tolist() == [4, 5, 6, 7, 8]
 
     # every chosen element should be present at most once
     s = functools.reduce(lambda s1, s2: set(s1) | set(s2), selection["found"])

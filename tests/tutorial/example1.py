@@ -1,7 +1,10 @@
+import pandas as pd
+
 from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
-import trumania.core.util_functions as util_functions
+from trumania.core.util_functions import make_random_bipartite_data, setup_logging
+from trumania.core.operations import FieldLogger, Apply
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
+from trumania.core.random_generators import ConstantDependentGenerator, ConstantGenerator
 
 # each step?() function below implement one step of the first example of the
 # tutorial documented at
@@ -42,7 +45,7 @@ def step1():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step2():
@@ -89,7 +92,7 @@ def step2():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step3():
@@ -149,7 +152,7 @@ def step3():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step4():
@@ -219,7 +222,7 @@ def step4():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step5():
@@ -299,7 +302,7 @@ def step5():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step6():
@@ -418,7 +421,7 @@ def step6():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step7():
@@ -490,7 +493,7 @@ def step7():
 
         result = pd.DataFrame(index=action_data.index)
 
-        result["PRICE"] = action_data["DURATION"]*0.05
+        result["PRICE"] = action_data["DURATION"] * 0.05
         result["CURRENCY"] = "EUR"
 
         return result
@@ -540,7 +543,7 @@ def step7():
         allowed_sites.ops.select_one(from_field="COUNTERPART_ID",
                                      named_as="COUNTERPART_SITE"),
 
-        operations.Apply(
+        Apply(
             source_fields=["DURATION", "SITE", "COUNTERPART_SITE"],
             named_as=["PRICE", "CURRENCY"],
             f=price, f_args="dataframe"),
@@ -557,9 +560,9 @@ def step7():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines())-1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 if __name__ == "__main__":
-    util_functions.setup_logging()
+    setup_logging()
     step7()

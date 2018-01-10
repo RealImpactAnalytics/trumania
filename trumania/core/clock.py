@@ -1,8 +1,13 @@
 from __future__ import division
 
-from trumania.core.random_generators import *
-from trumania.core.util_functions import *
+import pandas as pd
 import logging
+import numpy as np
+from numpy.random import RandomState
+
+from trumania.core.operations import AddColumns
+from trumania.core.random_generators import DependentGenerator
+from trumania.core.util_functions import latest_date_before
 
 
 class Clock(object):
@@ -19,9 +24,6 @@ class Clock(object):
 
         :type step_duration: pd.Timedelta
         :param step_duration: duration of a clock step
-
-        :type output_format: string
-        :param output_format: format string to return timestamps
 
         :type seed: int
         :param seed: seed for timestamp generator (if steps are more than 1 sec)
@@ -127,8 +129,8 @@ class CyclicTimerGenerator(DependentGenerator):
     It's mostly a super class, normally only its child classes should be used.
 
     The goal of a TimeProfiler is to keep a track of the expected level of activity of users over a cyclic time range
-    It will store a vector with probabilities of activity per time step, as well as a cumulative sum of the probabilities
-    starting with the current time step.
+    It will store a vector with probabilities of activity per time step, as well as a cumulative sum of the
+    probabilities starting with the current time step.
 
     This allows to quickly produce random waiting times until the next event for the users
 
@@ -154,14 +156,14 @@ class CyclicTimerGenerator(DependentGenerator):
         init_date = latest_date_before(
             starting_date=config.start_date,
             upper_bound=clock.current_date,
-            time_step=pd.Timedelta(config.profile_time_steps)*len(
+            time_step=pd.Timedelta(config.profile_time_steps) * len(
                 config.profile))
 
         # Un-scaled weight profile. We artificially adds a nan to force the
         # up-sclaling to multiply the last element
         profile_idx = pd.date_range(start=init_date,
                                     freq=config.profile_time_steps,
-                                    periods=len(config.profile)+1)
+                                    periods=len(config.profile) + 1)
         profile_ser = pd.Series(data=config.profile + [np.nan],
                                 index=profile_idx)
 
@@ -245,7 +247,7 @@ class CyclicTimerGenerator(DependentGenerator):
             # rely on betas here for expected frequencies of 2 per cycle or
             # higher
             timer_slots = high_activities.apply(
-                lambda activity: self._state.beta(1, activity-1))
+                lambda activity: self._state.beta(1, activity - 1))
 
             timers = self.profile["cdf"].searchsorted(timer_slots, side="left")
             high_activity_timer = pd.Series(timers, index=high_activities.index)
@@ -258,7 +260,7 @@ class CyclicTimerGenerator(DependentGenerator):
         # Not sure about that one, there seem to be a bias somewhere that
         # systematically generates too large timer. Maybe it's a rounding
         # effect of searchsorted() or so. Or a bug elsewhere ?
-        all_timers = all_timers.apply(lambda d: max(0, d-1))
+        all_timers = all_timers.apply(lambda d: max(0, d - 1))
 
         # makes sure all_timers is in the same order and with the same index
         # as input observations, even in case of duplicate index values
@@ -280,13 +282,14 @@ class CyclicTimerGenerator(DependentGenerator):
 
         requested_period = pd.Timedelta(seconds=per.total_seconds() / n_actions)
         if requested_period < self.clock.step_duration:
-            logging.warn("Warning: Creating activity level for {} actions per "
-                         "{} =>  activity is {} but period is {}, which is "
-                         "shorter  than the clock period ({}). This clock "
-                         "cannot keep up with such rate and less events will be"
-                         " produced".format(
-                n_actions, per, activity, requested_period,
-                self.clock.step_duration)
+            logging.warn(
+                "Warning: Creating activity level for {} actions per "
+                "{} =>  activity is {} but period is {}, which is "
+                "shorter  than the clock period ({}). This clock "
+                "cannot keep up with such rate and less events will be"
+                " produced".format(n_actions, per, activity, requested_period,
+                                   self.clock.step_duration
+                                   )
             )
 
         return activity
@@ -321,8 +324,8 @@ class CyclicTimerProfile(object):
         saved_df = pd.DataFrame({("value", "profile"): self.profile},
                                 dtype=str).stack()
         saved_df.index = saved_df.index.reorder_levels([1, 0])
-        saved_df.loc[("start_date", 0),] = self.start_date
-        saved_df.loc[("profile_time_steps", 0),] = self.profile_time_steps
+        saved_df.loc[("start_date", 0)] = self.start_date
+        saved_df.loc[("profile_time_steps", 0)] = self.profile_time_steps
         saved_df.to_csv(file_path)
 
     @staticmethod

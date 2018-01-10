@@ -1,4 +1,8 @@
-from trumania.components.time_patterns.profilers import *
+import pandas as pd
+
+from trumania.core.clock import CyclicTimerProfile, CyclicTimerGenerator
+from trumania.core.clock import Clock
+from trumania.components.time_patterns.profilers import DefaultDailyTimerGenerator
 
 
 def test_clock_tick_per_day():
@@ -8,8 +12,8 @@ def test_clock_tick_per_day():
                   seed=1234)
 
     # time steps is 900 s, i.e 15 min
-    assert clock.n_iterations(pd.Timedelta("7D")) == 7*24*4
-    assert clock.n_iterations(pd.Timedelta("1D")) == 24*4
+    assert clock.n_iterations(pd.Timedelta("7D")) == 7 * 24 * 4
+    assert clock.n_iterations(pd.Timedelta("1D")) == 24 * 4
 
     # 47 min should be rounded up to 4 quarters
     assert clock.n_iterations(pd.Timedelta("47min")) == 4
@@ -36,7 +40,7 @@ def test_init_cyclictimergenerator():
 
     # after the initialization, the 1h time delta of the profile should have
     # been aligned to the 15min of the clock
-    assert timer_gen.profile.index.shape[0] == 24*4
+    assert timer_gen.profile.index.shape[0] == 24 * 4
 
     # the first index should be shifted to the time of the clock
     assert timer_gen.profile.index[0] == pd.Timestamp("10 June 2016 5:45pm")
@@ -93,5 +97,5 @@ def test_activity_level_should_be_scaled_according_to_profile_duration():
 
     assert .5 == one_day_timer.activity(n_actions=.25, per=pd.Timedelta("12h"))
 
-    assert 1./360 - one_day_timer.activity(
+    assert 1. / 360 - one_day_timer.activity(
         n_actions=1, per=pd.Timedelta("360 days")) < 1e-10

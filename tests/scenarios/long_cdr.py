@@ -1,5 +1,7 @@
+import logging
+
 from test_cdr import run_cdr_scenario
-from trumania.core.util_functions import *
+from trumania.core.util_functions import setup_logging
 
 # better run this outside of PyCharm for consistent measures...
 #
@@ -47,5 +49,3 @@ execution times: "
      - building the circus: 0 days 00:02:43.163336
      - running the simulation: 0 days 00:30:58.923819
     """
-
-

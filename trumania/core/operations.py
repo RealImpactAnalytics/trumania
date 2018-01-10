@@ -1,8 +1,10 @@
 from scipy import stats
 from abc import ABCMeta, abstractmethod
-import functools
+import pandas as pd
+import numpy as np
 
-from trumania.core.util_functions import *
+from trumania.core.util_functions import merge_dicts, df_concat
+import functools
 
 
 class Operation(object):
@@ -324,7 +326,7 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
     make sure that the curve actually reaches 0 and 1 at some point (e.g.
     probability of triggering an "restock" action must be 1 if stock is as
     low as 1).
-    
+
     See /tests/notebooks/bounded_sigmoid.ipynb for examples
 
     :param x_min: lower bound of the x domain
@@ -351,10 +353,12 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
 
         if incrementing:
             return stats.beta.cdf((x_b - x_min) / (x_max - x_min),
-                                   a=shape, b=shape)
+                                  a=shape,
+                                  b=shape)
         else:
             return stats.beta.sf((x_b - x_min) / (x_max - x_min),
-                                  a=shape, b=shape)
+                                 a=shape,
+                                 b=shape)
 
     return np.frompyfunc(f, 1, 1)
 

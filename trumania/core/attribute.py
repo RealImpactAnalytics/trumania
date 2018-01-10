@@ -1,4 +1,6 @@
-from trumania.core.operations import *
+import pandas as pd
+import logging
+from trumania.core.operations import SideEffectOnly
 
 
 class Attribute(object):

@@ -158,7 +158,7 @@ def add_listen_and_share_actions_with_details(the_circus):
         seed=next(the_circus.seeder),
         loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
         scale=5
-        ).map(ops.bound_value(lb=10, ub=30))
+    ).map(ops.bound_value(lb=10, ub=30))
 
     listen = the_circus.create_action(
             name="listen_events",
@@ -297,4 +297,3 @@ def step2():
 if __name__ == "__main__":
     util_functions.setup_logging()
     step2()
-

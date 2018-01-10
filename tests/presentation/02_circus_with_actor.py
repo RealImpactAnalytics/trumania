@@ -1,8 +1,10 @@
-from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
-import trumania.core.util_functions as util_functions
+import logging
+import pandas as pd
 from tabulate import tabulate
+
+from trumania.core import circus
+import trumania.core.util_functions as util_functions
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
 
 
 util_functions.setup_logging()
@@ -37,6 +39,5 @@ example.run(
 )
 
 
-logging.info("10 first persons: \n" +
-    tabulate(person.to_dataframe().head(10),
+logging.info("10 first persons: \n" + tabulate(person.to_dataframe().head(10),
              headers='keys', tablefmt='psql'))

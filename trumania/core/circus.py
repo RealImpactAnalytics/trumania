@@ -1,9 +1,14 @@
-from trumania.core.action import *
-from trumania.core import actor
 import logging
 import os
 import json
+import pandas as pd
+
+from trumania.core import actor
 from trumania.components import db
+from trumania.core.random_generators import seed_provider
+from trumania.core.util_functions import ensure_non_existing_dir
+from trumania.core.clock import Clock
+from trumania.core.action import Action
 
 
 class Circus(object):
@@ -64,7 +69,7 @@ class Circus(object):
             namespace = self.name
 
         loaded_actor = db.load_actor(namespace=namespace, actor_id=actor_id,
-                              circus=self)
+                                     circus=self)
         self.actors[actor_id] = loaded_actor
         return loaded_actor
 
@@ -117,7 +122,8 @@ class Circus(object):
         self.attach_generator(gen_id, gen)
         return gen
 
-    def save_logs(self, log_id, logs, log_output_folder):
+    @staticmethod
+    def save_logs(log_id, logs, log_output_folder):
         """
         Appends those logs to the corresponding output file, creating it if
         it does not exist or appending lines to it otherwise.
@@ -157,7 +163,8 @@ class Circus(object):
         n_iterations = self.clock.n_iterations(duration)
         logging.info("Starting circus for {} iterations of {} for a "
                      "total duration of {}".format(
-            n_iterations, self.clock.step_duration, duration))
+                        n_iterations, self.clock.step_duration, duration
+                     ))
 
         if os.path.exists(log_output_folder):
             if delete_existing_logs:
@@ -230,9 +237,7 @@ class Circus(object):
             config = {"master_seed": self.master_seed,
                       "clock_config": {
                           "start": self.clock_params["start"].isoformat(),
-                          "step_duration":
-                              str(self.clock_params["step_duration"])
-                        }
+                          "step_duration": str(self.clock_params["step_duration"])}
                       }
             json.dump(config, o, indent=4)
 

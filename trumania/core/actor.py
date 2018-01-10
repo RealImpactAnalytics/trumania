@@ -1,7 +1,14 @@
-from trumania.core.attribute import *
-from trumania.core.relationship import *
-from trumania.core import random_generators
+import pandas as pd
+import logging
+import numpy as np
+import os
 import functools
+
+from trumania.core.operations import AddColumns, SideEffectOnly
+from trumania.core.relationship import Relationship
+from trumania.core.attribute import Attribute
+from trumania.core.util_functions import make_random_assign, ensure_non_existing_dir, is_sequence
+from trumania.core import random_generators
 
 
 class Actor(object):
@@ -276,7 +283,8 @@ class Actor(object):
 
                 for attribute, named_as in self.select_dict.items():
                     vals = pd.DataFrame(
-                    self.actor.get_attribute_values(attribute, actor_ids))
+                        self.actor.get_attribute_values(attribute, actor_ids))
+
                     vals.rename(columns={"value": named_as}, inplace=True)
 
                     output = pd.merge(left=output, right=vals,
@@ -301,7 +309,10 @@ class Actor(object):
                     vals = self.actor.get_attribute_values(attribute, actor_ids)
 
                     def attributes_of_ids(ids):
-                        "return: list of attribute values for those actor ids"
+                        """
+                        :param ids:
+                        :return: list of attribute values for those actor ids
+                        """
                         return vals.loc[ids].tolist()
 
                     output[named_as] = id_lists.map(attributes_of_ids)
@@ -369,7 +380,6 @@ class Actor(object):
             particular relation is required, we just sample one id randomly
 
             :param named_as: the name of the field added to the action_data
-            :param seed: seed of the random generator
             """
 
             gen = random_generators.NumpyRandomGenerator(

@@ -1,7 +1,8 @@
+import logging
+import pandas as pd
+
 from trumania.core import circus
 import trumania.core.util_functions as util_functions
-from trumania.core.actor import *
-
 
 util_functions.setup_logging()
 
@@ -18,4 +19,3 @@ example1.run(
     log_output_folder="output/example1",
     delete_existing_logs=True
 )
-

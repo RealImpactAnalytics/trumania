@@ -1,8 +1,11 @@
+import logging
+import pandas as pd
+
 from trumania.core import circus
-from trumania.core.circus import *
-from trumania.core.actor import *
 import trumania.core.util_functions as util_functions
-from tabulate import tabulate
+from trumania.core.operations import FieldLogger
+from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
+from trumania.core.random_generators import ConstantDependentGenerator
 
 
 util_functions.setup_logging()
@@ -56,7 +59,8 @@ hello_world.set_operations(
     FakerGenerator(method="sentence",
                    nb_words=6, variable_nb_words=True,
                    seed=next(the_circus.seeder)
-        ).ops
+                   )
+        .ops
         .generate(named_as="MESSAGE"),
 
     # selecting a random "other person"
@@ -76,7 +80,7 @@ hello_world.set_operations(
 
     # specifying which fields to put in the log
     FieldLogger(log_id="hello",
-        cols=["TIME", "EMITTER_NAME", "RECEIVER_NAME", "MESSAGE"]
+                cols=["TIME", "EMITTER_NAME", "RECEIVER_NAME", "MESSAGE"]
                 )
 
 )
@@ -88,5 +92,4 @@ the_circus.run(
 )
 
 with open("output/example4/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(100000)[:10]))
-
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
