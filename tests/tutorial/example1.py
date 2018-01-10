@@ -45,7 +45,7 @@ def step1():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step2():
@@ -92,7 +92,7 @@ def step2():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step3():
@@ -152,7 +152,7 @@ def step3():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step4():
@@ -222,7 +222,7 @@ def step4():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step5():
@@ -302,7 +302,7 @@ def step5():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step6():
@@ -421,7 +421,7 @@ def step6():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step7():
@@ -560,7 +560,7 @@ def step7():
     )
 
     with open("output/example1/hello.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 if __name__ == "__main__":

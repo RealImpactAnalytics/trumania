@@ -401,7 +401,7 @@ def run_and_report(the_circus):
     )
 
     with open("output/example2/report.csv") as f:
-        print ("Logged {} lines".format(len(f.readlines()) - 1))
+        print("Logged {} lines".format(len(f.readlines()) - 1))
 
 
 def step1():

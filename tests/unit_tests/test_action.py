@@ -285,7 +285,7 @@ def test_scenario_transiting_to_state_with_1_back_to_default_prob_should_go_back
     assert logs == {}
 
     # this time, all actors should have transited back to "normal" at the end
-    print (action.timer["state"].tolist())
+    print(action.timer["state"].tolist())
     assert ["default"] * 10 == action.timer["state"].tolist()
 
 
@@ -574,7 +574,7 @@ def test_bugfix_force_actors_should_only_act_once():
 
     action.execute()
     assert recording_op.last_seen_actor_ids == ["ac_1", "ac_3", "ac_7", "ac_8", "ac_9"]
-    print (action.timer["remaining"].tolist())
+    print(action.timer["remaining"].tolist())
     assert action.timer["remaining"].tolist() == [1, 2, 1, 2, 1, 4, 4, 5, 5, 5]
     recording_op.reset()
 
