@@ -134,8 +134,8 @@ class SndScenario(WithRandomGeo, Circus):
         dealers = self.create_population(name="dealers",
                                          size=params["n_dealers"],
                                          ids_gen=SequencialGenerator(
-                                         prefix="DEALER_",
-                                         max_length=3))
+                                             prefix="DEALER_",
+                                             max_length=3))
 
         # SIM relationship to maintain some stock
         sims = dealers.create_relationship(name="SIM")
@@ -167,8 +167,8 @@ class SndScenario(WithRandomGeo, Circus):
         agents = self.create_population(name="agents",
                                         size=params["n_agents"],
                                         ids_gen=SequencialGenerator(
-                                        prefix="AGENT_",
-                                        max_length=3))
+                                            prefix="AGENT_",
+                                            max_length=3))
         agents.create_relationship(name="SIM")
 
         agents.create_attribute(name="AGENT_NAME",
