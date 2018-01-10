@@ -2,12 +2,11 @@ import pandas as pd
 import numpy as np
 
 from trumania.core.operations import Operation
-from trumania.core.random_generators import SequencialGenerator
+from trumania.core.random_generators import SequencialGenerator, ConstantGenerator, ConstantDependentGenerator
 from trumania.core.actor import Actor
 from trumania.core.action import Action
 
-from tests.mocks.random_generators import MockTimerGenerator, ConstantsMockGenerator, ConstantDependentGenerator
-from tests.mocks.random_generators import ConstantGenerator
+from tests.mocks.random_generators import MockTimerGenerator, ConstantsMockGenerator
 from tests.mocks.operations import MockDropOp, FakeRecording
 
 

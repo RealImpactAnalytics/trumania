@@ -41,7 +41,7 @@ def test_seeder_should_be_deterministic():
 def test_depend_trigger_should_trigger_given_constant_value():
 
     # returns 6 hard-coded 1 and zero
-    def fake_mapper():
+    def fake_mapper(x):
         return [1, 1, 0, 0, 1, 0]
 
     g = DependentTriggerGenerator(value_to_proba_mapper=fake_mapper)

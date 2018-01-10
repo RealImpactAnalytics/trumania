@@ -468,7 +468,7 @@ def test_select_many_should_return_subsets_of_relationships():
     assert selection.columns.tolist() == ["selected_sets"]
 
     # no capping should have occured: four_to_plenty has largely enough
-    assert selection["selected_sets"].apply(len).tolist() == [4, 5, 6, 7, 8]
+    assert sorted(selection["selected_sets"].apply(len).tolist()) == [4, 5, 6, 7, 8]
 
     # every chosen elemnt should be persent at most once
     s = functools.reduce(lambda s1, s2: set(s1) | set(s2), selection["selected_sets"])
