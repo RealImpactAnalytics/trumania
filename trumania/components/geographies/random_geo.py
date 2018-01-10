@@ -1,5 +1,5 @@
 from trumania.core.circus import Circus
-from trumania.core.actor import Actor
+from trumania.core.population import Population
 from trumania.core.random_generators import FakerGenerator
 
 
@@ -13,7 +13,7 @@ class WithRandomGeo(Circus):
         Creation of a basic actor for cells, with latitude and longitude
         """
 
-        cells = Actor(size=n_cells)
+        cells = Population(size=n_cells)
 
         latitude_generator = FakerGenerator(method="latitude", seed=next(self.seeder))
         longitude_generator = FakerGenerator(method="longitude", seed=next(self.seeder))

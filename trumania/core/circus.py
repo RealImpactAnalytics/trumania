@@ -3,7 +3,7 @@ import os
 import json
 import pandas as pd
 
-from trumania.core import actor
+from trumania.core import population
 from trumania.components import db
 from trumania.core.random_generators import seed_provider
 from trumania.core.util_functions import ensure_non_existing_dir
@@ -17,12 +17,10 @@ class Circus(object):
     It is also the object that will execute the actions required for 1 iteration
 
     The different objects contained in the Circus are:
-    - Actors, which do actions during the simumation
+    - Population, which do actions during the simulation
     - Items, that contain descriptive data
     - a Clock object, to manage overall time
-    - Actions, a list of actions to perform on the actors
-    - Incrementors, similarly to a list of actions, it's storing which generators need to be incremented at each step
-
+    - Actions, a list of actions to perform on the populations
     """
 
     def __init__(self, name, master_seed, **clock_params):
@@ -43,20 +41,20 @@ class Circus(object):
         self.seeder = seed_provider(master_seed=master_seed)
         self.clock = Clock(seed=next(self.seeder), **clock_params)
         self.actions = []
-        self.actors = {}
+        self.populations = {}
         self.generators = {}
 
-    def create_actor(self, name, **actor_params):
+    def create_population(self, name, **population_params):
         """
-        Creates an actor with the specifed parameters and attach it to this
+        Creates a population with the specifed parameters and attach it to this
         circus.
         """
-        if name in self.actors:
-            raise ValueError("refusing to overwrite existing actor: {} "
+        if name in self.populations:
+            raise ValueError("refusing to overwrite existing population: {} "
                              "".format(name))
 
-        self.actors[name] = actor.Actor(circus=self, **actor_params)
-        return self.actors[name]
+        self.populations[name] = population.Population(circus=self, **population_params)
+        return self.populations[name]
 
     def load_actor(self, actor_id, namespace=None):
         """
@@ -70,7 +68,7 @@ class Circus(object):
 
         loaded_actor = db.load_actor(namespace=namespace, actor_id=actor_id,
                                      circus=self)
-        self.actors[actor_id] = loaded_actor
+        self.populations[actor_id] = loaded_actor
         return loaded_actor
 
     def create_action(self, name, **action_params):
@@ -242,7 +240,7 @@ class Circus(object):
             json.dump(config, o, indent=4)
 
         logging.info("saving all actors")
-        for actor_id, ac in self.actors.items():
+        for actor_id, ac in self.populations.items():
             db.save_actor(ac, namespace=self.name, actor_id=actor_id)
 
         logging.info("saving all generators")
@@ -269,7 +267,7 @@ class Circus(object):
             "circus_name": self.name,
             "master_seed": self.master_seed,
             "actors": {actor_id: actor.description()
-                       for actor_id, actor in self.actors.items()
+                       for actor_id, actor in self.populations.items()
                        },
             "generators": {gen_id: gen.description()
                            for gen_id, gen in self.generators.items()

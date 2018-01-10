@@ -22,7 +22,7 @@ def build_circus():
 
 def add_music_repo(the_circus):
 
-    repo = the_circus.create_actor(
+    repo = the_circus.create_population(
         name="music_repository", size=5,
         ids_gen=gen.SequencialGenerator(prefix="GENRE_"))
 
@@ -35,7 +35,7 @@ def add_music_repo(the_circus):
 
 def add_songids_to_repos(the_circus):
 
-    repo = the_circus.actors["music_repository"]
+    repo = the_circus.populations["music_repository"]
 
     song_id_gen = gen.SequencialGenerator(prefix="S_")
     added_songs = [song_id_gen.generate(size=1000) for _ in repo.ids]
@@ -51,7 +51,7 @@ def add_songids_to_repos(the_circus):
 
 def add_listener(the_circus):
 
-    users = the_circus.create_actor(
+    users = the_circus.create_population(
         name="user", size=1000,
         ids_gen=gen.SequencialGenerator(prefix="user_"))
 
@@ -67,7 +67,7 @@ def add_listener(the_circus):
 
 def add_listen_action(the_circus):
 
-    users = the_circus.actors["user"]
+    users = the_circus.populations["user"]
 
     # using this timer means users only listen to songs during work hours
     timer_gen = profilers.WorkHoursTimerGenerator(
@@ -84,19 +84,19 @@ def add_listen_action(the_circus):
 
     listen = the_circus.create_action(
             name="listen_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    repo = the_circus.actors["music_repository"]
+    repo = the_circus.populations["music_repository"]
 
     listen.set_operations(
 
         users.ops.lookup(
-            actor_id_field="UID",
+            id_field="UID",
             select={
                 "FIRST_NAME": "USER_FIRST_NAME",
                 "LAST_NAME": "USER_LAST_NAME",
@@ -121,7 +121,7 @@ def add_listen_and_share_actions(the_circus):
     share action, in order to show the Chain re-usability clearly
     """
 
-    users = the_circus.actors["user"]
+    users = the_circus.populations["user"]
 
     # using this timer means users only listen to songs during work hours
     timer_gen = profilers.WorkHoursTimerGenerator(
@@ -138,8 +138,8 @@ def add_listen_and_share_actions(the_circus):
 
     listen = the_circus.create_action(
             name="listen_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
@@ -147,19 +147,19 @@ def add_listen_and_share_actions(the_circus):
 
     share = the_circus.create_action(
             name="share_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    repo = the_circus.actors["music_repository"]
+    repo = the_circus.populations["music_repository"]
 
     select_genre_and_song = ops.Chain(
 
         users.ops.lookup(
-            actor_id_field="UID",
+            id_field="UID",
             select={
                 "FIRST_NAME": "USER_FIRST_NAME",
                 "LAST_NAME": "USER_LAST_NAME",
@@ -195,7 +195,7 @@ def add_listen_and_share_actions(the_circus):
 
 def add_song_actors(the_circus):
 
-    songs = the_circus.create_actor(
+    songs = the_circus.create_population(
         name="song", size=0,
         ids_gen=gen.SequencialGenerator(prefix="SONG_"))
 
@@ -236,7 +236,7 @@ def add_song_actors(the_circus):
                                        force_int=True,
                                        a=1.2)
 
-    repo = the_circus.actors["music_repository"]
+    repo = the_circus.populations["music_repository"]
     repo_genre_rel = repo.get_attribute("genre_name")
     for genre_id, genre_name in repo_genre_rel.get_values().items():
 
@@ -252,7 +252,7 @@ def add_song_actors(the_circus):
         # dataframe of emtpy songs: just with one SONG_ID column for now
         song_ids = song_id_gen.generate(size=1000)
         emtpy_songs = action.Action.init_action_data(
-            actorid_field_name="SONG_ID",
+            member_id_field_name="SONG_ID",
             active_ids=song_ids
         )
 
@@ -267,7 +267,7 @@ def add_song_actors(the_circus):
         initialized_songs.drop(["SONG_ID"], axis=1, inplace=True)
 
         # this works because the columns of init_attribute match exactly the
-        # ones of the attributes of the actors
+        # ones of the attributes of the populations
         songs.update(initialized_songs)
 
     # makes sure year and duration are handled as integer
@@ -282,7 +282,7 @@ def add_listen_and_share_actions_with_details(the_circus):
     supplementary look-up on the attributes of the songs
     """
 
-    users = the_circus.actors["user"]
+    users = the_circus.populations["user"]
 
     # using this timer means users only listen to songs during work hours
     timer_gen = profilers.WorkHoursTimerGenerator(
@@ -299,8 +299,8 @@ def add_listen_and_share_actions_with_details(the_circus):
 
     listen = the_circus.create_action(
             name="listen_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
@@ -308,20 +308,20 @@ def add_listen_and_share_actions_with_details(the_circus):
 
     share = the_circus.create_action(
             name="share_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    repo = the_circus.actors["music_repository"]
-    songs = the_circus.actors["song"]
+    repo = the_circus.populations["music_repository"]
+    songs = the_circus.populations["song"]
 
     select_genre_and_song = ops.Chain(
 
         users.ops.lookup(
-            actor_id_field="UID",
+            id_field="UID",
             select={
                 "FIRST_NAME": "USER_FIRST_NAME",
                 "LAST_NAME": "USER_LAST_NAME",
@@ -338,7 +338,7 @@ def add_listen_and_share_actions_with_details(the_circus):
 
         # now also reporting details of listened or shared songs
         songs.ops.lookup(
-            actor_id_field="SONG_ID",
+            id_field="SONG_ID",
             select={
                 "artist_name": "SONG_ARTIST",
                 "title": "SONG_TITLE",

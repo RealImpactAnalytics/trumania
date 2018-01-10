@@ -20,7 +20,7 @@ def create_circus_with_actor():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example_circus.create_actor(
+    person = example_circus.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -42,7 +42,7 @@ the_circus = create_circus_with_actor()
 
 hello_world = the_circus.create_action(
     name="hello_world",
-    initiating_actor=the_circus.actors["person"],
+    initiating_actor=the_circus.populations["person"],
     actorid_field="PERSON_ID",
 
     timer_gen=ConstantDependentGenerator(value=1)
@@ -64,18 +64,18 @@ hello_world.set_operations(
         .generate(named_as="MESSAGE"),
 
     # selecting a random "other person"
-    the_circus.actors["person"]
+    the_circus.populations["person"]
         .ops
         .select_one(named_as="OTHER_PERSON"),
 
-    the_circus.actors["person"]
+    the_circus.populations["person"]
         .ops
-        .lookup(actor_id_field="PERSON_ID",
+        .lookup(id_field="PERSON_ID",
                 select={"NAME": "EMITTER_NAME"}),
 
-    the_circus.actors["person"]
+    the_circus.populations["person"]
         .ops
-        .lookup(actor_id_field="OTHER_PERSON",
+        .lookup(id_field="OTHER_PERSON",
                 select={"NAME": "RECEIVER_NAME"}),
 
     # specifying which fields to put in the log

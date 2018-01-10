@@ -21,7 +21,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta(clock_step))
 
-    actor = circus.create_actor(
+    actor = circus.create_population(
         name="a",
         size=1000,
         ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
@@ -44,8 +44,8 @@ def run_test_scenario_1(clock_step, simulation_duration,
     # just a dummy operation to produce some logs
     action = circus.create_action(
         name="test_action",
-        initiating_actor=actor,
-        actorid_field="some_id",
+        initiating_population=actor,
+        member_id_field="some_id",
         timer_gen=daily_profile,
         activity_gen=activity_gen)
 
@@ -192,7 +192,7 @@ def test_actors_during_default_daily():
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
-        field_agents = circus.create_actor(
+        field_agents = circus.create_population(
             name="fa",
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
@@ -208,8 +208,8 @@ def test_actors_during_default_daily():
         # just a dummy operation to produce some logs
         action = circus.create_action(
             name="test_action",
-            initiating_actor=field_agents,
-            actorid_field="some_id",
+            initiating_population=field_agents,
+            member_id_field="some_id",
             timer_gen=mobility_time_gen,
             activity_gen=mobility_activity_gen)
 
@@ -239,7 +239,7 @@ def test_actors_during_working_hours():
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
-        field_agents = circus.create_actor(
+        field_agents = circus.create_population(
             name="fa",
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
@@ -261,8 +261,8 @@ def test_actors_during_working_hours():
         # just a dummy operation to produce some logs
         action = circus.create_action(
             name="test_action",
-            initiating_actor=field_agents,
-            actorid_field="some_id",
+            initiating_population=field_agents,
+            member_id_field="some_id",
             timer_gen=mobility_time_gen,
             activity_gen=mobility_activity_gen)
 

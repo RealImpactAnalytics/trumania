@@ -1,5 +1,5 @@
 from trumania.core import circus
-import trumania.core.actor as actor
+import trumania.core.population as actor
 import trumania.core.random_generators as gen
 import trumania.core.operations as ops
 import trumania.core.action as action
@@ -20,7 +20,7 @@ import pandas as pd
 def build_music_repo():
 
     # this time we create a "detached" actor, not connected to a circus
-    repo = actor.Actor(
+    repo = actor.Population(
         circus=None,
         size=5,
         ids_gen=gen.SequencialGenerator(prefix="GENRE_"))
@@ -36,7 +36,7 @@ def build_music_repo():
 
 def add_song_to_repo(repo_actor):
 
-    songs = actor.Actor(
+    songs = actor.Population(
         circus=None,
         size=0,
         ids_gen=gen.SequencialGenerator(prefix="SONG_"))
@@ -93,7 +93,7 @@ def add_song_to_repo(repo_actor):
         # dataframe of emtpy songs: just with one SONG_ID column for now
         song_ids = song_id_gen.generate(size=1000)
         emtpy_songs = action.Action.init_action_data(
-            actorid_field_name="SONG_ID",
+            member_id_field_name="SONG_ID",
             active_ids=song_ids
         )
 
@@ -108,7 +108,7 @@ def add_song_to_repo(repo_actor):
         initialized_songs.drop(["SONG_ID"], axis=1, inplace=True)
 
         # this works because the columns of init_attribute match exactly the
-        # ones of the attributes of the actors
+        # ones of the attributes of the populations
         songs.update(initialized_songs)
 
     # makes sure year and duration are handled as integer
@@ -128,7 +128,7 @@ def build_circus(name):
 
 def add_listener(the_circus):
 
-    users = the_circus.create_actor(
+    users = the_circus.create_population(
         name="user", size=5,
         ids_gen=gen.SequencialGenerator(prefix="user_"))
 
@@ -144,7 +144,7 @@ def add_listener(the_circus):
 
 def add_listen_and_share_actions_with_details(the_circus):
 
-    users = the_circus.actors["user"]
+    users = the_circus.populations["user"]
 
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
@@ -162,8 +162,8 @@ def add_listen_and_share_actions_with_details(the_circus):
 
     listen = the_circus.create_action(
             name="listen_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
@@ -171,20 +171,20 @@ def add_listen_and_share_actions_with_details(the_circus):
 
     share = the_circus.create_action(
             name="share_events",
-            initiating_actor=users,
-            actorid_field="UID",
+            initiating_population=users,
+            member_id_field="UID",
 
             timer_gen=timer_gen,
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    repo = the_circus.actors["music_repository"]
-    songs = the_circus.actors["songs"]
+    repo = the_circus.populations["music_repository"]
+    songs = the_circus.populations["songs"]
 
     select_genre_and_song = ops.Chain(
 
         users.ops.lookup(
-            actor_id_field="UID",
+            id_field="UID",
             select={
                 "FIRST_NAME": "USER_FIRST_NAME",
                 "LAST_NAME": "USER_LAST_NAME",
@@ -201,7 +201,7 @@ def add_listen_and_share_actions_with_details(the_circus):
 
         # now also reporting details of listened or shared songs
         songs.ops.lookup(
-            actor_id_field="SONG_ID",
+            id_field="SONG_ID",
             select={
                 "artist_name": "SONG_ARTIST",
                 "title": "SONG_TITLE",
@@ -231,7 +231,7 @@ def add_listen_and_share_actions_with_details(the_circus):
 
 def step1():
 
-    # this creates 2 actors: music_repo and songs
+    # this creates 2 populations: music_repo and songs
     music_repo = build_music_repo()
     songs = add_song_to_repo(music_repo)
 
@@ -254,7 +254,7 @@ def step1():
 
 def step2():
 
-    # this creates 2 actors: music_repo and songs
+    # this creates 2 populations: music_repo and songs
     music_repo = build_music_repo()
     songs = add_song_to_repo(music_repo)
 
@@ -274,9 +274,9 @@ def step2():
 
     add_listener(example4_circus)
 
-    # This saves the whole circus to persistence, with all its actors,
+    # This saves the whole circus to persistence, with all its populations,
     # relationships, generators,...
-    # This is independent from the 2 actors saved above: this time we no longer
+    # This is independent from the 2 populations saved above: this time we no longer
     # have direct control on the namespace: the persistence mechanism use the
     # circus name as namespace
     example4_circus.save_to_db(overwrite=True)

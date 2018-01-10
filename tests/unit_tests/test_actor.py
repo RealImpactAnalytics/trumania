@@ -3,11 +3,11 @@ import pandas as pd
 import os
 
 from trumania.core.random_generators import SequencialGenerator
-from trumania.core.actor import Actor
+from trumania.core.population import Population
 
-dummy_actor = Actor(circus=None,
-                    size=10,
-                    ids_gen=SequencialGenerator(max_length=1, prefix="id_"))
+dummy_actor = Population(circus=None,
+                         size=10,
+                         ids_gen=SequencialGenerator(max_length=1, prefix="id_"))
 
 ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
 dummy_actor.create_attribute("age", init_values=ages)
@@ -53,7 +53,7 @@ def test_transforming_actor_to_dataframe_should_provide_all_data():
 def test_lookup_values_by_scalar_should_return_correct_values():
 
     lookup = dummy_actor.ops.lookup(
-        actor_id_field="NEIGHBOUR",
+        id_field="NEIGHBOUR",
         select={
             "age": "neighbour_age",
             "city": "neighbour_city",
@@ -77,7 +77,7 @@ def test_lookup_values_by_scalar_should_return_correct_values():
 def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all_columns():
 
     lookup = dummy_actor.ops.lookup(
-        actor_id_field="NEIGHBOUR",
+        id_field="NEIGHBOUR",
         select={
             "age": "neighbour_age",
             "city": "neighbour_city",
@@ -97,7 +97,7 @@ def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all
 def test_lookup_values_by_array_should_return_correct_values():
 
     lookup = dummy_actor.ops.lookup(
-        actor_id_field="COUSINS",
+        id_field="COUSINS",
         select={
             "age": "cousins_age",
             "city": "cousins_city",
@@ -131,7 +131,7 @@ def test_lookup_values_by_array_should_return_correct_values():
 def test_insert_actor_value_for_existing_actors_should_update_all_values():
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(
+    tested_actor = Population(
         circus=None,
         size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_")
@@ -167,7 +167,7 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
 def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_values():
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(
+    tested_actor = Population(
         circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
@@ -202,7 +202,7 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     # same as test above but triggered as an Operation on action data
 
     # copy of dummy actor that will be updated
-    tested_actor = Actor(
+    tested_actor = Population(
         circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
@@ -220,7 +220,7 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
     )
 
     update_op = tested_actor.ops.update(
-        actor_id_field="updated_actors",
+        id_field="updated_actors",
         copy_attributes_from_fields={
             "age": "the_new_age",
             "city": "location"
@@ -246,7 +246,7 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
 def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible():
 
     # empty actor
-    a = Actor(circus=None, size=0)
+    a = Population(circus=None, size=0)
     assert a.ids.shape[0] == 0
 
     # empty attributes
@@ -272,7 +272,7 @@ def test_io_round_trip():
 
         actor_path = os.path.join(p, "test_location")
         dummy_actor.save_to(actor_path)
-        retrieved = Actor.load_from(circus=None, actor_dir=actor_path)
+        retrieved = Population.load_from(circus=None, folder=actor_path)
 
         assert dummy_actor.size == retrieved.size
         assert dummy_actor.ids.tolist() == retrieved.ids.tolist()

@@ -12,9 +12,9 @@ from trumania.core.clock import CyclicTimerGenerator, CyclicTimerProfile
 def add_customers(circus, params):
 
     logging.info(" adding customers")
-    customers = circus.create_actor(name="customers",
-                                    size=params["n_customers"],
-                                    ids_gen=SequencialGenerator(prefix="CUST_"))
+    customers = circus.create_population(name="customers",
+                                         size=params["n_customers"],
+                                         ids_gen=SequencialGenerator(prefix="CUST_"))
 
     logging.info(" adding 'possible sites' mobility relationship to customers")
 
@@ -103,7 +103,7 @@ def add_mobility_action(circus, params):
 
     mobility_action.set_operations(
         circus.actors["customers"].ops.lookup(
-            actor_id_field="CUST_ID",
+            id_field="CUST_ID",
             select={"CURRENT_SITE": "PREV_SITE"}),
 
         # selects a destination site (or maybe the same as current... ^^)
@@ -116,7 +116,7 @@ def add_mobility_action(circus, params):
         circus.actors["customers"] \
             .get_attribute("CURRENT_SITE") \
             .ops.update(
-                actor_id_field="CUST_ID",
+                id_field="CUST_ID",
                 copy_from_field="NEW_SITE"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
@@ -178,7 +178,7 @@ def add_purchase_actions(circus, params):
         purchase_action.set_operations(
 
             customers.ops.lookup(
-                actor_id_field="CUST_ID",
+                id_field="CUST_ID",
                 select={"CURRENT_SITE": "SITE"}),
 
             sites.get_relationship("POS").ops.select_one(
@@ -199,7 +199,7 @@ def add_purchase_actions(circus, params):
             # this is only required for approximating targets of that
             # distributor
             sites.ops.lookup(
-                actor_id_field="SITE",
+                id_field="SITE",
                 select={"GEO_LEVEL_2": "geo_level2_id",
                         "{}__dist_l1".format(product): "distributor_l1"}
             ),

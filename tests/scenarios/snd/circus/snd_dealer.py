@@ -13,8 +13,8 @@ import trumania.components.db as db
 def add_telcos(circus, params, distributor_id_gen):
 
     logging.info("creating telcos")
-    telcos = circus.create_actor(name="telcos", size=params["n_telcos"],
-                                 ids_gen=distributor_id_gen)
+    telcos = circus.create_population(name="telcos", size=params["n_telcos"],
+                                      ids_gen=distributor_id_gen)
 
     for product, description in params["products"].items():
 

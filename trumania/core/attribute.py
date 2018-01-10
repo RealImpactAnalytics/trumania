@@ -5,11 +5,11 @@ from trumania.core.operations import SideEffectOnly
 
 class Attribute(object):
     """
-        Static actor attribute, with various ways to initialize it randomly
+        Static population attribute, with various ways to initialize it randomly
     """
 
     def __init__(self,
-                 actor,
+                 population,
 
                  # if initializing with value, must provide ids and one of the
                  # init values
@@ -23,7 +23,7 @@ class Attribute(object):
                  init_relationship=None):
         self.ops = self.AttributeOps(self)
 
-        if actor.size == 0:
+        if population.size == 0:
             self._table = pd.DataFrame(columns=["value"])
 
         elif init_relationship is None:
@@ -33,28 +33,28 @@ class Attribute(object):
                                  "init_values_gen")
 
             elif init_values is None:
-                init_values = init_gen.generate(size=actor.size)
+                init_values = init_gen.generate(size=population.size)
 
             if type(init_values) == pd.Series:
                 logging.warn("  Trying to create attribute with a series "
                              "but indices will be lost.")
                 init_values = init_values.tolist()
 
-            self._table = pd.DataFrame({"value": init_values}, index=actor.ids)
+            self._table = pd.DataFrame({"value": init_values}, index=population.ids)
 
         else:
             if init_relationship is None:
                 raise ValueError("must provide either ids or relationship to "
                                  "initialize the attribute")
 
-            self._table = actor.get_relationship(init_relationship).select_one()
+            self._table = population.get_relationship(init_relationship).select_one()
             self._table.set_index("from", drop=True, inplace=True)
             self._table.rename(columns={"to": "value"}, inplace=True)
 
     def get_values(self, ids=None):
         """
-        :param ids: actor ids for which the attribute values are desired
-        :return: the current attribute values for those actors, as Series
+        :param ids: members ids for which the attribute values are desired
+        :return: the current attribute values for those members, as Series
         """
         if ids is None:
             return self._table["value"]
@@ -64,7 +64,7 @@ class Attribute(object):
     def update(self, series):
         """
         updates or adds values of this attributes from the values of the provided
-        series, using its index as actor id
+        series, using its index as member id
         """
         self._table = self._table.reindex(self._table.index | series.index)
         self._table.loc[series.index, "value"] = series.values
@@ -101,12 +101,12 @@ class Attribute(object):
         # so it's initialized correctly.
         #
         # Don't do that outside this class!
-        class FakeActor(object):
+        class FakePopulation(object):
             def __init__(self):
                 self.size = table.shape[0]
                 self.ids = table.index
 
-        return Attribute(actor=FakeActor(), init_values=table["value"])
+        return Attribute(population=FakePopulation(), init_values=table["value"])
 
     ############
     # operations
@@ -116,38 +116,37 @@ class Attribute(object):
             self.attribute = attribute
 
         class Update(SideEffectOnly):
-            def __init__(self, attribute, actor_id_field,
-                         copy_from_field):
+            def __init__(self, attribute, member_id_field, copy_from_field):
                 self.attribute = attribute
                 self.copy_from_field = copy_from_field
-                self.actor_id_field = actor_id_field
+                self.member_id_field = member_id_field
 
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
                     update_series = pd.Series(
                         data=action_data[self.copy_from_field].values,
-                        index=action_data[self.actor_id_field].values)
+                        index=action_data[self.member_id_field].values)
                     self.attribute.update(update_series)
 
-        def update(self, actor_id_field, copy_from_field):
+        def update(self, member_id_field, copy_from_field):
             """
             Overwrite the value of this attribute with values in this field
 
-            :param actor_id_field: name of the field of the action data
-                containing the actor ids whose attribute should be updated
+            :param member_id_field: name of the field of the action data
+                containing the member ids whose attribute should be updated
             :param copy_from_field: name of the field of the action data
                 containing the new values of the attribute
             :return:
             """
-            return self.Update(self.attribute, actor_id_field,
+            return self.Update(self.attribute, member_id_field,
                                copy_from_field)
 
         class Add(SideEffectOnly):
-            def __init__(self, attribute, actor_id_field,
+            def __init__(self, attribute, member_id_field,
                          added_value_field, subtract):
                 self.attribute = attribute
                 self.added_value_field = added_value_field
-                self.actor_id_field = actor_id_field
+                self.member_id_field = member_id_field
                 self.subtract = subtract
 
             def side_effect(self, action_data):
@@ -158,11 +157,11 @@ class Attribute(object):
                         values = -values
 
                     self.attribute.add(
-                        ids=action_data[self.actor_id_field].values,
+                        ids=action_data[self.member_id_field].values,
                         added_values=values)
 
-        def add(self, actor_id_field, added_value_field):
-            return self.Add(self.attribute, actor_id_field, added_value_field, subtract=False)
+        def add(self, member_id_field, added_value_field):
+            return self.Add(self.attribute, member_id_field, added_value_field, subtract=False)
 
-        def subtract(self, actor_id_field, subtracted_value_field):
-            return self.Add(self.attribute, actor_id_field, subtracted_value_field, subtract=True)
+        def subtract(self, member_id_field, subtracted_value_field):
+            return self.Add(self.attribute, member_id_field, subtracted_value_field, subtract=True)

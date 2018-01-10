@@ -9,25 +9,26 @@ from trumania.core.util_functions import merge_2_dicts
 
 class Action(object):
     def __init__(self, name,
-                 initiating_actor, actorid_field,
+                 initiating_population, member_id_field,
                  activity_gen=ConstantGenerator(value=1.), states=None,
                  timer_gen=ConstantDependentGenerator(value=-1),
                  auto_reset_timer=True):
         """
         :param name: name of this action
 
-        :param initiating_actor: actors from which the operations of this
-            action are started
+        :param initiating_population: population from which the operations of
+        this action are started
 
-        :param actorid_field: when building the action data, a field will be
-            automatically inserted containing the actor id, with this name
+        :param member_id_field: when building the action data, a field will be
+            automatically inserted containing the member ids, with this name
 
         :param activity_gen: generator for the default activity levels of the
-            actors for this action. Default: same level for everybody
+            population members for this action. Default: same level for
+            everybody
 
         :param states: dictionary of states providing activity level for
-            other states of the actors + a probability level to transit back to
-            the default state after each execution (NOT after each clock
+            other states of the population + a probability level to transit
+            back to the default state after each execution (NOT after each clock
             tick). Default: no supplementary states.
 
         :param timer_gen: timer generator: this must be a generator able to
@@ -36,21 +37,21 @@ class Action(object):
             action.
 
         :param auto_reset_timer: if True, we automatically re-schedule a new
-            execution for the same actor id after at the end of the previous
+            execution for the same member id after at the end of the previous
             ont, by resetting the timer.
         """
 
         self.name = name
-        self.triggering_actor = initiating_actor
-        self.actorid_field_name = actorid_field
-        self.size = initiating_actor.size
+        self.triggering_population = initiating_population
+        self.member_id_field = member_id_field
+        self.size = initiating_population.size
         self.time_generator = timer_gen
         self.auto_reset_timer = auto_reset_timer
         self.forced_to_act_next = pd.Series()
 
         # activity and transition probability parameters, for each state
         self.params = pd.DataFrame({("default", "activity"): 0},
-                                   index=initiating_actor.ids)
+                                   index=initiating_population.ids)
 
         default_state = {"default": {
             "activity": activity_gen,
@@ -64,7 +65,7 @@ class Action(object):
             self.params[("activity", state)] = activity_vals
             self.params[("back_to_default_probability", state)] = probs_vals
 
-        # current state and timer value for each actor id
+        # current state and timer value for each population member id
         self.timer = pd.DataFrame({"state": "default", "remaining": -1},
                                   index=self.params.index)
         if self.auto_reset_timer:
@@ -90,14 +91,14 @@ class Action(object):
     def get_param(self, param_name, ids):
         """
         :param param_name: either "activity" or ""back_to_default_probability""
-        :param ids: actor ids
-        :return: the activity level of each requested actor id, depending its
+        :param ids: population member ids
+        :return: the activity level of each requested member id, depending its
         current state
         """
         if len(self.get_possible_states()) == 1:
             return self.params.loc[ids][(param_name, "default")]
         else:
-            # pairs of (actorid, state), to select the appropriate activity level
+            # pairs of (member id, state), to select the desired activity level
             param_idx = zip(ids, self.timer.ix[ids, "state"].tolist())
             param_values = self.params.loc[ids][param_name].stack()[param_idx]
             param_values.index = param_values.index.droplevel(level=1)
@@ -108,25 +109,26 @@ class Action(object):
 
     def transit_to_state(self, ids, states):
         """
-        :param ids: array of actor id to updates
-        :param states: array of states to assign to those actor ids
+        :param ids: array of population member id to updates
+        :param states: array of states to assign to those member ids
         """
         self.timer.loc[ids, "state"] = states
 
     def active_inactive_ids(self):
         """
-        :return: 2 sets of actor ids: the one active at this turn and the others
+        :return: 2 sets of member ids: the one active at this turn and the
+        others
         """
 
         active_idx = self.timer["remaining"] == 0
         return self.timer.index[active_idx].tolist(), self.timer.index[~active_idx].tolist()
 
-    def timer_tick(self, actor_ids):
+    def timer_tick(self, member_ids):
 
-        actor_ids = pd.Index(actor_ids).difference(self.forced_to_act_next)
-        impacted_timers = self.timer.loc[actor_ids]
+        member_ids = pd.Index(member_ids).difference(self.forced_to_act_next)
+        impacted_timers = self.timer.loc[member_ids]
 
-        # not updating actors that keep a negative counter: those are "marked
+        # not updating members that keep a negative counter: those are "marked
         #  inactive" already
         positive_idx = impacted_timers[impacted_timers["remaining"] >= 0].index
         if len(positive_idx) > 0:
@@ -140,14 +142,14 @@ class Action(object):
     def reset_timers(self, ids=None):
         """
         Resets the timers to some random positive number of ticks, related to
-        the activity level of each actor row.
+        the activity level of each population row.
 
-        We limit to a set of ids and not all the actors currently set to
+        We limit to a set of ids and not all the members currently set to
         zero, since we could have zero timers as a side effect of other
         actions, in which case we want to trigger an execution at next clock
         tick instead of resetting the timer.
 
-        :param ids: the subset of actor ids to impact
+        :param ids: the subset of population member ids to impact
         """
 
         if ids is None:
@@ -155,13 +157,14 @@ class Action(object):
         else:
             ids = pd.Index(ids)
 
-        # The reset_timers *operation* is called on an actor typically to
+        # The reset_timers *operation* is called on a member typically to
         # re-generate some timer values because the activity level has
         # changed (e.g. subscribers get "bursty" => their next action should
         # now be earlier than originally timed).
-        # BUT: if some some other reason, some (typically other) actors have
-        # been forced to act at the next clock step, we don't want to cancel
-        # that by resetting their timers to some positive value.
+        # BUT: if some some other reason, some (typically other)
+        # population member have been forced to act at the next clock step,
+        # we don't want to cancel that by resetting their timers to some
+        # positive value.
         ids = ids.difference(self.forced_to_act_next)
 
         if len(ids) > 0:
@@ -169,23 +172,23 @@ class Action(object):
             activity = self.get_param("activity", ids)
             new_timer = self.time_generator.generate(observations=activity)
 
-            # replacing any generated timer with -1 for fully inactive actors
+            # replacing any generated timer with -1 for fully inactive members
             new_timer = new_timer.where(cond=activity != 0, other=-1)
 
             self.timer.loc[ids, "remaining"] = new_timer
 
     @staticmethod
-    def init_action_data(actorid_field_name, active_ids):
+    def init_action_data(member_id_field_name, active_ids):
         """
         creates the initial action_data dataframe containing just the id of
-        the currently active actors
+        the currently active members
         """
-        return pd.DataFrame({actorid_field_name: active_ids}, index=active_ids)
+        return pd.DataFrame({member_id_field_name: active_ids}, index=active_ids)
 
     def execute(self):
 
         # Any previously forced actions will now execute => cancelling the flag.
-        # Note that some actors might put back the flag to themselves during
+        # Note that some members might put back the flag to themselves during
         # self.operation_chain(ids_df), which is ok and in which case their
         # timer will not be ticked => they will re-execte at the next clock step
         self.forced_to_act_next = pd.Series()
@@ -194,12 +197,12 @@ class Action(object):
         active_ids, inactive_ids = self.active_inactive_ids()
 
         if len(active_ids) == 0:
-            # skips execution altogether if no actor has a timer at 0 right now
+            # skips execution altogether if no member has a timer at 0 right now
             all_logs = {}
 
         else:
             _, all_logs = self.operation_chain(
-                Action.init_action_data(self.actorid_field_name, active_ids))
+                Action.init_action_data(self.member_id_field, active_ids))
 
             if self.auto_reset_timer:
                 # re-scheduling those actions one more time
@@ -213,7 +216,7 @@ class Action(object):
 
     class _MaybeBackToDefault(SideEffectOnly):
         """
-        This is an internal operation of Action, that transits actors
+        This is an internal operation of Action, that transits members
         back to default with probability as declared in
         back_to_default_probability
         """
@@ -223,7 +226,7 @@ class Action(object):
             self.action = action
 
         def side_effect(self, action_data):
-            # only transiting actors that have ran during this clock tick
+            # only transiting members that have ran during this clock tick
             active_timer = self.action.timer.loc[action_data.index]
 
             non_default_ids = active_timer[
@@ -243,22 +246,22 @@ class Action(object):
                 baseline = self.judge.generate(back_prob.shape[0])
                 cond = back_prob > baseline
 
-            actor_ids = back_prob[cond].index
-            states = ["default"] * actor_ids.shape[0]
+            member_ids = back_prob[cond].index
+            states = ["default"] * member_ids.shape[0]
 
-            self.action.transit_to_state(ids=actor_ids, states=states)
+            self.action.transit_to_state(ids=member_ids, states=states)
 
     class ActionOps(object):
         class ForceActNext(SideEffectOnly):
-            def __init__(self, action, actor_id_field, condition_field):
+            def __init__(self, action, member_id_field, condition_field):
                 self.action = action
-                self.active_ids_field = actor_id_field
+                self.active_ids_field = member_id_field
                 self.condition_field = condition_field
 
             def side_effect(self, action_data):
                 if action_data.shape[0] > 0:
                     # active_ids_field should contain NA: which are all the
-                    # actor _NOT_ being forced to trigger
+                    # members _NOT_ being forced to trigger
 
                     if self.condition_field is None:
                         filtered = action_data
@@ -273,40 +276,40 @@ class Action(object):
         def __init__(self, action):
             self.action = action
 
-        def force_act_next(self, actor_id_field, condition_field=None):
+        def force_act_next(self, member_id_field, condition_field=None):
             """
-            Sets the timer of those actor to 0, forcing them to act at the
+            Sets the timer of those members to 0, forcing them to act at the
             next clock tick
             """
-            return self.ForceActNext(self.action, actor_id_field,
+            return self.ForceActNext(self.action, member_id_field,
                                      condition_field)
 
         class ResetTimers(SideEffectOnly):
-            def __init__(self, action, actor_id_field=None):
+            def __init__(self, action, member_id_field=None):
                 self.action = action
-                self.actor_id_field = actor_id_field
+                self.member_id_field = member_id_field
 
             def side_effect(self, action_data):
-                if self.actor_id_field is None:
+                if self.member_id_field is None:
                     # no ids specified => resetting everybody
                     self.action.reset_timers(action_data.index)
                 else:
-                    ids = action_data[self.actor_id_field].dropna().unique()
+                    ids = action_data[self.member_id_field].dropna().unique()
                     self.action.reset_timers(ids)
 
-        def reset_timers(self, actor_id_field=None):
+        def reset_timers(self, member_id_field=None):
             """
             regenerates some random positive count value for all timers
             """
-            return self.ResetTimers(self.action, actor_id_field)
+            return self.ResetTimers(self.action, member_id_field)
 
         class TransitToState(SideEffectOnly):
-            def __init__(self, action, actor_id_field, state_field, state,
+            def __init__(self, action, member_id_field, state_field, state,
                          condition_field):
                 self.action = action
                 self.state_field = state_field
                 self.state = state
-                self.actor_id_field = actor_id_field
+                self.member_id_field = member_id_field
                 self.condition_field = condition_field
 
             def side_effect(self, action_data):
@@ -317,25 +320,25 @@ class Action(object):
                     filtered = action_data[action_data[self.condition_field]]
 
                 if self.state_field is None:
-                    actor_ids = filtered[self.actor_id_field].dropna()
-                    states = [self.state] * actor_ids.shape[0]
+                    member_ids = filtered[self.member_id_field].dropna()
+                    states = [self.state] * member_ids.shape[0]
 
                 else:
-                    updated = filtered[[self.actor_id_field, self.state_field]].dropna()
-                    actor_ids = updated[self.actor_id_field]
+                    updated = filtered[[self.member_id_field, self.state_field]].dropna()
+                    member_ids = updated[self.member_id_field]
                     states = updated[self.state_field].tolist()
 
-                self.action.transit_to_state(ids=actor_ids, states=states)
+                self.action.transit_to_state(ids=member_ids, states=states)
 
-        def transit_to_state(self, actor_id_field, state_field=None,
+        def transit_to_state(self, member_id_field, state_field=None,
                              state=None, condition_field=None):
             """
-            changes the state of those actor ids
+            changes the state of those population member ids
             """
 
             if not ((state_field is None) ^ (state is None)):
                 raise ValueError("must provide exactly one of state_field or "
                                  "state")
 
-            return self.TransitToState(self.action, actor_id_field,
+            return self.TransitToState(self.action, member_id_field,
                                        state_field, state, condition_field)

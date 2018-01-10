@@ -19,14 +19,14 @@ def step1():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -56,7 +56,7 @@ def step2():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -67,8 +67,8 @@ def step2():
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -77,7 +77,7 @@ def step2():
 
     hello_world.set_operations(
         person.ops.lookup(
-            actor_id_field="PERSON_ID",
+            id_field="PERSON_ID",
             select={"NAME": "NAME"}
         ),
         ConstantGenerator(value="hello world").ops.generate(named_as="HELLO"),
@@ -103,7 +103,7 @@ def step3():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -114,8 +114,8 @@ def step3():
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -131,7 +131,7 @@ def step3():
 
     hello_world.set_operations(
         person.ops.lookup(
-            actor_id_field="PERSON_ID",
+            id_field="PERSON_ID",
             select={"NAME": "NAME"}
         ),
 
@@ -166,7 +166,7 @@ def step4():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -187,8 +187,8 @@ def step4():
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -200,7 +200,7 @@ def step4():
 
     hello_world.set_operations(
         person.ops.lookup(
-            actor_id_field="PERSON_ID",
+            id_field="PERSON_ID",
             select={"NAME": "NAME"}
         ),
 
@@ -233,7 +233,7 @@ def step5():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -267,8 +267,8 @@ def step5():
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -280,7 +280,7 @@ def step5():
 
     hello_world.set_operations(
         person.ops.lookup(
-            actor_id_field="PERSON_ID",
+            id_field="PERSON_ID",
             select={"NAME": "NAME"}
         ),
 
@@ -313,7 +313,7 @@ def step6():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -372,8 +372,8 @@ def step6():
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -385,7 +385,7 @@ def step6():
 
     hello_world.set_operations(
         person.ops.lookup(
-            actor_id_field="PERSON_ID",
+            id_field="PERSON_ID",
             select={"NAME": "NAME"}
         ),
 
@@ -405,7 +405,7 @@ def step6():
             discard_empty=True),
 
         person.ops.lookup(
-            actor_id_field="COUNTERPART_ID",
+            id_field="COUNTERPART_ID",
             select={"NAME": "COUNTER_PART_NAME"}
         ),
 
@@ -432,7 +432,7 @@ def step7():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example1.create_actor(
+    person = example1.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -502,8 +502,8 @@ def step7():
 
     hello_world = example1.create_action(
         name="hello_world",
-        initiating_actor=person,
-        actorid_field="PERSON_ID",
+        initiating_population=person,
+        member_id_field="PERSON_ID",
 
         # after each action, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
@@ -515,7 +515,7 @@ def step7():
 
     hello_world.set_operations(
         person.ops.lookup(
-            actor_id_field="PERSON_ID",
+            id_field="PERSON_ID",
             select={"NAME": "NAME"}
         ),
 
@@ -533,7 +533,7 @@ def step7():
             discard_empty=True),
 
         person.ops.lookup(
-            actor_id_field="COUNTERPART_ID",
+            id_field="COUNTERPART_ID",
             select={"NAME": "COUNTER_PART_NAME"}
         ),
 

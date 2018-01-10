@@ -63,7 +63,7 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating distributors and their SIM stock  ")
 
-        distributors = self.create_actor(
+        distributors = self.create_population(
             name="distros",
             size=params["n_distributors"],
             ids_gen=SequencialGenerator(
@@ -93,8 +93,8 @@ class SndScenario(WithRandomGeo, Circus):
 
         restocking = self.create_action(
             name="distributor_restock",
-            initiating_actor=distributors,
-            actorid_field="DISTRIBUTOR_ID",
+            initiating_population=distributors,
+            member_id_field="DISTRIBUTOR_ID",
 
             # here again: no activity gen nor time profile here since the action
             # is triggered externally
@@ -104,7 +104,7 @@ class SndScenario(WithRandomGeo, Circus):
             self.clock.ops.timestamp(named_as="DATETIME"),
 
             distributors.ops.lookup(
-                actor_id_field="DISTRIBUTOR_ID",
+                id_field="DISTRIBUTOR_ID",
                 select={"SIMS_TO_RESTOCK": "SIMS_TO_RESTOCK"}),
 
             sim_generator.ops.generate(
@@ -117,7 +117,7 @@ class SndScenario(WithRandomGeo, Circus):
 
             # back to zero
             distributors.get_attribute("SIMS_TO_RESTOCK").ops.subtract(
-                actor_id_field="DISTRIBUTOR_ID",
+                member_id_field="DISTRIBUTOR_ID",
                 subtracted_value_field="SIMS_TO_RESTOCK"),
 
             operations.FieldLogger(log_id="distributor_restock",
@@ -131,11 +131,11 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating dealer and their SIM stock  ")
 
-        dealers = self.create_actor(name="dealers",
-                                    size=params["n_dealers"],
-                                    ids_gen=SequencialGenerator(
-                                        prefix="DEALER_",
-                                        max_length=3))
+        dealers = self.create_population(name="dealers",
+                                         size=params["n_dealers"],
+                                         ids_gen=SequencialGenerator(
+                                         prefix="DEALER_",
+                                         max_length=3))
 
         # SIM relationship to maintain some stock
         sims = dealers.create_relationship(name="SIM")
@@ -164,11 +164,11 @@ class SndScenario(WithRandomGeo, Circus):
         """
         logging.info("Creating agents ")
 
-        agents = self.create_actor(name="agents",
-                                   size=params["n_agents"],
-                                   ids_gen=SequencialGenerator(
-                                       prefix="AGENT_",
-                                       max_length=3))
+        agents = self.create_population(name="agents",
+                                        size=params["n_agents"],
+                                        ids_gen=SequencialGenerator(
+                                        prefix="AGENT_",
+                                        max_length=3))
         agents.create_relationship(name="SIM")
 
         agents.create_attribute(name="AGENT_NAME",
@@ -241,8 +241,8 @@ class SndScenario(WithRandomGeo, Circus):
 
         build_purchases = self.create_action(
             name="bulk_purchases",
-            initiating_actor=dealers,
-            actorid_field="DEALER_ID",
+            initiating_population=dealers,
+            member_id_field="DEALER_ID",
             timer_gen=timegen,
             activity_gen=purchase_activity_gen)
 
@@ -253,7 +253,7 @@ class SndScenario(WithRandomGeo, Circus):
                 from_field="DEALER_ID",
                 named_as="DISTRIBUTOR"),
 
-            dealers.ops.lookup(actor_id_field="DEALER_ID",
+            dealers.ops.lookup(id_field="DEALER_ID",
                                select={"BULK_BUY_SIZE": "BULK_BUY_SIZE"}),
 
             distributors.get_relationship("SIM").ops.select_many(
@@ -281,11 +281,11 @@ class SndScenario(WithRandomGeo, Circus):
 
             # finally, triggering some re-stocking by the distributor
             distributors.get_attribute("SIMS_TO_RESTOCK").ops.add(
-                actor_id_field="DISTRIBUTOR",
+                member_id_field="DISTRIBUTOR",
                 added_value_field="NUMBER_OF_SIMS"),
 
             self.get_action("distributor_restock").ops.force_act_next(
-                actor_id_field="DISTRIBUTOR"),
+                member_id_field="DISTRIBUTOR"),
 
             operations.FieldLogger(log_id="bulk_purchases",
                                    cols=["DEALER_ID", "DISTRIBUTOR",
@@ -313,8 +313,8 @@ class SndScenario(WithRandomGeo, Circus):
 
         purchase = self.create_action(
             name="purchases",
-            initiating_actor=agents,
-            actorid_field="AGENT",
+            initiating_population=agents,
+            member_id_field="AGENT",
             timer_gen=timegen,
             activity_gen=purchase_activity_gen,
 
@@ -354,7 +354,7 @@ class SndScenario(WithRandomGeo, Circus):
 
             # any agent who failed to buy a SIM will try again at next round
             # (we could do that probabilistically as well, just add a trigger..)
-            purchase.ops.force_act_next(actor_id_field="AGENT",
+            purchase.ops.force_act_next(member_id_field="AGENT",
                                         condition_field="FAILED_SALE"),
 
             # not specifying the logged columns => by defaults, log everything
@@ -396,15 +396,15 @@ class SndScenario(WithRandomGeo, Circus):
 
         going_on_holidays = self.create_action(
             name="agent_start_holidays",
-            initiating_actor=agents,
-            actorid_field="AGENT",
+            initiating_population=agents,
+            member_id_field="AGENT",
             timer_gen=holiday_time_gen,
             activity_gen=holiday_start_activity)
 
         returning_from_holidays = self.create_action(
             name="agent_stops_holidays",
-            initiating_actor=agents,
-            actorid_field="AGENT",
+            initiating_population=agents,
+            member_id_field="AGENT",
             timer_gen=holiday_time_gen,
             activity_gen=holiday_end_activity,
             auto_reset_timer=False)
@@ -412,9 +412,9 @@ class SndScenario(WithRandomGeo, Circus):
         going_on_holidays.set_operations(
 
             self.get_action("purchases").ops.transit_to_state(
-                actor_id_field="AGENT",
+                member_id_field="AGENT",
                 state="on_holiday"),
-            returning_from_holidays.ops.reset_timers(actor_id_field="AGENT"),
+            returning_from_holidays.ops.reset_timers(member_id_field="AGENT"),
 
             # just for the logs
             self.clock.ops.timestamp(named_as="TIME"),
@@ -424,7 +424,7 @@ class SndScenario(WithRandomGeo, Circus):
 
         returning_from_holidays.set_operations(
             self.get_action("purchases").ops.transit_to_state(
-                actor_id_field="AGENT",
+                member_id_field="AGENT",
                 state="default"),
 
             # just for the logs
@@ -450,7 +450,7 @@ class SndScenario(WithRandomGeo, Circus):
             method="choice", a=range(1, 4), seed=next(self.seeder))
 
         # the system starts with no reviews
-        review_actor = self.create_actor(name="rev", size=0)
+        review_actor = self.create_population(name="rev", size=0)
         review_actor.create_attribute("DATE")
         review_actor.create_attribute("TEXT")
         review_actor.create_attribute("AGENT_ID")
@@ -458,8 +458,8 @@ class SndScenario(WithRandomGeo, Circus):
 
         reviews = self.create_action(
             name="agent_reviews",
-            initiating_actor=agents,
-            actorid_field="AGENT",
+            initiating_population=agents,
+            member_id_field="AGENT",
             timer_gen=timegen,
             activity_gen=review_activity_gen,
         )
@@ -470,7 +470,7 @@ class SndScenario(WithRandomGeo, Circus):
         reviews.set_operations(
             self.clock.ops.timestamp(named_as="DATETIME"),
 
-            agents.ops.lookup(actor_id_field="AGENT",
+            agents.ops.lookup(id_field="AGENT",
                               select={"AGENT_NAME": "AGENT_NAME"}),
 
             review_id_gen.ops.generate(named_as="REVIEW_ID"),
@@ -478,7 +478,7 @@ class SndScenario(WithRandomGeo, Circus):
             text_id_gen.ops.generate(named_as="REVIEW_TEXT"),
 
             review_actor.ops.update(
-                actor_id_field="REVIEW_ID",
+                id_field="REVIEW_ID",
                 copy_attributes_from_fields={
                     "DATE": "DATETIME",
                     "TEXT": "REVIEW_TEXT",

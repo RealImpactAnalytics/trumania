@@ -16,7 +16,7 @@ import pandas as pd
 import os
 
 from trumania.core.util_functions import ensure_folder_exists, ensure_non_existing_dir
-from trumania.core.actor import Actor
+from trumania.core.population import Population
 import trumania.core.clock as clock
 from trumania.core.random_generators import Generator, NumpyRandomGenerator
 
@@ -26,7 +26,7 @@ def save_actor(actor, namespace, actor_id):
 
 
 def load_actor(namespace, actor_id, circus):
-    return Actor.load_from(_actor_folder(namespace, actor_id), circus)
+    return Population.load_from(_actor_folder(namespace, actor_id), circus)
 
 
 def list_actors(namespace):

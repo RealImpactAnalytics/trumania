@@ -34,7 +34,7 @@ def trigger_action_if_low_stock(
             observed_field="{}CURRENT_STOCK".format(field_prefix)),
 
         circus.get_action(triggered_action_name).ops.force_act_next(
-            actor_id_field=actor_id_field,
+            member_id_field=actor_id_field,
             condition_field="{}SHOULD_RESTOCK".format(field_prefix)),
     )
 

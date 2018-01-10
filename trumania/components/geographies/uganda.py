@@ -58,8 +58,8 @@ class WithUganda(Circus):
         cell_break_down_action = self.create_action(
             name="cell_break_down",
 
-            initiating_actor=uganda_cells,
-            actorid_field="CELL_ID",
+            initiating_population=uganda_cells,
+            member_id_field="CELL_ID",
 
             timer_gen=repair_n_fix_timer,
 
@@ -71,8 +71,8 @@ class WithUganda(Circus):
         cell_repair_action = self.create_action(
             name="cell_repair_down",
 
-            initiating_actor=uganda_cells,
-            actorid_field="CELL_ID",
+            initiating_population=uganda_cells,
+            member_id_field="CELL_ID",
 
             timer_gen=repair_n_fix_timer,
 
@@ -89,10 +89,10 @@ class WithUganda(Circus):
             unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
             uganda_cells.get_attribute("HEALTH").ops.update(
-                actor_id_field="CELL_ID",
+                member_id_field="CELL_ID",
                 copy_from_field="NEW_HEALTH_LEVEL"),
 
-            cell_repair_action.ops.reset_timers(actor_id_field="CELL_ID"),
+            cell_repair_action.ops.reset_timers(member_id_field="CELL_ID"),
             self.clock.ops.timestamp(named_as="TIME"),
 
             operations.FieldLogger(log_id="cell_status",
@@ -104,7 +104,7 @@ class WithUganda(Circus):
             healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
             uganda_cells.get_attribute("HEALTH").ops.update(
-                actor_id_field="CELL_ID",
+                member_id_field="CELL_ID",
                 copy_from_field="NEW_HEALTH_LEVEL"),
 
             self.clock.ops.timestamp(named_as="TIME"),
@@ -122,9 +122,9 @@ def build_uganda_actors(circus):
 
     seeder = seed_provider(12345)
 
-    cells = circus.create_actor(name="cells",
-                                ids_gen=SequencialGenerator(prefix="CELL_"),
-                                size=200)
+    cells = circus.create_population(name="cells",
+                                     ids_gen=SequencialGenerator(prefix="CELL_"),
+                                     size=200)
     latitude_generator = FakerGenerator(method="latitude",
                                         seed=next(seeder))
     cells.create_attribute("latitude", init_gen=latitude_generator)
@@ -140,7 +140,7 @@ def build_uganda_actors(circus):
     cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
     city_gen = FakerGenerator(method="city", seed=next(seeder))
-    cities = circus.create_actor(name="cities", size=200, ids_gen=city_gen)
+    cities = circus.create_population(name="cities", size=200, ids_gen=city_gen)
 
     cell_city_rel = cities.create_relationship("CELLS")
 

@@ -14,7 +14,7 @@ def test_create_action_get_action_should_work_as_expected():
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
-    customers = flying.create_actor(
+    customers = flying.create_population(
         "teste", size=100,
         ids_gen=SequencialGenerator(prefix="a"))
 
@@ -23,8 +23,8 @@ def test_create_action_get_action_should_work_as_expected():
     mobility_action = flying.create_action(
         name="mobility",
 
-        initiating_actor=customers,
-        actorid_field="A_ID",
+        initiating_population=customers,
+        member_id_field="A_ID",
 
         timer_gen=mobility_time_gen,
     )
@@ -33,7 +33,7 @@ def test_create_action_get_action_should_work_as_expected():
     result = flying.get_action("mobility")
 
     assert result.name == "mobility"
-    assert result.actorid_field_name == mobility_action.actorid_field_name
+    assert result.member_id_field == mobility_action.member_id_field
 
 
 def test_get_non_existing_action_should_return_none():
@@ -53,15 +53,15 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
-    customers = flying.create_actor(
+    customers = flying.create_population(
         name="tested", size=100,
         ids_gen=SequencialGenerator(prefix="a"))
 
     flying.create_action(name="the_action",
-                         initiating_actor=customers,
-                         actorid_field="actor_id")
+                         initiating_population=customers,
+                         member_id_field="actor_id")
 
     with pytest.raises(ValueError):
         flying.create_action(name="the_action",
-                             initiating_actor=customers,
-                             actorid_field="actor_id")
+                             initiating_population=customers,
+                             member_id_field="actor_id")

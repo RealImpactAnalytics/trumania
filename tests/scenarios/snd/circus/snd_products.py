@@ -10,7 +10,7 @@ def create_products(circus, params):
     """
 
     for product_name, description in params["products"].items():
-        product = circus.create_actor(
+        product = circus.create_population(
             name=product_name,
             ids_gen=random_generators.SequencialGenerator(
                 prefix=description["prefix"]),

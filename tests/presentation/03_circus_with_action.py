@@ -20,7 +20,7 @@ def create_circus_with_actor():
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example_circus.create_actor(
+    person = example_circus.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -42,8 +42,8 @@ example = create_circus_with_actor()
 
 hello_world = example.create_action(
     name="hello_world",
-    initiating_actor=example.actors["person"],
-    actorid_field="PERSON_ID",
+    initiating_population=example.populations["person"],
+    member_id_field="PERSON_ID",
 
     timer_gen=ConstantDependentGenerator(value=1)
 )
