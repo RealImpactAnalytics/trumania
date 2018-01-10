@@ -42,8 +42,8 @@ the_circus = create_circus_with_actor()
 
 hello_world = the_circus.create_action(
     name="hello_world",
-    initiating_actor=the_circus.populations["person"],
-    actorid_field="PERSON_ID",
+    initiating_population=the_circus.populations["person"],
+    member_id_field="PERSON_ID",
 
     # each actor instance is now going to have 10, 20 or 30
     # trigger of this action per week
@@ -102,4 +102,4 @@ the_circus.run(
 )
 
 with open("output/example8/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))

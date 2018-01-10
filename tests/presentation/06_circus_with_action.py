@@ -42,8 +42,8 @@ the_circus = create_circus_with_actor()
 
 hello_world = the_circus.create_action(
     name="hello_world",
-    initiating_actor=the_circus.populations["person"],
-    actorid_field="PERSON_ID",
+    initiating_population=the_circus.populations["person"],
+    member_id_field="PERSON_ID",
 
     timer_gen=ConstantDependentGenerator(value=1)
 )

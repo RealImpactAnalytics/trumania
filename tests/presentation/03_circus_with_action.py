@@ -60,4 +60,4 @@ example.run(
 )
 
 with open("output/example3/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))

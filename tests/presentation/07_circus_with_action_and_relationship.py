@@ -45,7 +45,7 @@ def add_quotes(the_circus):
                                      variable_nb_words=True,
                                      seed=next(the_circus.seeder))
 
-    person = the_circus.actors["person"]
+    person = the_circus.populations["person"]
 
     quotes_rel = person.create_relationship("quotes")
 
@@ -61,9 +61,8 @@ add_quotes(the_circus)
 
 hello_world = the_circus.create_action(
     name="hello_world",
-    initiating_actor=the_circus.populations["person"],
-    actorid_field="PERSON_ID",
-
+    initiating_population=the_circus.populations["person"],
+    member_id_field="PERSON_ID",
     timer_gen=ConstantDependentGenerator(value=1)
 )
 
@@ -109,4 +108,4 @@ the_circus.run(
 )
 
 with open("output/example4/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))
