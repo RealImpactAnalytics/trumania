@@ -21,15 +21,15 @@ import trumania.core.clock as clock
 from trumania.core.random_generators import Generator, NumpyRandomGenerator
 
 
-def save_actor(actor, namespace, actor_id):
-    actor.save_to(_actor_folder(namespace, actor_id))
+def save_population(actor, namespace, population_id):
+    actor.save_to(_actor_folder(namespace, population_id))
 
 
-def load_actor(namespace, actor_id, circus):
-    return Population.load_from(_actor_folder(namespace, actor_id), circus)
+def load_population(namespace, population_id, circus):
+    return Population.load_from(_actor_folder(namespace, population_id), circus)
 
 
-def list_actors(namespace):
+def list_populations(namespace):
     folder = _actors_folder(namespace)
     return [d for d in os.listdir(folder)
             if os.path.isdir(os.path.join(folder, d))]

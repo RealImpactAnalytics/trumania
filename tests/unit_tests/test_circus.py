@@ -15,7 +15,7 @@ def test_create_action_get_action_should_work_as_expected():
                     step_duration=pd.Timedelta("60s"))
 
     customers = flying.create_population(
-        "teste", size=100,
+        "the_customers", size=100,
         ids_gen=SequencialGenerator(prefix="a"))
 
     mobility_time_gen = DefaultDailyTimerGenerator(flying.clock, seed=1)
@@ -34,6 +34,12 @@ def test_create_action_get_action_should_work_as_expected():
 
     assert result.name == "mobility"
     assert result.member_id_field == mobility_action.member_id_field
+
+    # also retrieving this initiating population of that actor
+
+    retrieved_ = flying.get_population_of("mobility")
+
+    assert retrieved_.name == "the_customers"
 
 
 def test_get_non_existing_action_should_return_none():

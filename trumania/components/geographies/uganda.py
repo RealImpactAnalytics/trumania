@@ -35,8 +35,8 @@ class WithUganda(Circus):
                 self)
 
         else:
-            uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
-            uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
+            uganda_cells = db.load_population(namespace="uganda", population_id="cells")
+            uganda_cities = db.load_population(namespace="uganda", population_id="cities")
             timer_config = db.load_timer_gen_config("uganda",
                                                     "cell_repair_timer_profile")
 
@@ -180,8 +180,8 @@ if __name__ == "__main__":
     cells, cities, timer_config = build_uganda_actors()
 
     db.remove_namespace("uganda")
-    db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
-    db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
+    db.save_population(actor=cells, namespace="uganda", population_id="cells")
+    db.save_population(actor=cities, namespace="uganda", population_id="cities")
 
     db.save_timer_gen(timer_gen=timer_config, namespace="uganda",
                       timer_gen_id="cell_repair_timer_profile")

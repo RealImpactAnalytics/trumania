@@ -56,9 +56,9 @@ class Circus(object):
         self.populations[name] = population.Population(circus=self, **population_params)
         return self.populations[name]
 
-    def load_actor(self, actor_id, namespace=None):
+    def load_population(self, population_id, namespace=None):
         """
-        Load this actor definition add attach it to this circus
+        Load this population definition add attach it to this circus
         """
 
         # Defaulting to the namespace associated to this circus if none
@@ -66,10 +66,10 @@ class Circus(object):
         if namespace is None:
             namespace = self.name
 
-        loaded_actor = db.load_actor(namespace=namespace, actor_id=actor_id,
-                                     circus=self)
-        self.populations[actor_id] = loaded_actor
-        return loaded_actor
+        loaded = db.load_population(namespace=namespace,
+                                    population_id=population_id, circus=self)
+        self.populations[population_id] = loaded
+        return loaded
 
     def create_action(self, name, **action_params):
         """
@@ -89,6 +89,10 @@ class Circus(object):
                              "identical name is already in the circus".format(name))
 
     def get_action(self, action_name):
+        """
+        Looks up and action by name in this circus and returns it. Returns none
+        if not found.
+        """
         remaining_actions = filter(lambda a: a.name == action_name, self.actions)
         try:
             return next(remaining_actions)
@@ -96,8 +100,11 @@ class Circus(object):
             logging.warn("action not found: {}".format(action_name))
             return None
 
-    def get_actor_of(self, action_name):
-        return self.get_action(action_name).triggering_actor
+    def get_population_of(self, action_name):
+        """
+        Looks up the initiating population associated to this action
+        """
+        return self.get_action(action_name).triggering_population
 
     def attach_generator(self, gen_id, generator):
         """
@@ -112,7 +119,7 @@ class Circus(object):
 
     def load_generator(self, gen_type, gen_id):
         """
-        Load this actor definition add attach it to this circus
+        Load this generator definition add attach it to this circus
         """
         gen = db.load_generator(
             namespace=self.name, gen_type=gen_type, gen_id=gen_id)
@@ -201,8 +208,8 @@ class Circus(object):
             circus = Circus(name=circus_name, master_seed=config["master_seed"],
                             **clock_config)
 
-            for actor_id in db.list_actors(namespace=circus_name):
-                circus.load_actor(actor_id)
+            for population_id in db.list_populations(namespace=circus_name):
+                circus.load_population(population_id)
 
             for gen_type, gen_id in db.list_generators(namespace=circus_name):
                 circus.load_generator(gen_type=gen_type, gen_id=gen_id)
@@ -212,7 +219,7 @@ class Circus(object):
     def save_to_db(self, overwrite=False):
         """
         Create a db namespace named after this circus and saves all the
-        actors there.
+        populations there.
 
         Only static data is saved, not the actions.
         """
@@ -239,9 +246,10 @@ class Circus(object):
                       }
             json.dump(config, o, indent=4)
 
-        logging.info("saving all actors")
-        for actor_id, ac in self.populations.items():
-            db.save_actor(ac, namespace=self.name, actor_id=actor_id)
+        logging.info("saving all populations")
+        for population_id, ac in self.populations.items():
+            db.save_population(ac, namespace=self.name,
+                               population_id=population_id)
 
         logging.info("saving all generators")
         for gen_id, generator in self.generators.items():
@@ -266,9 +274,9 @@ class Circus(object):
         return {
             "circus_name": self.name,
             "master_seed": self.master_seed,
-            "actors": {actor_id: actor.description()
-                       for actor_id, actor in self.populations.items()
-                       },
+            "populations": {id: population.description()
+                            for id, population in self.populations.items()
+                            },
             "generators": {gen_id: gen.description()
                            for gen_id, gen in self.generators.items()
                            },

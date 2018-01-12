@@ -237,17 +237,17 @@ def step1():
 
     # saves them to persistence
     DB.remove_namespace(namespace="tutorial_example4")
-    DB.save_actor(music_repo, namespace="tutorial_example4",
-                  actor_id="music_repository")
-    DB.save_actor(songs, namespace="tutorial_example4",
-                  actor_id="songs")
+    DB.save_population(music_repo, namespace="tutorial_example4",
+                       population_id="music_repository")
+    DB.save_population(songs, namespace="tutorial_example4",
+                       population_id="songs")
 
     # build a new circus then loads and attach the persisted actor to it
     example4_circus = build_circus(name="example4_circus")
-    example4_circus.load_actor(namespace="tutorial_example4",
-                               actor_id="music_repository")
-    example4_circus.load_actor(namespace="tutorial_example4",
-                               actor_id="songs")
+    example4_circus.load_population(namespace="tutorial_example4",
+                                    population_id="music_repository")
+    example4_circus.load_population(namespace="tutorial_example4",
+                                    population_id="songs")
 
     add_listener(example4_circus)
 
@@ -260,17 +260,17 @@ def step2():
 
     # saves them to persistence
     DB.remove_namespace(namespace="tutorial_example4")
-    DB.save_actor(music_repo, namespace="tutorial_example4",
-                  actor_id="music_repository")
-    DB.save_actor(songs, namespace="tutorial_example4",
-                  actor_id="songs")
+    DB.save_population(music_repo, namespace="tutorial_example4",
+                       population_id="music_repository")
+    DB.save_population(songs, namespace="tutorial_example4",
+                       population_id="songs")
 
     # build a new circus then loads and attach the persisted actor to it
     example4_circus = build_circus(name="example4_circus")
-    example4_circus.load_actor(namespace="tutorial_example4",
-                               actor_id="music_repository")
-    example4_circus.load_actor(namespace="tutorial_example4",
-                               actor_id="songs")
+    example4_circus.load_population(namespace="tutorial_example4",
+                                    population_id="music_repository")
+    example4_circus.load_population(namespace="tutorial_example4",
+                                    population_id="songs")
 
     add_listener(example4_circus)
 

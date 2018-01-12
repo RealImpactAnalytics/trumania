@@ -595,6 +595,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
 def run_cdr_scenario(params):
     setup_logging()
+    print ("hh")
     logging.info("test_cdr_scenario")
 
     # building the circus
@@ -640,6 +641,7 @@ def run_cdr_scenario(params):
     """.format(built_time - start_time, execution_time - built_time))
 
 
+# having this method called "test_" makes it interpreted as a unit test
 def test_cdr_scenario():
 
     params = {
@@ -653,3 +655,7 @@ def test_cdr_scenario():
     }
 
     run_cdr_scenario(params)
+
+
+if __name__ == "__main__":
+    test_cdr_scenario()

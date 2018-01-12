@@ -492,6 +492,7 @@ class SndScenario(WithRandomGeo, Circus):
         )
 
 
+# having this method called "test_" makes it interpreted as a unit test
 def test_snd_scenario():
 
     setup_logging()
@@ -522,3 +523,7 @@ def test_snd_scenario():
     # broke dealer should have maximum 3 successful sales
     ok_sales_of_broke = sales_of_broke[~sales_of_broke["FAILED_SALE"]]
     assert ok_sales_of_broke.shape[0] <= 3
+
+
+if __name__ == "__main__":
+    test_snd_scenario()
