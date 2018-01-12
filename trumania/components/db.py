@@ -21,8 +21,8 @@ import trumania.core.clock as clock
 from trumania.core.random_generators import Generator, NumpyRandomGenerator
 
 
-def save_population(actor, namespace, population_id):
-    actor.save_to(_actor_folder(namespace, population_id))
+def save_population(population, namespace, population_id):
+    population.save_to(_actor_folder(namespace, population_id))
 
 
 def load_population(namespace, population_id, circus):

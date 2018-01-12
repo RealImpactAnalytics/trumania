@@ -595,7 +595,6 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
 def run_cdr_scenario(params):
     setup_logging()
-    print ("hh")
     logging.info("test_cdr_scenario")
 
     # building the circus

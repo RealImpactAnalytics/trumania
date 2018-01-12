@@ -6,9 +6,9 @@ from trumania.core.operations import FieldLogger, Apply
 from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
 from trumania.core.random_generators import ConstantDependentGenerator, ConstantGenerator
 
-# each step?() function below implement one step of the first example of the
+# each step_() function below implement one step of the first example of the
 # tutorial documented at
-# https://realimpactanalytics.atlassian.net/wiki/display/LM/Data+generator+tutorial
+# https://github.com/RealImpactAnalytics/trumania/wiki
 
 
 def step1():

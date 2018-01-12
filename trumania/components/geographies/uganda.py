@@ -31,7 +31,7 @@ class WithUganda(Circus):
         seeder = seed_provider(12345)
 
         if force_build:
-            uganda_cells, uganda_cities, timer_config = build_uganda_actors(
+            uganda_cells, uganda_cities, timer_config = build_uganda_populations(
                 self)
 
         else:
@@ -118,7 +118,7 @@ class WithUganda(Circus):
         return uganda_cells, uganda_cities
 
 
-def build_uganda_actors(circus):
+def build_uganda_populations(circus):
 
     seeder = seed_provider(12345)
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
     # Note: using generators and persisting the result could make sense
     # if such generation is costly or for facilitating reproduceability,
-    # though a more common use cas might be to build such Actors and
+    # though a more common use cas might be to build such Populations  and
     # relationship from empirical exploration of a dataset.
 
     # Note2: only the "static" properties of an environment are saved here,
@@ -177,11 +177,11 @@ if __name__ == "__main__":
 
     setup_logging()
 
-    cells, cities, timer_config = build_uganda_actors()
+    cells, cities, timer_config = build_uganda_populations()
 
     db.remove_namespace("uganda")
-    db.save_population(actor=cells, namespace="uganda", population_id="cells")
-    db.save_population(actor=cities, namespace="uganda", population_id="cities")
+    db.save_population(population=cells, namespace="uganda", population_id="cells")
+    db.save_population(population=cities, namespace="uganda", population_id="cities")
 
     db.save_timer_gen(timer_gen=timer_config, namespace="uganda",
                       timer_gen_id="cell_repair_timer_profile")

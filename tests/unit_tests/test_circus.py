@@ -37,9 +37,9 @@ def test_create_action_get_action_should_work_as_expected():
 
     # also retrieving this initiating population of that actor
 
-    retrieved_ = flying.get_population_of("mobility")
+    retrieved_pop = flying.get_population_of("mobility")
 
-    assert retrieved_.name == "the_customers"
+    assert retrieved_pop == customers
 
 
 def test_get_non_existing_action_should_return_none():
