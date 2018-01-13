@@ -10,7 +10,7 @@ from trumania.core.operations import AddColumns, Operation, SideEffectOnly
 
 class Relationship(object):
     """
-        One-to-many relationship between actors.
+        One-to-many relationship between populations.
 
         Each implementation of this provides a `select_one(from_ids)` method
         that randomly picks one "to" side for each of the provided "from"
@@ -414,8 +414,8 @@ class Relationship(object):
 
             :param weight: weight to use for the "to" side of the
                 relationship. Must be a Series whose index are the "to" values.
-                Typical usage would be to plug an attribute of the "to" actor
-                here.
+                Typical usage would be to plug an attribute of the "to"
+                population here.
 
             :return: this operation adds a single column corresponding to a
                 random choice from a Relationship

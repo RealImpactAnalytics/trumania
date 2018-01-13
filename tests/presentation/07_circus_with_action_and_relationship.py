@@ -13,14 +13,14 @@ util_functions.setup_logging()
 logging.info("building circus")
 
 
-def create_circus_with_actor():
+def create_circus_with_population():
     example_circus = circus.Circus(
         name="example",
         master_seed=12345,
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example_circus.create_actor(
+    person = example_circus.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -45,7 +45,7 @@ def add_quotes(the_circus):
                                      variable_nb_words=True,
                                      seed=next(the_circus.seeder))
 
-    person = the_circus.actors["person"]
+    person = the_circus.populations["person"]
 
     quotes_rel = person.create_relationship("quotes")
 
@@ -56,14 +56,13 @@ def add_quotes(the_circus):
         )
 
 
-the_circus = create_circus_with_actor()
+the_circus = create_circus_with_population()
 add_quotes(the_circus)
 
 hello_world = the_circus.create_action(
     name="hello_world",
-    initiating_actor=the_circus.actors["person"],
-    actorid_field="PERSON_ID",
-
+    initiating_population=the_circus.populations["person"],
+    member_id_field="PERSON_ID",
     timer_gen=ConstantDependentGenerator(value=1)
 )
 
@@ -75,25 +74,25 @@ hello_world.set_operations(
         .timestamp(named_as="TIME"),
 
     # message is now selected from the favourite quotes of the speaker
-    the_circus.actors["person"].get_relationship("quotes")
+    the_circus.populations["person"].get_relationship("quotes")
         .ops
         .select_one(
             from_field="PERSON_ID",
             named_as="MESSAGE"),
 
     # selecting a random "other person"
-    the_circus.actors["person"]
+    the_circus.populations["person"]
         .ops
         .select_one(named_as="OTHER_PERSON"),
 
-    the_circus.actors["person"]
+    the_circus.populations["person"]
         .ops
-        .lookup(actor_id_field="PERSON_ID",
+        .lookup(id_field="PERSON_ID",
                 select={"NAME": "EMITTER_NAME"}),
 
-    the_circus.actors["person"]
+    the_circus.populations["person"]
         .ops
-        .lookup(actor_id_field="OTHER_PERSON",
+        .lookup(id_field="OTHER_PERSON",
                 select={"NAME": "RECEIVER_NAME"}),
 
     # specifying which fields to put in the log
@@ -109,4 +108,4 @@ the_circus.run(
 )
 
 with open("output/example4/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))

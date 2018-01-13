@@ -31,12 +31,12 @@ class WithUganda(Circus):
         seeder = seed_provider(12345)
 
         if force_build:
-            uganda_cells, uganda_cities, timer_config = build_uganda_actors(
+            uganda_cells, uganda_cities, timer_config = build_uganda_populations(
                 self)
 
         else:
-            uganda_cells = db.load_actor(namespace="uganda", actor_id="cells")
-            uganda_cities = db.load_actor(namespace="uganda", actor_id="cities")
+            uganda_cells = db.load_population(namespace="uganda", population_id="cells")
+            uganda_cities = db.load_population(namespace="uganda", population_id="cities")
             timer_config = db.load_timer_gen_config("uganda",
                                                     "cell_repair_timer_profile")
 
@@ -58,8 +58,8 @@ class WithUganda(Circus):
         cell_break_down_action = self.create_action(
             name="cell_break_down",
 
-            initiating_actor=uganda_cells,
-            actorid_field="CELL_ID",
+            initiating_population=uganda_cells,
+            member_id_field="CELL_ID",
 
             timer_gen=repair_n_fix_timer,
 
@@ -71,8 +71,8 @@ class WithUganda(Circus):
         cell_repair_action = self.create_action(
             name="cell_repair_down",
 
-            initiating_actor=uganda_cells,
-            actorid_field="CELL_ID",
+            initiating_population=uganda_cells,
+            member_id_field="CELL_ID",
 
             timer_gen=repair_n_fix_timer,
 
@@ -89,10 +89,10 @@ class WithUganda(Circus):
             unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
             uganda_cells.get_attribute("HEALTH").ops.update(
-                actor_id_field="CELL_ID",
+                member_id_field="CELL_ID",
                 copy_from_field="NEW_HEALTH_LEVEL"),
 
-            cell_repair_action.ops.reset_timers(actor_id_field="CELL_ID"),
+            cell_repair_action.ops.reset_timers(member_id_field="CELL_ID"),
             self.clock.ops.timestamp(named_as="TIME"),
 
             operations.FieldLogger(log_id="cell_status",
@@ -104,7 +104,7 @@ class WithUganda(Circus):
             healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
             uganda_cells.get_attribute("HEALTH").ops.update(
-                actor_id_field="CELL_ID",
+                member_id_field="CELL_ID",
                 copy_from_field="NEW_HEALTH_LEVEL"),
 
             self.clock.ops.timestamp(named_as="TIME"),
@@ -118,13 +118,13 @@ class WithUganda(Circus):
         return uganda_cells, uganda_cities
 
 
-def build_uganda_actors(circus):
+def build_uganda_populations(circus):
 
     seeder = seed_provider(12345)
 
-    cells = circus.create_actor(name="cells",
-                                ids_gen=SequencialGenerator(prefix="CELL_"),
-                                size=200)
+    cells = circus.create_population(name="cells",
+                                     ids_gen=SequencialGenerator(prefix="CELL_"),
+                                     size=200)
     latitude_generator = FakerGenerator(method="latitude",
                                         seed=next(seeder))
     cells.create_attribute("latitude", init_gen=latitude_generator)
@@ -140,7 +140,7 @@ def build_uganda_actors(circus):
     cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
     city_gen = FakerGenerator(method="city", seed=next(seeder))
-    cities = circus.create_actor(name="cities", size=200, ids_gen=city_gen)
+    cities = circus.create_population(name="cities", size=200, ids_gen=city_gen)
 
     cell_city_rel = cities.create_relationship("CELLS")
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
     # Note: using generators and persisting the result could make sense
     # if such generation is costly or for facilitating reproduceability,
-    # though a more common use cas might be to build such Actors and
+    # though a more common use cas might be to build such Populations  and
     # relationship from empirical exploration of a dataset.
 
     # Note2: only the "static" properties of an environment are saved here,
@@ -177,11 +177,11 @@ if __name__ == "__main__":
 
     setup_logging()
 
-    cells, cities, timer_config = build_uganda_actors()
+    cells, cities, timer_config = build_uganda_populations()
 
     db.remove_namespace("uganda")
-    db.save_actor(actor=cells, namespace="uganda", actor_id="cells")
-    db.save_actor(actor=cities, namespace="uganda", actor_id="cities")
+    db.save_population(population=cells, namespace="uganda", population_id="cells")
+    db.save_population(population=cities, namespace="uganda", population_id="cities")
 
     db.save_timer_gen(timer_gen=timer_config, namespace="uganda",
                       timer_gen_id="cell_repair_timer_profile")

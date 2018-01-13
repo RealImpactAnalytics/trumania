@@ -19,4 +19,4 @@ class WithBelgium(Circus):
         """
         logging.info(" adding Belgium Geography")
 
-        return db.load_actor(namespace="belgium", actor_id="sites")
+        return db.load_population(namespace="belgium", population_id="sites")

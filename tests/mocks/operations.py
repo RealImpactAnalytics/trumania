@@ -17,14 +17,14 @@ class FakeOp(operations.Operation):
 class FakeRecording(operations.Operation):
 
     def __init__(self):
-        self.last_seen_actor_ids = []
+        self.last_seen_population_ids = []
 
     def __call__(self, action_data):
-        self.last_seen_actor_ids = action_data.index.tolist()
+        self.last_seen_population_ids = action_data.index.tolist()
         return action_data, {}
 
     def reset(self):
-        self.last_seen_actor_ids = []
+        self.last_seen_population_ids = []
 
 
 class MockDropOp(operations.Operation):

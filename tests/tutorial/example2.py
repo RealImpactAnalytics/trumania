@@ -19,11 +19,11 @@ def build_circus():
         step_duration=pd.Timedelta("1h"))
 
 
-def create_pos_actor(the_circus):
+def create_pos_population(the_circus):
     """
-    Creates a point of sale actor and attach it to the circus
+    Creates a point of sale population and attach it to the circus
     """
-    pos = the_circus.create_actor(
+    pos = the_circus.create_population(
         name="point_of_sale", size=100,
         ids_gen=gen.SequencialGenerator(prefix="POS_"))
 
@@ -46,11 +46,11 @@ def add_report_action(the_circus):
     day
     """
 
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
     report_action = the_circus.create_action(
         name="report",
-        initiating_actor=pos,
-        actorid_field="POS_ID",
+        initiating_population=pos,
+        member_id_field="POS_ID",
 
         timer_gen=gen.ConstantDependentGenerator(
             value=the_circus.clock.n_iterations(duration=pd.Timedelta("24h")) - 1)
@@ -72,7 +72,7 @@ def add_items_to_pos_stock(the_circus):
     """
     Generates and add 5 items to the "items" relationship of each POS
     """
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     items_gen = gen.SequencialGenerator(prefix="ITEM_")
     the_circus.attach_generator("items_gen", items_gen)
@@ -88,7 +88,7 @@ def add_periodic_restock_action(the_circus):
     Adds a periodic POS restock action to the circus, having each POS
     systematically adding a random amount of items to their stock
     """
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
@@ -97,8 +97,8 @@ def add_periodic_restock_action(the_circus):
 
     restock_action = the_circus.create_action(
             name="restock",
-            initiating_actor=pos,
-            actorid_field="POS_ID",
+            initiating_population=pos,
+            member_id_field="POS_ID",
 
             timer_gen=timer_gen,
 
@@ -124,7 +124,7 @@ def add_periodic_restock_action(the_circus):
                                        log_format="%Y-%m-%d"),
 
         # include the POS NAME attribute as a field name "POS_NAME"
-        pos.ops.lookup(actor_id_field="POS_ID", select={"NAME": "POS_NAME"}),
+        pos.ops.lookup(id_field="POS_ID", select={"NAME": "POS_NAME"}),
 
         stock_size_gen.ops.generate(named_as="RESTOCK_VOLUME"),
 
@@ -145,7 +145,7 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
     to obtain the same result by plugging generators into each other instead
     of explicitly generating intermediary fields in the action_data.
     """
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
@@ -154,8 +154,8 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
 
     restock_action = the_circus.create_action(
             name="restock",
-            initiating_actor=pos,
-            actorid_field="POS_ID",
+            initiating_population=pos,
+            member_id_field="POS_ID",
 
             timer_gen=timer_gen,
 
@@ -183,7 +183,7 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
                                        log_format="%Y-%m-%d"),
 
         # include the POS NAME attribute as a field name "POS_NAME"
-        pos.ops.lookup(actor_id_field="POS_ID", select={"NAME": "POS_NAME"}),
+        pos.ops.lookup(id_field="POS_ID", select={"NAME": "POS_NAME"}),
 
         # stock_size_gen.ops.generate(named_as="RESTOCK_VOLUME"),
 
@@ -196,11 +196,11 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
     )
 
 
-def create_customer_actor(the_circus):
+def create_customer_population(the_circus):
     """
-    Creates a customer actor and attach it to the circus
+    Creates a customer population and attach it to the circus
     """
-    customer = the_circus.create_actor(
+    customer = the_circus.create_population(
         name="customer", size=2500,
         ids_gen=gen.SequencialGenerator(prefix="CUS_"))
 
@@ -221,12 +221,12 @@ def create_purchase_action(the_circus):
     timer_gen = profilers.WorkHoursTimerGenerator(clock=the_circus.clock,
                                                   seed=next(the_circus.seeder))
 
-    customers = the_circus.actors["customer"]
+    customers = the_circus.populations["customer"]
 
     purchase_action = the_circus.create_action(
             name="purchase",
-            initiating_actor=customers,
-            actorid_field="CUST_ID",
+            initiating_population=customers,
+            member_id_field="CUST_ID",
 
             timer_gen=timer_gen,
 
@@ -243,19 +243,19 @@ def create_purchase_action(the_circus):
         )
 
     customers_items = customers.get_relationship("my_items")
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
     pos_items = pos.get_relationship("items")
 
     purchase_action.set_operations(
 
-        customers.ops.lookup(actor_id_field="CUST_ID",
+        customers.ops.lookup(id_field="CUST_ID",
                              select={
                                  "FIRST_NAME": "BUYER_FIRST_NAME",
                                  "LAST_NAME": "BUYER_LAST_NAME"}),
 
         pos.ops.select_one(named_as="POS_ID"),
 
-        pos.ops.lookup(actor_id_field="POS_ID",
+        pos.ops.lookup(id_field="POS_ID",
                        select={"COMPANY": "POS_NAME"}),
 
         # pick an item from the vendor's stock
@@ -299,12 +299,12 @@ def add_inactive_restock_action(the_circus):
     This is a copy-paste of add_periodic_restock_action(), but without the
     timer nor the activity levels => as-is, this action never triggers
     """
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     restock_action = the_circus.create_action(
             name="restock",
-            initiating_actor=pos,
-            actorid_field="POS_ID")
+            initiating_population=pos,
+            member_id_field="POS_ID")
 
     stock_size_gen = gen.NumpyRandomGenerator(method="choice",
                                               a=[5, 15, 20, 25],
@@ -318,7 +318,7 @@ def add_inactive_restock_action(the_circus):
         the_circus.clock.ops.timestamp(named_as="TIME"),
 
         # include the POS NAME attribute as a field name "POS_NAME"
-        pos.ops.lookup(actor_id_field="POS_ID", select={"NAME": "POS_NAME"}),
+        pos.ops.lookup(id_field="POS_ID", select={"NAME": "POS_NAME"}),
 
         pos.get_relationship("items").ops.get_neighbourhood_size(
             from_field="POS_ID",
@@ -349,7 +349,7 @@ def update_purchase_action(the_circus):
     """
 
     purchase_action = the_circus.get_action("purchase")
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     # trigger_prop_func(level) specifies the probability of re-stocking as a
     # function the stock level
@@ -388,7 +388,7 @@ def update_purchase_action(the_circus):
         # trigger the restock action of the POS whose SHOULD_RESTOCK field is
         # now true
         the_circus.get_action("restock").ops.force_act_next(
-            actor_id_field="POS_ID",
+            member_id_field="POS_ID",
             condition_field="SHOULD_RESTOCK")
     )
 
@@ -408,7 +408,7 @@ def step1():
 
     example2 = build_circus()
 
-    create_pos_actor(example2)
+    create_pos_population(example2)
     add_report_action(example2)
     run_and_report(example2)
 
@@ -417,7 +417,7 @@ def step2():
 
     example2 = build_circus()
 
-    create_pos_actor(example2)
+    create_pos_population(example2)
     add_items_to_pos_stock(example2)
     add_report_action(example2)
     run_and_report(example2)
@@ -427,7 +427,7 @@ def step3():
 
     example2 = build_circus()
 
-    create_pos_actor(example2)
+    create_pos_population(example2)
     add_items_to_pos_stock(example2)
     add_periodic_restock_action(example2)
 
@@ -439,7 +439,7 @@ def step3_bis():
 
     example2 = build_circus()
 
-    create_pos_actor(example2)
+    create_pos_population(example2)
     add_items_to_pos_stock(example2)
     add_periodic_restock_action_with_combined_generator(example2)
 
@@ -452,13 +452,13 @@ def step4():
     example2 = build_circus()
 
     # point of sales
-    create_pos_actor(example2)
+    create_pos_population(example2)
     add_items_to_pos_stock(example2)
     add_periodic_restock_action(example2)
     add_report_action(example2)
 
     # customers
-    create_customer_actor(example2)
+    create_customer_population(example2)
     create_purchase_action(example2)
 
     run_and_report(example2)
@@ -469,13 +469,13 @@ def step5():
     example2 = build_circus()
 
     # point of sales
-    create_pos_actor(example2)
+    create_pos_population(example2)
     add_items_to_pos_stock(example2)
     add_inactive_restock_action(example2)
     add_report_action(example2)
 
     # customers
-    create_customer_actor(example2)
+    create_customer_population(example2)
     create_purchase_action(example2)
 
     update_purchase_action(example2)

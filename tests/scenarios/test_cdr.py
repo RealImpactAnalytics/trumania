@@ -111,7 +111,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
     def __init__(self, params):
         self.params = params
 
-        logging.info("building subscriber actors ")
+        logging.info("building subscriber populations ")
 
         Circus.__init__(self,
                         name="test_cdr_circus",
@@ -138,12 +138,12 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         We have at least one sim per subs: sims.size >= subs.size
 
-        The sims actor contains the "OPERATOR", "MAIN_ACCT" and "MSISDN" attributes.
+        The sims population contains the "OPERATOR", "MAIN_ACCT" and "MSISDN" attributes.
 
-        The subs actor has a "SIMS" relationship that points to the sims owned by
+        The subs population has a "SIMS" relationship that points to the sims owned by
         each subs.
 
-        The sims actor also has a relationship to the set of agents where this sim
+        The sims population also has a relationship to the set of agents where this sim
         can be topped up.
         """
 
@@ -151,9 +151,9 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         # subs are empty here but will receive a "CELLS" and "EXCITABILITY"
         # attributes later on
-        subs = self.create_actor(name="subs",
-                                 size=self.params["n_subscribers"],
-                                 ids_gen=SequencialGenerator(prefix="SUBS_"))
+        subs = self.create_population(name="subs",
+                                      size=self.params["n_subscribers"],
+                                      ids_gen=SequencialGenerator(prefix="SUBS_"))
 
         number_of_operators = npgen.choice(a=range(1, 5), size=subs.size)
         operator_ids = build_ids(size=4, prefix="OPERATOR_", max_length=1)
@@ -178,15 +178,15 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         subs_ops_mapping = subs_operators_df.stack()
         subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
 
-        # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
-        sims = self.create_actor(name="sims",
-                                 size=subs_ops_mapping.size,
-                                 ids_gen=SequencialGenerator(prefix="SIMS_"))
+        # SIM population, each with an OPERATOR and MAIN_ACCT attributes
+        sims = self.create_population(name="sims",
+                                      size=subs_ops_mapping.size,
+                                      ids_gen=SequencialGenerator(prefix="SIMS_"))
         sims.create_attribute("OPERATOR", init_values=subs_ops_mapping.values)
         recharge_gen = ConstantGenerator(value=1000.)
         sims.create_attribute(name="MAIN_ACCT", init_gen=recharge_gen)
 
-        # keeping track of the link between actor and sims as a relationship
+        # keeping track of the link between population and sims as a relationship
         sims_of_subs = subs.create_relationship("SIMS")
         sims_of_subs.add_relations(
             from_ids=subs_ops_mapping.index,
@@ -225,7 +225,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
     def add_mobility(self, subs, cells):
         """
-        adds a CELL attribute to the customer actor + a mobility action that
+        adds a CELL attribute to the customer population + a mobility action that
         randomly moves customers from CELL to CELL among their used cells.
         """
         logging.info("Adding mobility ")
@@ -275,22 +275,22 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         mobility_action = self.create_action(
             name="mobility",
 
-            initiating_actor=subs,
-            actorid_field="A_ID",
+            initiating_population=subs,
+            member_id_field="A_ID",
 
             timer_gen=mobility_time_gen,
         )
 
         logging.info(" adding operations")
         mobility_action.set_operations(
-            subs.ops.lookup(actor_id_field="A_ID", select={"CELL": "PREV_CELL"}),
+            subs.ops.lookup(id_field="A_ID", select={"CELL": "PREV_CELL"}),
 
             # selects a destination cell (or maybe the same as current... ^^)
             mobility_rel.ops.select_one(from_field="A_ID", named_as="NEW_CELL"),
 
             # update the CELL attribute of the customers accordingly
             subs.get_attribute("CELL").ops.update(
-                actor_id_field="A_ID",
+                member_id_field="A_ID",
                 copy_from_field="NEW_CELL"),
 
             self.clock.ops.timestamp(named_as="TIME"),
@@ -314,8 +314,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # computation of the value
         topup_action = self.create_action(
             name="topups",
-            initiating_actor=sims,
-            actorid_field="SIM_ID",
+            initiating_population=sims,
+            member_id_field="SIM_ID",
 
             # note that there is timegen specified => the clock is not ticking
             # => the action can only be set externally (cf calls action)
@@ -323,7 +323,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         topup_action.set_operations(
             sims.ops.lookup(
-                actor_id_field="SIM_ID",
+                id_field="SIM_ID",
                 select={"MSISDN": "CUSTOMER_NUMBER",
                         "OPERATOR": "OPERATOR",
                         "MAIN_ACCT": "MAIN_ACCT_OLD"}),
@@ -339,7 +339,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                              f=np.add, f_args="series"),
 
             sims.get_attribute("MAIN_ACCT").ops.update(
-                actor_id_field="SIM_ID",
+                member_id_field="SIM_ID",
                 copy_from_field="MAIN_ACCT"),
 
             self.clock.ops.timestamp(named_as="TIME"),
@@ -393,8 +393,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         calls = self.create_action(
             name="calls",
 
-            initiating_actor=subs,
-            actorid_field="A_ID",
+            initiating_population=subs,
+            member_id_field="A_ID",
 
             timer_gen=call_timegen,
             activity_gen=normal_call_activity,
@@ -409,8 +409,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         sms = self.create_action(
             name="sms",
 
-            initiating_actor=subs,
-            actorid_field="A_ID",
+            initiating_population=subs,
+            member_id_field="A_ID",
 
             timer_gen=call_timegen,
             activity_gen=normal_call_activity,
@@ -435,14 +435,14 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
             # fetches information about all SIMs of A and B
             subs.get_relationship("SIMS").ops.select_all(from_field="A_ID",
                                                          named_as="A_SIMS"),
-            sims.ops.lookup(actor_id_field="A_SIMS",
+            sims.ops.lookup(id_field="A_SIMS",
                             select={"OPERATOR": "OPERATORS_A",
                                     "MSISDN": "MSISDNS_A",
                                     "MAIN_ACCT": "MAIN_ACCTS_A"}),
 
             subs.get_relationship("SIMS").ops.select_all(from_field="B_ID",
                                                          named_as="B_SIMS"),
-            sims.ops.lookup(actor_id_field="B_SIMS",
+            sims.ops.lookup(id_field="B_SIMS",
                             select={"OPERATOR": "OPERATORS_B",
                                     "MSISDN": "MSISDNS_B"}),
 
@@ -464,18 +464,18 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # Both CELL_A and CELL_B might drop the call based on their current HEALTH
         compute_cell_status = Chain(
             # some static fields
-            subs.ops.lookup(actor_id_field="A_ID",
+            subs.ops.lookup(id_field="A_ID",
                             select={"CELL": "CELL_A",
                                     "EXCITABILITY": "EXCITABILITY_A"}),
 
-            subs.ops.lookup(actor_id_field="B_ID",
+            subs.ops.lookup(id_field="B_ID",
                             select={"CELL": "CELL_B",
                                     "EXCITABILITY": "EXCITABILITY_B"}),
 
-            cells.ops.lookup(actor_id_field="CELL_A",
+            cells.ops.lookup(id_field="CELL_A",
                              select={"HEALTH": "CELL_A_HEALTH"}),
 
-            cells.ops.lookup(actor_id_field="CELL_B",
+            cells.ops.lookup(id_field="CELL_B",
                              select={"HEALTH": "CELL_B_HEALTH"}),
 
             flat_trigger.ops.generate(observed_field="CELL_A_HEALTH",
@@ -495,7 +495,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                              f=np.subtract, f_args="series"),
 
             sims.get_attribute("MAIN_ACCT").ops.update(
-                actor_id_field="SIM_A",
+                member_id_field="SIM_A",
                 copy_from_field="MAIN_ACCT_NEW"),
         )
 
@@ -508,7 +508,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                 named_as="SHOULD_TOP_UP"),
 
             self.get_action("topups").ops.force_act_next(
-                actor_id_field="SIM_A",
+                member_id_field="SIM_A",
                 condition_field="SHOULD_TOP_UP"),
         )
 
@@ -519,10 +519,10 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
             flat_trigger.ops.generate(observed_field="EXCITABILITY_A",
                                       named_as="A_GETTING_BURSTY"),
 
-            calls.ops.transit_to_state(actor_id_field="A_ID",
+            calls.ops.transit_to_state(member_id_field="A_ID",
                                        condition_field="A_GETTING_BURSTY",
                                        state="excited"),
-            sms.ops.transit_to_state(actor_id_field="A_ID",
+            sms.ops.transit_to_state(member_id_field="A_ID",
                                      condition_field="A_GETTING_BURSTY",
                                      state="excited"),
 
@@ -531,18 +531,18 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                                       named_as="B_GETTING_BURSTY"),
 
             # transiting to excited mode, according to trigger value
-            calls.ops.transit_to_state(actor_id_field="B_ID",
+            calls.ops.transit_to_state(member_id_field="B_ID",
                                        condition_field="B_GETTING_BURSTY",
                                        state="excited"),
 
-            sms.ops.transit_to_state(actor_id_field="B_ID",
+            sms.ops.transit_to_state(member_id_field="B_ID",
                                      condition_field="B_GETTING_BURSTY",
                                      state="excited"),
             #
             # B party need to have their time reset explicitally since they were
             # not active at this round. A party will be reset automatically
-            calls.ops.reset_timers(actor_id_field="B_ID"),
-            sms.ops.reset_timers(actor_id_field="B_ID"),
+            calls.ops.reset_timers(member_id_field="B_ID"),
+            sms.ops.reset_timers(member_id_field="B_ID"),
         )
 
         calls.set_operations(
@@ -640,6 +640,7 @@ def run_cdr_scenario(params):
     """.format(built_time - start_time, execution_time - built_time))
 
 
+# having this method called "test_" makes it interpreted as a unit test
 def test_cdr_scenario():
 
     params = {
@@ -653,3 +654,7 @@ def test_cdr_scenario():
     }
 
     run_cdr_scenario(params)
+
+
+if __name__ == "__main__":
+    test_cdr_scenario()

@@ -12,8 +12,8 @@ def create_field_agents(circus, params):
 
     logging.info(" adding {} field agents".format(params["n_field_agents"]))
 
-    field_agents = circus.create_actor(name="field_agents", size=params["n_field_agents"],
-                                       ids_gen=SequencialGenerator(prefix="FA_"))
+    field_agents = circus.create_population(name="field_agents", size=params["n_field_agents"],
+                                            ids_gen=SequencialGenerator(prefix="FA_"))
 
     logging.info(" adding mobility relationships to field agents")
 
@@ -81,7 +81,7 @@ def add_mobility_action(circus, params):
 
     mobility_action.set_operations(
         field_agents.ops.lookup(
-            actor_id_field="FA_ID",
+            id_field="FA_ID",
             select={"CURRENT_SITE": "PREV_SITE"}),
 
         # selects a destination site (or maybe the same as current... ^^)
@@ -94,7 +94,7 @@ def add_mobility_action(circus, params):
         field_agents \
             .get_attribute("CURRENT_SITE") \
             .ops.update(
-                actor_id_field="FA_ID",
+                id_field="FA_ID",
                 copy_from_field="NEW_SITE"),
 
         circus.clock.ops.timestamp(named_as="TIME"),
@@ -136,7 +136,7 @@ def add_survey_action(circus):
     survey_action.set_operations(
 
         field_agents.ops.lookup(
-            actor_id_field="FA_ID",
+            id_field="FA_ID",
             select={"CURRENT_SITE": "SITE"}
         ),
 
@@ -150,7 +150,7 @@ def add_survey_action(circus):
         ),
 
         circus.actors["pos"].ops.lookup(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             select={
                 "LATITUDE": "POS_LATITUDE",
                 "LONGITUDE": "POS_LONGITUDE",

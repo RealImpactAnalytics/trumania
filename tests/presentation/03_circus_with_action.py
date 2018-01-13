@@ -13,14 +13,14 @@ util_functions.setup_logging()
 logging.info("building circus")
 
 
-def create_circus_with_actor():
+def create_circus_with_population():
     example_circus = circus.Circus(
         name="example",
         master_seed=12345,
         start=pd.Timestamp("1 Jan 2017 00:00"),
         step_duration=pd.Timedelta("1h"))
 
-    person = example_circus.create_actor(
+    person = example_circus.create_population(
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
@@ -38,12 +38,12 @@ def create_circus_with_actor():
     return example_circus
 
 
-example = create_circus_with_actor()
+example = create_circus_with_population()
 
 hello_world = example.create_action(
     name="hello_world",
-    initiating_actor=example.actors["person"],
-    actorid_field="PERSON_ID",
+    initiating_population=example.populations["person"],
+    member_id_field="PERSON_ID",
 
     timer_gen=ConstantDependentGenerator(value=1)
 )
@@ -60,4 +60,4 @@ example.run(
 )
 
 with open("output/example3/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))

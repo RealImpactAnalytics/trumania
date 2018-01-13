@@ -8,9 +8,9 @@ import trumania.core.operations as operations
 
 def load_geo_actors(circus, params):
     logging.info("loading Belgium sites, cells and distribution network")
-    circus.load_actor(namespace=params["geography"], actor_id="sites")
-    circus.load_actor(namespace=params["geography"], actor_id="dist_l1")
-    circus.load_actor(namespace=params["geography"], actor_id="dist_l2")
+    circus.load_population(namespace=params["geography"], population_id="sites")
+    circus.load_population(namespace=params["geography"], population_id="dist_l1")
+    circus.load_population(namespace=params["geography"], population_id="dist_l2")
 
 
 def build_site_product_pos_target(circus, params):

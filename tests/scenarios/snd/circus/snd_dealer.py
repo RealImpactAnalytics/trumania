@@ -13,8 +13,8 @@ import trumania.components.db as db
 def add_telcos(circus, params, distributor_id_gen):
 
     logging.info("creating telcos")
-    telcos = circus.create_actor(name="telcos", size=params["n_telcos"],
-                                 ids_gen=distributor_id_gen)
+    telcos = circus.create_population(name="telcos", size=params["n_telcos"],
+                                      ids_gen=distributor_id_gen)
 
     for product, description in params["products"].items():
 
@@ -94,7 +94,7 @@ def add_telco_restock_actions(circus, params):
 
 def prepare_dealers(circus, params):
     """
-    updates the dist_l1 and dist_l2 actors with product stock
+    updates the dist_l1 and dist_l2 populations with product stock
     and link from dist_l1 to telcos
     """
 

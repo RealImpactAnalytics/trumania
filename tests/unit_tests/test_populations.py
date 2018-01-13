@@ -3,21 +3,21 @@ import pandas as pd
 import os
 
 from trumania.core.random_generators import SequencialGenerator
-from trumania.core.actor import Actor
+from trumania.core.population import Population
 
-dummy_actor = Actor(circus=None,
-                    size=10,
-                    ids_gen=SequencialGenerator(max_length=1, prefix="id_"))
+dummy_population = Population(circus=None,
+                              size=10,
+                              ids_gen=SequencialGenerator(max_length=1, prefix="id_"))
 
 ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
-dummy_actor.create_attribute("age", init_values=ages)
+dummy_population.create_attribute("age", init_values=ages)
 
 city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
-dummy_actor.create_attribute("city", init_values=city)
+dummy_population.create_attribute("city", init_values=city)
 
-# some fake action data with an index corresponding to another actor
-# => simulates an action triggered by that other actor
-# the column "NEIGHBOUR" contains value that point to the dummy actor, with
+# some fake action data with an index corresponding to another population
+# => simulates an action triggered by that other population
+# the column "NEIGHBOUR" contains value that point to the dummy population, with
 # a duplication (id2)
 action_data = pd.DataFrame({
         "A": ["a1", "a2", "a3", "a4"],
@@ -35,12 +35,12 @@ action_data = pd.DataFrame({
 
 
 def test_resulting_size_should_be_as_expected():
-    assert dummy_actor.size == 10
-    assert len(dummy_actor.ids) == 10
+    assert dummy_population.size == 10
+    assert len(dummy_population.ids) == 10
 
 
-def test_transforming_actor_to_dataframe_should_provide_all_data():
-    df = dummy_actor.to_dataframe()
+def test_transforming_population_to_dataframe_should_provide_all_data():
+    df = dummy_population.to_dataframe()
 
     # order of the columns in the resulting dataframe is currently not
     # deterministic
@@ -52,8 +52,8 @@ def test_transforming_actor_to_dataframe_should_provide_all_data():
 
 def test_lookup_values_by_scalar_should_return_correct_values():
 
-    lookup = dummy_actor.ops.lookup(
-        actor_id_field="NEIGHBOUR",
+    lookup = dummy_population.ops.lookup(
+        id_field="NEIGHBOUR",
         select={
             "age": "neighbour_age",
             "city": "neighbour_city",
@@ -76,8 +76,8 @@ def test_lookup_values_by_scalar_should_return_correct_values():
 
 def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all_columns():
 
-    lookup = dummy_actor.ops.lookup(
-        actor_id_field="NEIGHBOUR",
+    lookup = dummy_population.ops.lookup(
+        id_field="NEIGHBOUR",
         select={
             "age": "neighbour_age",
             "city": "neighbour_city",
@@ -96,8 +96,8 @@ def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all
 
 def test_lookup_values_by_array_should_return_correct_values():
 
-    lookup = dummy_actor.ops.lookup(
-        actor_id_field="COUSINS",
+    lookup = dummy_population.ops.lookup(
+        id_field="COUSINS",
         select={
             "age": "cousins_age",
             "city": "cousins_city",
@@ -128,20 +128,20 @@ def test_lookup_values_by_array_should_return_correct_values():
            ] == result["cousins_city"].tolist()
 
 
-def test_insert_actor_value_for_existing_actors_should_update_all_values():
+def test_insert_poppulation_value_for_existing_populations_should_update_all_values():
 
-    # copy of dummy actor that will be updated
-    tested_actor = Actor(
+    # copy of dummy population that will be updated
+    tested_population = Population(
         circus=None,
         size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_")
     )
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
-    tested_actor.create_attribute("age", init_values=ages)
+    tested_population.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
-    tested_actor.create_attribute("city", init_values=city)
+    tested_population.create_attribute("city", init_values=city)
 
-    current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
+    current = tested_population.get_attribute_values("age", ["a_0", "a_7", "a_9"])
     assert current.tolist() == [10, 39, 23]
 
     update = pd.DataFrame(
@@ -152,30 +152,30 @@ def test_insert_actor_value_for_existing_actors_should_update_all_values():
         index=["a_7", "a_9"]
     )
 
-    tested_actor.update(update)
+    tested_population.update(update)
 
-    # we should have the same number of actors
-    assert tested_actor.ids.shape[0] == 10
+    # we should have the same number of populations
+    assert tested_population.ids.shape[0] == 10
 
-    updated_age = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
-    updated_city = tested_actor.get_attribute_values("city", ["a_0", "a_7", "a_9"])
+    updated_age = tested_population.get_attribute_values("age", ["a_0", "a_7", "a_9"])
+    updated_city = tested_population.get_attribute_values("city", ["a_0", "a_7", "a_9"])
 
     assert updated_age.tolist() == [10, 139, 123]
     assert updated_city.tolist() == ["a", "city_7", "city_9"]
 
 
-def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_values():
+def test_insert_population_value_for_existing_and_new_populations_should_update_and_add_values():
 
-    # copy of dummy actor that will be updated
-    tested_actor = Actor(
+    # copy of dummy population that will be updated
+    tested_population = Population(
         circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
-    tested_actor.create_attribute("age", init_values=ages)
+    tested_population.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
-    tested_actor.create_attribute("city", init_values=city)
+    tested_population.create_attribute("city", init_values=city)
 
-    current = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9"])
+    current = tested_population.get_attribute_values("age", ["a_0", "a_7", "a_9"])
     assert current.tolist() == [10, 39, 23]
 
     update = pd.DataFrame(
@@ -186,41 +186,41 @@ def test_insert_actor_value_for_existing_and_new_actors_should_update_and_add_va
         index=["a_7", "a_9", "a_11", "a_10"]
     )
 
-    tested_actor.update(update)
+    tested_population.update(update)
 
-    # we should have 2 new actors
-    assert tested_actor.ids.shape[0] == 12
+    # we should have 2 new populations
+    assert tested_population.ids.shape[0] == 12
 
-    updated_age = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9", "a_10", "a_11"])
-    updated_city = tested_actor.get_attribute_values("city", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+    updated_age = tested_population.get_attribute_values("age", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+    updated_city = tested_population.get_attribute_values("city", ["a_0", "a_7", "a_9", "a_10", "a_11"])
 
     assert updated_age.tolist() == [10, 139, 123, 25, 54]
     assert updated_city.tolist() == ["a", "city_7", "city_9", "city_10", "city_11"]
 
 
-def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
+def test_insert_op_population_value_for_existing_populations_should_update_all_values():
     # same as test above but triggered as an Operation on action data
 
-    # copy of dummy actor that will be updated
-    tested_actor = Actor(
+    # copy of dummy population that will be updated
+    tested_population = Population(
         circus=None, size=10,
         ids_gen=SequencialGenerator(max_length=1, prefix="a_"))
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
-    tested_actor.create_attribute("age", init_values=ages)
+    tested_population.create_attribute("age", init_values=ages)
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
-    tested_actor.create_attribute("city", init_values=city)
+    tested_population.create_attribute("city", init_values=city)
 
     action_data = pd.DataFrame(
         {
             "the_new_age": [139, 123, 1, 2],
             "location": ["city_7", "city_9", "city_11", "city_10"],
-            "updated_actors": ["a_7", "a_9", "a_11", "a_10"]
+            "updated_populations": ["a_7", "a_9", "a_11", "a_10"]
         },
         index=["d_1", "d_2", "d_4", "d_3"]
     )
 
-    update_op = tested_actor.ops.update(
-        actor_id_field="updated_actors",
+    update_op = tested_population.ops.update(
+        id_field="updated_populations",
         copy_attributes_from_fields={
             "age": "the_new_age",
             "city": "location"
@@ -231,22 +231,22 @@ def test_insert_op_actor_value_for_existing_actors_should_update_all_values():
 
     # there should be no impact on the action data
     assert action_data_2.shape == (4, 3)
-    assert sorted(action_data_2.columns.tolist()) == ["location", "the_new_age", "updated_actors"]
+    assert sorted(action_data_2.columns.tolist()) == ["location", "the_new_age", "updated_populations"]
 
-    # we should have 2 new actors
-    assert tested_actor.ids.shape[0] == 12
+    # we should have 2 new populations
+    assert tested_population.ids.shape[0] == 12
 
-    updated_age = tested_actor.get_attribute_values("age", ["a_0", "a_7", "a_9", "a_10", "a_11"])
-    updated_city = tested_actor.get_attribute_values("city", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+    updated_age = tested_population.get_attribute_values("age", ["a_0", "a_7", "a_9", "a_10", "a_11"])
+    updated_city = tested_population.get_attribute_values("city", ["a_0", "a_7", "a_9", "a_10", "a_11"])
 
     assert updated_age.tolist() == [10, 139, 123, 2, 1]
     assert updated_city.tolist() == ["a", "city_7", "city_9", "city_10", "city_11"]
 
 
-def test_creating_an_empty_actor_and_adding_attributes_later_should_be_possible():
+def test_creating_an_empty_population_and_adding_attributes_later_should_be_possible():
 
-    # empty actor
-    a = Actor(circus=None, size=0)
+    # empty population
+    a = Population(circus=None, size=0)
     assert a.ids.shape[0] == 0
 
     # empty attributes
@@ -270,21 +270,21 @@ def test_io_round_trip():
 
     with path.tempdir() as p:
 
-        actor_path = os.path.join(p, "test_location")
-        dummy_actor.save_to(actor_path)
-        retrieved = Actor.load_from(circus=None, actor_dir=actor_path)
+        population_path = os.path.join(p, "test_location")
+        dummy_population.save_to(population_path)
+        retrieved = Population.load_from(circus=None, folder=population_path)
 
-        assert dummy_actor.size == retrieved.size
-        assert dummy_actor.ids.tolist() == retrieved.ids.tolist()
+        assert dummy_population.size == retrieved.size
+        assert dummy_population.ids.tolist() == retrieved.ids.tolist()
 
-        ids = dummy_actor.ids.tolist()
+        ids = dummy_population.ids.tolist()
 
-        for att_name in dummy_actor.attribute_names():
-            assert dummy_actor.get_attribute_values(att_name, ids).equals(
+        for att_name in dummy_population.attribute_names():
+            assert dummy_population.get_attribute_values(att_name, ids).equals(
                 retrieved.get_attribute_values(att_name, ids)
             )
 
-        for rel_name in dummy_actor.relationship_names():
-            assert dummy_actor.get_relationship(rel_name)._table.equals(
+        for rel_name in dummy_population.relationship_names():
+            assert dummy_population.get_relationship(rel_name)._table.equals(
                 retrieved.get_relationship(rel_name)._table
             )

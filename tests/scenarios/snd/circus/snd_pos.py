@@ -72,7 +72,7 @@ def add_attractiveness_evolution_action(circus):
 
     attractiveness_evolution.set_operations(
         pos.ops.lookup(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             select={
                 "ATTRACT_BASE": "ATTRACT_BASE",
                 "ATTRACT_DELTA": "ATTRACT_DELTA",
@@ -86,7 +86,7 @@ def add_attractiveness_evolution_action(circus):
         ),
 
         pos.get_attribute("ATTRACT_BASE").ops.update(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             copy_from_field="NEW_ATTRACT_BASE"
         ),
 
@@ -97,7 +97,7 @@ def add_attractiveness_evolution_action(circus):
         ),
 
         pos.get_attribute("ATTRACTIVENESS").ops.update(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             copy_from_field="NEW_ATTRACTIVENESS"
         ),
 
@@ -121,7 +121,7 @@ def add_attractiveness_evolution_action(circus):
 
     attractiveness_delta_evolution.set_operations(
         pos.ops.lookup(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             select={"ATTRACT_DELTA": "ATTRACT_DELTA"}
         ),
 
@@ -133,7 +133,7 @@ def add_attractiveness_evolution_action(circus):
             f=np.add, f_args="series"),
 
         pos.get_attribute("ATTRACT_DELTA").ops.update(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             copy_from_field="NEW_ATTRACT_DELTA"
         ),
 
@@ -157,12 +157,12 @@ def _add_pos_latlong(circus, params):
     # using an at build time to generate random values :)
     pos_coord_act = Chain(
         pos.ops.lookup(
-            actor_id_field="POS_ID",
+            id_field="POS_ID",
             select={"SITE": "SITE_ID"}
         ),
 
         sites.ops.lookup(
-            actor_id_field="SITE_ID",
+            id_field="SITE_ID",
             select={
                 "LATITUDE": "SITE_LATITUDE",
                 "LONGITUDE": "SITE_LONGITUDE"
@@ -185,7 +185,7 @@ def _add_pos_latlong(circus, params):
     for product in params["products"].keys():
         pos_coord_act.append(
             sites.ops.lookup(
-                actor_id_field="SITE_ID",
+                id_field="SITE_ID",
                 select={
                     "{}__dist_l2".format(product): "{}__provider".format(product),
                     "{}__dist_l1".format(product): "{}__dist_l1".format(product),
@@ -212,7 +212,7 @@ def _add_pos_latlong(circus, params):
 def add_pos(circus, params):
 
     logging.info("creating {} POS".format(params["n_pos"]))
-    pos = circus.create_actor(
+    pos = circus.create_population(
         name="pos", size=params["n_pos"],
         ids_gen=SequencialGenerator(prefix="POS_"))
 
@@ -359,7 +359,7 @@ def add_agent_stock_log_action(circus, params):
                 ),
 
                 # The log_id (=> the resulting file name) is the same for all
-                # actions => we just merge the stock level of all actors as
+                # actions => we just merge the stock level of all populations as
                 # we go. I dare to find that pretty neat ^^
                 FieldLogger(
                     log_id="agent_stock_log",

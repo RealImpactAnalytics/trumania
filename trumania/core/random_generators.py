@@ -400,7 +400,7 @@ class MongoIdGenerator(Generator):
 class DependentGenerator(object):
     """
     Generator providing random values depending on some live observation
-    among the fields of the action or attributes of the actors.
+    among the fields of the action or attributes of the populations.
 
     This opens the door to "probability given" distributions
     """
@@ -480,10 +480,9 @@ class DependentTrigger(object):
     """
     A trigger is a boolean Generator.
 
-    A dependent trigger transforms, with the specified function, the value
-    of the depended on action field or actor attribute into the [0, 1] range
+    A dependent trigger transforms, with the specified function, the value of
+    the depended on action field or population attribute into the [0,1] range
     and uses that as the probability of triggering (i.e. of returning True)
-
     """
 
     def __init__(self, value_to_proba_mapper=identity, seed=None):

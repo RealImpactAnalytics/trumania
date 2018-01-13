@@ -21,7 +21,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta(clock_step))
 
-    actor = circus.create_actor(
+    population = circus.create_population(
         name="a",
         size=1000,
         ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
@@ -35,7 +35,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
         ),
         seed=1234)
 
-    # each of the 500 actors have a constant 12 logs per day rate
+    # each of the 500 populations have a constant 12 logs per day rate
     activity_gen = ConstantGenerator(
         value=daily_profile.activity(
             n_actions=n_actions, per=per
@@ -44,8 +44,8 @@ def run_test_scenario_1(clock_step, simulation_duration,
     # just a dummy operation to produce some logs
     action = circus.create_action(
         name="test_action",
-        initiating_actor=actor,
-        actorid_field="some_id",
+        initiating_population=population,
+        member_id_field="some_id",
         timer_gen=daily_profile,
         activity_gen=activity_gen)
 
@@ -57,7 +57,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
     circus.run(duration=pd.Timedelta(simulation_duration), log_output_folder=log_folder)
 
 
-def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days():
+def test_1000_populations_with_activity_12perday_should_yield_24k_logs_in_2days():
     """
     this is a "high frequency test", where the number of actions per cycle (
     i.e. per day here) is largely below 1 => the cyclic generator should
@@ -81,7 +81,7 @@ def test_1000_actors_with_activity_12perday_should_yield_24k_logs_in_2days():
         assert 22e3 <= logs.shape[0] <= 26e3
 
 
-def test_1000_actors_with_activity_12perday_should_yield_60k_logs_in_5days():
+def test_1000_populations_with_activity_12perday_should_yield_60k_logs_in_5days():
     """
     same test as above, with bigger clock step => typically more "rounding
     errors", and longer total simulation duration
@@ -106,10 +106,10 @@ def test_1000_actors_with_activity_12perday_should_yield_60k_logs_in_5days():
         assert 55e3 <= logs.shape[0] <= 65e3
 
 
-def test_1000_actors_with_low_activity():
+def test_1000_populations_with_low_activity():
     """
 
-    This is a low activity test, where the actors have less than one activity
+    This is a low activity test, where the populations have less than one activity
     per cycle
 
     """
@@ -132,10 +132,10 @@ def test_1000_actors_with_low_activity():
         assert 3500 <= logs.shape[0] <= 4500
 
 
-def test_1000_actors_with_low_activity2():
+def test_1000_populations_with_low_activity2():
     """
 
-    This is a low activity test, where the actors have less than one activity
+    This is a low activity test, where the populations have less than one activity
     per cycle
 
     """
@@ -156,7 +156,7 @@ def test_1000_actors_with_low_activity2():
         assert 2600 <= logs.shape[0] <= 3400
 
 
-def test_1000_actors_with_activity_one_per_cycle():
+def test_1000_populations_with_activity_one_per_cycle():
     """
     This is a border case between low and high activity, where the desired
     amount of logs per cycle is close to 1 (i.e. close to 1 per day with our
@@ -182,7 +182,7 @@ def test_1000_actors_with_activity_one_per_cycle():
         assert 9500 <= logs.shape[0] <= 10500
 
 
-def test_actors_during_default_daily():
+def test_populations_during_default_daily():
 
     with path.tempdir() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
@@ -192,7 +192,7 @@ def test_actors_during_default_daily():
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
-        field_agents = circus.create_actor(
+        field_agents = circus.create_population(
             name="fa",
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
@@ -208,8 +208,8 @@ def test_actors_during_default_daily():
         # just a dummy operation to produce some logs
         action = circus.create_action(
             name="test_action",
-            initiating_actor=field_agents,
-            actorid_field="some_id",
+            initiating_population=field_agents,
+            member_id_field="some_id",
             timer_gen=mobility_time_gen,
             activity_gen=mobility_activity_gen)
 
@@ -229,7 +229,7 @@ def test_actors_during_default_daily():
         assert 14e3 <= logs.shape[0] <= 16.5e3
 
 
-def test_actors_during_working_hours():
+def test_populations_during_working_hours():
 
     with path.tempdir() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
@@ -239,7 +239,7 @@ def test_actors_during_working_hours():
                         start=pd.Timestamp("8 June 2016"),
                         step_duration=pd.Timedelta("1h"))
 
-        field_agents = circus.create_actor(
+        field_agents = circus.create_population(
             name="fa",
             size=100,
             ids_gen=SequencialGenerator(max_length=3, prefix="id_"))
@@ -261,8 +261,8 @@ def test_actors_during_working_hours():
         # just a dummy operation to produce some logs
         action = circus.create_action(
             name="test_action",
-            initiating_actor=field_agents,
-            actorid_field="some_id",
+            initiating_population=field_agents,
+            member_id_field="some_id",
             timer_gen=mobility_time_gen,
             activity_gen=mobility_activity_gen)
 
