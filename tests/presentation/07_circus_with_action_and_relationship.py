@@ -13,7 +13,7 @@ util_functions.setup_logging()
 logging.info("building circus")
 
 
-def create_circus_with_actor():
+def create_circus_with_population():
     example_circus = circus.Circus(
         name="example",
         master_seed=12345,
@@ -56,7 +56,7 @@ def add_quotes(the_circus):
         )
 
 
-the_circus = create_circus_with_actor()
+the_circus = create_circus_with_population()
 add_quotes(the_circus)
 
 hello_world = the_circus.create_action(

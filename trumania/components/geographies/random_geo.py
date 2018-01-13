@@ -10,7 +10,7 @@ class WithRandomGeo(Circus):
 
     def create_random_cells(self, n_cells):
         """
-        Creation of a basic actor for cells, with latitude and longitude
+        Creation of a basic population for cells, with latitude and longitude
         """
 
         cells = Population(size=n_cells)

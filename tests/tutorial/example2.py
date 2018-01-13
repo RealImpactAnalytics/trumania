@@ -21,7 +21,7 @@ def build_circus():
 
 def create_pos_population(the_circus):
     """
-    Creates a point of sale actor and attach it to the circus
+    Creates a point of sale population and attach it to the circus
     """
     pos = the_circus.create_population(
         name="point_of_sale", size=100,
@@ -88,7 +88,7 @@ def add_periodic_restock_action(the_circus):
     Adds a periodic POS restock action to the circus, having each POS
     systematically adding a random amount of items to their stock
     """
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     # using this timer means POS are more likely to trigger a re-stock during
     # day hours rather that at night.
@@ -196,9 +196,9 @@ def add_periodic_restock_action_with_combined_generator(the_circus):
     )
 
 
-def create_customer_actor(the_circus):
+def create_customer_population(the_circus):
     """
-    Creates a customer actor and attach it to the circus
+    Creates a customer population and attach it to the circus
     """
     customer = the_circus.create_population(
         name="customer", size=2500,
@@ -221,7 +221,7 @@ def create_purchase_action(the_circus):
     timer_gen = profilers.WorkHoursTimerGenerator(clock=the_circus.clock,
                                                   seed=next(the_circus.seeder))
 
-    customers = the_circus.actors["customer"]
+    customers = the_circus.populations["customer"]
 
     purchase_action = the_circus.create_action(
             name="purchase",
@@ -243,7 +243,7 @@ def create_purchase_action(the_circus):
         )
 
     customers_items = customers.get_relationship("my_items")
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
     pos_items = pos.get_relationship("items")
 
     purchase_action.set_operations(
@@ -299,7 +299,7 @@ def add_inactive_restock_action(the_circus):
     This is a copy-paste of add_periodic_restock_action(), but without the
     timer nor the activity levels => as-is, this action never triggers
     """
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     restock_action = the_circus.create_action(
             name="restock",
@@ -349,7 +349,7 @@ def update_purchase_action(the_circus):
     """
 
     purchase_action = the_circus.get_action("purchase")
-    pos = the_circus.actors["point_of_sale"]
+    pos = the_circus.populations["point_of_sale"]
 
     # trigger_prop_func(level) specifies the probability of re-stocking as a
     # function the stock level
@@ -458,7 +458,7 @@ def step4():
     add_report_action(example2)
 
     # customers
-    create_customer_actor(example2)
+    create_customer_population(example2)
     create_purchase_action(example2)
 
     run_and_report(example2)
@@ -475,7 +475,7 @@ def step5():
     add_report_action(example2)
 
     # customers
-    create_customer_actor(example2)
+    create_customer_population(example2)
     create_purchase_action(example2)
 
     update_purchase_action(example2)

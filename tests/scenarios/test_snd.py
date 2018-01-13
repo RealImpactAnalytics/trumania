@@ -127,7 +127,7 @@ class SndScenario(WithRandomGeo, Circus):
 
     def create_dealers_and_sims_stock(self):
         """
-        Create the DEALER actor together with their init SIM stock
+        Create the DEALER population together with their init SIM stock
         """
         logging.info("Creating dealer and their SIM stock  ")
 
@@ -159,7 +159,7 @@ class SndScenario(WithRandomGeo, Circus):
 
     def create_agents(self):
         """
-        Create the AGENT actor (i.e. customer) together with its "SIM" labeled
+        Create the AGENT population (i.e. customer) together with its "SIM" labeled
         stock, to keep track of which SIMs are own by which agent
         """
         logging.info("Creating agents ")
@@ -230,7 +230,7 @@ class SndScenario(WithRandomGeo, Circus):
     def add_dealer_bulk_sim_purchase_action(self, dealers, distributors):
         """
         Adds a SIM purchase action from agents to dealer, with impact on stock of
-        both actors
+        both populations
         """
         logging.info("Creating bulk purchase action")
 
@@ -295,7 +295,7 @@ class SndScenario(WithRandomGeo, Circus):
     def add_agent_sim_purchase_action(self, agents, dealers):
         """
         Adds a SIM purchase action from agents to dealer, with impact on stock of
-        both actors
+        both populations
         """
         logging.info("Creating purchase action")
 
@@ -372,7 +372,7 @@ class SndScenario(WithRandomGeo, Circus):
     def add_agent_holidays_action(self, agents):
         """
         Adds actions that reset to 0 the activity level of the purchases action of
-        some actors
+        some populations
         """
         logging.info("Adding 'holiday' periods for agents ")
 
@@ -435,11 +435,11 @@ class SndScenario(WithRandomGeo, Circus):
 
     def add_agent_reviews_actions(self, agents):
         """
-        This illustrates the dynamic creation of new actors: reviews are modeled as "actor"
+        This illustrates the dynamic creation of new populations: reviews are modeled as "population"
          (even though they are mostly inactive data container) that are created dynamically
          and linked to agents.
 
-        I guess most of the time reviews would be modeled as logs instead of actors, but
+        I guess most of the time reviews would be modeled as logs instead of populations, but
          let's just ignore that for illustration purposes... ^^
         """
 
@@ -450,11 +450,11 @@ class SndScenario(WithRandomGeo, Circus):
             method="choice", a=range(1, 4), seed=next(self.seeder))
 
         # the system starts with no reviews
-        review_actor = self.create_population(name="rev", size=0)
-        review_actor.create_attribute("DATE")
-        review_actor.create_attribute("TEXT")
-        review_actor.create_attribute("AGENT_ID")
-        review_actor.create_attribute("AGENT_NAME")
+        review_population = self.create_population(name="rev", size=0)
+        review_population.create_attribute("DATE")
+        review_population.create_attribute("TEXT")
+        review_population.create_attribute("AGENT_ID")
+        review_population.create_attribute("AGENT_NAME")
 
         reviews = self.create_action(
             name="agent_reviews",
@@ -477,7 +477,7 @@ class SndScenario(WithRandomGeo, Circus):
 
             text_id_gen.ops.generate(named_as="REVIEW_TEXT"),
 
-            review_actor.ops.update(
+            review_population.ops.update(
                 id_field="REVIEW_ID",
                 copy_attributes_from_fields={
                     "DATE": "DATETIME",
@@ -487,7 +487,7 @@ class SndScenario(WithRandomGeo, Circus):
                 }
             ),
 
-            # actually, here we're modelling review both as actors and logs..
+            # actually, here we're modelling review both as populations and logs..
             operations.FieldLogger(log_id="reviews")
         )
 

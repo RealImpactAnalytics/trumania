@@ -111,7 +111,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
     def __init__(self, params):
         self.params = params
 
-        logging.info("building subscriber actors ")
+        logging.info("building subscriber populations ")
 
         Circus.__init__(self,
                         name="test_cdr_circus",
@@ -138,12 +138,12 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
         We have at least one sim per subs: sims.size >= subs.size
 
-        The sims actor contains the "OPERATOR", "MAIN_ACCT" and "MSISDN" attributes.
+        The sims population contains the "OPERATOR", "MAIN_ACCT" and "MSISDN" attributes.
 
-        The subs actor has a "SIMS" relationship that points to the sims owned by
+        The subs population has a "SIMS" relationship that points to the sims owned by
         each subs.
 
-        The sims actor also has a relationship to the set of agents where this sim
+        The sims population also has a relationship to the set of agents where this sim
         can be topped up.
         """
 
@@ -178,7 +178,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         subs_ops_mapping = subs_operators_df.stack()
         subs_ops_mapping.index = subs_ops_mapping.index.droplevel(level=1)
 
-        # SIM actor, each with an OPERATOR and MAIN_ACCT attributes
+        # SIM population, each with an OPERATOR and MAIN_ACCT attributes
         sims = self.create_population(name="sims",
                                       size=subs_ops_mapping.size,
                                       ids_gen=SequencialGenerator(prefix="SIMS_"))
@@ -186,7 +186,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         recharge_gen = ConstantGenerator(value=1000.)
         sims.create_attribute(name="MAIN_ACCT", init_gen=recharge_gen)
 
-        # keeping track of the link between actor and sims as a relationship
+        # keeping track of the link between population and sims as a relationship
         sims_of_subs = subs.create_relationship("SIMS")
         sims_of_subs.add_relations(
             from_ids=subs_ops_mapping.index,
@@ -225,7 +225,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
     def add_mobility(self, subs, cells):
         """
-        adds a CELL attribute to the customer actor + a mobility action that
+        adds a CELL attribute to the customer population + a mobility action that
         randomly moves customers from CELL to CELL among their used cells.
         """
         logging.info("Adding mobility ")

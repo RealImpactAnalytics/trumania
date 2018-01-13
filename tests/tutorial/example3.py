@@ -193,13 +193,13 @@ def add_listen_and_share_actions(the_circus):
     )
 
 
-def add_song_actors(the_circus):
+def add_song_populations(the_circus):
 
     songs = the_circus.create_population(
         name="song", size=0,
         ids_gen=gen.SequencialGenerator(prefix="SONG_"))
 
-    # since the size of the actor is 0, we can create attribute without
+    # since the size of the population is 0, we can create attribute without
     # providing any initialization
     songs.create_attribute(name="artist_name")
     songs.create_attribute(name="song_genre")
@@ -403,7 +403,7 @@ def step4():
     example3 = build_circus()
 
     add_music_repo(example3)
-    add_song_actors(example3)
+    add_song_populations(example3)
 
     add_listener(example3)
     add_listen_and_share_actions_with_details(example3)

@@ -1,5 +1,5 @@
 from trumania.core import circus
-import trumania.core.population as actor
+import trumania.core.population as population
 import trumania.core.random_generators as gen
 import trumania.core.operations as ops
 import trumania.core.action as action
@@ -19,8 +19,8 @@ import pandas as pd
 
 def build_music_repo():
 
-    # this time we create a "detached" actor, not connected to a circus
-    repo = actor.Population(
+    # this time we create a "detached" population, not connected to a circus
+    repo = population.Population(
         circus=None,
         size=5,
         ids_gen=gen.SequencialGenerator(prefix="GENRE_"))
@@ -34,14 +34,14 @@ def build_music_repo():
     return repo
 
 
-def add_song_to_repo(repo_actor):
+def add_song_to_repo(repo_population):
 
-    songs = actor.Population(
+    songs = population.Population(
         circus=None,
         size=0,
         ids_gen=gen.SequencialGenerator(prefix="SONG_"))
 
-    # since the size of the actor is 0, we can create attribute without
+    # since the size of the population is 0, we can create attribute without
     # providing any initialization
     songs.create_attribute(name="artist_name")
     songs.create_attribute(name="song_genre")
@@ -78,7 +78,7 @@ def add_song_to_repo(repo_actor):
                                        force_int=True,
                                        a=1.2)
 
-    repo_genre_rel = repo_actor.get_attribute("genre_name")
+    repo_genre_rel = repo_population.get_attribute("genre_name")
     for genre_id, genre_name in repo_genre_rel.get_values().items():
 
         # an operation capable of creating songs of that genre
@@ -98,7 +98,7 @@ def add_song_to_repo(repo_actor):
         )
 
         # we can already adds the generated songs to the music repo relationship
-        repo_actor.get_relationship("songs").add_grouped_relations(
+        repo_population.get_relationship("songs").add_grouped_relations(
             from_ids=[genre_id],
             grouped_ids=[song_ids]
         )
@@ -242,7 +242,7 @@ def step1():
     DB.save_population(songs, namespace="tutorial_example4",
                        population_id="songs")
 
-    # build a new circus then loads and attach the persisted actor to it
+    # build a new circus then loads and attach the persisted population to it
     example4_circus = build_circus(name="example4_circus")
     example4_circus.load_population(namespace="tutorial_example4",
                                     population_id="music_repository")
@@ -265,7 +265,7 @@ def step2():
     DB.save_population(songs, namespace="tutorial_example4",
                        population_id="songs")
 
-    # build a new circus then loads and attach the persisted actor to it
+    # build a new circus then loads and attach the persisted population to it
     example4_circus = build_circus(name="example4_circus")
     example4_circus.load_population(namespace="tutorial_example4",
                                     population_id="music_repository")

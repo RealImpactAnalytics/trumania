@@ -94,7 +94,7 @@ def add_telco_restock_actions(circus, params):
 
 def prepare_dealers(circus, params):
     """
-    updates the dist_l1 and dist_l2 actors with product stock
+    updates the dist_l1 and dist_l2 populations with product stock
     and link from dist_l1 to telcos
     """
 

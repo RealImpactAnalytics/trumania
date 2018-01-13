@@ -35,7 +35,7 @@ def test_create_action_get_action_should_work_as_expected():
     assert result.name == "mobility"
     assert result.member_id_field == mobility_action.member_id_field
 
-    # also retrieving this initiating population of that actor
+    # also retrieving this initiating population of that population
 
     retrieved_pop = flying.get_population_of("mobility")
 
@@ -65,9 +65,9 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
 
     flying.create_action(name="the_action",
                          initiating_population=customers,
-                         member_id_field="actor_id")
+                         member_id_field="population_id")
 
     with pytest.raises(ValueError):
         flying.create_action(name="the_action",
                              initiating_population=customers,
-                             member_id_field="actor_id")
+                             member_id_field="population_id")

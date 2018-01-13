@@ -359,7 +359,7 @@ def add_agent_stock_log_action(circus, params):
                 ),
 
                 # The log_id (=> the resulting file name) is the same for all
-                # actions => we just merge the stock level of all actors as
+                # actions => we just merge the stock level of all populations as
                 # we go. I dare to find that pretty neat ^^
                 FieldLogger(
                     log_id="agent_stock_log",

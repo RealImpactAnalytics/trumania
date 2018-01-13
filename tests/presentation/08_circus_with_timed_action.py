@@ -13,7 +13,7 @@ util_functions.setup_logging()
 logging.info("building circus")
 
 
-def create_circus_with_actor():
+def create_circus_with_population():
     example_circus = circus.Circus(
         name="example",
         master_seed=12345,
@@ -38,14 +38,14 @@ def create_circus_with_actor():
     return example_circus
 
 
-the_circus = create_circus_with_actor()
+the_circus = create_circus_with_population()
 
 hello_world = the_circus.create_action(
     name="hello_world",
     initiating_population=the_circus.populations["person"],
     member_id_field="PERSON_ID",
 
-    # each actor instance is now going to have 10, 20 or 30
+    # each population instance is now going to have 10, 20 or 30
     # trigger of this action per week
     activity_gen=NumpyRandomGenerator(
         method="choice", a=[10, 20, 30],

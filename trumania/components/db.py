@@ -22,15 +22,15 @@ from trumania.core.random_generators import Generator, NumpyRandomGenerator
 
 
 def save_population(population, namespace, population_id):
-    population.save_to(_actor_folder(namespace, population_id))
+    population.save_to(population_folder(namespace, population_id))
 
 
 def load_population(namespace, population_id, circus):
-    return Population.load_from(_actor_folder(namespace, population_id), circus)
+    return Population.load_from(population_folder(namespace, population_id), circus)
 
 
 def list_populations(namespace):
-    folder = _actors_folder(namespace)
+    folder = _population_folder(namespace)
     return [d for d in os.listdir(folder)
             if os.path.isdir(os.path.join(folder, d))]
 
@@ -129,12 +129,12 @@ def remove_namespace(namespace):
     ensure_non_existing_dir(namespace_folder(namespace))
 
 
-def _actors_folder(namespace):
-    return os.path.join(namespace_folder(namespace), "actors")
+def _population_folder(namespace):
+    return os.path.join(namespace_folder(namespace), "populations")
 
 
-def _actor_folder(namespace, actor_id):
-    return os.path.join(_actors_folder(namespace), actor_id)
+def population_folder(namespace, population_id):
+    return os.path.join(_population_folder(namespace), population_id)
 
 
 def _generators_folder(namespace):
