@@ -159,10 +159,10 @@ def save_providers_csv(circus, params):
         """Add LINK between POS and DIST_L1"""
 
         pos_dist_l2 = circus.actors["pos"] \
-            .relationships["{}__provider".format(product)].get_relations(None)
+            .relationships["{}__provider".format(product)].get_relations()
 
         dist_l2_dist_l1 = circus.actors["dist_l2"] \
-            .relationships["{}__provider".format(product)].get_relations(None)
+            .relationships["{}__provider".format(product)].get_relations()
 
         # join dist_l1 responsible for pos
         pos_dist_l1 = pd.merge(

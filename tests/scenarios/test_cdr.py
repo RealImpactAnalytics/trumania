@@ -434,14 +434,14 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
             # fetches information about all SIMs of A and B
             subs.get_relationship("SIMS").ops.select_all(from_field="A_ID",
-                                                         named_as="A_SIMS"),
+                                                                    named_as="A_SIMS"),
             sims.ops.lookup(id_field="A_SIMS",
                             select={"OPERATOR": "OPERATORS_A",
                                     "MSISDN": "MSISDNS_A",
                                     "MAIN_ACCT": "MAIN_ACCTS_A"}),
 
             subs.get_relationship("SIMS").ops.select_all(from_field="B_ID",
-                                                         named_as="B_SIMS"),
+                                                                    named_as="B_SIMS"),
             sims.ops.lookup(id_field="B_SIMS",
                             select={"OPERATOR": "OPERATORS_B",
                                     "MSISDN": "MSISDNS_B"}),

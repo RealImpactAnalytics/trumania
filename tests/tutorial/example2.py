@@ -24,7 +24,7 @@ def create_pos_population(the_circus):
     Creates a point of sale population and attach it to the circus
     """
     pos = the_circus.create_population(
-        name="point_of_sale", size=100,
+        name="point_of_sale", size=1000,
         ids_gen=gen.SequencialGenerator(prefix="POS_"))
 
     name_gen = gen.FakerGenerator(method="name", seed=next(the_circus.seeder))

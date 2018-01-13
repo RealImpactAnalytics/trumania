@@ -1,320 +1,482 @@
+import functools
+import itertools
+import logging
+
+import numpy as np
 import pandas as pd
 from numpy.random import RandomState
-import numpy as np
-import logging
-import functools
-
-from trumania.core.util_functions import cap_to_total
+from trumania.core import util_functions as utils
 from trumania.core.operations import AddColumns, Operation, SideEffectOnly
 
 
+# There are a lot of somewhat ugly optimizations here like in-place mutations,
+# caching, or usage of numpy instead of a more readable pandas alternative. The
+# reason is the methods of this filetend to be called a large amount of time
+# in inner loop of the simulation, optimizing them make the whole simulation
+# faster.
+
+
+class Relations(object):
+    """
+     This entity contains all the "to" sides of the relationships of a given
+     "from", together with the related weights.
+
+     This data structure seems to be the most optimal since it corresponds to a cached
+     group-by result, and those group-by are expensive in the select_one
+     operation
+    """
+
+    def __init__(self, to_ids, weights):
+        self.to_ids = np.array(to_ids)
+        self.weights = np.array(weights)
+        self.weights_normed = self.weights / self.weights.sum()
+
+    def size(self):
+        return self.to_ids.shape[0]
+
+    @staticmethod
+    def from_tuples(from_ids, to_ids, weights):
+        """
+         from_ids, to_ids and weights must be 3 arrays of identical size,
+         a relationship is built here for each "line" read across those 3
+         arrays.
+
+         This methods builds one instance of Relations for each unique from_id
+         value, containing all the to_id's it is related to.
+        """
+
+        from_ids = np.array(from_ids)
+        to_ids = np.array(to_ids)
+
+        if type(weights) is int or type(weights) is float:
+            weights = np.repeat(weights, from_ids.shape)
+        else:
+            weights = np.array(weights)
+
+        order = from_ids.argsort()
+        ordered = zip(from_ids[order], to_ids[order], weights[order])
+
+        def _relations():
+            # itertools.groupby is much faster than pandas
+            for from_id, tuples in itertools.groupby(ordered, lambda t: t[0]):
+                to_ids, weights = list(zip(*tuples))[1: 3]
+                yield from_id, Relations(list(to_ids), list(weights))
+
+        return {from_id: relz for from_id, relz in _relations()}
+
+    def plus(self, other):
+        """
+        Merge function for 2 sets of relations all starting from the same "from"
+        """
+        return Relations(
+            np.hstack([self.to_ids, other.to_ids]),
+            np.hstack([self.weights, other.weights]))
+
+    def minus(self, other):
+        """
+        removes from self _all_ relations to the to_ids mentioned in the
+        provided other Relation
+        """
+        removed_indices = np.argwhere(
+            [idx in other.to_ids for idx in self.to_ids])
+        return Relations(
+            np.delete(self.to_ids, removed_indices),
+            np.delete(self.weights, removed_indices))
+
+    def pick_one(self, random_state, overridden_to_weights=None):
+        """
+        Randomly picks one of the to_ids of this Relation. By default this
+        uses the weights encapsulated in this Relation, unless
+        overridden_to_weights is specified.
+        """
+
+        if self.to_ids.shape[0] == 0:
+            return None, None
+
+        if self.to_ids.shape[0] == 1:
+            return 0, self.to_ids[0]
+
+        if overridden_to_weights is None:
+            proba = self.weights_normed.astype(float)
+        else:
+            proba = np.array(
+                [overridden_to_weights[to] for to in self.to_ids]).astype(float)
+            proba = proba / proba.sum()
+
+        idx = random_state.choice(
+            a=range(self.to_ids.shape[0]), size=1, p=proba)[0]
+
+        # we do not remove values here, even if "pop=true", since some
+        # picked selections might be discarded later in case of one-to-one
+        return idx, self.to_ids[idx]
+
+    def pick_many(self, random_state, amount):
+        """
+        Quantities and req_indices should have the same size: the first
+        one lists the ids of the index that requests some selections
+        to be picked in the relationship, and the second provide
+        the quantities that each request asked.
+
+        The result will be in vertical format, with as many lines as the
+        sum of the quantities.
+        """
+
+        sample_size = min(self.to_ids.shape[0], amount)
+
+        # pick enough random index of "to_ids"
+        indices = random_state.choice(
+            a=range(self.to_ids.shape[0]),
+            replace=False,
+            size=sample_size
+        ).tolist()
+
+        return indices, self.to_ids[indices]
+
+    def remove_inplace(self, removed_indices):
+        self.to_ids = np.delete(self.to_ids, removed_indices)
+        self.weights = np.delete(self.weights, removed_indices)
+        self.weights_normed = np.delete(self.weights_normed, removed_indices)
+        self.weights_normed = self.weights / self.weights.sum()
+
+    def __repr__(self):
+        return """to_ids: {},\nweights:{},\nweights_normed:{}""".format(
+            self.to_ids, self.weights, self.weights_normed)
+
+
 class Relationship(object):
-    """
-        One-to-many relationship between populations.
-
-        Each implementation of this provides a `select_one(from_ids)` method
-        that randomly picks one "to" side for each of the provided "from"
-        A similar `pop_one(from_ids)` method is availeble, which behaves
-        similarly + removes the selected relationship.
-
-        Both those method may return supplementary data with each "to" side.
-        For example, a CustomerSellerRelationship could be designed to
-        captures the available sellers of each buyers. `select_one` in that
-        case could mean "sale", and supplementary properties could be the
-        description of the sold items.
-    """
-
     def __init__(self, seed):
         self.seed = seed
         self.state = RandomState(self.seed)
-        self._table = pd.DataFrame(
-            columns=["from", "to", "weight", "table_index"])
+        self.grouped = {}
         self.ops = self.RelationshipOps(self)
 
     def add_relations(self, from_ids, to_ids, weights=1):
+        """
+        Add relations to this Relationships from from_ids, to_ids, weights
+        """
 
-        new_relations = pd.DataFrame({"from": from_ids,
-                                      "to": to_ids,
-                                      "weight": weights})
-
-        self._table = pd.concat([self._table, new_relations],
-                                ignore_index=True, copy=False)
-
-        self._table["weight"] = self._table["weight"].astype(float)
-
-        # we sometimes want to keep track of the index of some rows when
-        # accessed within a group-by operation => copying the info in a separate
-        # column is the only way I found...
-        self._table["table_index"] = self._table.index
+        self.grouped = utils.merge_2_dicts(
+            self.grouped,
+            Relations.from_tuples(from_ids, to_ids, weights),
+            lambda r1, r2: r1.plus(r2))
 
     def add_grouped_relations(self, from_ids, grouped_ids):
         """
-        Add "bulk" relationship, i.e. many "to" side for each "from" side at
+        Add "bulk" relationship, i.e. many "to" sides for each "from" side at
         once.
 
         :param from_ids: list of "from" sides of the relationships to add
         :param grouped_ids: list of list of "to" sides of the relationships
             to add
 
-        Note: we assume all weights are 1 for now...
+        Note: we assume all weights are 1 for this use (for now
         """
 
         for one_from, many_tos in zip(from_ids, grouped_ids):
             rels = pd.DataFrame({"from": one_from, "to": many_tos})
             self.add_relations(from_ids=rels["from"], to_ids=rels["to"])
 
-    def get_relations(self, from_ids):
-        if from_ids is None:
-            return self._table
+    def remove_relations(self, from_ids, to_ids):
+        """
+        Removes all relations between those from_ids and to_ids pairs (not combinatory: if each list is
+        10 elements, we removed 10 pairs).
+        If the same relation was stored several times between two ids, this removes them all
+        """
+
+        self.grouped = utils.merge_2_dicts(
+            self.grouped,
+            Relations.from_tuples(from_ids, to_ids, weights=0),
+            lambda r1, r2: r1.minus(r2))
+
+    def get_relations(self, from_ids=None):
+        """
+        This returns, as a dataframe, the sub-set of the relationships whose
+        "from" is part of specified "from_ids".
+
+        If no from_ids is provided, this just returns all the relations.
+        """
+
+        _from_ids = set(self.grouped.keys()) if from_ids is None else from_ids
+
+        def _rel_arrays():
+            for gid in set(_from_ids):
+                if gid in self.grouped.keys():
+                    relations = self.grouped[gid]
+                    yield np.array([np.array([gid] * relations.to_ids.shape[0]),
+                                    relations.to_ids,
+                                    relations.weights])
+
+        rel_arrays = list(_rel_arrays())
+        if len(rel_arrays) == 0:
+            return pd.DataFrame(columns=["from", "to", "weight"])
+
         else:
-            return self._table[self._table["from"].isin(from_ids)]
+            df = pd.DataFrame(np.hstack(rel_arrays).T,
+                              columns=["from", "to", "weight"])
+            df["weight"] = df["weight"].astype(float)
+            return df
 
     def get_neighbourhood_size(self, from_ids):
         """
         return a series indexed by "from" containing the number of "tos" for
         each requested from.
         """
-        unique_froms = np.unique(from_ids)
 
-        counts = self.get_relations(unique_froms)[["from", "to"]]\
-            .groupby("from").count()["to"].astype(int)
+        def size(from_id):
+            if from_id in self.grouped:
+                return self.grouped[from_id].size()
+            else:
+                return 0
 
-        return counts.reindex(np.unique(unique_froms)).fillna(0)
+        return pd.Series({from_id: size(from_id) for from_id in from_ids})
 
-    @staticmethod
-    def _maybe_add_nones(should_inject_nones, from_ids, selected):
+    def unique_tos(self):
         """
-        if should_inject_Nones, this adds (from_id -> None) selection entries
-        for any from_id present in the from_ids series but not found in this
-        relationship
+        :return: the set of unique "to" parts throughout all relationships
         """
-        if should_inject_nones and selected.shape[0] != len(from_ids):
-            missing_index = from_ids.index.difference(selected.index)
-            missing_values = pd.DataFrame(
-                {
-                    "from": from_ids.loc[missing_index],
-                    "to": [None] * missing_index.shape[0]
-                },
-                index=missing_index)
-
-            return pd.concat([selected, missing_values], copy=False)
-        else:
-            return selected
+        return {to for relations in self.grouped.values() for to in
+                relations.to_ids}
 
     def select_one(self, from_ids=None, named_as="to", remove_selected=False,
                    discard_empty=True, one_to_one=False,
                    overridden_to_weights=None):
-
-        # TODO: the implementation of select_many is cleaner and probably
-        # faster => refactor to make them one single thingy, select_one being
-        # just a special case of select_many...
-
         """
-        Select randomly one "to" for each specified "from" values.
-         If drop is True, the selected relations are removed.
+        Randomly selects one "to" part for each specified id in from_ids. An
+        id can be specified several times in that list, in which case we
+        simply do a selection several times. The result is aligned with
+        from_ids by index. i.e. the row in the return value that has the same
+        pandas index than a rom in from_ids is the selection for that row.
 
-         from_ids must be a Series with an index that does not have duplicates.
+        The selection in the resulting dataframe will by default be named
+        "to", unless this is overridden by "named_as".
 
-         from_ids values can contain duplicates: if "DEALER_123" is present 5
-         times in it, this will return 5 selections from it in the result,
-         with index aligned with the one of from_ids.
+        If remove_selected is True, the selected relations are removed from
+        the relationship. This is handy to model stocks or any container of
+        things.
+
+        If discard_empty is True, all specified from_ids will be present in
+        the result, even if no relation is available for them or if some
+        selection were dropped due to one-to-one config.
+
+        If one_to_one is True, the selection is an injective function,
+        i.e each to_ids will at most be picked once.
+
+        overridden_to_weights is an optional dictionary of {"to": weight}
+        that can be used to override the default weights contained in this
+        Relationship.
         """
-        if type(from_ids) == list:
-            from_ids = pd.Series(from_ids)
 
-        # TODO: performance: the logic with from_index below slows down the
-        # lookup => we could test for unicity in from_ids first and only
-        # apply it in this case.
+        if overridden_to_weights is not None:
+            missing_keys = self.unique_tos() - set(
+                overridden_to_weights.keys().values)
+            assert len(missing_keys) == 0, \
+                "overridden_to_weights is missing those 'to' keys: {}".format(
+                    missing_keys)
 
-        ###
-        # selects the relations for the requested from_ids, keeping track of
-        # the index of the original from_ids Series
-        if from_ids is not None:
-            from_df = pd.DataFrame({"from_id": from_ids})
-            from_df["from_index"] = from_df.index
-            relations = pd.merge(left=self.get_relations(from_ids),
-                                 right=from_df,
-                                 left_on="from", right_on="from_id")
-            relations.drop("from_id", axis=1, inplace=True)
-
+        if from_ids is None:
+            _from_ids = pd.Series(list(self.grouped.keys()))
+        elif type(from_ids) == list:
+            _from_ids = pd.Series(from_ids)
         else:
-            relations = self._table.copy()
-            relations["from_index"] = relations["from"]
+            _from_ids = from_ids
 
-        ###
-        # actual selection of a "to" side
-        if relations.shape[0] == 0:
-            selected = pd.DataFrame(columns=["from", "to"])
+        def _results():
+            # req_index is the technical index of the table built by the Action,
+            # => must be respect to join correctly the result of the select_one
+            for req_index, from_id in zip(_from_ids.index, _from_ids):
+                if from_id in self.grouped:
+                    idx, picked = self.grouped[from_id].pick_one(self.state,
+                                                                 overridden_to_weights)
+                    if picked is None:
+                        if discard_empty:
+                            continue
+                        else:
+                            yield req_index, from_id, -1, None
+                    else:
+                        yield req_index, from_id, idx, picked
 
-        else:
-            def pick_one(df):
-                return df.sample(n=1, weights="weight",
-                                 random_state=self.state)[["to", "table_index"]]
+                elif not discard_empty:
+                    yield req_index, from_id, -1, None
 
-            # overriding weights if requested. It's ok to override "weight"
-            # since relations is a copy already
-            if overridden_to_weights is not None:
-                relations["weight"] = relations["to"].map(
-                    overridden_to_weights).values
+        output = list(zip(*_results()))
+        if len(output) == 0:
+            return pd.DataFrame(columns=["from", named_as])
 
-            # picking a "to" for each, potentially duplicated, "from" value
-            grouped = relations.groupby(by=["from", "from_index"], sort=False)
-            selected = grouped.apply(pick_one)
+        request_index, from_id, rel_idx, chosen_tos = output
+        output = pd.DataFrame({named_as: list(chosen_tos),
+                               "idx": list(rel_idx),
+                               "from": from_id},
+                              index=request_index)
 
-            if remove_selected:
-                # We ignore errors here since several pop of the same "from"
-                # could happen at the same time, e.g. same dealer trying to
-                # sell the same sell, which would be de-duplicated
-                # downstream, and should not lead this to crash
-                self._table.drop(selected["table_index"], inplace=True,
-                                 errors="ignore")
-            selected.drop("table_index", axis=1, inplace=True)
+        if one_to_one and output.shape[0] > 0:
+            # not de-duplicating the blank results
+            blank_idx = output[named_as].isna()
+            blanks, present = output[blank_idx], output[~blank_idx]
 
-            # shaping final results
-            selected["from"] = selected.index.get_level_values(level="from")
-            selected.index = selected.index.get_level_values(level="from_index")
+            present = present.loc[self.state.permutation(present.index)]
+            present.drop_duplicates(subset=named_as, keep="first", inplace=True)
 
-        selected = self._maybe_add_nones(not discard_empty, from_ids, selected)
-        selected.rename(columns={"to": named_as}, inplace=True)
+            output = pd.concat([present, blanks])
 
-        if one_to_one and selected.shape[0] > 0:
-            idx = self.state.permutation(selected.index)
-            selected = selected.loc[idx]
-            selected.drop_duplicates(subset=named_as, keep="first",
-                                     inplace=True)
+        if remove_selected:
 
-        return selected
+            # we have to remove all the relations of each from in one go since
+            # no injective selection might have the same index several times
+            g = output[output["idx"] != -1][["from", "idx"]].groupby(by="from")
+            for from_id in g.groups:
+                group = self.grouped[from_id]
+                removed_idx = g.get_group(from_id)["idx"]
+                group.remove_inplace(removed_idx)
+                if group.size() == 0:
+                    del self.grouped[from_id]
 
-    def select_many(self, from_ids, named_as, quantities, remove_selected,
-                    discard_empty):
+        output.drop(["idx"], axis=1, inplace=True)
+        return output
+
+    def select_all_horizontal(self, from_ids, named_as="to"):
         """
-        This is functional similar to a select_one that returns list, although
-        the implementation is much different. Here we optimize for sampling
-        large contiguous chunks among the "to" parts of a relationship.
+        Return all the "to" sides starting from each "from",
+        as an "horizontal" list, i.e. each "from" is on one row and the set of
+        all "to" are all on that row, in one list.
 
-        Also, one-to-one is always assumed: there is never overlap between
-        the returned chunks.
+        Any requested from_id that has no relationship is absent is the
+        returned dataframe (=> the corresponding rows are dropped in the result)
+        """
 
-        The result is a dataframe with an index aligned with the one of from_ids
-        (each "from" value could be present several times, so we cannot use
-        that as index)
+        rows = self.get_relations(from_ids)
+        groups = rows.set_index("to", drop=True).groupby("from", sort=False)
+        df = pd.DataFrame(data=list(groups.groups.items()),
+                          columns=["from", named_as])
+        df[named_as] = df[named_as].apply(lambda s: [el for el in s])
+        return df
+
+    def select_many(self, from_ids, named_as, quantities, remove_selected=False,
+                    discard_empty=True):
+        """
+
+        The result is returned in vertical format and index by the values of the index of from_ids.
+        Since we select several values, we return several lines per index value of from_id =>
+        during the subsequent join by the Operation, the number of produced rows increases.
+
         """
 
         req = pd.DataFrame({"from": from_ids, "qties": quantities})
         req["qties"] = req["qties"].astype(np.int)
 
         # gathers all requests to the same "from" together, keeping track of
-        # the index in the original "from_ids" to be able to merge it later
+        # the "request index" in the original from_ids so we can merge it later
         def gather(df):
-            return pd.Series({"quantities": df["qties"].tolist(),
-                              "from_index": df.index.tolist()})
 
+            # shuffles that set of request s.t. in case of capping not the same
+            # from_id get "capped" all time
+            df2 = df.loc[self.state.permutation(df.index)]
+            return pd.Series({"quantities": df2["qties"].tolist(),
+                              "req_index": df2.index.tolist()})
+
+        # the same "from" can be requested several times
         all_reqs = req.groupby("from", sort=False).apply(gather)
 
-        # potential relations in "horizontal" format, just kept with their index
-        # in the original table for now
-        relations = self.get_relations(from_ids).groupby(by="from", sort=False)
-        relations = relations.apply(lambda r: pd.Series({
-            "table_indices": r["table_index"].tolist()
-        }))
+        def _all_picks_results():
+            for _, row in all_reqs.iterrows():
 
-        # => requested size and the available "tos" for each requested "from"
-        all_infos = pd.merge(left=all_reqs, right=relations,
-                             left_index=True, right_index=True)
+                from_id = row.name
 
-        def make_selections(info_row):
+                if from_id in self.grouped:
 
-            available_tos = len(info_row["table_indices"])
+                    relations = self.grouped[from_id]
+                    quantities = utils.cap_to_total(row["quantities"],
+                                                    relations.size())
 
-            # TODO: we should randomize the capping below s.t. the same
-            # ones do not risk to get capped every time...
+                    # rel_idx is the index of the picked values within the grouped values (i.e. for one from_id)
+                    rel_idx, rel_tos = relations.pick_many(self.state,
+                                                           np.sum(quantities))
 
-            qties = cap_to_total(info_row["quantities"], available_tos)
-            t_idx = self.state.choice(a=info_row["table_indices"], replace=False,
-                                      size=np.sum(qties)).tolist()
+                    # prepares the indices of the resulting vertical format, as a sequence
+                    # of index interval where to inject the picked values
+                    to_idx = np.cumsum(quantities).tolist()
+                    from_idx = [0] + to_idx[:-1]
+                    idx_intervals = [(lb, ub) for lb, ub in zip(from_idx, to_idx)]
 
-            # splits the results into several selections: one for each time
-            # this "from" was requested
-            to_idx = np.cumsum(qties).tolist()
-            from_idx = [0] + to_idx[:-1]
-            selected_tidx = [t_idx[lb:ub] for lb, ub in zip(from_idx, to_idx)]
+                    def _one_pick_result():
+                        for ((lower_bound, upper_bound), req_index) in zip(
+                                idx_intervals, row["req_index"]):
+                            size = upper_bound - lower_bound
 
-            # creating this Series in an apply() will create columns named along
-            # info_row["from_index"] => the stack() right after adds them into the
-            # row index, besides each "from"
-            selection_ser = pd.Series(selected_tidx, index=info_row["from_index"])
-            return selection_ser
+                            if size == 0:
+                                continue
 
-        # Df with multi-index index (from, from_index) and 1 column with the set of idx
-        # in the relationship table of the chosen "t"os
-        selected_tidx = pd.DataFrame(all_infos.apply(make_selections, axis=1))
-        selected_tidx = pd.DataFrame(selected_tidx.stack(dropna=True))
+                            yield [
+                                req_index,
+                                from_id,
+                                rel_tos[lower_bound:upper_bound],
+                                rel_idx[lower_bound:upper_bound],
+                            ]
 
-        # this typically happens if none of the requested "froms" are present
-        # in the relationship
-        if selected_tidx.shape[0] == 0:
-            selected = pd.DataFrame(columns=[named_as])
+                    yield list(_one_pick_result())
+
+        all_picks_results = list(_all_picks_results())
+
+        if len(all_picks_results) > 0:
+            output = pd.DataFrame(
+                data=functools.reduce(lambda l1, l2: l1 + l2, all_picks_results),
+                columns=["req_idx", "from", named_as, "rel_idx"])
+
+            if remove_selected:
+
+                # remove all the relations of each from in one go since
+                # no injective selection might have the same index several times
+                g = output[output["rel_idx"] != -1][
+                    ["from", "rel_idx"]].groupby(by="from")
+                for from_id in g.groups:
+                    group = self.grouped[from_id]
+                    removed_idx = g.get_group(from_id)["rel_idx"].values[0]
+                    group.remove_inplace(removed_idx)
+                    if group.size() == 0:
+                        del self.grouped[from_id]
 
         else:
-            selected = selected_tidx.applymap(
-                lambda ids: self._table.ix[ids]["to"].values)
-            selected.index = selected.index.droplevel(level=0)
-            selected.columns = [named_as]
+            output = pd.DataFrame(
+                columns=["req_idx", "from", named_as, "rel_idx"])
 
-            # "pop" option: any selected relation is now removed
-            if remove_selected:
-                all_removed_idx = functools.reduce(lambda l1, l2: l1 + l2,
-                                                   selected_tidx.iloc[:, 0])
-                self._table.drop(all_removed_idx, axis=0, inplace=True)
+        output.set_index("req_idx", drop=True, inplace=True)
+        output.drop(["rel_idx", "from"], axis=1, inplace=True)
 
         # "discard_empty" option: return empty result (instead of nothing) for
         # any non existing (i.e. empty) "from" relation
-        if not discard_empty and selected.shape[0] != len(from_ids):
-            missing_index = from_ids.index.difference(selected.index)
+        if not discard_empty and output.shape[0] != len(from_ids):
+            missing_index = from_ids.index.difference(output.index)
             missing_values = pd.DataFrame(
                 {named_as: pd.Series([[] * missing_index.shape[0]],
                                      index=missing_index)})
 
-            selected = pd.concat([selected, missing_values], copy=False)
+            output = pd.concat([output, missing_values], copy=False)
 
-        return selected
-
-    def select_all(self, from_ids, named_as="to"):
-        """
-        Return all the "to" sides starting from each "from", as a list.
-
-        Any requested from_id that has no relationship is absent is the
-        returned dataframe (=> the corresponding rows are dropped in the
-        """
-
-        rows = self.get_relations(from_ids)
-        groups = rows.set_index("to", drop=True).groupby("from", sort=False)
-        df = pd.DataFrame(data=list(groups.groups.items()), columns=["from", named_as])
-        df[named_as] = df[named_as].apply(lambda s: [el for el in s])
-        return df
-
-    def remove(self, from_ids, to_ids):
-        lines = self._table[self._table["from"].isin(from_ids) &
-                            self._table["to"].isin(to_ids)]
-
-        self._table.drop(lines.index, inplace=True)
+        return output
 
     ######################
     # IO                 #
     ######################
 
     def save_to(self, file_path):
-
+        """
+        Saves all the relationship as well as the current status of the seed
+        as a CSV file
+        """
         logging.info("saving relationship to {}".format(file_path))
 
         # creating a vertical dataframe to store the inner table
-        saved_df = pd.DataFrame(self._table.stack())
+
+        print (self.get_relations())
+
+        saved_df = pd.DataFrame(self.get_relations().stack(), columns=["value"])
 
         # we also want to save the seed => added an index level to separate
         # self._table from self.seed in the end result
-        saved_df["param"] = "table"
+        saved_df["param"] = "relations"
         saved_df = saved_df.set_index("param", append=True)
         saved_df.index = saved_df.index.reorder_levels([2, 0, 1])
+
+        print (saved_df.head())
 
         # then finally added the seed
         saved_df.loc[("seed", 0, 0)] = self.seed
@@ -322,20 +484,23 @@ class Relationship(object):
 
     @staticmethod
     def load_from(file_path):
+        logging.info("loading relationship from {}".format(file_path))
+
         saved_df = pd.read_csv(file_path, index_col=[0, 1, 2])
         seed = int(saved_df.loc["seed"].values[0][0])
 
-        table = saved_df.loc[("table", slice(None), slice(None))].unstack()
-        table.columns = table.columns.droplevel(level=0)
-        table.columns.name = None
-        table.index.name = None
-        table["weight"] = table["weight"].astype(float)
-        table["table_index"] = table["table_index"].astype(int)
+        _all = slice(None)
+        relations = saved_df.loc[("relations", _all, _all)].unstack()
+        relations.index = relations.index.droplevel(0)
+        relations.columns = relations.columns.droplevel(0)
 
-        rel = Relationship(seed)
-        rel._table = table
+        relationship = Relationship(seed)
+        relationship.add_relations(
+            from_ids=relations["from"].values,
+            to_ids=relations["to"].values,
+            weights=relations["weight"].values.astype(float))
 
-        return rel
+        return relationship
 
     class RelationshipOps(object):
         def __init__(self, relationship):
@@ -432,7 +597,7 @@ class Relationship(object):
             def transform(self, action_data):
 
                 from_ids = action_data[[self.from_field]].drop_duplicates()
-                selected = self.relationship.select_all(
+                selected = self.relationship.select_all_horizontal(
                     from_ids=from_ids[self.from_field].values,
                     named_as=self.named_as)
 
@@ -530,4 +695,4 @@ class Relationship(object):
                         to_ids=action_data[self.item_field])
 
         def remove(self, from_field, item_field):
-            return self.Add(self.relationship, from_field, item_field)
+            return self.Remove(self.relationship, from_field, item_field)

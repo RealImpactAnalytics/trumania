@@ -2,6 +2,7 @@ from scipy import stats
 from abc import ABCMeta, abstractmethod
 import pandas as pd
 import numpy as np
+import logging
 
 from trumania.core.util_functions import merge_dicts, df_concat
 import functools
@@ -173,6 +174,7 @@ class AddColumns(Operation):
 
     def transform(self, action_data):
         output = self.build_output(action_data)
+#        logging.info("  adding column(s) {}".format(output.columns.tolist()))
         return pd.merge(left=action_data, right=output,
                         left_index=True, right_index=True,
                         how=self.join_kind)

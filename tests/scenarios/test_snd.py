@@ -207,7 +207,7 @@ class SndScenario(WithRandomGeo, Circus):
         # one gets out of stock quickly
         agent_customer_rel.add_relations(
             from_ids=agents.ids,
-            to_ids="broke_dealer",
+            to_ids=np.repeat("broke_dealer", agents.ids.shape),
             weights=4)
 
     def connect_dealers_to_distributors(self, dealers, distributors):
