@@ -8,19 +8,13 @@ from trumania.components import db
 from trumania.core.random_generators import seed_provider
 from trumania.core.util_functions import ensure_non_existing_dir
 from trumania.core.clock import Clock
-from trumania.core.action import Action
+from trumania.core.story import Story
 
 
 class Circus(object):
     """
     A Circus is just a container of a lot of objects that are required to make the simulation
-    It is also the object that will execute the actions required for 1 iteration
-
-    The different objects contained in the Circus are:
-    - Population, which do actions during the simulation
-    - Items, that contain descriptive data
-    - a Clock object, to manage overall time
-    - Actions, a list of actions to perform on the populations
+    It is also the object that will execute the stories required for 1 iteration
     """
 
     def __init__(self, name, master_seed, **clock_params):
@@ -40,7 +34,7 @@ class Circus(object):
 
         self.seeder = seed_provider(master_seed=master_seed)
         self.clock = Clock(seed=next(self.seeder), **clock_params)
-        self.actions = []
+        self.stories = []
         self.populations = {}
         self.generators = {}
 
@@ -71,40 +65,40 @@ class Circus(object):
         self.populations[population_id] = loaded
         return loaded
 
-    def create_action(self, name, **action_params):
+    def create_story(self, name, **story_params):
         """
-        Creates an action with the provided parameters and attach it to this
+        Creates a story with the provided parameters and attach it to this
         circus.
         """
 
-        existing = self.get_action(name)
+        existing = self.get_story(name)
 
         if existing is None:
-            action = Action(name=name, **action_params)
-            self.actions.append(action)
-            return action
+            story = Story(name=name, **story_params)
+            self.stories.append(story)
+            return story
 
         else:
-            raise ValueError("Cannot add action {}: another action with "
+            raise ValueError("Cannot add story {}: another story with "
                              "identical name is already in the circus".format(name))
 
-    def get_action(self, action_name):
+    def get_story(self, story_name):
         """
-        Looks up and action by name in this circus and returns it. Returns none
+        Looks up and story by name in this circus and returns it. Returns none
         if not found.
         """
-        remaining_actions = filter(lambda a: a.name == action_name, self.actions)
+        remaining_stories = filter(lambda a: a.name == story_name, self.stories)
         try:
-            return next(remaining_actions)
+            return next(remaining_stories)
         except StopIteration:
-            logging.warn("action not found: {}".format(action_name))
+            logging.warn("story not found: {}".format(story_name))
             return None
 
-    def get_population_of(self, action_name):
+    def get_population_of(self, story_name):
         """
-        Looks up the initiating population associated to this action
+        Looks up the initiating population associated to this story
         """
-        return self.get_action(action_name).triggering_population
+        return self.get_story(story_name).triggering_population
 
     def attach_generator(self, gen_id, generator):
         """
@@ -153,7 +147,7 @@ class Circus(object):
 
     def run(self, duration, log_output_folder, delete_existing_logs=False):
         """
-        Executes all actions in the circus for as long as requested.
+        Executes all stories in the circus for as long as requested.
 
         :param duration: duration of the desired simulation (start date is
         dictated by the clock)
@@ -182,8 +176,8 @@ class Circus(object):
         for step_number in range(n_iterations):
             logging.info("step : {}".format(step_number))
 
-            for action in self.actions:
-                for log_id, logs in action.execute().items():
+            for story in self.stories:
+                for log_id, logs in story.execute().items():
                     self.save_logs(log_id, logs, log_output_folder)
 
             self.clock.increment()
@@ -221,7 +215,7 @@ class Circus(object):
         Create a db namespace named after this circus and saves all the
         populations there.
 
-        Only static data is saved, not the actions.
+        Only static data is saved, not the stories.
         """
 
         logging.info("saving circus {}".format(self.name))

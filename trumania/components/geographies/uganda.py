@@ -25,7 +25,7 @@ class WithUganda(Circus):
 
     def add_uganda_geography(self, force_build=False):
         """
-        Loads the cells definition from Uganda + adds 2 actions to control
+        Loads the cells definition from Uganda + adds 2 stories to control
         """
         logging.info(" adding Uganda Geography")
         seeder = seed_provider(12345)
@@ -55,7 +55,7 @@ class WithUganda(Circus):
         # typical human activity
 
         logging.info(" adding Uganda Geography6")
-        cell_break_down_action = self.create_action(
+        cell_break_down_story = self.create_story(
             name="cell_break_down",
 
             initiating_population=uganda_cells,
@@ -68,7 +68,7 @@ class WithUganda(Circus):
             activity_gen=ParetoGenerator(xmin=5, a=1.4, seed=next(self.seeder))
         )
 
-        cell_repair_action = self.create_action(
+        cell_repair_story = self.create_story(
             name="cell_repair_down",
 
             initiating_population=uganda_cells,
@@ -81,18 +81,18 @@ class WithUganda(Circus):
                                          seed=next(self.seeder)),
 
             # repair is not re-scheduled at the end of a repair, but only triggered
-            # from a "break-down" action
+            # from a "break-down" story
             auto_reset_timer=False
         )
 
-        cell_break_down_action.set_operations(
+        cell_break_down_story.set_operations(
             unhealthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
             uganda_cells.get_attribute("HEALTH").ops.update(
                 member_id_field="CELL_ID",
                 copy_from_field="NEW_HEALTH_LEVEL"),
 
-            cell_repair_action.ops.reset_timers(member_id_field="CELL_ID"),
+            cell_repair_story.ops.reset_timers(member_id_field="CELL_ID"),
             self.clock.ops.timestamp(named_as="TIME"),
 
             operations.FieldLogger(log_id="cell_status",
@@ -100,7 +100,7 @@ class WithUganda(Circus):
                                          "NEW_HEALTH_LEVEL"]),
         )
 
-        cell_repair_action.set_operations(
+        cell_repair_story.set_operations(
             healthy_level_gen.ops.generate(named_as="NEW_HEALTH_LEVEL"),
 
             uganda_cells.get_attribute("HEALTH").ops.update(
@@ -109,7 +109,8 @@ class WithUganda(Circus):
 
             self.clock.ops.timestamp(named_as="TIME"),
 
-            # note that both actions are contributing to the same "cell_status" log
+            # note that both stories are contributing to the same
+            # "cell_status" log
             operations.FieldLogger(log_id="cell_status",
                                    cols=["TIME", "CELL_ID",
                                          "NEW_HEALTH_LEVEL"]),
@@ -172,7 +173,7 @@ if __name__ == "__main__":
     # relationship from empirical exploration of a dataset.
 
     # Note2: only the "static" properties of an environment are saved here,
-    # whereas the "dynamic parts" (e.g. actions) are stored "in code", i.e.
+    # whereas the "dynamic parts" (e.g. stories) are stored "in code", i.e.
     # in the withXYZ() class above that then need to be mixed in a Circus.
 
     setup_logging()

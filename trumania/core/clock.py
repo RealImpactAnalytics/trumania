@@ -108,13 +108,13 @@ class Clock(object):
                 self.random = random
                 self.log_format = log_format
 
-            def build_output(self, action_data):
+            def build_output(self, story_data):
                 values = self.clock.get_timestamp(
-                    size=action_data.shape[0], random=self.random,
+                    size=story_data.shape[0], random=self.random,
                     log_format=self.log_format).values
 
                 df = pd.DataFrame({self.named_as: values},
-                                  index=action_data.index)
+                                  index=story_data.index)
                 return df
 
         def timestamp(self, named_as, random=True, log_format=None):
@@ -219,9 +219,9 @@ class CyclicTimerGenerator(DependentGenerator):
             draw = self._state.uniform(size=low_activities.shape[0])
 
             # A uniform [0, 2/activity] yields an expected freqs == 1/activity
-            # == average period between action.
+            # == average period between story.
             # => n_cycles is the number of full timer cycles from now until
-            # next action. It's typically not an integer and possibly be > 1
+            # next story. It's typically not an integer and possibly be > 1
             # since we have on average less han 1 activity per cycle of this
             # timer.
             n_cycles = 2 * draw / low_activities.values
@@ -241,7 +241,7 @@ class CyclicTimerGenerator(DependentGenerator):
         if high_activities.shape[0] > 0:
 
             # A beta(1, activity-1) will yield expected frequencies of
-            # 1/(1+activity-1) == 1/activity == average period between action.
+            # 1/(1+activity-1) == 1/activity == average period between story.
             # This just stops to work for activities < 1, or even close to one
             # => we use the uniform mechanism above for activities <= 2 and
             # rely on betas here for expected frequencies of 2 per cycle or
@@ -267,29 +267,28 @@ class CyclicTimerGenerator(DependentGenerator):
         all_timers = all_timers.reindex_like(observations)
         return all_timers
 
-    def activity(self, n_actions, per):
+    def activity(self, n, per):
         """
 
-        :param n_actions: number of actions
-        :param per: time period for that number of actions
+        :param n: number of stories
+        :param per: time period for that number of stories
         :type per: pd.Timedelta
-        :return: the activity level corresponding to the specified number of
-        action per time period
+        :return: the activity level corresponding to the specified number of n
+        executions per time period
         """
 
         scale = self.config.duration().total_seconds() / per.total_seconds()
-        activity = n_actions * scale
+        activity = n * scale
 
-        requested_period = pd.Timedelta(seconds=per.total_seconds() / n_actions)
+        requested_period = pd.Timedelta(seconds=per.total_seconds() / n)
         if requested_period < self.clock.step_duration:
-            logging.warn(
-                "Warning: Creating activity level for {} actions per "
+            logging.warning(
+                "Warning: Creating activity level for {} stories per "
                 "{} =>  activity is {} but period is {}, which is "
                 "shorter  than the clock period ({}). This clock "
                 "cannot keep up with such rate and less events will be"
-                " produced".format(n_actions, per, activity, requested_period,
-                                   self.clock.step_duration
-                                   )
+                " produced".format(n, per, activity, requested_period,
+                                   self.clock.step_duration)
             )
 
         return activity

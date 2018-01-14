@@ -89,7 +89,7 @@ def add_mobility_action(circus, params):
 
     mobility_activity_gen = gaussian_activity.map(f=bound_value(lb=.5))
 
-    mobility_action = circus.create_action(
+    mobility_action = circus.create_story(
         name="customer_mobility",
 
         initiating_actor=circus.actors["customers"],
@@ -141,12 +141,12 @@ def add_purchase_actions(circus, params):
                                                         next(circus.seeder))
 
         max_activity = purchase_timer_gen.activity(
-            n_actions=1,
+            n=1,
             per=pd.Timedelta(
                 days=description["customer_purchase_min_period_days"]))
 
         min_activity = purchase_timer_gen.activity(
-            n_actions=1,
+            n=1,
             per=pd.Timedelta(
                 days=description["customer_purchase_max_period_days"]))
 
@@ -168,7 +168,7 @@ def add_purchase_actions(circus, params):
             seed=next(circus.seeder))
 
         action_name = "customer_{}_purchase".format(product)
-        purchase_action = circus.create_action(
+        purchase_action = circus.create_story(
             name=action_name,
             initiating_actor=customers,
             actorid_field="CUST_ID",

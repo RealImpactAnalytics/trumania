@@ -87,15 +87,15 @@ def test_activity_level_should_be_scaled_according_to_profile_duration():
     )
 
     # 14 actions/week should be scaled to activity 2 since profile lasts 1 day
-    assert 2 == one_day_timer.activity(n_actions=14, per=pd.Timedelta("7 days"))
+    assert 2 == one_day_timer.activity(n=14, per=pd.Timedelta("7 days"))
 
     # this one should generate a warning log since the corresponding freq
     # is shorter than the clock step
-    assert 48 == one_day_timer.activity(n_actions=4, per=pd.Timedelta("2h"))
+    assert 48 == one_day_timer.activity(n=4, per=pd.Timedelta("2h"))
 
-    assert .5 == one_day_timer.activity(n_actions=1, per=pd.Timedelta("2 days"))
+    assert .5 == one_day_timer.activity(n=1, per=pd.Timedelta("2 days"))
 
-    assert .5 == one_day_timer.activity(n_actions=.25, per=pd.Timedelta("12h"))
+    assert .5 == one_day_timer.activity(n=.25, per=pd.Timedelta("12h"))
 
     assert 1. / 360 - one_day_timer.activity(
-        n_actions=1, per=pd.Timedelta("360 days")) < 1e-10
+        n=1, per=pd.Timedelta("360 days")) < 1e-10

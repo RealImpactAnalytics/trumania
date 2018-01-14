@@ -121,20 +121,20 @@ class Attribute(object):
                 self.copy_from_field = copy_from_field
                 self.member_id_field = member_id_field
 
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
+            def side_effect(self, story_data):
+                if story_data.shape[0] > 0:
                     update_series = pd.Series(
-                        data=action_data[self.copy_from_field].values,
-                        index=action_data[self.member_id_field].values)
+                        data=story_data[self.copy_from_field].values,
+                        index=story_data[self.member_id_field].values)
                     self.attribute.update(update_series)
 
         def update(self, member_id_field, copy_from_field):
             """
             Overwrite the value of this attribute with values in this field
 
-            :param member_id_field: name of the field of the action data
+            :param member_id_field: name of the field of the story data
                 containing the member ids whose attribute should be updated
-            :param copy_from_field: name of the field of the action data
+            :param copy_from_field: name of the field of the story data
                 containing the new values of the attribute
             :return:
             """
@@ -149,15 +149,15 @@ class Attribute(object):
                 self.member_id_field = member_id_field
                 self.subtract = subtract
 
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
+            def side_effect(self, story_data):
+                if story_data.shape[0] > 0:
 
-                    values = action_data[self.added_value_field].values
+                    values = story_data[self.added_value_field].values
                     if self.subtract:
                         values = -values
 
                     self.attribute.add(
-                        ids=action_data[self.member_id_field].values,
+                        ids=story_data[self.member_id_field].values,
                         added_values=values)
 
         def add(self, member_id_field, added_value_field):

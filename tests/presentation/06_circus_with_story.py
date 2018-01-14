@@ -5,7 +5,7 @@ from trumania.core import circus
 import trumania.core.util_functions as util_functions
 from trumania.core.operations import FieldLogger
 from trumania.core.random_generators import SequencialGenerator, FakerGenerator, NumpyRandomGenerator
-from trumania. components.time_patterns.profilers import WorkHoursTimerGenerator
+from trumania.core.random_generators import ConstantDependentGenerator
 
 
 util_functions.setup_logging()
@@ -40,22 +40,12 @@ def create_circus_with_population():
 
 the_circus = create_circus_with_population()
 
-hello_world = the_circus.create_action(
+hello_world = the_circus.create_story(
     name="hello_world",
     initiating_population=the_circus.populations["person"],
     member_id_field="PERSON_ID",
 
-    # each population instance is now going to have 10, 20 or 30
-    # trigger of this action per week
-    activity_gen=NumpyRandomGenerator(
-        method="choice", a=[10, 20, 30],
-        seed=next(the_circus.seeder)
-    ),
-
-    # action now only tiggers during office hours
-    timer_gen=WorkHoursTimerGenerator(
-        clock=the_circus.clock,
-        seed=next(the_circus.seeder))
+    timer_gen=ConstantDependentGenerator(value=1)
 )
 
 hello_world.set_operations(
@@ -97,9 +87,9 @@ hello_world.set_operations(
 
 the_circus.run(
     duration=pd.Timedelta("48h"),
-    log_output_folder="output/example8",
+    log_output_folder="output/example4",
     delete_existing_logs=True
 )
 
-with open("output/example8/hello.csv") as log:
-    logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))
+with open("output/example4/hello.csv") as log:
+    logging.info("some produced logs: \n\n" + "".join(log.readlines(10)[:10]))

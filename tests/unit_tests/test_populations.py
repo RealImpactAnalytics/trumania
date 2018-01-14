@@ -15,11 +15,11 @@ dummy_population.create_attribute("age", init_values=ages)
 city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
 dummy_population.create_attribute("city", init_values=city)
 
-# some fake action data with an index corresponding to another population
-# => simulates an action triggered by that other population
+# some fake story data with an index corresponding to another population
+# => simulates an story triggered by that other population
 # the column "NEIGHBOUR" contains value that point to the dummy population, with
 # a duplication (id2)
-action_data = pd.DataFrame({
+story_data = pd.DataFrame({
         "A": ["a1", "a2", "a3", "a4"],
         "B": ["b1", "b2", "b3", "b4"],
         "NEIGHBOUR": ["id_2", "id_4", "id_7", "id_2"],
@@ -60,7 +60,7 @@ def test_lookup_values_by_scalar_should_return_correct_values():
         }
     )
 
-    result, logs = lookup(action_data)
+    result, logs = lookup(story_data)
     expected_cols = ["A", "B", "COUSINS", "NEIGHBOUR", "neighbour_age",
                      "neighbour_city"]
     assert logs == {}
@@ -74,7 +74,7 @@ def test_lookup_values_by_scalar_should_return_correct_values():
     assert ["b", "d", "a", "b"] == result["neighbour_city"].tolist()
 
 
-def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all_columns():
+def test_lookup_operation_from_empty_story_data_should_return_empty_df_with_all_columns():
 
     lookup = dummy_population.ops.lookup(
         id_field="NEIGHBOUR",
@@ -84,9 +84,9 @@ def test_lookup_operation_from_empty_action_data_should_return_empty_df_with_all
         }
     )
 
-    empty_action_data = pd.DataFrame(columns=["A", "B", "COUSINS", "NEIGHBOUR"])
+    empty_story_data = pd.DataFrame(columns=["A", "B", "COUSINS", "NEIGHBOUR"])
 
-    result, logs = lookup(empty_action_data)
+    result, logs = lookup(empty_story_data)
     expected_cols = ["A", "B", "COUSINS", "NEIGHBOUR", "neighbour_age",
                      "neighbour_city"]
     assert logs == {}
@@ -104,7 +104,7 @@ def test_lookup_values_by_array_should_return_correct_values():
         }
     )
 
-    result, logs = lookup(action_data)
+    result, logs = lookup(story_data)
     expected_cols = ["A", "B", "COUSINS", "NEIGHBOUR", "cousins_age",
                      "cousins_city"]
     assert logs == {}
@@ -199,7 +199,7 @@ def test_insert_population_value_for_existing_and_new_populations_should_update_
 
 
 def test_insert_op_population_value_for_existing_populations_should_update_all_values():
-    # same as test above but triggered as an Operation on action data
+    # same as test above but triggered as an Operation on story data
 
     # copy of dummy population that will be updated
     tested_population = Population(
@@ -210,7 +210,7 @@ def test_insert_op_population_value_for_existing_populations_should_update_all_v
     city = ["a", "b", "b", "a", "d", "e", "r", "a", "z", "c"]
     tested_population.create_attribute("city", init_values=city)
 
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         {
             "the_new_age": [139, 123, 1, 2],
             "location": ["city_7", "city_9", "city_11", "city_10"],
@@ -227,11 +227,11 @@ def test_insert_op_population_value_for_existing_populations_should_update_all_v
         }
     )
 
-    action_data_2, logs = update_op(action_data)
+    story_data_2, logs = update_op(story_data)
 
-    # there should be no impact on the action data
-    assert action_data_2.shape == (4, 3)
-    assert sorted(action_data_2.columns.tolist()) == ["location", "the_new_age", "updated_populations"]
+    # there should be no impact on the story data
+    assert story_data_2.shape == (4, 3)
+    assert sorted(story_data_2.columns.tolist()) == ["location", "the_new_age", "updated_populations"]
 
     # we should have 2 new populations
     assert tested_population.ids.shape[0] == 12

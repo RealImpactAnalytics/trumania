@@ -13,7 +13,7 @@ tc = Circus("c", master_seed=1234, start=pd.Timestamp("1 Jan 2011"),
 def test_set_and_read_values_in_attribute_should_be_equal():
 
     population = Population(circus=None, size=5,
-                       ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="abc", max_length=1))
 
     tested = Attribute(population, init_values=[10, 20, 30, 40, 50])
 
@@ -25,8 +25,8 @@ def test_set_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updated_and_read_values_in_attribute_should_be_equal():
-    population = Population(circus=tc, size=5,
-                       ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+    population = Population(circus=tc, size=5, ids_gen=SequencialGenerator(
+        prefix="abc", max_length=1))
     tested = Attribute(population, init_values=[10, 20, 30, 40, 50])
 
     tested.update(pd.Series([22, 44], index=["abc1", "abc3"]))
@@ -39,8 +39,8 @@ def test_updated_and_read_values_in_attribute_should_be_equal():
 
 
 def test_updating_non_existing_population_ids_should_add_them():
-    population = Population(circus=tc, size=5,
-                       ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+    population = Population(circus=tc, size=5, ids_gen=SequencialGenerator(
+        prefix="abc", max_length=1))
     tested = Attribute(population, init_values=[10, 20, 30, 40, 50])
 
     tested.update(pd.Series([22, 1000, 44], index=["abc1", "not_yet_there", "abc3"]))
@@ -50,9 +50,8 @@ def test_updating_non_existing_population_ids_should_add_them():
 
 def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
-    population = Population(circus=tc,
-                       size=5,
-                       ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+    population = Population(circus=tc, size=5, ids_gen=SequencialGenerator(
+        prefix="abc", max_length=1))
     oneto1 = population.create_relationship("rel")
     oneto1.add_relations(from_ids=["abc0", "abc1", "abc2", "abc3", "abc4"],
                          to_ids=["ta", "tb", "tc", "td", "te"])
@@ -67,9 +66,8 @@ def test_initializing_attribute_from_relationship_must_have_a_value_for_all():
 
 def test_overwrite_attribute():
 
-    population = Population(circus=tc,
-                       size=10,
-                       ids_gen=SequencialGenerator(prefix="u_", max_length=1))
+    population = Population(circus=tc, size=10,
+                            ids_gen=SequencialGenerator(prefix="u_", max_length=1))
 
     ages = [10, 20, 40, 10, 100, 98, 12, 39, 76, 23]
     age_attr = population.create_attribute("age", init_values=ages)
@@ -78,14 +76,14 @@ def test_overwrite_attribute():
     ages = age_attr.get_values(["u_0", "u_4", "u_9"]).tolist()
     assert ages == [10, 100, 23]
 
-    action_data = pd.DataFrame({
+    story_data = pd.DataFrame({
         # id of the populations to update
         "A_ID": ["u_4", "u_0"],
 
         # new values to copy
         "new_ages": [34, 30]},
 
-        # index of the action data has, in general, nothing to do with the
+        # index of the story data has, in general, nothing to do with the
         # updated population
         index=["cust_1", "cust_2"]
     )
@@ -95,7 +93,7 @@ def test_overwrite_attribute():
         copy_from_field="new_ages"
     )
 
-    _, logs = update(action_data)
+    _, logs = update(story_data)
 
     assert logs == {}
     # before modification
@@ -104,9 +102,8 @@ def test_overwrite_attribute():
 
 
 def test_added_and_read_values_in_attribute_should_be_equal():
-    population = Population(circus=tc,
-                       size=5,
-                       ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+    population = Population(circus=tc, size=5,
+                            ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(population, init_values=[10, 20, 30, 40, 50])
 
     tested.add(["abc1", "abc3"], [22, 44])
@@ -115,9 +112,8 @@ def test_added_and_read_values_in_attribute_should_be_equal():
 
 
 def test_adding_several_times_to_the_same_from_should_pile_up():
-    population = Population(circus=tc,
-                       size=5,
-                       ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+    population = Population(circus=tc, size=5,
+                            ids_gen=SequencialGenerator(prefix="abc", max_length=1))
     tested = Attribute(population, init_values=[10, 20, 30, 40, 50])
 
     tested.add(["abc1", "abc3", "abc1"], [22, 44, 10])
@@ -129,9 +125,8 @@ def test_io_round_trip():
 
     with path.tempdir() as root_dir:
 
-        population = Population(circus=tc,
-                           size=5,
-                           ids_gen=SequencialGenerator(prefix="abc", max_length=1))
+        population = Population(circus=tc, size=5,
+                                ids_gen=SequencialGenerator(prefix="abc", max_length=1))
         orig = Attribute(population, init_values=[10, 20, 30, 40, 50])
 
         full_path = os.path.join(root_dir, "attribute.csv")

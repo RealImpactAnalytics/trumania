@@ -53,11 +53,11 @@ def add_mobility_action(circus, params):
                                                 seed=next(circus.seeder))
 
     fa_mean_weekly_activity = mobility_time_gen.activity(
-        n_actions=params["mean_daily_fa_mobility_activity"],
+        n=params["mean_daily_fa_mobility_activity"],
         per=pd.Timedelta("1day"))
 
     fa_weekly_std = mobility_time_gen.activity(
-        n_actions=params["std_daily_fa_mobility_activity"],
+        n=params["std_daily_fa_mobility_activity"],
         per=pd.Timedelta("1day"))
 
     gaussian_activity = NumpyRandomGenerator(
@@ -68,7 +68,7 @@ def add_mobility_action(circus, params):
 
     field_agents = circus.actors["field_agents"]
 
-    mobility_action = circus.create_action(
+    mobility_action = circus.create_story(
         name="field_agent_mobility",
 
         initiating_actor=field_agents,
@@ -117,15 +117,15 @@ def add_survey_action(circus):
                                                seed=next(circus.seeder))
 
     min_activity = survey_timer_gen.activity(
-        n_actions=10, per=pd.Timedelta("7 days"),)
+        n=10, per=pd.Timedelta("7 days"),)
     max_activity = survey_timer_gen.activity(
-        n_actions=100, per=pd.Timedelta("7 days"),)
+        n=100, per=pd.Timedelta("7 days"),)
 
     survey_activity_gen = NumpyRandomGenerator(
         method="choice", a=np.arange(min_activity, max_activity),
         seed=next(circus.seeder))
 
-    survey_action = circus.create_action(
+    survey_action = circus.create_story(
         name="pos_surveys",
         initiating_actor=field_agents,
         actorid_field="FA_ID",

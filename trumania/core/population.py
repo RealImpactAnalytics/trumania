@@ -266,21 +266,21 @@ class Population(object):
                 self.id_field = id_field
                 self.select_dict = select_dict
 
-            def build_output(self, action_data):
-                if action_data.shape[0] == 0:
+            def build_output(self, story_data):
+                if story_data.shape[0] == 0:
                     return pd.DataFrame(columns=self.select_dict.values())
-                elif is_sequence(action_data.iloc[0][self.id_field]):
-                    return self._lookup_by_sequences(action_data)
+                elif is_sequence(story_data.iloc[0][self.id_field]):
+                    return self._lookup_by_sequences(story_data)
                 else:
-                    return self._lookup_by_scalars(action_data)
+                    return self._lookup_by_scalars(story_data)
 
-            def _lookup_by_scalars(self, action_data):
+            def _lookup_by_scalars(self, story_data):
                 """
                 looking up, after we know the ids are not sequences of ids
                 """
 
-                output = action_data[[self.id_field]]
-                members_ids = action_data[self.id_field].unique()
+                output = story_data[[self.id_field]]
+                members_ids = story_data[self.id_field].unique()
 
                 for attribute, named_as in self.select_dict.items():
                     vals = pd.DataFrame(
@@ -298,16 +298,16 @@ class Population(object):
                 output.drop(self.id_field, axis=1, inplace=True)
                 return output
 
-            def _lookup_by_sequences(self, action_data):
+            def _lookup_by_sequences(self, story_data):
 
                 # pd.Series containing seq of ids to lookup
-                id_lists = action_data[self.id_field]
+                id_lists = story_data[self.id_field]
 
                 # unique member ids of the attribute to look up
                 member_ids = np.unique(
                     functools.reduce(lambda l1, l2: l1 + l2, id_lists))
 
-                output = pd.DataFrame(index=action_data.index)
+                output = pd.DataFrame(index=story_data.index)
                 for attribute, named_as in self.select_dict.items():
                     vals = self.population.get_attribute_values(attribute, member_ids)
 
@@ -327,7 +327,7 @@ class Population(object):
             Looks up some attribute values by joining on the specified field
             of the current data
 
-            :param id_field: field name in the action_data.
+            :param id_field: field name in the story_data.
               If the that column contains lists, then it's assumed to contain
               only list and it's flatten to obtain the list of id to lookup
               in the attribute. Must be a list of "scalar" values or list of
@@ -346,11 +346,11 @@ class Population(object):
                 self.id_field = id_field
                 self.copy_attribute_from_fields = copy_attributes_from_fields
 
-            def side_effect(self, action_data):
+            def side_effect(self, story_data):
                 update_df = pd.DataFrame(
-                    {attribute: action_data[field].values
+                    {attribute: story_data[field].values
                      for attribute, field in self.copy_attribute_from_fields.items()},
-                    index=action_data[self.id_field]
+                    index=story_data[self.id_field]
                 )
                 self.population.update(update_df)
 
@@ -359,12 +359,12 @@ class Population(object):
 
             Adds or update members and their attributes.
 
-            Note that the index of action_data, i.e. the ids of the _triggering_
+            Note that the index of story_data, i.e. the ids of the _triggering_
             members, is irrelevant during this operation.
 
             :param id_field: ids of the updated or created members
             :param copy_attributes_from_fields: dictionary of
-                (attribute name -> action data field name)
+                (attribute name -> story data field name)
              that describes which column in the population dataframe to use
                to update which attribute.
             :return:
@@ -376,13 +376,13 @@ class Population(object):
         def select_one(self, named_as):
             """
 
-            Appends a field column to the action_action containing member ids
+            Appends a field column to the story_data containing member ids
             taken at random among the ids of this population.
 
             This is similar to relationship_select_one(), except that no
             particular relation is required, we just sample one id randomly
 
-            :param named_as: the name of the field added to the action_data
+            :param named_as: the name of the field added to the story_data
             """
 
             gen = random_generators.NumpyRandomGenerator(

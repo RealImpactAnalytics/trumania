@@ -2,7 +2,6 @@ from scipy import stats
 from abc import ABCMeta, abstractmethod
 import pandas as pd
 import numpy as np
-
 from trumania.core.util_functions import merge_dicts, df_concat
 import functools
 
@@ -13,27 +12,27 @@ class Operation(object):
         produce logs.
     """
 
-    def transform(self, action_data):
+    def transform(self, story_data):
         """
-        :param action_data: dataframe as produced by the previous operation
+        :param story_data: dataframe as produced by the previous operation
         :return: a dataframe that replaces the previous one in the pipeline
         """
 
-        return action_data
+        return story_data
 
-    def emit_logs(self, action_data):
+    def emit_logs(self, story_data):
         """
         This method is used to produces logs (e.g. CDRs, mobility, topus...)
 
-        :param action_data: output of this operation, as produced by transform()
+        :param story_data: output of this operation, as produced by transform()
         :return: emitted logs, as a dictionary of {"log_id": some_data_frame}
         """
 
         return {}
 
-    def __call__(self, action_data):
+    def __call__(self, story_data):
 
-        output = self.transform(action_data)
+        output = self.transform(story_data)
         logs = self.emit_logs(output)
 
         return output, logs
@@ -54,22 +53,22 @@ class Chain(Operation):
         self.operations += list(operations)
 
     @staticmethod
-    def _execute_operation(action_data__prev_logs, operation):
+    def _execute_operation(story_data__prev_logs, operation):
         """
 
         executes this operation and merges its logs with the previous one
         :param operation: the operation to call
-        :return: the merged action data and logs
+        :return: the merged story data and logs
         """
 
-        (action_data, prev_logs) = action_data__prev_logs
+        (story_data, prev_logs) = story_data__prev_logs
 
-        output, supp_logs = operation(action_data)
-        # merging the logs of each operation of this action.
+        output, supp_logs = operation(story_data)
+        # merging the logs of each operation of this story.
         return output, merge_dicts([prev_logs, supp_logs], df_concat)
 
-    def __call__(self, action_data):
-        init = [(action_data, {})]
+    def __call__(self, story_data):
+        init = [(story_data, {})]
         return functools.reduce(self._execute_operation, init + self.operations)
 
 
@@ -83,11 +82,11 @@ class FieldLogger(Operation):
         """
         :param log_id: the id of the logs in the dictionary of logs returned
         by the Circus, at the end of the simulation
-        :param cols: sub-sets of fields from the action data that will be
+        :param cols: sub-sets of fields from the story data that will be
         selected in order to build the logs
         :param exploded_cols: name of one or several columns containing list of
-        values. If provided, we explode the action_data dataframe and log one per value
-        in that list (which is more that one line per row in action_data).
+        values. If provided, we explode the story_data dataframe and log one per value
+        in that list (which is more that one line per row in story_data).
         In each row, all lists must have the same length
         """
         self.log_id = log_id
@@ -104,7 +103,7 @@ class FieldLogger(Operation):
 
         self.cols += self.exploded_cols
 
-    def emit_logs(self, action_data):
+    def emit_logs(self, story_data):
 
         # explode lists, cf constructor documentation
         if self.exploded_cols:
@@ -119,10 +118,10 @@ class FieldLogger(Operation):
                 return df2
 
             logged_data = pd.concat(explo(row)
-                                    for _, row in action_data.iterrows())
+                                    for _, row in story_data.iterrows())
 
         else:
-            logged_data = action_data
+            logged_data = story_data
 
         if not self.cols:
             return {self.log_id: logged_data}
@@ -137,14 +136,14 @@ class SideEffectOnly(Operation):
     """
     __metaclass__ = ABCMeta
 
-    def transform(self, action_data):
-        self.side_effect(action_data)
-        return action_data
+    def transform(self, story_data):
+        self.side_effect(story_data)
+        return story_data
 
     @abstractmethod
-    def side_effect(self, action_data):
+    def side_effect(self, story_data):
         """
-        :param action_data:
+        :param story_data:
         :return: nothing
         """
         pass
@@ -161,33 +160,34 @@ class AddColumns(Operation):
         self.join_kind = join_kind
 
     @abstractmethod
-    def build_output(self, action_data):
+    def build_output(self, story_data):
         """
         Produces a dataframe with one or several columns and an index aligned
         with the one of input. The columns of this will be merge with input.
 
-        :param action_data: current dataframe
+        :param story_data: current dataframe
         :return: the column(s) to append to it, as a dataframe
         """
         pass
 
-    def transform(self, action_data):
-        output = self.build_output(action_data)
-        return pd.merge(left=action_data, right=output,
+    def transform(self, story_data):
+        output = self.build_output(story_data)
+#        logging.info("  adding column(s) {}".format(output.columns.tolist()))
+        return pd.merge(left=story_data, right=output,
                         left_index=True, right_index=True,
                         how=self.join_kind)
 
 
 class DropRow(Operation):
     """
-    Discards any row in the action data where the condition field is false.
+    Discards any row in the story data where the condition field is false.
     """
 
     def __init__(self, condition_field):
         self.condition_field = condition_field
 
-    def transform(self, action_data):
-        return action_data[~action_data[self.condition_field]]
+    def transform(self, story_data):
+        return story_data[~story_data[self.condition_field]]
 
 
 class Apply(AddColumns):
@@ -202,8 +202,8 @@ class Apply(AddColumns):
 
     def __init__(self, source_fields, named_as, f, f_args="dataframe"):
         """
-        :param source_fields: input field from the action data
-        :param named_as: name of the resulting fields added to the action data
+        :param source_fields: input field from the story data
+        :param named_as: name of the resulting fields added to the story data
         :param f: transforming function
         :param f_args: "dataframe" or "columns", depending on the signature
             of f:
@@ -237,15 +237,15 @@ class Apply(AddColumns):
 
         self.f_input = f_args
 
-    def build_output(self, action_data):
+    def build_output(self, story_data):
         if self.f_input == "dataframe":
-            result = self.f(action_data[self.source_fields])
+            result = self.f(story_data[self.source_fields])
             renamed = result.rename(
                 columns=dict(zip(result.columns, self.named_as)))
 
             return renamed
         else:
-            cols = [action_data[c] for c in self.source_fields]
+            cols = [story_data[c] for c in self.source_fields]
             result = pd.DataFrame({self.named_as[0]: self.f(*cols)})
             return result
 
@@ -253,7 +253,7 @@ class Apply(AddColumns):
 #####################
 # Collection of functions directly usable in Apply
 
-def copy_if(action_data):
+def copy_if(story_data):
     """
     Copies values from the source to the "named_as" if the condition is True,
     otherwise inserts NA
@@ -265,8 +265,8 @@ def copy_if(action_data):
               f=copy_if)
     """
 
-    condition_field, source_field = action_data.columns
-    copied = action_data.where(action_data[condition_field])[[source_field]]
+    condition_field, source_field = story_data.columns
+    copied = story_data.where(story_data[condition_field])[[source_field]]
     return copied.rename(columns={source_field: "result"})
 
 
@@ -324,7 +324,7 @@ def bounded_sigmoid(x_min, x_max, shape, incrementing=True):
 
     This is preferable to the logistic function for cases where we want to
     make sure that the curve actually reaches 0 and 1 at some point (e.g.
-    probability of triggering an "restock" action must be 1 if stock is as
+    probability of triggering an "restock" story must be 1 if stock is as
     low as 1).
 
     See /tests/notebooks/bounded_sigmoid.ipynb for examples

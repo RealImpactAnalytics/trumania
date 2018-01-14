@@ -17,12 +17,12 @@ def test_apply_should_delegate_to_single_col_dataframe_function_correctly():
                               named_as="r",
                               f=f, f_args="dataframe")
 
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
 
-    result = tested.build_output(action_data)
+    result = tested.build_output(story_data)
 
-    assert result["r"].equals(action_data["A"] + action_data["D"] - action_data[
+    assert result["r"].equals(story_data["A"] + story_data["D"] - story_data[
         "C"])
 
 
@@ -40,19 +40,19 @@ def test_apply_should_delegate_to_multi_col_dataframe_function_correctly():
                               named_as=["op1", "op2", "op3"],
                               f=f, f_args="dataframe")
 
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
 
-    result = tested.transform(action_data)
+    result = tested.transform(story_data)
     assert result.columns.tolist() == ["A", "B", "C", "D", "E", "op1", "op2",
                                        "op3"]
 
     assert result["op1"].equals(
-        action_data["A"] + action_data["D"] - action_data["C"])
+        story_data["A"] + story_data["D"] - story_data["C"])
     assert result["op2"].equals(
-        action_data["A"] + action_data["C"])
+        story_data["A"] + story_data["C"])
     assert result["op3"].equals(
-        action_data["A"] * action_data["C"])
+        story_data["A"] * story_data["C"])
 
 
 def test_apply_should_delegate_to_columns_function_correctly():
@@ -68,13 +68,13 @@ def test_apply_should_delegate_to_columns_function_correctly():
                               named_as="r",
                               f=f, f_args="series")
 
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
 
-    result = tested.build_output(action_data)
+    result = tested.build_output(story_data)
 
     assert result["r"].equals(
-        action_data["A"] + action_data["D"] - action_data["C"])
+        story_data["A"] + story_data["D"] - story_data["C"])
 
 
 def test_one_execution_should_merge_empty_data_correctly():
@@ -137,7 +137,7 @@ def test_chain_of_3_operation_should_return_merged_logs():
     chain = operations.Chain(op1, op2, op3)
 
     prev_data = pd.DataFrame(columns=[])
-    action_data, all_logs = chain(prev_data)
+    story_data, all_logs = chain(prev_data)
 
     assert set(all_logs.keys()) == {"cdrs1", "cdrs2", "cdrs3"}
     assert all_logs["cdrs1"].equals(cdrs1)
@@ -151,14 +151,14 @@ def test_drop_when_condition_is_all_false_should_have_no_impact():
     cdrs["all_nos"] = False
 
     rem = operations.DropRow(condition_field="all_nos")
-    action_data, all_logs = rem(cdrs)
+    story_data, all_logs = rem(cdrs)
 
     # all rows should still be there
-    assert action_data.shape == (12, 4)
-    assert action_data.columns.tolist() == ["A", "B", "duration", "all_nos"]
-    assert action_data["A"].equals(cdrs["A"])
-    assert action_data["B"].equals(cdrs["B"])
-    assert action_data["duration"].equals(cdrs["duration"])
+    assert story_data.shape == (12, 4)
+    assert story_data.columns.tolist() == ["A", "B", "duration", "all_nos"]
+    assert story_data["A"].equals(cdrs["A"])
+    assert story_data["B"].equals(cdrs["B"])
+    assert story_data["duration"].equals(cdrs["duration"])
 
 
 def test_drop_when_condition_is_all_true_should_remove_everything():
@@ -167,14 +167,14 @@ def test_drop_when_condition_is_all_true_should_remove_everything():
     cdrs["all_yes"] = True
 
     rem = operations.DropRow(condition_field="all_yes")
-    action_data, all_logs = rem(cdrs)
+    story_data, all_logs = rem(cdrs)
 
     # all rows should still be there
-    assert action_data.shape == (0, 4)
-    assert action_data.columns.tolist() == ["A", "B", "duration", "all_yes"]
-    assert action_data["A"].equals(pd.Series())
-    assert action_data["B"].equals(pd.Series())
-    assert action_data["duration"].equals(pd.Series())
+    assert story_data.shape == (0, 4)
+    assert story_data.columns.tolist() == ["A", "B", "duration", "all_yes"]
+    assert story_data["A"].equals(pd.Series())
+    assert story_data["B"].equals(pd.Series())
+    assert story_data["duration"].equals(pd.Series())
 
 
 def test_drop_should_remove_the_rows_where_condition_is_true_():
@@ -183,16 +183,16 @@ def test_drop_should_remove_the_rows_where_condition_is_true_():
     cdrs["cond"] = ([True] * 3 + [False] * 3) * 2
 
     rem = operations.DropRow(condition_field="cond")
-    action_data, all_logs = rem(cdrs)
+    story_data, all_logs = rem(cdrs)
 
     kept_index = ["ix_03", "ix_04", "ix_05", "ix_09", "ix_10", "ix_11"]
 
     # 6 rows should have been removed
-    assert action_data.shape == (6, 4)
-    assert action_data.columns.tolist() == ["A", "B", "duration", "cond"]
-    assert action_data["A"].equals(cdrs.loc[kept_index]["A"])
-    assert action_data["B"].equals(cdrs.loc[kept_index]["B"])
-    assert action_data["duration"].equals(cdrs.loc[kept_index]["duration"])
+    assert story_data.shape == (6, 4)
+    assert story_data.columns.tolist() == ["A", "B", "duration", "cond"]
+    assert story_data["A"].equals(cdrs.loc[kept_index]["A"])
+    assert story_data["B"].equals(cdrs.loc[kept_index]["B"])
+    assert story_data["duration"].equals(cdrs.loc[kept_index]["duration"])
 
 
 def test_increasing_bounded_sigmoid_must_reach_min_and_max_at_boundaries():

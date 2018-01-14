@@ -23,12 +23,12 @@ def step1():
         name="person", size=1000,
         ids_gen=SequencialGenerator(prefix="PERSON_"))
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )
@@ -65,12 +65,12 @@ def step2():
         init_gen=FakerGenerator(method="name",
                                 seed=next(example1.seeder)))
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )
@@ -112,12 +112,12 @@ def step3():
         init_gen=FakerGenerator(method="name",
                                 seed=next(example1.seeder)))
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )
@@ -185,12 +185,12 @@ def step4():
             .add_relations(from_ids=person.ids,
                            to_ids=random_site_gen.generate(person.size))
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )
@@ -265,12 +265,12 @@ def step5():
                            to_ids=random_site_gen.generate(person.size),
                            weights=0.1)
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )
@@ -368,14 +368,14 @@ def step6():
         from_ids=friends_df["A"],
         to_ids=friends_df["B"])
 
-    # ACTION ------------------
+    # STORIES ------------------
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )
@@ -489,23 +489,23 @@ def step7():
 
     # PRICE ------------------
 
-    def price(action_data):
+    def price(story_data):
 
-        result = pd.DataFrame(index=action_data.index)
+        result = pd.DataFrame(index=story_data.index)
 
-        result["PRICE"] = action_data["DURATION"] * 0.05
+        result["PRICE"] = story_data["DURATION"] * 0.05
         result["CURRENCY"] = "EUR"
 
         return result
 
-    # ACTION ------------------
+    # STORIES ------------------
 
-    hello_world = example1.create_action(
+    hello_world = example1.create_story(
         name="hello_world",
         initiating_population=person,
         member_id_field="PERSON_ID",
 
-        # after each action, reset the timer to 0, so that it will get
+        # after each story, reset the timer to 0, so that it will get
         # executed again at the next clock tick (next hour)
         timer_gen=ConstantDependentGenerator(value=0)
     )

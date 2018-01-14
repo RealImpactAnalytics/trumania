@@ -40,7 +40,7 @@ def create_circus_with_population():
 
 example = create_circus_with_population()
 
-hello_world = example.create_action(
+hello_world = example.create_story(
     name="hello_world",
     initiating_population=example.populations["person"],
     member_id_field="PERSON_ID",
