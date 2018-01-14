@@ -2,8 +2,6 @@ from scipy import stats
 from abc import ABCMeta, abstractmethod
 import pandas as pd
 import numpy as np
-import logging
-
 from trumania.core.util_functions import merge_dicts, df_concat
 import functools
 

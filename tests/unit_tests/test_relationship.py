@@ -167,7 +167,6 @@ def test_select_one_nonexistingids_should_insert_none_if_keep_missing():
     assert result_s["to"].tolist() == ["a1", "a1", None, "c1", None, ]
 
 
-
 def test_select_one_from_all_ids_should_return_one_line_per_id():
     tested = Relationship(seed=1)
     tested.add_relations(from_ids=["a", "b", "b", "c"],
@@ -664,13 +663,12 @@ def test_select_many_operation_should_join_subsets_of_relationships():
 
 def test_add_grouped():
     story_data = pd.DataFrame({"boxes": ["b1", "b2"],
-                                "fruits": [["f11", "f12", "f13", "f14"],
-                                           ["f21", "f22", "f23", "f24"]],
+                               "fruits": [["f11", "f12", "f13", "f14"],
+                                          ["f21", "f22", "f23", "f24"]],
 
-                                })
+                               })
 
     rel = Relationship(seed=1)
-
     ag = rel.ops.add_grouped(from_field="boxes", grouped_items_field="fruits")
 
     ag(story_data)

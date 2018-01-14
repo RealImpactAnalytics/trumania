@@ -31,8 +31,12 @@ class Relations(object):
         self.weights = np.array(weights)
         self.weights_normed = self.weights / self.weights.sum()
 
-    def size(self):
+    def __len__(self):
         return self.to_ids.shape[0]
+
+    def __repr__(self):
+        return """to_ids: {},\nweights:{},\nweights_normed:{}""".format(
+            self.to_ids, self.weights, self.weights_normed)
 
     @staticmethod
     def from_tuples(from_ids, to_ids, weights):
@@ -138,10 +142,6 @@ class Relations(object):
         self.weights_normed = np.delete(self.weights_normed, removed_indices)
         self.weights_normed = self.weights / self.weights.sum()
 
-    def __repr__(self):
-        return """to_ids: {},\nweights:{},\nweights_normed:{}""".format(
-            self.to_ids, self.weights, self.weights_normed)
-
 
 class Relationship(object):
     def __init__(self, seed):
@@ -224,7 +224,7 @@ class Relationship(object):
 
         def size(from_id):
             if from_id in self.grouped:
-                return self.grouped[from_id].size()
+                return len(self.grouped[from_id])
             else:
                 return 0
 
@@ -327,7 +327,7 @@ class Relationship(object):
                 group = self.grouped[from_id]
                 removed_idx = g.get_group(from_id)["idx"]
                 group.remove_inplace(removed_idx)
-                if group.size() == 0:
+                if len(group) == 0:
                     del self.grouped[from_id]
 
         output.drop(["idx"], axis=1, inplace=True)
@@ -385,7 +385,7 @@ class Relationship(object):
 
                     relations = self.grouped[from_id]
                     quantities = utils.cap_to_total(row["quantities"],
-                                                    relations.size())
+                                                    len(relations))
 
                     # rel_idx is the index of the picked values within the grouped values (i.e. for one from_id)
                     rel_idx, rel_tos = relations.pick_many(self.state,
@@ -431,7 +431,7 @@ class Relationship(object):
                     group = self.grouped[from_id]
                     removed_idx = g.get_group(from_id)["rel_idx"].values[0]
                     group.remove_inplace(removed_idx)
-                    if group.size() == 0:
+                    if len(group) == 0:
                         del self.grouped[from_id]
 
         else:
@@ -465,9 +465,6 @@ class Relationship(object):
         logging.info("saving relationship to {}".format(file_path))
 
         # creating a vertical dataframe to store the inner table
-
-        print (self.get_relations())
-
         saved_df = pd.DataFrame(self.get_relations().stack(), columns=["value"])
 
         # we also want to save the seed => added an index level to separate
@@ -475,8 +472,6 @@ class Relationship(object):
         saved_df["param"] = "relations"
         saved_df = saved_df.set_index("param", append=True)
         saved_df.index = saved_df.index.reorder_levels([2, 0, 1])
-
-        print (saved_df.head())
 
         # then finally added the seed
         saved_df.loc[("seed", 0, 0)] = self.seed

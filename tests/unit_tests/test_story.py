@@ -27,7 +27,7 @@ def test_empty_story_should_do_nothing_and_not_crash():
 
 def test_all_populations_should_be_inactive_when_timers_are_positive():
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=population.ids)
@@ -48,7 +48,7 @@ def test_all_populations_should_be_inactive_when_timers_are_positive():
 
 def test_active_inactive_ids_should_mark_timer_0_as_active():
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([0] * 5 + [1] * 5, index=population.ids)
@@ -68,7 +68,7 @@ def test_active_inactive_ids_should_mark_timer_0_as_active():
 
 def test_active_inactive_ids_should_mark_all_populations_active_when_all_timers_0():
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([0] * 10, index=population.ids)
@@ -89,10 +89,9 @@ def test_active_inactive_ids_should_mark_all_populations_active_when_all_timers_
 def test_get_activity_should_be_default_by_default():
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
-    story = Story(name="tested",
-                   initiating_population=population,
-                   member_id_field="")
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+    story = Story(name="tested", initiating_population=population,
+                  member_id_field="")
 
     # by default, each population should be in the default state with activity 1
     assert [1.] * 10 == story.get_param("activity", population.ids).tolist()
@@ -102,7 +101,7 @@ def test_get_activity_should_be_default_by_default():
 def test_populations_with_zero_activity_should_never_have_positive_timer():
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     story = Story(
         name="tested",
@@ -128,11 +127,10 @@ def test_get_activity_should_be_aligned_for_each_state():
     back_to_normal_prob = ConstantGenerator(value=.3)
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
-    story = Story(name="tested",
-                   initiating_population=population,
-                   member_id_field="",
-                   states={
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+    story = Story(name="tested", initiating_population=population,
+                  member_id_field="",
+                  states={
                              "excited": {
                                  "activity": excited_call_activity,
                                  "back_to_default_probability":
@@ -142,27 +140,27 @@ def test_get_activity_should_be_aligned_for_each_state():
     # by default, each population should be in the default state with activity 1
     assert [1] * 10 == story.get_param("activity", population.ids).tolist()
     assert [1] * 10 == story.get_param("back_to_default_probability",
-                                        population.ids).tolist()
+                                       population.ids).tolist()
     assert sorted(story.get_possible_states()) == ["default", "excited"]
 
     story.transit_to_state(["ac_2", "ac_5", "ac_9"],
-                            ["excited", "excited", "excited"])
+                           ["excited", "excited", "excited"])
 
     # activity and probability of getting back to normal should now be updated
     expected_activity = [1, 1, 10, 1, 1, 10, 1, 1, 1, 10]
     assert expected_activity == story.get_param("activity",
-                                                 population.ids).tolist()
+                                                population.ids).tolist()
 
     # also, doing a get_param for some specific population ids should return the
     # correct values (was buggy if we requested sth else than the whole list)
     assert expected_activity[2:7] == story.get_param("activity",
-                                                      population.ids[2:7]).tolist()
+                                                     population.ids[2:7]).tolist()
 
     assert [1, 10] == story.get_param("activity", population.ids[-2:]).tolist()
 
     expected_probs = [1, 1, .3, 1, 1, .3, 1, 1, 1, .3]
     assert expected_probs == story.get_param("back_to_default_probability",
-                                              population.ids, ).tolist()
+                                             population.ids, ).tolist()
 
 
 def test_scenario_transiting_to_state_with_0_back_to_default_prob_should_remain_there():
@@ -173,7 +171,7 @@ def test_scenario_transiting_to_state_with_0_back_to_default_prob_should_remain_
     """
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # here we are saying that some story on populations 5 to 9 is triggering a
     # state change on populations 0 to 4
@@ -209,7 +207,7 @@ def test_scenario_transiting_to_state_with_0_back_to_default_prob_should_remain_
 
         # forcing a transition to "excited" state of the 5 populations
         story.ops.transit_to_state(member_id_field="active_ids",
-                                    state_field="new_state")
+                                   state_field="new_state")
     )
 
     # before any execution, the state should be default for all
@@ -235,7 +233,7 @@ def test_scenario_transiting_to_state_with_1_back_to_default_prob_should_go_back
     """
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # this one is slightly tricky: populations
     active_ids_gens = ConstantsMockGenerator(
@@ -270,7 +268,7 @@ def test_scenario_transiting_to_state_with_1_back_to_default_prob_should_go_back
 
         # forcing a transition to "excited" state of the 5 populations
         story.ops.transit_to_state(member_id_field="active_ids",
-                                    state_field="new_state")
+                                   state_field="new_state")
     )
 
     # before any execution, the state should be default for all
@@ -293,7 +291,7 @@ def test_story_autoreset_true_not_dropping_rows_should_reset_all_timers():
     #  - all non executed rows should have gone down one tick
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=population.ids)
@@ -335,7 +333,7 @@ def test_story_autoreset_true_and_dropping_rows_should_reset_all_timers():
     #  - all non executed rows should have gone down one tick
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=population.ids)
@@ -376,7 +374,7 @@ def test_story_autoreset_false_not_dropping_rows_should_reset_all_timers():
     #  - all non executed rows should have gone down one tick
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=population.ids)
@@ -434,7 +432,7 @@ def test_story_autoreset_false_and_dropping_rows_should_reset_all_timers():
     #  - all non executed rows should have gone down one tick
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=population.ids)
@@ -498,7 +496,7 @@ def test_bugfix_collisions_force_act_next():
     # not cancel the retry.
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [1] * 5, index=population.ids)
@@ -546,7 +544,7 @@ def test_bugfix_collisions_force_act_next():
 def test_bugfix_force_populations_should_only_act_once():
 
     population = Population(circus=None, size=10,
-                       ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
+                            ids_gen=SequencialGenerator(prefix="ac_", max_length=1))
 
     # 5 populations should trigger in 2 ticks, and 5 more
     init_timers = pd.Series([2] * 5 + [5] * 5, index=population.ids)
