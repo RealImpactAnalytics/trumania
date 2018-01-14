@@ -317,10 +317,10 @@ def test_select_one_to_one_should_not_return_duplicates_1():
 
     op = four_to_one.ops.select_one(from_field="A", named_as="B",
                                     one_to_one=True)
-    action_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
-    action_data = action_data.set_index("A", drop=False)
+    story_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
+    story_data = story_data.set_index("A", drop=False)
 
-    output, logs = op(action_data)
+    output, logs = op(story_data)
 
     assert {} == logs
     assert sorted(output["B"].unique()) == sorted(output["B"])
@@ -332,10 +332,10 @@ def test_select_one_to_one_should_not_return_duplicates_1():
 def test_select_one_to_one_should_not_return_duplicates_2():
 
     op = four_to_two.ops.select_one("A", "B", one_to_one=True)
-    action_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
-    action_data = action_data.set_index("A", drop=False)
+    story_data = pd.DataFrame({"A": ["a", "b", "c", "d"]})
+    story_data = story_data.set_index("A", drop=False)
 
-    output, logs = op(action_data)
+    output, logs = op(story_data)
 
     assert {} == logs
     assert sorted(output["B"].unique()) == sorted(output["B"])
@@ -366,14 +366,14 @@ def test_select_one_from_many_times_same_id_should_yield_different_results():
 
     # Many customer selected the same dealer and want to get a sim from them.
     # We expect each of the 2 selected dealer to sell a different SIM to each
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         {
             "DEALER": ["a", "a", "b", "a", "b", "a", "b", "a", "a", "a"],
         },
         index=build_ids(size=10, prefix="c", max_length=2)
     )
 
-    result, logs = op(action_data)
+    result, logs = op(story_data)
     logging.info("selected")
 
     assert {} == logs
@@ -433,9 +433,9 @@ def test_select_all_operation():
 
     op = two_per_from.ops.select_all(from_field="A", named_as="CELLS")
 
-    action_data = pd.DataFrame({"A": ["a", "d"]})
-    action_data = action_data.set_index("A", drop=False)
-    output, logs = op(action_data)
+    story_data = pd.DataFrame({"A": ["a", "d"]})
+    story_data = story_data.set_index("A", drop=False)
+    output, logs = op(story_data)
 
     # the transformer should have added the "CELL" column to the df
     assert output.columns.values.tolist() == ["A", "CELLS"]
@@ -451,12 +451,12 @@ def test_select_all_operation():
 
 def test_select_many_should_return_subsets_of_relationships():
 
-    action_data_index = build_ids(5, prefix="cl_", max_length=1)
+    story_data_index = build_ids(5, prefix="cl_", max_length=1)
 
     # cheating with the seed for the second part of the test
     four_to_plenty.state = np.random.RandomState(18)
     selection = four_to_plenty.select_many(
-        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=story_data_index),
         named_as="selected_sets",
 
         # On purpose requesting non-integer quantities => these should be
@@ -468,7 +468,7 @@ def test_select_many_should_return_subsets_of_relationships():
 
     # this index is expected among other things since it allows a direct
     # merge into the initial request
-    assert sorted(selection.index.tolist()) == action_data_index
+    assert sorted(selection.index.tolist()) == story_data_index
     assert selection.columns.tolist() == ["selected_sets"]
 
     # no capping should have occured: four_to_plenty has largely enough
@@ -482,7 +482,7 @@ def test_select_many_should_return_subsets_of_relationships():
     # remove_selected is False and the relationship is seeded
     four_to_plenty.state = np.random.RandomState(18)
     selection_again = four_to_plenty.select_many(
-        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=story_data_index),
         named_as="selected_sets",
         quantities=[4, 5, 6, 7, 8],
         remove_selected=False,
@@ -495,7 +495,7 @@ def test_select_many_should_return_subsets_of_relationships():
 
 def test_select_many_with_drop_should_remove_elements():
 
-    action_data_index = build_ids(5, prefix="cl_", max_length=1)
+    story_data_index = build_ids(5, prefix="cl_", max_length=1)
 
     # makes a copy since we're going to drop some elements
     four_to_plenty_copy = Relationship(seed=1)
@@ -505,7 +505,7 @@ def test_select_many_with_drop_should_remove_elements():
             to_ids=["a_%d" % i, "b_%d" % i, "c_%d" % i, "d_%d" % i])
 
     selection = four_to_plenty.select_many(
-        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=action_data_index),
+        from_ids=pd.Series(["a", "b", "c", "b", "a"], index=story_data_index),
         named_as="selected_sets",
         quantities=[4, 5, 6, 7, 8],
         remove_selected=True,
@@ -614,7 +614,7 @@ def test_select_many_several_times_with_pop_should_empty_all_data():
 def test_select_many_operation_should_join_subsets_of_relationships():
     # same test as above, but from the operation
 
-    action_data = pd.DataFrame({
+    story_data = pd.DataFrame({
             "let": ["a", "b", "c", "b", "a"],
             "how_many": [4, 5, 6, 7, 8]
         },
@@ -629,11 +629,11 @@ def test_select_many_operation_should_join_subsets_of_relationships():
         discard_missing=False,
     )
 
-    selection, logs = select_op(action_data)
+    selection, logs = select_op(story_data)
 
     # this index is expected among other things since it allows a direct
     # merge into the initial request
-    assert selection.sort_index().index.equals(action_data.sort_index().index)
+    assert selection.sort_index().index.equals(story_data.sort_index().index)
 
     assert selection.columns.tolist() == ["how_many", "let", "found"]
 
@@ -663,7 +663,7 @@ def test_select_many_operation_should_join_subsets_of_relationships():
 
 
 def test_add_grouped():
-    action_data = pd.DataFrame({"boxes": ["b1", "b2"],
+    story_data = pd.DataFrame({"boxes": ["b1", "b2"],
                                 "fruits": [["f11", "f12", "f13", "f14"],
                                            ["f21", "f22", "f23", "f24"]],
 
@@ -673,7 +673,7 @@ def test_add_grouped():
 
     ag = rel.ops.add_grouped(from_field="boxes", grouped_items_field="fruits")
 
-    ag(action_data)
+    ag(story_data)
 
     # we should have 4 relationships from b1 and from b2
     assert rel.get_relations(from_ids=["b1"])["from"].tolist() == [

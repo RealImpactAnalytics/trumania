@@ -281,7 +281,7 @@ class Relationship(object):
             _from_ids = from_ids
 
         def _results():
-            # req_index is the technical index of the table built by the Action,
+            # req_index is the technical index of the table built by the Story,
             # => must be respect to join correctly the result of the select_one
             for req_index, from_id in zip(_from_ids.index, _from_ids):
                 if from_id in self.grouped:
@@ -514,9 +514,9 @@ class Relationship(object):
                 self.from_field = from_field
                 self.named_as = named_as
 
-            def build_output(self, action_data):
+            def build_output(self, story_data):
 
-                requested_froms = action_data[self.from_field]
+                requested_froms = story_data[self.from_field]
                 sizes = self.relationship.get_neighbourhood_size(
                     from_ids=requested_froms)
 
@@ -546,10 +546,9 @@ class Relationship(object):
                 self.discard_missing = discard_missing
                 self.weight = weight
 
-            # def transform(self, action_data):
-            def build_output(self, action_data):
+            def build_output(self, story_data):
                 selected = self.relationship.select_one(
-                    from_ids=action_data[self.from_field],
+                    from_ids=story_data[self.from_field],
                     named_as=self.named_as,
                     remove_selected=self.pop,
                     one_to_one=self.one_to_one,
@@ -575,7 +574,7 @@ class Relationship(object):
 
             :param discard_empty: if False, any non-existing "from" in the
                 relationship yields a None in the resulting selection. If
-                true, that row is removed from the action_data.
+                true, that row is removed from the story_data.
 
             :param weight: weight to use for the "to" side of the
                 relationship. Must be a Series whose index are the "to" values.
@@ -594,20 +593,20 @@ class Relationship(object):
                 self.from_field = from_field
                 self.named_as = named_as
 
-            def transform(self, action_data):
+            def transform(self, story_data):
 
-                from_ids = action_data[[self.from_field]].drop_duplicates()
+                from_ids = story_data[[self.from_field]].drop_duplicates()
                 selected = self.relationship.select_all_horizontal(
                     from_ids=from_ids[self.from_field].values,
                     named_as=self.named_as)
 
                 selected.set_index("from", drop=True, inplace=True)
-                return pd.merge(left=action_data, right=selected,
+                return pd.merge(left=story_data, right=selected,
                                 left_on=self.from_field, right_index=True)
 
         def select_all(self, from_field, named_as):
             """
-            This simply creates a new action_data field containing all the
+            This simply creates a new story_data field containing all the
             "to" values of the requested from, as a set.
             """
             return self.SelectAll(self.relationship, from_field, named_as)
@@ -630,12 +629,11 @@ class Relationship(object):
                 self.quantity_field = quantity_field
                 self.pop = pop
 
-            # def transform(self, action_data):
-            def build_output(self, action_data):
+            def build_output(self, story_data):
                 selected = self.relationship.select_many(
-                    from_ids=action_data[self.from_field],
+                    from_ids=story_data[self.from_field],
                     named_as=self.named_as,
-                    quantities=action_data[self.quantity_field],
+                    quantities=story_data[self.quantity_field],
                     remove_selected=self.pop,
                     discard_empty=self.discard_missing)
 
@@ -652,11 +650,11 @@ class Relationship(object):
                 self.from_field = from_field
                 self.item_field = item_field
 
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
+            def side_effect(self, story_data):
+                if story_data.shape[0] > 0:
                     self.relationship.add_relations(
-                        from_ids=action_data[self.from_field],
-                        to_ids=action_data[self.item_field])
+                        from_ids=story_data[self.from_field],
+                        to_ids=story_data[self.item_field])
 
         def add(self, from_field, item_field):
             return self.Add(self.relationship, from_field, item_field)
@@ -667,12 +665,12 @@ class Relationship(object):
                 self.from_field = from_field
                 self.grouped_items_field = grouped_items_field
 
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
+            def side_effect(self, story_data):
+                if story_data.shape[0] > 0:
 
                     self.relationship.add_grouped_relations(
-                        from_ids=action_data[self.from_field],
-                        grouped_ids=action_data[self.grouped_items_field])
+                        from_ids=story_data[self.from_field],
+                        grouped_ids=story_data[self.grouped_items_field])
 
         def add_grouped(self, from_field, grouped_items_field):
             """
@@ -688,11 +686,11 @@ class Relationship(object):
                 self.from_field = from_field
                 self.item_field = item_field
 
-            def side_effect(self, action_data):
-                if action_data.shape[0] > 0:
+            def side_effect(self, story_data):
+                if story_data.shape[0] > 0:
                     self.relationship.remove(
-                        from_ids=action_data[self.from_field],
-                        to_ids=action_data[self.item_field])
+                        from_ids=story_data[self.from_field],
+                        to_ids=story_data[self.item_field])
 
         def remove(self, from_field, item_field):
             return self.Remove(self.relationship, from_field, item_field)

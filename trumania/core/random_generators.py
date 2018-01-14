@@ -118,23 +118,23 @@ class Generator(object):
                 self.named_as = named_as
                 self.quantity_field = quantity_field
 
-            def build_output(self, action_data):
+            def build_output(self, story_data):
 
                 # if quantity_field is not specified, we assume 1 and return
                 # the "bare" result (i.e. not in a list of 1 element)
                 if self.quantity_field is None:
-                    values = self.generator.generate(size=action_data.shape[0])
+                    values = self.generator.generate(size=story_data.shape[0])
 
                 # otherwise, provides a columns with list of generated values
                 else:
-                    qties = action_data[self.quantity_field]
+                    qties = story_data[self.quantity_field]
 
                     # slices groups of generated values of appropriate size
                     flat_vals = iter(self.generator.generate(size=qties.sum()))
                     values = [list(islice(flat_vals, size)) for size in qties]
 
                 return pd.DataFrame({self.named_as: values},
-                                    index=action_data.index)
+                                    index=story_data.index)
 
         def generate(self, named_as, quantity_field=None):
             return self.RandomValues(self.generator, named_as=named_as,
@@ -400,7 +400,7 @@ class MongoIdGenerator(Generator):
 class DependentGenerator(object):
     """
     Generator providing random values depending on some live observation
-    among the fields of the action or attributes of the populations.
+    among the fields of the story or attributes of the populations.
 
     This opens the door to "probability given" distributions
     """
@@ -418,8 +418,8 @@ class DependentGenerator(object):
         Generation of random values after observing the input events.
 
         :param observations: one list of "previous observations", coming from
-        upstream operation in the Action or upstream random variables in this
-        graph.
+        upstream operation in the Story upstream random variables in
+        this graph.
 
         :return: an array of generated random values
         """
@@ -442,18 +442,18 @@ class DependentGenerator(object):
                 self.named_as = named_as
                 self.observations_field = observations_field
 
-            def build_output(self, action_data):
+            def build_output(self, story_data):
                 # observing either a field or an attribute
-                obs = action_data[self.observations_field]
+                obs = story_data[self.observations_field]
                 values = self.generator.generate(observations=obs).values
                 return pd.DataFrame({self.named_as: values},
-                                    index=action_data.index)
+                                    index=story_data.index)
 
         def generate(self, named_as, observed_field):
             """
             :param named_as: the name of the supplementary field inserted in
-              the action_data
-            :param observed_field: the name of the action_data field whose
+              the story_data
+            :param observed_field: the name of the story_data field whose
               content is used as observed input by this DependentGenerator
             :return:
             """
@@ -481,7 +481,7 @@ class DependentTrigger(object):
     A trigger is a boolean Generator.
 
     A dependent trigger transforms, with the specified function, the value of
-    the depended on action field or population attribute into the [0,1] range
+    the depended on story field or population attribute into the [0,1] range
     and uses that as the probability of triggering (i.e. of returning True)
     """
 

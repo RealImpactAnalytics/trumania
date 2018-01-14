@@ -59,7 +59,7 @@ def add_quotes(the_circus):
 the_circus = create_circus_with_population()
 add_quotes(the_circus)
 
-hello_world = the_circus.create_action(
+hello_world = the_circus.create_story(
     name="hello_world",
     initiating_population=the_circus.populations["person"],
     member_id_field="PERSON_ID",

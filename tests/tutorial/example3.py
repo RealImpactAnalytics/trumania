@@ -1,7 +1,7 @@
 from trumania.core import circus
 import trumania.core.random_generators as gen
 import trumania.core.operations as ops
-import trumania.core.action as action
+import trumania.core.story as story
 import trumania.components.time_patterns.profilers as profilers
 import trumania.core.util_functions as util_functions
 
@@ -65,7 +65,7 @@ def add_listener(the_circus):
                                     seed=next(the_circus.seeder)))
 
 
-def add_listen_action(the_circus):
+def add_listen_story(the_circus):
 
     users = the_circus.populations["user"]
 
@@ -78,11 +78,11 @@ def add_listen_action(the_circus):
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
         seed=next(the_circus.seeder),
-        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
+        loc=timer_gen.activity(n=20, per=pd.Timedelta("1 day")),
         scale=5
     ).map(ops.bound_value(lb=10, ub=30))
 
-    listen = the_circus.create_action(
+    listen = the_circus.create_story(
             name="listen_events",
             initiating_population=users,
             member_id_field="UID",
@@ -115,10 +115,10 @@ def add_listen_action(the_circus):
     )
 
 
-def add_listen_and_share_actions(the_circus):
+def add_listen_and_share_stories(the_circus):
     """
-    This is essentially a copy-paste of add_listen_action, + the update for the
-    share action, in order to show the Chain re-usability clearly
+    This is essentially a copy-paste of add_listen_story, + the update for the
+    share story, in order to show the Chain re-usability clearly
     """
 
     users = the_circus.populations["user"]
@@ -132,11 +132,11 @@ def add_listen_and_share_actions(the_circus):
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
         seed=next(the_circus.seeder),
-        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
+        loc=timer_gen.activity(n=20, per=pd.Timedelta("1 day")),
         scale=5
     ).map(ops.bound_value(lb=10, ub=30))
 
-    listen = the_circus.create_action(
+    listen = the_circus.create_story(
             name="listen_events",
             initiating_population=users,
             member_id_field="UID",
@@ -145,7 +145,7 @@ def add_listen_and_share_actions(the_circus):
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    share = the_circus.create_action(
+    share = the_circus.create_story(
             name="share_events",
             initiating_population=users,
             member_id_field="UID",
@@ -251,7 +251,7 @@ def add_song_populations(the_circus):
 
         # dataframe of emtpy songs: just with one SONG_ID column for now
         song_ids = song_id_gen.generate(size=1000)
-        emtpy_songs = action.Action.init_action_data(
+        emtpy_songs = story.Story.init_story_data(
             member_id_field_name="SONG_ID",
             active_ids=song_ids
         )
@@ -275,9 +275,9 @@ def add_song_populations(the_circus):
     songs.get_attribute("duration_seconds").transform_inplace(int)
 
 
-def add_listen_and_share_actions_with_details(the_circus):
+def add_listen_and_share_stories_with_details(the_circus):
     """
-    This is again a copy-paste of add_listen_and_share_actions_with_details,
+    This is again a copy-paste of add_listen_and_share_stories_with_details,
     (hopefully this helps to illustrate the progression), here showing the
     supplementary look-up on the attributes of the songs
     """
@@ -293,11 +293,11 @@ def add_listen_and_share_actions_with_details(the_circus):
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
         seed=next(the_circus.seeder),
-        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
+        loc=timer_gen.activity(n=20, per=pd.Timedelta("1 day")),
         scale=5
     ).map(ops.bound_value(lb=10, ub=30))
 
-    listen = the_circus.create_action(
+    listen = the_circus.create_story(
             name="listen_events",
             initiating_population=users,
             member_id_field="UID",
@@ -306,7 +306,7 @@ def add_listen_and_share_actions_with_details(the_circus):
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    share = the_circus.create_action(
+    share = the_circus.create_story(
             name="share_events",
             initiating_population=users,
             member_id_field="UID",
@@ -386,7 +386,7 @@ def step2():
     add_music_repo(example3)
     add_songids_to_repos(example3)
     add_listener(example3)
-    add_listen_action(example3)
+    add_listen_story(example3)
     run(example3)
 
 
@@ -395,7 +395,7 @@ def step3():
     add_music_repo(example3)
     add_songids_to_repos(example3)
     add_listener(example3)
-    add_listen_and_share_actions(example3)
+    add_listen_and_share_stories(example3)
     run(example3)
 
 
@@ -406,7 +406,7 @@ def step4():
     add_song_populations(example3)
 
     add_listener(example3)
-    add_listen_and_share_actions_with_details(example3)
+    add_listen_and_share_stories_with_details(example3)
     run(example3)
 
 

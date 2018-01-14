@@ -2,12 +2,10 @@ from trumania.core import circus
 import trumania.core.population as population
 import trumania.core.random_generators as gen
 import trumania.core.operations as ops
-import trumania.core.action as action
+import trumania.core.story as story
 import trumania.components.time_patterns.profilers as profilers
 import trumania.core.util_functions as util_functions
-
 import trumania.components.db as DB
-
 import pandas as pd
 
 # each step?() function below implement one step of the fourth example of the
@@ -92,7 +90,7 @@ def add_song_to_repo(repo_population):
 
         # dataframe of emtpy songs: just with one SONG_ID column for now
         song_ids = song_id_gen.generate(size=1000)
-        emtpy_songs = action.Action.init_action_data(
+        emtpy_songs = story.Story.init_story_data(
             member_id_field_name="SONG_ID",
             active_ids=song_ids
         )
@@ -142,7 +140,7 @@ def add_listener(the_circus):
                                     seed=next(the_circus.seeder)))
 
 
-def add_listen_and_share_actions_with_details(the_circus):
+def add_listen_and_share_stories_with_details(the_circus):
 
     users = the_circus.populations["user"]
 
@@ -156,11 +154,11 @@ def add_listen_and_share_actions_with_details(the_circus):
     bounded_gaussian_activity_gen = gen.NumpyRandomGenerator(
         method="normal",
         seed=next(the_circus.seeder),
-        loc=timer_gen.activity(n_actions=20, per=pd.Timedelta("1 day")),
+        loc=timer_gen.activity(n=20, per=pd.Timedelta("1 day")),
         scale=5
     ).map(ops.bound_value(lb=10, ub=30))
 
-    listen = the_circus.create_action(
+    listen = the_circus.create_story(
             name="listen_events",
             initiating_population=users,
             member_id_field="UID",
@@ -169,7 +167,7 @@ def add_listen_and_share_actions_with_details(the_circus):
             activity_gen=bounded_gaussian_activity_gen
         )
 
-    share = the_circus.create_action(
+    share = the_circus.create_story(
             name="share_events",
             initiating_population=users,
             member_id_field="UID",
@@ -284,9 +282,9 @@ def step2():
     # example4bis should be an exact deep copy of example4_circus
     example4bis = circus.Circus.load_from_db(circus_name="example4_circus")
 
-    # Actions are not serialized to CSV but rather serialized in code,
+    # Stories are not serialized to CSV but rather serialized in code,
     # using humans as transducers
-    add_listen_and_share_actions_with_details(example4bis)
+    add_listen_and_share_stories_with_details(example4bis)
 
     example4bis.run(
         duration=pd.Timedelta("5 days"),

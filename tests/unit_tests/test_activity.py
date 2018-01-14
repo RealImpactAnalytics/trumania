@@ -14,7 +14,7 @@ setup_logging()
 
 
 def run_test_scenario_1(clock_step, simulation_duration,
-                        n_actions, per,
+                        n_stories, per,
                         log_folder):
 
     circus = Circus(name="tested_circus", master_seed=1,
@@ -38,18 +38,18 @@ def run_test_scenario_1(clock_step, simulation_duration,
     # each of the 500 populations have a constant 12 logs per day rate
     activity_gen = ConstantGenerator(
         value=daily_profile.activity(
-            n_actions=n_actions, per=per
+            n=n_stories, per=per
         ))
 
     # just a dummy operation to produce some logs
-    action = circus.create_action(
-        name="test_action",
+    story = circus.create_story(
+        name="test_story",
         initiating_population=population,
         member_id_field="some_id",
         timer_gen=daily_profile,
         activity_gen=activity_gen)
 
-    action.set_operations(
+    story.set_operations(
         circus.clock.ops.timestamp(named_as="TIME"),
         FieldLogger(log_id="the_logs")
     )
@@ -59,7 +59,7 @@ def run_test_scenario_1(clock_step, simulation_duration,
 
 def test_1000_populations_with_activity_12perday_should_yield_24k_logs_in_2days():
     """
-    this is a "high frequency test", where the number of actions per cycle (
+    this is a "high frequency test", where the number of stories per cycle (
     i.e. per day here) is largely below 1 => the cyclic generator should
     typically generate timers smaller than the length of the cycle
     """
@@ -69,7 +69,7 @@ def test_1000_populations_with_activity_12perday_should_yield_24k_logs_in_2days(
 
         run_test_scenario_1(clock_step="15 min",
                             simulation_duration="2 days",
-                            n_actions=12,
+                            n_stories=12,
                             per=pd.Timedelta("1day"),
                             log_folder=log_folder)
 
@@ -93,7 +93,7 @@ def test_1000_populations_with_activity_12perday_should_yield_60k_logs_in_5days(
         # note that we cannot have clock_step > 2h since that
         run_test_scenario_1(clock_step="1h",
                             simulation_duration="5 days",
-                            n_actions=12,
+                            n_stories=12,
                             per=pd.Timedelta("1day"),
                             log_folder=log_folder)
 
@@ -119,7 +119,7 @@ def test_1000_populations_with_low_activity():
 
         run_test_scenario_1(clock_step="1 h",
                             simulation_duration="20days",
-                            n_actions=1,
+                            n_stories=1,
                             per=pd.Timedelta("5 days"),
                             log_folder=log_folder)
 
@@ -145,7 +145,7 @@ def test_1000_populations_with_low_activity2():
 
         run_test_scenario_1(clock_step="3 h",
                             simulation_duration="15days",
-                            n_actions=1,
+                            n_stories=1,
                             per=pd.Timedelta("5 days"),
                             log_folder=log_folder)
 
@@ -169,7 +169,7 @@ def test_1000_populations_with_activity_one_per_cycle():
 
         run_test_scenario_1(clock_step="15 min",
                             simulation_duration="10days",
-                            n_actions=1,
+                            n_stories=1,
                             per=pd.Timedelta("1 day"),
                             log_folder=log_folder)
 
@@ -206,14 +206,14 @@ def test_populations_during_default_daily():
         mobility_activity_gen = gaussian_activity.map(bound_value(lb=1))
 
         # just a dummy operation to produce some logs
-        action = circus.create_action(
-            name="test_action",
+        story = circus.create_story(
+            name="test_story",
             initiating_population=field_agents,
             member_id_field="some_id",
             timer_gen=mobility_time_gen,
             activity_gen=mobility_activity_gen)
 
-        action.set_operations(
+        story.set_operations(
             circus.clock.ops.timestamp(named_as="TIME"),
             FieldLogger(log_id="the_logs")
         )
@@ -248,10 +248,10 @@ def test_populations_during_working_hours():
             clock=circus.clock, seed=next(circus.seeder))
 
         five_per_day = mobility_time_gen.activity(
-            n_actions=5, per=pd.Timedelta("1day"))
+            n=5, per=pd.Timedelta("1day"))
 
         std_per_day = mobility_time_gen.activity(
-            n_actions=.5, per=pd.Timedelta("1day"))
+            n=.5, per=pd.Timedelta("1day"))
 
         gaussian_activity = NumpyRandomGenerator(
             method="normal", loc=five_per_day,
@@ -259,14 +259,14 @@ def test_populations_during_working_hours():
         mobility_activity_gen = gaussian_activity.map(bound_value(lb=1))
 
         # just a dummy operation to produce some logs
-        action = circus.create_action(
-            name="test_action",
+        story = circus.create_story(
+            name="test_story",
             initiating_population=field_agents,
             member_id_field="some_id",
             timer_gen=mobility_time_gen,
             activity_gen=mobility_activity_gen)
 
-        action.set_operations(
+        story.set_operations(
             circus.clock.ops.timestamp(named_as="TIME"),
             FieldLogger(log_id="the_logs")
         )

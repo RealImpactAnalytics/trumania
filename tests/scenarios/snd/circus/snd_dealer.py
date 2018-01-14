@@ -47,7 +47,7 @@ def add_telco_restock_actions(circus, params):
         action_name = "telcos_{}_bulk_purchase".format(product)
         logging.info("creating {} action".format(action_name))
 
-        bulk_purchases = circus.create_action(
+        bulk_purchases = circus.create_story(
             name=action_name,
             initiating_actor=telcos,
             actorid_field="TELCO",

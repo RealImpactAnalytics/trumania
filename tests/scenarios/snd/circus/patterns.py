@@ -33,7 +33,7 @@ def trigger_action_if_low_stock(
             named_as="{}SHOULD_RESTOCK".format(field_prefix),
             observed_field="{}CURRENT_STOCK".format(field_prefix)),
 
-        circus.get_action(triggered_action_name).ops.force_act_next(
+        circus.get_story(triggered_action_name).ops.force_act_next(
             member_id_field=actor_id_field,
             condition_field="{}SHOULD_RESTOCK".format(field_prefix)),
     )
@@ -105,7 +105,7 @@ def add_bulk_restock_actions(circus, params,
             stock_size_gen=circus.generators["pos_{}_bulk_size_gen".format(product)],
             scale_factor=pos_per_buyer)
 
-        build_purchase_action = circus.create_action(
+        build_purchase_action = circus.create_story(
             name=action_name,
             initiating_actor=buyer,
             actorid_field="BUYER_ID",
@@ -233,7 +233,7 @@ def add_initial_stock_as_purchases(circus,
         tx_seq_gen = random_generators.DependentBulkGenerator(
             element_generator=tx_gen)
 
-        log_stock = circus.create_action(
+        log_stock = circus.create_story(
             name="initial_{}".format(action_name),
             initiating_actor=buyer,
             actorid_field="BUYER_ID",

@@ -72,10 +72,10 @@ def test_random_generator_should_provide_correct_amount_of_single_values():
 
     genops = tested.ops.generate(named_as="rand")
 
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"])
 
-    result, logs = genops(action_data)
+    result, logs = genops(story_data)
 
     assert result.columns.tolist() == ["A", "B", "C", "D", "E", "rand"]
 
@@ -87,14 +87,14 @@ def test_random_generator_should_provide_correct_amount_of_list_of_values():
 
     tested = NumpyRandomGenerator(method="gamma", scale=10, shape=1.8, seed=1)
 
-    action_data = pd.DataFrame(
+    story_data = pd.DataFrame(
         np.random.rand(10, 5), columns=["A", "B", "C", "D", "E"],
     )
-    action_data["how_many"] = pd.Series([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    story_data["how_many"] = pd.Series([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
 
     genops = tested.ops.generate(named_as="rand", quantity_field="how_many")
 
-    result, logs = genops(action_data)
+    result, logs = genops(story_data)
 
     assert result.columns.tolist() == ["A", "B", "C", "D", "E", "how_many", "rand"]
 

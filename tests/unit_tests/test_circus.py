@@ -7,7 +7,7 @@ from trumania.core.circus import Circus
 from trumania.components.time_patterns.profilers import DefaultDailyTimerGenerator
 
 
-def test_create_action_get_action_should_work_as_expected():
+def test_create_story_get_story_should_work_as_expected():
 
     flying = Circus(name="tested_circus",
                     master_seed=1,
@@ -20,7 +20,7 @@ def test_create_action_get_action_should_work_as_expected():
 
     mobility_time_gen = DefaultDailyTimerGenerator(flying.clock, seed=1)
 
-    mobility_action = flying.create_action(
+    mobility_story = flying.create_story(
         name="mobility",
 
         initiating_population=customers,
@@ -29,11 +29,11 @@ def test_create_action_get_action_should_work_as_expected():
         timer_gen=mobility_time_gen,
     )
 
-    # add and get action by name should work as expected
-    result = flying.get_action("mobility")
+    # add and get story by name should work as expected
+    result = flying.get_story("mobility")
 
     assert result.name == "mobility"
-    assert result.member_id_field == mobility_action.member_id_field
+    assert result.member_id_field == mobility_story.member_id_field
 
     # also retrieving this initiating population of that population
 
@@ -42,17 +42,17 @@ def test_create_action_get_action_should_work_as_expected():
     assert retrieved_pop == customers
 
 
-def test_get_non_existing_action_should_return_none():
+def test_get_non_existing_story_should_return_none():
 
     flying = Circus(name="tested_circus",
                     master_seed=1,
                     start=pd.Timestamp("8 June 2016"),
                     step_duration=pd.Timedelta("60s"))
 
-    assert flying.get_action("non_existing_name") is None
+    assert flying.get_story("non_existing_name") is None
 
 
-def test_adding_a_second_action_with_same_name_should_be_refused():
+def test_adding_a_second_story_with_same_name_should_be_refused():
 
     flying = Circus(name="tested_circus",
                     master_seed=1,
@@ -63,11 +63,11 @@ def test_adding_a_second_action_with_same_name_should_be_refused():
         name="tested", size=100,
         ids_gen=SequencialGenerator(prefix="a"))
 
-    flying.create_action(name="the_action",
-                         initiating_population=customers,
-                         member_id_field="population_id")
+    flying.create_story(name="the_story",
+                        initiating_population=customers,
+                        member_id_field="population_id")
 
     with pytest.raises(ValueError):
-        flying.create_action(name="the_action",
-                             initiating_population=customers,
-                             member_id_field="population_id")
+        flying.create_story(name="the_story",
+                            initiating_population=customers,
+                            member_id_field="population_id")

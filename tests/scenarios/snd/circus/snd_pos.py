@@ -7,7 +7,7 @@ import os
 from trumania.core.random_generators import SequencialGenerator, NumpyRandomGenerator, ConstantDependentGenerator
 from trumania.core.random_generators import MongoIdGenerator, FakerGenerator, DependentBulkGenerator
 from trumania.core.operations import FieldLogger, logistic, Apply, Chain
-from trumania.core.action import Action
+from trumania.core.story import Story
 from trumania.components import db
 
 
@@ -53,7 +53,7 @@ def add_attractiveness_evolution_action(circus):
     pos = circus.actors["pos"]
 
     # once per day the attractiveness of each POS evolves according to the delta
-    attractiveness_evolution = circus.create_action(
+    attractiveness_evolution = circus.create_story(
         name="attractiveness_evolution",
         initiating_actor=pos,
         actorid_field="POS_ID",
@@ -110,7 +110,7 @@ def add_attractiveness_evolution_action(circus):
                                          seed=next(circus.seeder))
 
     # random walk around of the attractiveness delta, once per week
-    attractiveness_delta_evolution = circus.create_action(
+    attractiveness_delta_evolution = circus.create_story(
         name="attractiveness_delta_evolution",
         initiating_actor=pos,
         actorid_field="POS_ID",
@@ -193,7 +193,7 @@ def _add_pos_latlong(circus, params):
             ),
         )
 
-    pos_info, _ = pos_coord_act(Action.init_action_data("POS_ID", pos.ids))
+    pos_info, _ = pos_coord_act(Story.init_story_data("POS_ID", pos.ids))
 
     pos.create_attribute("LATITUDE", init_values=pos_info["POS_LATITUDE"])
     pos.create_attribute("LONGITUDE", init_values=pos_info["POS_LONGITUDE"])
@@ -317,7 +317,7 @@ def add_agent_stock_log_action(circus, params):
             stock_ratio = 1 / product_actor.size
             mean_price = np.mean(params["products"][product]["item_prices"])
 
-            stock_levels_logs = circus.create_action(
+            stock_levels_logs = circus.create_story(
                 name="{}_{}_stock_log".format(agent_name, product),
                 initiating_actor=agent,
                 actorid_field="agent_id",

@@ -78,14 +78,14 @@ def test_overwrite_attribute():
     ages = age_attr.get_values(["u_0", "u_4", "u_9"]).tolist()
     assert ages == [10, 100, 23]
 
-    action_data = pd.DataFrame({
+    story_data = pd.DataFrame({
         # id of the populations to update
         "A_ID": ["u_4", "u_0"],
 
         # new values to copy
         "new_ages": [34, 30]},
 
-        # index of the action data has, in general, nothing to do with the
+        # index of the story data has, in general, nothing to do with the
         # updated population
         index=["cust_1", "cust_2"]
     )
@@ -95,7 +95,7 @@ def test_overwrite_attribute():
         copy_from_field="new_ages"
     )
 
-    _, logs = update(action_data)
+    _, logs = update(story_data)
 
     assert logs == {}
     # before modification

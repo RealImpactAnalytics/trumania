@@ -44,21 +44,21 @@ class SndScenario(WithRandomGeo, Circus):
                         step_duration=pd.Timedelta("60s"),)
 
         distributors, sim_generator = self.create_distributors_with_sims()
-        self.add_distributor_recharge_action(distributors, sim_generator)
+        self.add_distributor_recharge_story(distributors, sim_generator)
         dealers = self.create_dealers_and_sims_stock()
         agents = self.create_agents()
         self.connect_agent_to_dealer(agents, dealers)
         self.connect_dealers_to_distributors(dealers, distributors)
 
-        self.add_agent_sim_purchase_action(agents, dealers)
-        self.add_dealer_bulk_sim_purchase_action(dealers, distributors)
-        self.add_agent_holidays_action(agents,)
-        self.add_agent_reviews_actions(agents)
+        self.add_agent_sim_purchase_story(agents, dealers)
+        self.add_dealer_bulk_sim_purchase_story(dealers, distributors)
+        self.add_agent_holidays_story(agents, )
+        self.add_agent_reviews_stories(agents)
 
     def create_distributors_with_sims(self):
         """
         Distributors are similar to dealers, just with much more sims, and the
-        actions to buy SIM from them is "by bulks" (though the action is not
+        stories to buy SIM from them is "by bulks" (though the story is not
         created here)
         """
         logging.info("Creating distributors and their SIM stock  ")
@@ -79,24 +79,24 @@ class SndScenario(WithRandomGeo, Circus):
         sims.add_relations(from_ids=sims_dist["chosen_from_set2"],
                            to_ids=sims_dist["set1"])
 
-        # this tells to the "restock" action of the distributor how many
+        # this tells to the "restock" story of the distributor how many
         # sim should be re-generated to replenish the stocks
         distributors.create_attribute("SIMS_TO_RESTOCK", init_values=0)
 
         return distributors, sim_generator
 
-    def add_distributor_recharge_action(self, distributors, sim_generator):
+    def add_distributor_recharge_story(self, distributors, sim_generator):
         """
-        adds an action that increases the stock of distributor.
-        This is triggered externaly by the bulk purchase action below
+        adds an story that increases the stock of distributor.
+        This is triggered externaly by the bulk purchase story below
         """
 
-        restocking = self.create_action(
+        restocking = self.create_story(
             name="distributor_restock",
             initiating_population=distributors,
             member_id_field="DISTRIBUTOR_ID",
 
-            # here again: no activity gen nor time profile here since the action
+            # here again: no activity gen nor time profile here since the story
             # is triggered externally
         )
 
@@ -227,19 +227,19 @@ class SndScenario(WithRandomGeo, Circus):
 
         dealers.create_attribute("BULK_BUY_SIZE", init_gen=bulk_gen)
 
-    def add_dealer_bulk_sim_purchase_action(self, dealers, distributors):
+    def add_dealer_bulk_sim_purchase_story(self, dealers, distributors):
         """
-        Adds a SIM purchase action from agents to dealer, with impact on stock of
+        Adds a SIM purchase story from agents to dealer, with impact on stock of
         both populations
         """
-        logging.info("Creating bulk purchase action")
+        logging.info("Creating bulk purchase story")
 
         timegen = HighWeekDaysTimerGenerator(clock=self.clock,
                                              seed=next(self.seeder))
 
         purchase_activity_gen = ConstantGenerator(value=100)
 
-        build_purchases = self.create_action(
+        build_purchases = self.create_story(
             name="bulk_purchases",
             initiating_population=dealers,
             member_id_field="DEALER_ID",
@@ -284,7 +284,7 @@ class SndScenario(WithRandomGeo, Circus):
                 member_id_field="DISTRIBUTOR",
                 added_value_field="NUMBER_OF_SIMS"),
 
-            self.get_action("distributor_restock").ops.force_act_next(
+            self.get_story("distributor_restock").ops.force_act_next(
                 member_id_field="DISTRIBUTOR"),
 
             operations.FieldLogger(log_id="bulk_purchases",
@@ -292,12 +292,12 @@ class SndScenario(WithRandomGeo, Circus):
                                          "NUMBER_OF_SIMS"]),
         )
 
-    def add_agent_sim_purchase_action(self, agents, dealers):
+    def add_agent_sim_purchase_story(self, agents, dealers):
         """
-        Adds a SIM purchase action from agents to dealer, with impact on stock of
+        Adds a SIM purchase story from agents to dealer, with impact on stock of
         both populations
         """
-        logging.info("Creating purchase action")
+        logging.info("Creating purchase story")
 
         timegen = HighWeekDaysTimerGenerator(clock=self.clock,
                                              seed=next(self.seeder))
@@ -311,7 +311,7 @@ class SndScenario(WithRandomGeo, Circus):
         #  to "come back to normal", instead of sampling a random variable at
         #  each turn => would improve efficiency
 
-        purchase = self.create_action(
+        purchase = self.create_story(
             name="purchases",
             initiating_population=agents,
             member_id_field="AGENT",
@@ -344,7 +344,7 @@ class SndScenario(WithRandomGeo, Circus):
                 pop=True,
 
                 # If a chosen dealer has empty stock, we don't want to drop the
-                # row in action_data, but keep it with a None sold SIM,
+                # row in story_data, but keep it with a None sold SIM,
                 # which indicates the sale failed
                 discard_empty=False),
 
@@ -369,10 +369,10 @@ class SndScenario(WithRandomGeo, Circus):
                 item_field="SOLD_SIM"),
         )
 
-    def add_agent_holidays_action(self, agents):
+    def add_agent_holidays_story(self, agents):
         """
-        Adds actions that reset to 0 the activity level of the purchases action of
-        some populations
+        Adds stories that reset to 0 the activity level of the purchases
+        story of some populations
         """
         logging.info("Adding 'holiday' periods for agents ")
 
@@ -394,14 +394,14 @@ class SndScenario(WithRandomGeo, Circus):
         holiday_end_activity = ParetoGenerator(xmin=150, a=1.2,
                                                seed=next(self.seeder))
 
-        going_on_holidays = self.create_action(
+        going_on_holidays = self.create_story(
             name="agent_start_holidays",
             initiating_population=agents,
             member_id_field="AGENT",
             timer_gen=holiday_time_gen,
             activity_gen=holiday_start_activity)
 
-        returning_from_holidays = self.create_action(
+        returning_from_holidays = self.create_story(
             name="agent_stops_holidays",
             initiating_population=agents,
             member_id_field="AGENT",
@@ -411,7 +411,7 @@ class SndScenario(WithRandomGeo, Circus):
 
         going_on_holidays.set_operations(
 
-            self.get_action("purchases").ops.transit_to_state(
+            self.get_story("purchases").ops.transit_to_state(
                 member_id_field="AGENT",
                 state="on_holiday"),
             returning_from_holidays.ops.reset_timers(member_id_field="AGENT"),
@@ -423,7 +423,7 @@ class SndScenario(WithRandomGeo, Circus):
         )
 
         returning_from_holidays.set_operations(
-            self.get_action("purchases").ops.transit_to_state(
+            self.get_story("purchases").ops.transit_to_state(
                 member_id_field="AGENT",
                 state="default"),
 
@@ -433,7 +433,7 @@ class SndScenario(WithRandomGeo, Circus):
             operations.FieldLogger(log_id="holidays"),
         )
 
-    def add_agent_reviews_actions(self, agents):
+    def add_agent_reviews_stories(self, agents):
         """
         This illustrates the dynamic creation of new populations: reviews are modeled as "population"
          (even though they are mostly inactive data container) that are created dynamically
@@ -456,7 +456,7 @@ class SndScenario(WithRandomGeo, Circus):
         review_population.create_attribute("AGENT_ID")
         review_population.create_attribute("AGENT_NAME")
 
-        reviews = self.create_action(
+        reviews = self.create_story(
             name="agent_reviews",
             initiating_population=agents,
             member_id_field="AGENT",

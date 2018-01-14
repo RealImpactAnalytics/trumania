@@ -19,7 +19,7 @@ from trumania.core import operations
 
 
 # couple of utility methods called in Apply of this scenario
-def compute_call_value(action_data):
+def compute_call_value(story_data):
     """
         Computes the value of a call based on duration, onnet/offnet and time
         of the day.
@@ -29,21 +29,21 @@ def compute_call_value(action_data):
     price_per_second = 2
 
     # no, I'm lying, we just look at duration, but that's the idea...
-    df = action_data[["DURATION"]] * price_per_second
+    df = story_data[["DURATION"]] * price_per_second
 
     # must return a dataframe with a single column named "result"
     return df.rename(columns={"DURATION": "result"})
 
 
-def compute_sms_value(action_data):
+def compute_sms_value(story_data):
     """
         Computes the value of an call based on duration, onnet/offnet and time
         of the day.
     """
-    return pd.DataFrame({"result": 10}, index=action_data.index)
+    return pd.DataFrame({"result": 10}, index=story_data.index)
 
 
-def compute_cdr_type(action_data):
+def compute_cdr_type(story_data):
     """
         Computes the ONNET/OFFNET value based on the operator ids
     """
@@ -51,7 +51,7 @@ def compute_cdr_type(action_data):
     def onnet(row):
         return (row["OPERATOR_A"] == "OPERATOR_0") & (row["OPERATOR_B"] == "OPERATOR_0")
 
-    result = pd.DataFrame(action_data.apply(onnet, axis=1),
+    result = pd.DataFrame(story_data.apply(onnet, axis=1),
                           columns=["result_b"])
 
     result["result"] = result["result_b"].map(
@@ -60,15 +60,15 @@ def compute_cdr_type(action_data):
     return result[["result"]]
 
 
-def compute_call_status(action_data):
-    is_accepted = action_data["CELL_A_ACCEPTS"] & action_data["CELL_B_ACCEPTS"]
+def compute_call_status(story_data):
+    is_accepted = story_data["CELL_A_ACCEPTS"] & story_data["CELL_B_ACCEPTS"]
     status = is_accepted.map({True: "OK", False: "DROPPED"})
     return pd.DataFrame({"result": status})
 
 
-def select_sims(action_data):
+def select_sims(story_data):
     """
-    this function expects the following columns in action_data:
+    this function expects the following columns in story_data:
 
     ["MSISDNS_A", "OPERATORS_A", "A_SIMS", "MAIN_ACCTS_A",
      "MSISDNS_B", "OPERATORS_B", "B_SIMS"]
@@ -100,7 +100,7 @@ def select_sims(action_data):
             row["MSISDNS_B"][b_idx], row["OPERATORS_B"][b_idx],
             row["B_SIMS"][b_idx]])
 
-    return action_data.apply(do_select, axis=1)
+    return story_data.apply(do_select, axis=1)
 
 
 class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
@@ -225,7 +225,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
     def add_mobility(self, subs, cells):
         """
-        adds a CELL attribute to the customer population + a mobility action that
+        adds a CELL attribute to the customer population + a mobility story that
         randomly moves customers from CELL to CELL among their used cells.
         """
         logging.info("Adding mobility ")
@@ -269,10 +269,10 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         # customer among its network
         subs.create_attribute(name="CELL", init_relationship="POSSIBLE_CELLS")
 
-        # Mobility action itself, basically just a random hop from cell to cell,
+        # Mobility story itself, basically just a random hop from cell to cell,
         # that updates the "CELL" attributes + generates mobility logs
-        logging.info(" creating mobility action")
-        mobility_action = self.create_action(
+        logging.info(" creating mobility story")
+        mobility_story = self.create_story(
             name="mobility",
 
             initiating_population=subs,
@@ -282,7 +282,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         )
 
         logging.info(" adding operations")
-        mobility_action.set_operations(
+        mobility_story.set_operations(
             subs.ops.lookup(id_field="A_ID", select={"CELL": "PREV_CELL"}),
 
             # selects a destination cell (or maybe the same as current... ^^)
@@ -305,23 +305,23 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
     def add_topups(self, sims, recharge_gen):
         """
         The topups are not triggered by a timer_gen and a decrementing timer =>
-            by itself this action is permanently inactive. This action is meant
-            to be triggered externally (from the "calls" or "sms" actions)
+            by itself this story is permanently inactive. This story is meant
+            to be triggered externally (from the "calls" or "sms" stories)
         """
-        logging.info("Adding topups actions")
+        logging.info("Adding topups stories")
 
-        # topup action itself, basically just a selection of an agent and subsequent
+        # topup story itself, basically just a selection of an agent and subsequent
         # computation of the value
-        topup_action = self.create_action(
+        topup_story = self.create_story(
             name="topups",
             initiating_population=sims,
             member_id_field="SIM_ID",
 
             # note that there is timegen specified => the clock is not ticking
-            # => the action can only be set externally (cf calls action)
+            # => the story can only be set externally (cf calls story)
         )
 
-        topup_action.set_operations(
+        topup_story.set_operations(
             sims.ops.lookup(
                 id_field="SIM_ID",
                 select={"MSISDN": "CUSTOMER_NUMBER",
@@ -352,9 +352,9 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
 
     def add_communications(self, subs, sims, cells):
         """
-        Adds Calls and SMS actions, which in turn may trigger topups actions.
+        Adds Calls and SMS story, which in turn may trigger topups story.
         """
-        logging.info("Adding calls and sms actions ")
+        logging.info("Adding calls and sms story ")
 
         # generators for topups and call duration
         voice_duration_generator = NumpyRandomGenerator(
@@ -389,8 +389,8 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         back_to_normal_prob = NumpyRandomGenerator(method="beta", a=3, b=7,
                                                    seed=next(self.seeder))
 
-        # Calls and SMS actions themselves
-        calls = self.create_action(
+        # Calls and SMS stories themselves
+        calls = self.create_story(
             name="calls",
 
             initiating_population=subs,
@@ -406,7 +406,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
             }
         )
 
-        sms = self.create_action(
+        sms = self.create_story(
             name="sms",
 
             initiating_population=subs,
@@ -499,7 +499,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                 copy_from_field="MAIN_ACCT_NEW"),
         )
 
-        # triggers the topup action if the main account is low
+        # triggers the topup story if the main account is low
         trigger_topups = Chain(
             # A subscribers with low account are now more likely to topup the
             # SIM they just used to make a call
@@ -507,7 +507,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
                 observed_field="MAIN_ACCT_NEW",
                 named_as="SHOULD_TOP_UP"),
 
-            self.get_action("topups").ops.force_act_next(
+            self.get_story("topups").ops.force_act_next(
                 member_id_field="SIM_A",
                 condition_field="SHOULD_TOP_UP"),
         )
