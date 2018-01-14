@@ -2,35 +2,34 @@
 
 ## Documentation and tutorial
 
-See the [wiki](https://github.com/RealImpactAnalytics/trumania/wiki) in this repo for the detailed documentation of the generator. 
+Trumania is a scenario-based random dataset generator library in python 3. In order to use it, a scenario that describes the dataset
+to create has to be written, in python 3, and then executed. 
 
-You can also have a look at the S&D example Scenario here in `tests/scenarios/snd`.
+See the [wiki](https://github.com/RealImpactAnalytics/trumania/wiki) in this
+repo for a detailed documentation of each of the features. The wiki also
+contains a step-by-step explanation of 4 example scenarios.
+
+You can also have a look at the example scenario in the [tests/](tests/) folder of this repository.
 
 ## How to install 
 
-Trumania is not (yet) packaged in any special way, the way it is used at the moment is simply to have the code, the required dependencies, and execute the necessary python script directly. 
+Trumania is not packaged in any special way, the way it is used at the moment is simply to clone the code and install the required dependencies. This section describes how to do that.
 
-Make sure you have python 3 and pip installed.
-
-Then, if pipenv is not yet present on your laptop, install it: 
+Make sure you have python 3 and pip installed. Then make sure pipenv is installed:
 
 ```sh
 # make sure you're using pip from a python 3 installation 
 pip3 install --user pipenv
 ```
 
-Otherwise, make sure you have the latest version:
 
-```sh
-pipenv update
-```
+then install all python dependencies for this project: 
 
-then install all dependencies for this project: 
 ```sh
 pipenv install --three
 ```
 
-See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies.
+The steps below mention to prefix the commands with `pipenv run` whenever necessary in order to have access to those python dependencies. Alternatively, you can enter the corresponding virtualenv once with `pipenv shell`, in which case that prefix is no longer necessary. See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies. 
 
 
 ## Where and how to create a scenario
@@ -51,31 +50,17 @@ You can then create your scenario in python, let's call it `burbanks_and_friends
 pipenv run python burbanks_and_friends_talking.py  
 ```
 
-## Running Trumania unit tests locally
+## Contributing
+
+This section provides a few pointers on how to handle the trumania codebase.
+
+### Running Trumania unit tests locally
 
 
 ```sh
 # make sure you are not inside another pipenv shell when running this
-pipenv run py.test -s 
+pipenv run py.test -s -v
 ```
 
-## Python linting
+### Python linting
 Run `pipenv run flake8`. If nothing is returned, the correct styling has been applied.
-
-## Test data
-Some folders are stored on S3:
-
-`trumania/components/_DB` is on `s3://lab-data-generator-db`
-
-`trumania/components/geographies/source_data` is on `s3://lab-data-generator-geographies`
-
-You can download them with aws-cli:
-
-```sh
-pip install awscli
-mkdir trumania/components/_DB
-cd trumania/components/_DB
-# make sure you have your AWS env variables set
-aws s3 cp s3://lab-data-generator-db . --recursive
-```
-
