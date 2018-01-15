@@ -1,0 +1,368 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.circus &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">trumania 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.circus</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">trumania.core</span> <span class="k">import</span> <span class="n">population</span>
+<span class="kn">from</span> <span class="nn">trumania.components</span> <span class="k">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">trumania.core.random_generators</span> <span class="k">import</span> <span class="n">seed_provider</span>
+<span class="kn">from</span> <span class="nn">trumania.core.util_functions</span> <span class="k">import</span> <span class="n">ensure_non_existing_dir</span>
+<span class="kn">from</span> <span class="nn">trumania.core.clock</span> <span class="k">import</span> <span class="n">Clock</span>
+<span class="kn">from</span> <span class="nn">trumania.core.story</span> <span class="k">import</span> <span class="n">Story</span>
+
+
+<div class="viewcode-block" id="Circus"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus">[docs]</a><span class="k">class</span> <span class="nc">Circus</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Circus is just a container of a lot of objects that are required to make the simulation</span>
+<span class="sd">    It is also the object that will execute the stories required for 1 iteration</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">master_seed</span><span class="p">,</span> <span class="o">**</span><span class="n">clock_params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new Circus object</span>
+
+<span class="sd">        :param master_seed: seed used to initialized random generatof of</span>
+<span class="sd">        other seeds</span>
+<span class="sd">        :type master_seed: int</span>
+
+<span class="sd">        :rtype: Circus</span>
+<span class="sd">        :return: a new Circus object, with the clock, is created</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">master_seed</span> <span class="o">=</span> <span class="n">master_seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock_params</span> <span class="o">=</span> <span class="n">clock_params</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">seeder</span> <span class="o">=</span> <span class="n">seed_provider</span><span class="p">(</span><span class="n">master_seed</span><span class="o">=</span><span class="n">master_seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="n">Clock</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seeder</span><span class="p">),</span> <span class="o">**</span><span class="n">clock_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stories</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">populations</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generators</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="Circus.create_population"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.create_population">[docs]</a>    <span class="k">def</span> <span class="nf">create_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">population_params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a population with the specifed parameters and attach it to this</span>
+<span class="sd">        circus.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">populations</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;refusing to overwrite existing population: </span><span class="si">{}</span><span class="s2"> &quot;</span>
+                             <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">populations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">Population</span><span class="p">(</span><span class="n">circus</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">population_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">populations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Circus.load_population"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.load_population">[docs]</a>    <span class="k">def</span> <span class="nf">load_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population_id</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load this population definition add attach it to this circus</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Defaulting to the namespace associated to this circus if none</span>
+        <span class="c1"># specified</span>
+        <span class="k">if</span> <span class="n">namespace</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="n">loaded</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">load_population</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span>
+                                    <span class="n">population_id</span><span class="o">=</span><span class="n">population_id</span><span class="p">,</span> <span class="n">circus</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">populations</span><span class="p">[</span><span class="n">population_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span>
+        <span class="k">return</span> <span class="n">loaded</span></div>
+
+<div class="viewcode-block" id="Circus.create_story"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.create_story">[docs]</a>    <span class="k">def</span> <span class="nf">create_story</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">story_params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a story with the provided parameters and attach it to this</span>
+<span class="sd">        circus.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">story</span> <span class="o">=</span> <span class="n">Story</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">story_params</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stories</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">story</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">story</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot add story </span><span class="si">{}</span><span class="s2">: another story with &quot;</span>
+                             <span class="s2">&quot;identical name is already in the circus&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Circus.get_story"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.get_story">[docs]</a>    <span class="k">def</span> <span class="nf">get_story</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Looks up and story by name in this circus and returns it. Returns none</span>
+<span class="sd">        if not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">remaining_stories</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">story_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stories</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">remaining_stories</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;story not found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">story_name</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Circus.get_population_of"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.get_population_of">[docs]</a>    <span class="k">def</span> <span class="nf">get_population_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Looks up the initiating population associated to this story</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_story</span><span class="p">(</span><span class="n">story_name</span><span class="p">)</span><span class="o">.</span><span class="n">triggering_population</span></div>
+
+<div class="viewcode-block" id="Circus.attach_generator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.attach_generator">[docs]</a>    <span class="k">def</span> <span class="nf">attach_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gen_id</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;attach&quot; a random generator to this circus, s.t. it gets persisted</span>
+<span class="sd">        with the rest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">gen_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;refusing to replace existing generator: </span><span class="si">{}</span><span class="s2"> &quot;</span>
+                             <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gen_id</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">[</span><span class="n">gen_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">generator</span></div>
+
+<div class="viewcode-block" id="Circus.load_generator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.load_generator">[docs]</a>    <span class="k">def</span> <span class="nf">load_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gen_type</span><span class="p">,</span> <span class="n">gen_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load this generator definition add attach it to this circus</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gen</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">load_generator</span><span class="p">(</span>
+            <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">gen_type</span><span class="o">=</span><span class="n">gen_type</span><span class="p">,</span> <span class="n">gen_id</span><span class="o">=</span><span class="n">gen_id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">attach_generator</span><span class="p">(</span><span class="n">gen_id</span><span class="p">,</span> <span class="n">gen</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gen</span></div>
+
+<div class="viewcode-block" id="Circus.save_logs"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.save_logs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">save_logs</span><span class="p">(</span><span class="n">log_id</span><span class="p">,</span> <span class="n">logs</span><span class="p">,</span> <span class="n">log_output_folder</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends those logs to the corresponding output file, creating it if</span>
+<span class="sd">        it does not exist or appending lines to it otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_output_folder</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.csv&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">log_id</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">log_output_folder</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">log_output_folder</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_file</span><span class="p">):</span>
+                <span class="c1"># If these are this first persisted logs, we create the file</span>
+                <span class="c1"># and include the field names as column header.</span>
+                <span class="n">logs</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Otherwise, open the existing log file in append mode and add</span>
+                <span class="c1"># the new logs at the end, this time without columns headers.</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_f</span><span class="p">:</span>
+                    <span class="n">logs</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_f</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Circus.run"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">log_output_folder</span><span class="p">,</span> <span class="n">delete_existing_logs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Executes all stories in the circus for as long as requested.</span>
+
+<span class="sd">        :param duration: duration of the desired simulation (start date is</span>
+<span class="sd">        dictated by the clock)</span>
+<span class="sd">        :type duration: pd.TimeDelta</span>
+
+<span class="sd">        :param log_output_folder: folder where to write the logs.</span>
+<span class="sd">        :type log_output_folder: string</span>
+
+<span class="sd">        :param delete_existing_logs:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">n_iterations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">n_iterations</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting circus for </span><span class="si">{}</span><span class="s2"> iterations of </span><span class="si">{}</span><span class="s2"> for a &quot;</span>
+                     <span class="s2">&quot;total duration of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">n_iterations</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">step_duration</span><span class="p">,</span> <span class="n">duration</span>
+                     <span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">log_output_folder</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">delete_existing_logs</span><span class="p">:</span>
+                <span class="n">ensure_non_existing_dir</span><span class="p">(</span><span class="n">log_output_folder</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">EnvironmentError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> exists and delete_existing_logs is &quot;</span>
+                                       <span class="s2">&quot;False =&gt; refusing to start and &quot;</span>
+                                       <span class="s2">&quot;overwrite logs&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">log_output_folder</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">step_number</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iterations</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;step : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">step_number</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">story</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stories</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">log_id</span><span class="p">,</span> <span class="n">logs</span> <span class="ow">in</span> <span class="n">story</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">save_logs</span><span class="p">(</span><span class="n">log_id</span><span class="p">,</span> <span class="n">logs</span><span class="p">,</span> <span class="n">log_output_folder</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Circus.load_from_db"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.load_from_db">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_from_db</span><span class="p">(</span><span class="n">circus_name</span><span class="p">):</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading circus </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">circus_name</span><span class="p">))</span>
+
+        <span class="n">namespace_folder</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">namespace_folder</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="n">circus_name</span><span class="p">)</span>
+        <span class="n">config_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">namespace_folder</span><span class="p">,</span> <span class="s2">&quot;circus_config.json&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_h</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_h</span><span class="p">)</span>
+
+            <span class="n">clock_config</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;clock_config&quot;</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">]),</span>
+                <span class="s2">&quot;step_duration&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;clock_config&quot;</span><span class="p">][</span><span class="s2">&quot;step_duration&quot;</span><span class="p">]))</span>
+            <span class="p">}</span>
+
+            <span class="n">circus</span> <span class="o">=</span> <span class="n">Circus</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">circus_name</span><span class="p">,</span> <span class="n">master_seed</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;master_seed&quot;</span><span class="p">],</span>
+                            <span class="o">**</span><span class="n">clock_config</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">population_id</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">list_populations</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="n">circus_name</span><span class="p">):</span>
+                <span class="n">circus</span><span class="o">.</span><span class="n">load_population</span><span class="p">(</span><span class="n">population_id</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">gen_type</span><span class="p">,</span> <span class="n">gen_id</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">list_generators</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="n">circus_name</span><span class="p">):</span>
+                <span class="n">circus</span><span class="o">.</span><span class="n">load_generator</span><span class="p">(</span><span class="n">gen_type</span><span class="o">=</span><span class="n">gen_type</span><span class="p">,</span> <span class="n">gen_id</span><span class="o">=</span><span class="n">gen_id</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">circus</span></div>
+
+<div class="viewcode-block" id="Circus.save_to_db"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.save_to_db">[docs]</a>    <span class="k">def</span> <span class="nf">save_to_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a db namespace named after this circus and saves all the</span>
+<span class="sd">        populations there.</span>
+
+<span class="sd">        Only static data is saved, not the stories.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving circus </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">is_namespace_existing</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;overwriting existing circus </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">remove_namespace</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;refusing to remove existing </span><span class="si">{}</span><span class="s2"> namespace since &quot;</span>
+                              <span class="s2">&quot;overwrite parameter is False&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="n">namespace_folder</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">create_namespace</span><span class="p">(</span><span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">config_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">namespace_folder</span><span class="p">,</span> <span class="s2">&quot;circus_config.json&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">o</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;master_seed&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_seed</span><span class="p">,</span>
+                      <span class="s2">&quot;clock_config&quot;</span><span class="p">:</span> <span class="p">{</span>
+                          <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock_params</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+                          <span class="s2">&quot;step_duration&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clock_params</span><span class="p">[</span><span class="s2">&quot;step_duration&quot;</span><span class="p">])}</span>
+                      <span class="p">}</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving all populations&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">population_id</span><span class="p">,</span> <span class="n">ac</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">populations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">db</span><span class="o">.</span><span class="n">save_population</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                               <span class="n">population_id</span><span class="o">=</span><span class="n">population_id</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving all generators&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gen_id</span><span class="p">,</span> <span class="n">generator</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">db</span><span class="o">.</span><span class="n">save_generator</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">gen_id</span><span class="o">=</span><span class="n">gen_id</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;circus saved&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Circus.save_params_to_db"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.save_params_to_db">[docs]</a>    <span class="k">def</span> <span class="nf">save_params_to_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params_type</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the params object to the circus folder in the DB for future reference</span>
+<span class="sd">        :param params_type: &quot;build&quot;, &quot;run&quot; or &quot;target&quot;</span>
+<span class="sd">        :param params: the params object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">namespace_folder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                                   <span class="s2">&quot;params_</span><span class="si">{}</span><span class="s2">.json&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">params_type</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">target_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Circus.description"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.circus.Circus.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;circus_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;master_seed&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_seed</span><span class="p">,</span>
+            <span class="s2">&quot;populations&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="n">population</span><span class="o">.</span><span class="n">description</span><span class="p">()</span>
+                            <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">population</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">populations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                            <span class="p">},</span>
+            <span class="s2">&quot;generators&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">gen_id</span><span class="p">:</span> <span class="n">gen</span><span class="o">.</span><span class="n">description</span><span class="p">()</span>
+                           <span class="k">for</span> <span class="n">gen_id</span><span class="p">,</span> <span class="n">gen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                           <span class="p">},</span>
+        <span class="p">}</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">trumania 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, RIA.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

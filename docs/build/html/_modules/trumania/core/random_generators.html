@@ -1,0 +1,618 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.random_generators &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">trumania 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.random_generators</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">islice</span>
+<span class="kn">from</span> <span class="nn">faker</span> <span class="k">import</span> <span class="n">Faker</span>
+<span class="kn">from</span> <span class="nn">bson.objectid</span> <span class="k">import</span> <span class="n">ObjectId</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="k">import</span> <span class="n">RandomState</span>
+
+<span class="kn">from</span> <span class="nn">trumania.core.operations</span> <span class="k">import</span> <span class="n">AddColumns</span><span class="p">,</span> <span class="n">identity</span>
+<span class="kn">from</span> <span class="nn">trumania.core.util_functions</span> <span class="k">import</span> <span class="n">merge_2_dicts</span><span class="p">,</span> <span class="n">build_ids</span>
+
+
+<div class="viewcode-block" id="seed_provider"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.seed_provider">[docs]</a><span class="k">def</span> <span class="nf">seed_provider</span><span class="p">(</span><span class="n">master_seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param master_seed: master seed</span>
+<span class="sd">    :return: a generator of seeds, deterministically depending on the master one</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">master_seed</span><span class="p">)</span>
+    <span class="n">max_int_32</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">31</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">state</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_int_32</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Generator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator">[docs]</a><span class="k">class</span> <span class="nc">Generator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Independent parameterized random value generator.</span>
+<span class="sd">    Abstract class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+
+    <span class="n">file_loaders</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GeneratorOps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Generator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.generate">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;Independent&quot; random value generation: do not depend on any previous</span>
+<span class="sd">        observation, we just want to sample the random variable `size` times</span>
+
+<span class="sd">        :param size: the number of random value to produce</span>
+<span class="sd">        :return: an array of generated random values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Generator.map"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.map">[docs]</a>    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">f_vect</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a new generator that transforms the generated values with the</span>
+<span class="sd">        provided function.</span>
+
+<span class="sd">        # TODO: do we really need &quot;non vectorialized&quot; f and vectorialized</span>
+<span class="sd">        f_vect? Have a look at numpy ufunc...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">assert</span> <span class="p">(</span><span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">f_vect</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="k">class</span> <span class="nc">Transformed</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+
+                <span class="n">samples</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">f_vect</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># makes sure the result type is array and not a Series</span>
+                    <span class="c1"># (which may cause index mis-alignments)</span>
+                    <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">f_vect</span><span class="p">(</span><span class="n">samples</span><span class="p">)]</span>
+
+                <span class="k">elif</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span> <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">Transformed</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Generator.flatmap"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.flatmap">[docs]</a>    <span class="k">def</span> <span class="nf">flatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dependent_generator</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Not _really_ a flatmap but close enough on concept (I guess): this</span>
+<span class="sd">        chains self with a DependentGenerator by feeding our output</span>
+<span class="sd">        values as observations to the DependentGenerator at the moment of</span>
+<span class="sd">        generation.</span>
+
+<span class="sd">        :param dependent_generator: must be an instance of DependentGenerator,</span>
+<span class="sd">         i.e. have a .generate(observations=...) method</span>
+
+<span class="sd">        :return: an instance of Generator whose .generate(size=...) method</span>
+<span class="sd">            provides the combination of the above</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">f_vect</span><span class="o">=</span><span class="n">dependent_generator</span><span class="o">.</span><span class="n">generate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Generator.save_to"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.save_to">[docs]</a>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span><span class="p">(</span><span class="s2">&quot;must be implemented in sub-class&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Generator.description"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+<div class="viewcode-block" id="Generator.load_generator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.load_generator">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_generator</span><span class="p">(</span><span class="n">gen_type</span><span class="p">,</span> <span class="n">input_file</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">gen_type</span> <span class="ow">in</span> <span class="n">Generator</span><span class="o">.</span><span class="n">file_loaders</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Generator</span><span class="o">.</span><span class="n">file_loaders</span><span class="p">[</span><span class="n">gen_type</span><span class="p">](</span><span class="n">input_file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;does not know how to parse generator of type &quot;</span>
+                             <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gen_type</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Generator.GeneratorOps"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.GeneratorOps">[docs]</a>    <span class="k">class</span> <span class="nc">GeneratorOps</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
+
+<div class="viewcode-block" id="Generator.GeneratorOps.RandomValues"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.GeneratorOps.RandomValues">[docs]</a>        <span class="k">class</span> <span class="nc">RandomValues</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Operation that produces one single column generated randomly.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">generator</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">quantity_field</span><span class="p">):</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quantity_field</span> <span class="o">=</span> <span class="n">quantity_field</span>
+
+<div class="viewcode-block" id="Generator.GeneratorOps.RandomValues.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.GeneratorOps.RandomValues.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+                <span class="c1"># if quantity_field is not specified, we assume 1 and return</span>
+                <span class="c1"># the &quot;bare&quot; result (i.e. not in a list of 1 element)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+                <span class="c1"># otherwise, provides a columns with list of generated values</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">qties</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quantity_field</span><span class="p">]</span>
+
+                    <span class="c1"># slices groups of generated values of appropriate size</span>
+                    <span class="n">flat_vals</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">qties</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">flat_vals</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span> <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">qties</span><span class="p">]</span>
+
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">:</span> <span class="n">values</span><span class="p">},</span>
+                                    <span class="n">index</span><span class="o">=</span><span class="n">story_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Generator.GeneratorOps.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.Generator.GeneratorOps.generate">[docs]</a>        <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">quantity_field</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RandomValues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span> <span class="n">named_as</span><span class="o">=</span><span class="n">named_as</span><span class="p">,</span>
+                                     <span class="n">quantity_field</span><span class="o">=</span><span class="n">quantity_field</span><span class="p">)</span></div></div></div>
+
+
+<div class="viewcode-block" id="ConstantGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.ConstantGenerator">[docs]</a><span class="k">class</span> <span class="nc">ConstantGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">Generator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="ConstantGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.ConstantGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">*</span> <span class="n">size</span></div></div>
+
+
+<div class="viewcode-block" id="NumpyRandomGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.NumpyRandomGenerator">[docs]</a><span class="k">class</span> <span class="nc">NumpyRandomGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generator wrapping any numpy.Random method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="o">**</span><span class="n">numpy_parameters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialise a random number generator</span>
+
+<span class="sd">        :param method: string: must be a valid numpy.Randomstate method that</span>
+<span class="sd">            accept the &quot;size&quot; parameter</span>
+
+<span class="sd">        :param numpy_parameters: dict, see descriptions below</span>
+<span class="sd">        :param seed: int, seed of the generator</span>
+<span class="sd">        :return: create a random number generator of type &quot;gen_type&quot;, with its parameters and seeded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Generator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numpy_parameters</span> <span class="o">=</span> <span class="n">numpy_parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numpy_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NumpyRandomGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.NumpyRandomGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="n">all_params</span> <span class="o">=</span> <span class="n">merge_2_dicts</span><span class="p">({</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="n">size</span><span class="p">},</span> <span class="bp">self</span><span class="o">.</span><span class="n">numpy_parameters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">numpy_method</span><span class="p">(</span><span class="o">**</span><span class="n">all_params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NumpyRandomGenerator.description"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.NumpyRandomGenerator.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;NumpyRandomGenerator&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+            <span class="s2">&quot;numpy_parameters&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">numpy_parameters</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="NumpyRandomGenerator.save_to"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.NumpyRandomGenerator.save_to">[docs]</a>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">):</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving generator to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">output_file</span><span class="p">))</span>
+
+        <span class="c1"># saving the numpy RandomState instance, converting the numpy array</span>
+        <span class="c1"># to enable json serialization</span>
+        <span class="n">np_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+            <span class="s2">&quot;numpy_parameters&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">numpy_parameters</span><span class="p">,</span>
+            <span class="s2">&quot;numpy_state&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">np_state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">np_state</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                            <span class="n">np_state</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">np_state</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+        <span class="p">}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">outf</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NumpyRandomGenerator.load_from"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.NumpyRandomGenerator.load_from">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_from</span><span class="p">(</span><span class="n">input_file</span><span class="p">):</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading numpy generator from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">input_file</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
+            <span class="n">json_payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span>
+
+            <span class="c1"># Initializing the generator with an incorrect seed just to make</span>
+            <span class="c1"># the constructor happy, then setting the state</span>
+            <span class="n">gen</span> <span class="o">=</span> <span class="n">NumpyRandomGenerator</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">json_payload</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">],</span>
+                <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">json_payload</span><span class="p">[</span><span class="s2">&quot;numpy_parameters&quot;</span><span class="p">])</span>
+
+            <span class="c1"># retrieving the numpy state + converting list to np.array as needed</span>
+            <span class="n">state_raw_</span> <span class="o">=</span> <span class="n">json_payload</span><span class="p">[</span><span class="s2">&quot;numpy_state&quot;</span><span class="p">]</span>
+            <span class="n">np_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">state_raw_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">state_raw_</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">state_raw_</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                        <span class="n">state_raw_</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">state_raw_</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+
+            <span class="n">gen</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+            <span class="n">gen</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">np_state</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">gen</span></div></div>
+
+
+<span class="n">Generator</span><span class="o">.</span><span class="n">file_loaders</span><span class="p">[</span><span class="s2">&quot;NumpyRandomGenerator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">NumpyRandomGenerator</span><span class="o">.</span><span class="n">load_from</span>
+
+
+<div class="viewcode-block" id="ParetoGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.ParetoGenerator">[docs]</a><span class="k">class</span> <span class="nc">ParetoGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Builds a pareto having xmin as lower bound for the sampled values and a</span>
+<span class="sd">     as power parameter, i.e.:</span>
+
+<span class="sd">     p(x|a) = (x/xmin)^a  if x &gt;= xmin</span>
+<span class="sd">            = 0           otherwise</span>
+
+<span class="sd">     The higher the value of a, the closer pareto gets to dirac&#39;s delta.</span>
+
+<span class="sd">    force_int allows to round each value to integers (handy to generate</span>
+<span class="sd">     counts distributed as a power law)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmin</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_int</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">np_params</span><span class="p">):</span>
+        <span class="n">Generator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">force_int</span> <span class="o">=</span> <span class="n">force_int</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">xmin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lomax</span> <span class="o">=</span> <span class="n">NumpyRandomGenerator</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;pareto&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+                                          <span class="o">**</span><span class="n">np_params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ParetoGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.ParetoGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lomax</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_int</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">values</span></div></div>
+
+
+<div class="viewcode-block" id="SequencialGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.SequencialGenerator">[docs]</a><span class="k">class</span> <span class="nc">SequencialGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generator of sequencial unique values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;id_&quot;</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">Generator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="n">max_length</span>
+
+<div class="viewcode-block" id="SequencialGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.SequencialGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="c1"># forcing size as int, also making sure we never get floating point</span>
+        <span class="c1"># values in ids (can happen if size results from some scaling)</span>
+        <span class="n">size_i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+<span class="c1">#        size_i = size</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">build_ids</span><span class="p">(</span><span class="n">size_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+=</span> <span class="n">size_i</span>
+        <span class="k">return</span> <span class="n">values</span></div>
+
+<div class="viewcode-block" id="SequencialGenerator.description"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.SequencialGenerator.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;SequencialGenerator&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;prefix&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="s2">&quot;max_length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="SequencialGenerator.save_to"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.SequencialGenerator.save_to">[docs]</a>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">):</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving sequencial generator to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">output_file</span><span class="p">))</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;counter&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">),</span>
+            <span class="s2">&quot;prefix&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="s2">&quot;max_length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span>
+        <span class="p">}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">outf</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SequencialGenerator.load_from"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.SequencialGenerator.load_from">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_from</span><span class="p">(</span><span class="n">input_file</span><span class="p">):</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading generator from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">input_file</span><span class="p">))</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">SequencialGenerator</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">state</span><span class="p">[</span><span class="s2">&quot;counter&quot;</span><span class="p">],</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">state</span><span class="p">[</span><span class="s2">&quot;prefix&quot;</span><span class="p">],</span>
+                <span class="n">max_length</span><span class="o">=</span><span class="n">state</span><span class="p">[</span><span class="s2">&quot;max_length&quot;</span><span class="p">])</span></div></div>
+
+
+<span class="n">Generator</span><span class="o">.</span><span class="n">file_loaders</span><span class="p">[</span><span class="s2">&quot;SequencialGenerator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SequencialGenerator</span><span class="o">.</span><span class="n">load_from</span>
+
+
+<div class="viewcode-block" id="FakerGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.FakerGenerator">[docs]</a><span class="k">class</span> <span class="nc">FakerGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generator wrapping Faker factory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">fakerKwargs</span><span class="p">):</span>
+        <span class="n">Generator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">fake</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">()</span>
+        <span class="n">fake</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fake</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fakerKwargs</span> <span class="o">=</span> <span class="n">fakerKwargs</span>
+
+<div class="viewcode-block" id="FakerGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.FakerGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">fakerKwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)]</span></div></div>
+
+
+<div class="viewcode-block" id="MSISDNGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.MSISDNGenerator">[docs]</a><span class="k">class</span> <span class="nc">MSISDNGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">countrycode</span><span class="p">,</span> <span class="n">prefix_list</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param name: string</span>
+<span class="sd">        :param countrycode: string</span>
+<span class="sd">        :param prefix_list: list of strings</span>
+<span class="sd">        :param length: int</span>
+<span class="sd">        :param seed: int</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Generator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cc</span> <span class="o">=</span> <span class="n">countrycode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__pref</span> <span class="o">=</span> <span class="n">prefix_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__length</span> <span class="o">=</span> <span class="n">length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+
+        <span class="n">maxnumber</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__available</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="n">maxnumber</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix_list</span><span class="p">),</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix_list</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__available</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">maxnumber</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">maxnumber</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxnumber</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__available</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">maxnumber</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">maxnumber</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+<div class="viewcode-block" id="MSISDNGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.MSISDNGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns a list of size randomly generated msisdns.</span>
+<span class="sd">        Those msisdns cannot be generated again from this generator</span>
+
+<span class="sd">        :param size: int</span>
+<span class="sd">        :return: numpy array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">available_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__available</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">NumpyRandomGenerator</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;choice&quot;</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">available_idx</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="n">generated_entries</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">msisdns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__cc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pref</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__available</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__available</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__length</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generated_entries</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__available</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__available</span><span class="p">,</span> <span class="n">generated_entries</span><span class="p">,</span>
+                                     <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">msisdns</span></div></div>
+
+
+<div class="viewcode-block" id="MongoIdGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.MongoIdGenerator">[docs]</a><span class="k">class</span> <span class="nc">MongoIdGenerator</span><span class="p">(</span><span class="n">Generator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a random ObjectId for MongoDB, from bson.objectid.ObjectID,</span>
+<span class="sd">    See http://api.mongodb.com/python/current/api/bson/objectid.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MongoIdGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.MongoIdGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns a list of generated ObjectIds for a MongoDB.</span>
+<span class="sd">        Those ObjectIds cannot be generated again from this generator</span>
+
+<span class="sd">        :param size: int</span>
+<span class="sd">        :return: array of strings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">ObjectId</span><span class="p">()</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)]</span></div></div>
+
+
+<div class="viewcode-block" id="DependentGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentGenerator">[docs]</a><span class="k">class</span> <span class="nc">DependentGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generator providing random values depending on some live observation</span>
+<span class="sd">    among the fields of the story or attributes of the populations.</span>
+
+<span class="sd">    This opens the door to &quot;probability given&quot; distributions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO: observations is limited to one single column (&quot;weights&quot;)</span>
+
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DependentGeneratorOps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DependentGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentGenerator.generate">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generation of random values after observing the input events.</span>
+
+<span class="sd">        :param observations: one list of &quot;previous observations&quot;, coming from</span>
+<span class="sd">        upstream operation in the Story upstream random variables in</span>
+<span class="sd">        this graph.</span>
+
+<span class="sd">        :return: an array of generated random values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DependentGenerator.DependentGeneratorOps"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps">[docs]</a>    <span class="k">class</span> <span class="nc">DependentGeneratorOps</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
+
+<div class="viewcode-block" id="DependentGenerator.DependentGeneratorOps.RandomValuesFromField"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.RandomValuesFromField">[docs]</a>        <span class="k">class</span> <span class="nc">RandomValuesFromField</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Operation that produces one single column generated randomly.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">generator</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">observations_field</span><span class="p">):</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">observations_field</span> <span class="o">=</span> <span class="n">observations_field</span>
+
+<div class="viewcode-block" id="DependentGenerator.DependentGeneratorOps.RandomValuesFromField.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.RandomValuesFromField.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="c1"># observing either a field or an attribute</span>
+                <span class="n">obs</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">observations_field</span><span class="p">]</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">observations</span><span class="o">=</span><span class="n">obs</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">:</span> <span class="n">values</span><span class="p">},</span>
+                                    <span class="n">index</span><span class="o">=</span><span class="n">story_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="DependentGenerator.DependentGeneratorOps.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.generate">[docs]</a>        <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">observed_field</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            :param named_as: the name of the supplementary field inserted in</span>
+<span class="sd">              the story_data</span>
+<span class="sd">            :param observed_field: the name of the story_data field whose</span>
+<span class="sd">              content is used as observed input by this DependentGenerator</span>
+<span class="sd">            :return:</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">RandomValuesFromField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span>
+                                              <span class="n">observed_field</span><span class="p">)</span></div></div></div>
+
+
+<div class="viewcode-block" id="ConstantDependentGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.ConstantDependentGenerator">[docs]</a><span class="k">class</span> <span class="nc">ConstantDependentGenerator</span><span class="p">(</span><span class="n">ConstantGenerator</span><span class="p">,</span> <span class="n">DependentGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dependent generator ignoring the observations and producing a constant</span>
+<span class="sd">    value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">ConstantGenerator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">DependentGenerator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ConstantDependentGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.ConstantDependentGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observations</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">ConstantGenerator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">observations</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">observations</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DependentTrigger"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentTrigger">[docs]</a><span class="k">class</span> <span class="nc">DependentTrigger</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A trigger is a boolean Generator.</span>
+
+<span class="sd">    A dependent trigger transforms, with the specified function, the value of</span>
+<span class="sd">    the depended on story field or population attribute into the [0,1] range</span>
+<span class="sd">    and uses that as the probability of triggering (i.e. of returning True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_to_proba_mapper</span><span class="o">=</span><span class="n">identity</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="c1"># random baseline to compare to each the activation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_line</span> <span class="o">=</span> <span class="n">NumpyRandomGenerator</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span>
+                                              <span class="n">low</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                              <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_to_proba_mapper</span> <span class="o">=</span> <span class="n">value_to_proba_mapper</span>
+
+<div class="viewcode-block" id="DependentTrigger.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentTrigger.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observations</span><span class="p">):</span>
+        <span class="n">draws</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_line</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">observations</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">triggers_proba</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_to_proba_mapper</span><span class="p">(</span><span class="n">observations</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">draws</span> <span class="o">&lt;</span> <span class="n">triggers_proba</span></div></div>
+
+
+<div class="viewcode-block" id="DependentTriggerGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentTriggerGenerator">[docs]</a><span class="k">class</span> <span class="nc">DependentTriggerGenerator</span><span class="p">(</span><span class="n">DependentTrigger</span><span class="p">,</span> <span class="n">DependentGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Composition of the two mixin above:</span>
+<span class="sd">        DependentGenerator: , with the ability to build operation that generate</span>
+<span class="sd">         random values</span>
+<span class="sd">        DependentTrigger: to specify that the the generation actually</span>
+<span class="sd">        produces booleans with a value_mapper</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_to_proba_mapper</span><span class="o">=</span><span class="n">identity</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">DependentTrigger</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_to_proba_mapper</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="n">DependentGenerator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DependentBulkGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentBulkGenerator">[docs]</a><span class="k">class</span> <span class="nc">DependentBulkGenerator</span><span class="p">(</span><span class="n">DependentGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dependent Generator that transforms that observations into a list of</span>
+<span class="sd">    observation elements that are generated through element_generator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_generator</span><span class="p">):</span>
+        <span class="n">DependentGenerator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element_generator</span> <span class="o">=</span> <span class="n">element_generator</span>
+
+<div class="viewcode-block" id="DependentBulkGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.random_generators.DependentBulkGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observations</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">bulk_size</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">bulk_size</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">f</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span> <span class="k">for</span> <span class="n">observation</span> <span class="ow">in</span> <span class="n">observations</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">trumania 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, RIA.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

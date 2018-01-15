@@ -1,0 +1,2105 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core package &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">trumania 1.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="trumania-core-package">
+<h1>trumania.core package<a class="headerlink" href="#trumania-core-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trumania.core.attribute">
+<span id="trumania-core-attribute-module"></span><h2>trumania.core.attribute module<a class="headerlink" href="#module-trumania.core.attribute" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.attribute.Attribute">
+<em class="property">class </em><code class="descclassname">trumania.core.attribute.</code><code class="descname">Attribute</code><span class="sig-paren">(</span><em>population</em>, <em>init_values=None</em>, <em>init_gen=None</em>, <em>init_relationship=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Static population attribute, with various ways to initialize it randomly</p>
+<dl class="class">
+<dt id="trumania.core.attribute.Attribute.AttributeOps">
+<em class="property">class </em><code class="descname">AttributeOps</code><span class="sig-paren">(</span><em>attribute</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.Add">
+<em class="property">class </em><code class="descname">Add</code><span class="sig-paren">(</span><em>attribute</em>, <em>member_id_field</em>, <em>added_value_field</em>, <em>subtract</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.Add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.Add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.Add.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.Add.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.Add.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.Update">
+<em class="property">class </em><code class="descname">Update</code><span class="sig-paren">(</span><em>attribute</em>, <em>member_id_field</em>, <em>copy_from_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.Update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.Update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.Update.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.Update.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.Update.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>member_id_field</em>, <em>added_value_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.subtract">
+<code class="descname">subtract</code><span class="sig-paren">(</span><em>member_id_field</em>, <em>subtracted_value_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.subtract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.subtract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.AttributeOps.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>member_id_field</em>, <em>copy_from_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.AttributeOps.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.AttributeOps.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrite the value of this attribute with values in this field</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>member_id_field</strong> – name of the field of the story data
+containing the member ids whose attribute should be updated</li>
+<li><strong>copy_from_field</strong> – name of the field of the story data
+containing the new values of the attribute</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>ids</em>, <em>added_values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>This only makes sense for attributes that support a + operation (e.g. numerical values or list)
+: this simply performs a += operation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.get_values">
+<code class="descname">get_values</code><span class="sig-paren">(</span><em>ids=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.get_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.get_values" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ids</strong> – members ids for which the attribute values are desired</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the current attribute values for those members, as Series</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.attribute.Attribute.load_from">
+<em class="property">static </em><code class="descname">load_from</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.load_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.load_from" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.save_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.transform_inplace">
+<code class="descname">transform_inplace</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.transform_inplace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.transform_inplace" title="Permalink to this definition">¶</a></dt>
+<dd><p>transform the values of this attribute inplace with f</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.attribute.Attribute.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>series</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/attribute.html#Attribute.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.attribute.Attribute.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>updates or adds values of this attributes from the values of the provided
+series, using its index as member id</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.circus">
+<span id="trumania-core-circus-module"></span><h2>trumania.core.circus module<a class="headerlink" href="#module-trumania.core.circus" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.circus.Circus">
+<em class="property">class </em><code class="descclassname">trumania.core.circus.</code><code class="descname">Circus</code><span class="sig-paren">(</span><em>name</em>, <em>master_seed</em>, <em>**clock_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A Circus is just a container of a lot of objects that are required to make the simulation
+It is also the object that will execute the stories required for 1 iteration</p>
+<dl class="method">
+<dt id="trumania.core.circus.Circus.attach_generator">
+<code class="descname">attach_generator</code><span class="sig-paren">(</span><em>gen_id</em>, <em>generator</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.attach_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.attach_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>“attach” a random generator to this circus, s.t. it gets persisted
+with the rest</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.create_population">
+<code class="descname">create_population</code><span class="sig-paren">(</span><em>name</em>, <em>**population_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.create_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.create_population" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a population with the specifed parameters and attach it to this
+circus.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.create_story">
+<code class="descname">create_story</code><span class="sig-paren">(</span><em>name</em>, <em>**story_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.create_story"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.create_story" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a story with the provided parameters and attach it to this
+circus.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.description">
+<code class="descname">description</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.get_population_of">
+<code class="descname">get_population_of</code><span class="sig-paren">(</span><em>story_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.get_population_of"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.get_population_of" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks up the initiating population associated to this story</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.get_story">
+<code class="descname">get_story</code><span class="sig-paren">(</span><em>story_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.get_story"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.get_story" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks up and story by name in this circus and returns it. Returns none
+if not found.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.circus.Circus.load_from_db">
+<em class="property">static </em><code class="descname">load_from_db</code><span class="sig-paren">(</span><em>circus_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.load_from_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.load_from_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.load_generator">
+<code class="descname">load_generator</code><span class="sig-paren">(</span><em>gen_type</em>, <em>gen_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.load_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.load_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load this generator definition add attach it to this circus</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.load_population">
+<code class="descname">load_population</code><span class="sig-paren">(</span><em>population_id</em>, <em>namespace=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.load_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.load_population" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load this population definition add attach it to this circus</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>duration</em>, <em>log_output_folder</em>, <em>delete_existing_logs=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes all stories in the circus for as long as requested.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>duration</strong> – duration of the desired simulation (start date is</td>
+</tr>
+</tbody>
+</table>
+<p>dictated by the clock)
+:type duration: pd.TimeDelta</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>log_output_folder</strong> (<em>string</em>) – folder where to write the logs.</li>
+<li><strong>delete_existing_logs</strong> – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.circus.Circus.save_logs">
+<em class="property">static </em><code class="descname">save_logs</code><span class="sig-paren">(</span><em>log_id</em>, <em>logs</em>, <em>log_output_folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.save_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.save_logs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends those logs to the corresponding output file, creating it if
+it does not exist or appending lines to it otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.save_params_to_db">
+<code class="descname">save_params_to_db</code><span class="sig-paren">(</span><em>params_type</em>, <em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.save_params_to_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.save_params_to_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the params object to the circus folder in the DB for future reference
+:param params_type: “build”, “run” or “target”
+:param params: the params object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.circus.Circus.save_to_db">
+<code class="descname">save_to_db</code><span class="sig-paren">(</span><em>overwrite=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/circus.html#Circus.save_to_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.circus.Circus.save_to_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a db namespace named after this circus and saves all the
+populations there.</p>
+<p>Only static data is saved, not the stories.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.clock">
+<span id="trumania-core-clock-module"></span><h2>trumania.core.clock module<a class="headerlink" href="#module-trumania.core.clock" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.clock.Clock">
+<em class="property">class </em><code class="descclassname">trumania.core.clock.</code><code class="descname">Clock</code><span class="sig-paren">(</span><em>start</em>, <em>step_duration</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A Clock is the central object managing the evolution of time of the whole circus.
+It’s generating timestamps on demand, and provides information for TimeProfiler objects.</p>
+<dl class="class">
+<dt id="trumania.core.clock.Clock.ClockOps">
+<em class="property">class </em><code class="descname">ClockOps</code><span class="sig-paren">(</span><em>clock</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.ClockOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.ClockOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.clock.Clock.ClockOps.Timestamp">
+<em class="property">class </em><code class="descname">Timestamp</code><span class="sig-paren">(</span><em>clock</em>, <em>named_as</em>, <em>random</em>, <em>log_format</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.ClockOps.Timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.ClockOps.Timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.clock.Clock.ClockOps.Timestamp.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.ClockOps.Timestamp.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.ClockOps.Timestamp.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.Clock.ClockOps.timestamp">
+<code class="descname">timestamp</code><span class="sig-paren">(</span><em>named_as</em>, <em>random=True</em>, <em>log_format=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.ClockOps.timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.ClockOps.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a random timestamp within the current time slice</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.Clock.get_timestamp">
+<code class="descname">get_timestamp</code><span class="sig-paren">(</span><em>size=1</em>, <em>random=True</em>, <em>log_format=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.get_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.get_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns timestamps formatted as string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>size</strong> (<em>int</em>) – number of timestamps to generate, default 1</li>
+<li><strong>random</strong> (<em>boolean</em>) – if True, the timestamps are randomly generated in [</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>self.current_date, self.current_date+self.step_duration]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>log_format</strong> (<em>string</em>) – string format of the generated timestamps</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Pandas Series</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">random timestamps in the form of strings</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.Clock.increment">
+<code class="descname">increment</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.increment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.increment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increments the clock by 1 step</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">NoneType</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.Clock.n_iterations">
+<code class="descname">n_iterations</code><span class="sig-paren">(</span><em>duration</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.n_iterations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.n_iterations" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the smallest number of iteration of this clock s.t. the</td>
+</tr>
+</tbody>
+</table>
+<p>corresponding duration is &gt;= duration</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.Clock.register_increment_listener">
+<code class="descname">register_increment_listener</code><span class="sig-paren">(</span><em>listener</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#Clock.register_increment_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.Clock.register_increment_listener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an object to be incremented at each step (such as a TimeProfiler)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.clock.CyclicTimerGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.clock.</code><code class="descname">CyclicTimerGenerator</code><span class="sig-paren">(</span><em>clock</em>, <em>seed</em>, <em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.DependentGenerator" title="trumania.core.random_generators.DependentGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.DependentGenerator</span></code></a></p>
+<p>A TimeProfiler contains an activity profile over a defined time range.
+It’s mostly a super class, normally only its child classes should be used.</p>
+<p>The goal of a TimeProfiler is to keep a track of the expected level of activity of users over a cyclic time range
+It will store a vector with probabilities of activity per time step, as well as a cumulative sum of the
+probabilities starting with the current time step.</p>
+<p>This allows to quickly produce random waiting times until the next event for the users</p>
+<dl class="method">
+<dt id="trumania.core.clock.CyclicTimerGenerator.activity">
+<code class="descname">activity</code><span class="sig-paren">(</span><em>n</em>, <em>per</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerGenerator.activity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerGenerator.activity" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n</strong> – number of stories</li>
+<li><strong>per</strong> (<em>pd.Timedelta</em>) – time period for that number of stories</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the activity level corresponding to the specified number of n</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>executions per time period</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.CyclicTimerGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>observations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate random waiting times, based on some observed activity
+levels. The higher the level of activity, the shorter the waiting
+times will be</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>observations</strong> (<em>Pandas Series</em>) – contains an array of floats</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Pandas Series</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.CyclicTimerGenerator.increment">
+<code class="descname">increment</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerGenerator.increment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerGenerator.increment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increment the time generator by 1 step.</p>
+<p>This has as effect to move the cdf of one step to the left, decrease
+all values by the value of the original first entry, and placing the
+previous first entry at the end of the cdf, with value 1.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.clock.CyclicTimerProfile">
+<em class="property">class </em><code class="descclassname">trumania.core.clock.</code><code class="descname">CyclicTimerProfile</code><span class="sig-paren">(</span><em>profile</em>, <em>profile_time_steps</em>, <em>start_date</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerProfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerProfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Static parameters of the Timer profile. Separated from the timer gen
+itself to facilitate persistence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>profile</strong> (<em>python array</em>) – Weight of each period</li>
+<li><strong>profile_time_steps</strong> (<em>string</em>) – duration of the time-steps in the profile</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>(e.g. “15min”)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>start_date</strong> (<em>pd.Timestamp</em>) – date of the origin of the specified profile =&gt;</td>
+</tr>
+</tbody>
+</table>
+<p>this is used to align with the values of the clock</p>
+<dl class="method">
+<dt id="trumania.core.clock.CyclicTimerProfile.duration">
+<code class="descname">duration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerProfile.duration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerProfile.duration" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the total duration corresponding to this time profile</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.clock.CyclicTimerProfile.load_from">
+<em class="property">static </em><code class="descname">load_from</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerProfile.load_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerProfile.load_from" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.clock.CyclicTimerProfile.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/clock.html#CyclicTimerProfile.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.clock.CyclicTimerProfile.save_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.operations">
+<span id="trumania-core-operations-module"></span><h2>trumania.core.operations module<a class="headerlink" href="#module-trumania.core.operations" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.operations.AddColumns">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">AddColumns</code><span class="sig-paren">(</span><em>join_kind='left'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#AddColumns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.AddColumns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.Operation" title="trumania.core.operations.Operation"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.Operation</span></code></a></p>
+<p>Very typical case of an operation that appends (i.e. joins) columns to
+the previous result</p>
+<dl class="method">
+<dt id="trumania.core.operations.AddColumns.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#AddColumns.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.AddColumns.build_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a dataframe with one or several columns and an index aligned
+with the one of input. The columns of this will be merge with input.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>story_data</strong> – current dataframe</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the column(s) to append to it, as a dataframe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.operations.AddColumns.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#AddColumns.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.AddColumns.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.operations.Apply">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">Apply</code><span class="sig-paren">(</span><em>source_fields</em>, <em>named_as</em>, <em>f</em>, <em>f_args='dataframe'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#Apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<p>Custom operation adding one single column computed from a user-provided
+function.</p>
+<p>The length of the source_fields must match the number columns
+in the dataframe expected by the user f function</p>
+<dl class="method">
+<dt id="trumania.core.operations.Apply.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#Apply.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Apply.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.operations.Chain">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">Chain</code><span class="sig-paren">(</span><em>*operations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#Chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.Operation" title="trumania.core.operations.Operation"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.Operation</span></code></a></p>
+<p>A chain is a list of operation to be executed sequencially</p>
+<dl class="method">
+<dt id="trumania.core.operations.Chain.append">
+<code class="descname">append</code><span class="sig-paren">(</span><em>*operations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#Chain.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Chain.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds operations to be executed at the end of this chain</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.operations.DropRow">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">DropRow</code><span class="sig-paren">(</span><em>condition_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#DropRow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.DropRow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.Operation" title="trumania.core.operations.Operation"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.Operation</span></code></a></p>
+<p>Discards any row in the story data where the condition field is false.</p>
+<dl class="method">
+<dt id="trumania.core.operations.DropRow.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#DropRow.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.DropRow.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.operations.FieldLogger">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">FieldLogger</code><span class="sig-paren">(</span><em>log_id</em>, <em>cols=None</em>, <em>exploded_cols=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#FieldLogger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.FieldLogger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.Operation" title="trumania.core.operations.Operation"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.Operation</span></code></a></p>
+<p>Log creator that simply select a set of columns and create a logged
+dataframe from it</p>
+<dl class="method">
+<dt id="trumania.core.operations.FieldLogger.emit_logs">
+<code class="descname">emit_logs</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#FieldLogger.emit_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.FieldLogger.emit_logs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.operations.Operation">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">Operation</code><a class="reference internal" href="_modules/trumania/core/operations.html#Operation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Operation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="docutils">
+<dt>An Operation is able to produce transform input into an output +</dt>
+<dd>produce logs.</dd>
+</dl>
+<dl class="method">
+<dt id="trumania.core.operations.Operation.emit_logs">
+<code class="descname">emit_logs</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#Operation.emit_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Operation.emit_logs" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is used to produces logs (e.g. CDRs, mobility, topus…)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>story_data</strong> – output of this operation, as produced by transform()</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">emitted logs, as a dictionary of {“log_id”: some_data_frame}</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.operations.Operation.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#Operation.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.Operation.transform" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>story_data</strong> – dataframe as produced by the previous operation</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a dataframe that replaces the previous one in the pipeline</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.operations.SideEffectOnly">
+<em class="property">class </em><code class="descclassname">trumania.core.operations.</code><code class="descname">SideEffectOnly</code><a class="reference internal" href="_modules/trumania/core/operations.html#SideEffectOnly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.SideEffectOnly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.Operation" title="trumania.core.operations.Operation"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.Operation</span></code></a></p>
+<p>Operation that does not produce logs nor supplementary columns: just have
+side effect</p>
+<dl class="method">
+<dt id="trumania.core.operations.SideEffectOnly.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#SideEffectOnly.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.SideEffectOnly.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>story_data</strong> – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">nothing</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.operations.SideEffectOnly.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#SideEffectOnly.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.SideEffectOnly.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.operations.bound_value">
+<code class="descclassname">trumania.core.operations.</code><code class="descname">bound_value</code><span class="sig-paren">(</span><em>lb=None</em>, <em>ub=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#bound_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.bound_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>builds a function that limits the range of a value</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.operations.bounded_sigmoid">
+<code class="descclassname">trumania.core.operations.</code><code class="descname">bounded_sigmoid</code><span class="sig-paren">(</span><em>x_min</em>, <em>x_max</em>, <em>shape</em>, <em>incrementing=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#bounded_sigmoid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.bounded_sigmoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a S-shape curve that have y values evolving between 0 and 1 over
+the x domain [x_min, x_max]</p>
+<p>This is preferable to the logistic function for cases where we want to
+make sure that the curve actually reaches 0 and 1 at some point (e.g.
+probability of triggering an “restock” story must be 1 if stock is as
+low as 1).</p>
+<p>See /tests/notebooks/bounded_sigmoid.ipynb for examples</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x_min</strong> – lower bound of the x domain</li>
+<li><strong>x_max</strong> – lower bound of the x domain</li>
+<li><strong>incrementing</strong> – if True, evolve from 0 to 1, or from 1 to 0 otherwise</li>
+<li><strong>shape</strong> – <p>strictly positive number controlling the shape of the
+resulting function
+* 1 correspond to linear transition
+* higher values yield a more and more sharper, i.e. more</p>
+<blockquote>
+<div>vertical S shape, converging towards a step function
+transiting at (x_max-x_min)/2 for very large values of S (
+e.g. 10000)</div></blockquote>
+<ul>
+<li>values in ]0,1[ yield vertically shaped sigmoids, sharply
+rising/falling at the boundary of the x domain and
+transiting more smoothly in the middle of it.</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.operations.copy_if">
+<code class="descclassname">trumania.core.operations.</code><code class="descname">copy_if</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#copy_if"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.copy_if" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copies values from the source to the “named_as” if the condition is True,
+otherwise inserts NA</p>
+<p>usage:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Apply(source_fields=[“some_source_field”, “some_condition_field”],</dt>
+<dd>named_as=”some_result_field”,
+f=copy_if)</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.operations.identity">
+<code class="descclassname">trumania.core.operations.</code><code class="descname">identity</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#identity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.identity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.operations.logistic">
+<code class="descclassname">trumania.core.operations.</code><code class="descname">logistic</code><span class="sig-paren">(</span><em>k</em>, <em>x0=0</em>, <em>L=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#logistic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.logistic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a function, usable in an Apply operation, that transforms the
+specified field with a sigmoid with the provided parameters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>k</strong> – the steepness of the curve</li>
+<li><strong>x0</strong> – the x-value of the sigmoid’s midpoint (default: 0)</li>
+<li><strong>L</strong> – maximum value of the logistic (default: 1)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>same parameter naming conventions as in:
+<a class="reference external" href="https://en.wikipedia.org/wiki/Logistic_function">https://en.wikipedia.org/wiki/Logistic_function</a></p>
+<dl class="docutils">
+<dt>usage:</dt>
+<dd><dl class="first last docutils">
+<dt>Apply(source_fields=[“some_source_field”],</dt>
+<dd>named_as=”some_result_field”,
+f=sigmoid(k=-0.01, x0=1000)</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.operations.scale">
+<code class="descclassname">trumania.core.operations.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>factor</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/operations.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.operations.scale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.population">
+<span id="trumania-core-population-module"></span><h2>trumania.core.population module<a class="headerlink" href="#module-trumania.core.population" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.population.Population">
+<em class="property">class </em><code class="descclassname">trumania.core.population.</code><code class="descname">Population</code><span class="sig-paren">(</span><em>circus</em>, <em>ids_gen=None</em>, <em>size=None</em>, <em>ids=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.population.Population.PopulationOps">
+<em class="property">class </em><code class="descname">PopulationOps</code><span class="sig-paren">(</span><em>population</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.population.Population.PopulationOps.Lookup">
+<em class="property">class </em><code class="descname">Lookup</code><span class="sig-paren">(</span><em>population</em>, <em>id_field</em>, <em>select_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.Lookup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.Lookup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.population.Population.PopulationOps.Lookup.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.Lookup.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.Lookup.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.population.Population.PopulationOps.Update">
+<em class="property">class </em><code class="descname">Update</code><span class="sig-paren">(</span><em>population</em>, <em>id_field</em>, <em>copy_attributes_from_fields</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.Update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.Update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.population.Population.PopulationOps.Update.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.Update.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.Update.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.PopulationOps.lookup">
+<code class="descname">lookup</code><span class="sig-paren">(</span><em>id_field</em>, <em>select</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.lookup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.lookup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks up some attribute values by joining on the specified field
+of the current data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>id_field</strong> – field name in the story_data.
+If the that column contains lists, then it’s assumed to contain
+only list and it’s flatten to obtain the list of id to lookup
+in the attribute. Must be a list of “scalar” values or list of
+list, not a mix of both.</li>
+<li><strong>select</strong> – dictionary of (attribute_name -&gt; given_name)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>specifying which attribute to look up and which name to give to
+the resulting column</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.PopulationOps.select_one">
+<code class="descname">select_one</code><span class="sig-paren">(</span><em>named_as</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.select_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.select_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends a field column to the story_data containing member ids
+taken at random among the ids of this population.</p>
+<p>This is similar to relationship_select_one(), except that no
+particular relation is required, we just sample one id randomly</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>named_as</strong> – the name of the field added to the story_data</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.PopulationOps.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>id_field</em>, <em>copy_attributes_from_fields</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.PopulationOps.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.PopulationOps.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds or update members and their attributes.</p>
+<p>Note that the index of story_data, i.e. the ids of the _triggering_
+members, is irrelevant during this operation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>id_field</strong> – ids of the updated or created members</li>
+<li><strong>copy_attributes_from_fields</strong> – <dl class="docutils">
+<dt>dictionary of</dt>
+<dd>(attribute name -&gt; story data field name)</dd>
+<dt>that describes which column in the population dataframe to use</dt>
+<dd>to update which attribute.</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.attribute_names">
+<code class="descname">attribute_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.attribute_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.attribute_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.create_attribute">
+<code class="descname">create_attribute</code><span class="sig-paren">(</span><em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.create_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.create_attribute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.create_relationship">
+<code class="descname">create_relationship</code><span class="sig-paren">(</span><em>name</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.create_relationship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.create_relationship" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates an empty relationship from the members of this population</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.create_stock_relationship">
+<code class="descname">create_stock_relationship</code><span class="sig-paren">(</span><em>name</em>, <em>item_id_gen</em>, <em>n_items_per_member</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.create_stock_relationship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.create_stock_relationship" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a relationship aimed at maintaining a stock, from a generator
+that create stock item ids.</p>
+<p>The relationship does not point to another population, but to items
+whose id is generated with the provided generator.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.create_stock_relationship_grp">
+<code class="descname">create_stock_relationship_grp</code><span class="sig-paren">(</span><em>name</em>, <em>stock_bulk_gen</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.create_stock_relationship_grp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.create_stock_relationship_grp" title="Permalink to this definition">¶</a></dt>
+<dd><p>This creates exactly the same kind of relationship as
+create_stock_relationship, but using a generator of list of stock
+items instead of a generators of items.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.description">
+<code class="descname">description</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>”
+:return a dictionary description of this population</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.get_attribute">
+<code class="descname">get_attribute</code><span class="sig-paren">(</span><em>attribute_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.get_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.get_attribute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.get_attribute_values">
+<code class="descname">get_attribute_values</code><span class="sig-paren">(</span><em>attribute_name</em>, <em>ids=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.get_attribute_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.get_attribute_values" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the values of this attribute, as a Series</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.get_relationship">
+<code class="descname">get_relationship</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.get_relationship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.get_relationship" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.population.Population.load_from">
+<em class="property">static </em><code class="descname">load_from</code><span class="sig-paren">(</span><em>folder</em>, <em>circus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.load_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.load_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads all persistent data of this population and loads it</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>folder</strong> – folder containing all CSV files of this population</li>
+<li><strong>circus</strong> – parent circus containing this population</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.relationship_names">
+<code class="descname">relationship_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.relationship_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.relationship_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>target_folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.save_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves this population and all its attribute and relationships to the
+specified folder.</p>
+<p>If the folder already exists, it is deleted first</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.to_dataframe">
+<code class="descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">all the attributes of this population as one single dataframe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.population.Population.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>attribute_df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/population.html#Population.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.population.Population.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds or updates members with the provided attribute ids and values</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">param attribute_df:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">must be a dataframe whose index contain the id</td>
+</tr>
+</tbody>
+</table>
+<p>of the inserted members. There must be as many
+columns as there are attributes currently defined in this population.</p>
+</div></blockquote>
+<p>If the members for the specified ids already exist, their values are
+updated, otherwise the members are created.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.random_generators">
+<span id="trumania-core-random-generators-module"></span><h2>trumania.core.random_generators module<a class="headerlink" href="#module-trumania.core.random_generators" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.random_generators.ConstantDependentGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">ConstantDependentGenerator</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#ConstantDependentGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.ConstantDependentGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.ConstantGenerator" title="trumania.core.random_generators.ConstantGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.ConstantGenerator</span></code></a>, <a class="reference internal" href="#trumania.core.random_generators.DependentGenerator" title="trumania.core.random_generators.DependentGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.DependentGenerator</span></code></a></p>
+<p>Dependent generator ignoring the observations and producing a constant
+value.</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.ConstantDependentGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>observations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#ConstantDependentGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.ConstantDependentGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.ConstantGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">ConstantGenerator</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#ConstantGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.ConstantGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.random_generators.ConstantGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#ConstantGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.ConstantGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.DependentBulkGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">DependentBulkGenerator</code><span class="sig-paren">(</span><em>element_generator</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentBulkGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentBulkGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.DependentGenerator" title="trumania.core.random_generators.DependentGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.DependentGenerator</span></code></a></p>
+<p>Dependent Generator that transforms that observations into a list of
+observation elements that are generated through element_generator.</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.DependentBulkGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>observations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentBulkGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentBulkGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.DependentGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">DependentGenerator</code><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Generator providing random values depending on some live observation
+among the fields of the story or attributes of the populations.</p>
+<p>This opens the door to “probability given” distributions</p>
+<dl class="class">
+<dt id="trumania.core.random_generators.DependentGenerator.DependentGeneratorOps">
+<em class="property">class </em><code class="descname">DependentGeneratorOps</code><span class="sig-paren">(</span><em>generator</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentGenerator.DependentGeneratorOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.RandomValuesFromField">
+<em class="property">class </em><code class="descname">RandomValuesFromField</code><span class="sig-paren">(</span><em>generator</em>, <em>named_as</em>, <em>observations_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentGenerator.DependentGeneratorOps.RandomValuesFromField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.RandomValuesFromField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<p>Operation that produces one single column generated randomly.</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.RandomValuesFromField.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentGenerator.DependentGeneratorOps.RandomValuesFromField.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.RandomValuesFromField.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>named_as</em>, <em>observed_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentGenerator.DependentGeneratorOps.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentGenerator.DependentGeneratorOps.generate" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>named_as</strong> – the name of the supplementary field inserted in
+the story_data</li>
+<li><strong>observed_field</strong> – the name of the story_data field whose
+content is used as observed input by this DependentGenerator</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.DependentGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>observations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generation of random values after observing the input events.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>observations</strong> – one list of “previous observations”, coming from</td>
+</tr>
+</tbody>
+</table>
+<p>upstream operation in the Story upstream random variables in
+this graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an array of generated random values</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.DependentTrigger">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">DependentTrigger</code><span class="sig-paren">(</span><em>value_to_proba_mapper=&lt;function identity&gt;</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentTrigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentTrigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A trigger is a boolean Generator.</p>
+<p>A dependent trigger transforms, with the specified function, the value of
+the depended on story field or population attribute into the [0,1] range
+and uses that as the probability of triggering (i.e. of returning True)</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.DependentTrigger.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>observations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentTrigger.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentTrigger.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.DependentTriggerGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">DependentTriggerGenerator</code><span class="sig-paren">(</span><em>value_to_proba_mapper=&lt;function identity&gt;</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#DependentTriggerGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.DependentTriggerGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.DependentTrigger" title="trumania.core.random_generators.DependentTrigger"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.DependentTrigger</span></code></a>, <a class="reference internal" href="#trumania.core.random_generators.DependentGenerator" title="trumania.core.random_generators.DependentGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.DependentGenerator</span></code></a></p>
+<dl class="docutils">
+<dt>Composition of the two mixin above:</dt>
+<dd><dl class="first docutils">
+<dt>DependentGenerator: , with the ability to build operation that generate</dt>
+<dd>random values</dd>
+</dl>
+<p class="last">DependentTrigger: to specify that the the generation actually
+produces booleans with a value_mapper</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.FakerGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">FakerGenerator</code><span class="sig-paren">(</span><em>seed</em>, <em>method</em>, <em>**fakerKwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#FakerGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.FakerGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<p>Generator wrapping Faker factory</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.FakerGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#FakerGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.FakerGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.Generator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">Generator</code><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Independent parameterized random value generator.
+Abstract class</p>
+<dl class="class">
+<dt id="trumania.core.random_generators.Generator.GeneratorOps">
+<em class="property">class </em><code class="descname">GeneratorOps</code><span class="sig-paren">(</span><em>generator</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.GeneratorOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.GeneratorOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.random_generators.Generator.GeneratorOps.RandomValues">
+<em class="property">class </em><code class="descname">RandomValues</code><span class="sig-paren">(</span><em>generator</em>, <em>named_as</em>, <em>quantity_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.GeneratorOps.RandomValues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.GeneratorOps.RandomValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<p>Operation that produces one single column generated randomly.</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.GeneratorOps.RandomValues.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.GeneratorOps.RandomValues.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.GeneratorOps.RandomValues.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.GeneratorOps.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>named_as</em>, <em>quantity_field=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.GeneratorOps.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.GeneratorOps.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.description">
+<code class="descname">description</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="trumania.core.random_generators.Generator.file_loaders">
+<code class="descname">file_loaders</code><em class="property"> = {'NumpyRandomGenerator': &lt;function NumpyRandomGenerator.load_from at 0x10eceec80&gt;, 'SequencialGenerator': &lt;function SequencialGenerator.load_from at 0x10ecef0d0&gt;}</em><a class="headerlink" href="#trumania.core.random_generators.Generator.file_loaders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.flatmap">
+<code class="descname">flatmap</code><span class="sig-paren">(</span><em>dependent_generator</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.flatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.flatmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not _really_ a flatmap but close enough on concept (I guess): this
+chains self with a DependentGenerator by feeding our output
+values as observations to the DependentGenerator at the moment of
+generation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dependent_generator</strong> – must be an instance of DependentGenerator,
+i.e. have a .generate(observations=…) method</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an instance of Generator whose .generate(size=…) method
+provides the combination of the above</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>“Independent” random value generation: do not depend on any previous
+observation, we just want to sample the random variable <cite>size</cite> times</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> – the number of random value to produce</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an array of generated random values</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.random_generators.Generator.load_generator">
+<em class="property">static </em><code class="descname">load_generator</code><span class="sig-paren">(</span><em>gen_type</em>, <em>input_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.load_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.load_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.map">
+<code class="descname">map</code><span class="sig-paren">(</span><em>f=None</em>, <em>f_vect=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new generator that transforms the generated values with the
+provided function.</p>
+<p># TODO: do we really need “non vectorialized” f and vectorialized
+f_vect? Have a look at numpy ufunc…</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.Generator.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>output_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#Generator.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.Generator.save_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.MSISDNGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">MSISDNGenerator</code><span class="sig-paren">(</span><em>countrycode</em>, <em>prefix_list</em>, <em>length</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#MSISDNGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.MSISDNGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.random_generators.MSISDNGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#MSISDNGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.MSISDNGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of size randomly generated msisdns.
+Those msisdns cannot be generated again from this generator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> – int</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">numpy array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.MongoIdGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">MongoIdGenerator</code><a class="reference internal" href="_modules/trumania/core/random_generators.html#MongoIdGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.MongoIdGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<p>Generates a random ObjectId for MongoDB, from bson.objectid.ObjectID,
+See <a class="reference external" href="http://api.mongodb.com/python/current/api/bson/objectid.html">http://api.mongodb.com/python/current/api/bson/objectid.html</a></p>
+<dl class="method">
+<dt id="trumania.core.random_generators.MongoIdGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#MongoIdGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.MongoIdGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of generated ObjectIds for a MongoDB.
+Those ObjectIds cannot be generated again from this generator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> – int</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array of strings</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.NumpyRandomGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">NumpyRandomGenerator</code><span class="sig-paren">(</span><em>method</em>, <em>seed</em>, <em>**numpy_parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#NumpyRandomGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.NumpyRandomGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<p>Generator wrapping any numpy.Random method.</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.NumpyRandomGenerator.description">
+<code class="descname">description</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#NumpyRandomGenerator.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.NumpyRandomGenerator.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.NumpyRandomGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#NumpyRandomGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.NumpyRandomGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.random_generators.NumpyRandomGenerator.load_from">
+<em class="property">static </em><code class="descname">load_from</code><span class="sig-paren">(</span><em>input_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#NumpyRandomGenerator.load_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.NumpyRandomGenerator.load_from" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.NumpyRandomGenerator.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>output_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#NumpyRandomGenerator.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.NumpyRandomGenerator.save_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.ParetoGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">ParetoGenerator</code><span class="sig-paren">(</span><em>xmin</em>, <em>seed=None</em>, <em>force_int=False</em>, <em>**np_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#ParetoGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.ParetoGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<dl class="docutils">
+<dt>Builds a pareto having xmin as lower bound for the sampled values and a</dt>
+<dd><p class="first">as power parameter, i.e.:</p>
+<dl class="docutils">
+<dt>p(x|a) = (x/xmin)^a  if x &gt;= xmin</dt>
+<dd>= 0           otherwise</dd>
+</dl>
+<p class="last">The higher the value of a, the closer pareto gets to dirac’s delta.</p>
+</dd>
+<dt>force_int allows to round each value to integers (handy to generate</dt>
+<dd>counts distributed as a power law)</dd>
+</dl>
+<dl class="method">
+<dt id="trumania.core.random_generators.ParetoGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#ParetoGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.ParetoGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.random_generators.SequencialGenerator">
+<em class="property">class </em><code class="descclassname">trumania.core.random_generators.</code><code class="descname">SequencialGenerator</code><span class="sig-paren">(</span><em>start=0</em>, <em>prefix='id_'</em>, <em>max_length=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#SequencialGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.SequencialGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.random_generators.Generator" title="trumania.core.random_generators.Generator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.random_generators.Generator</span></code></a></p>
+<p>Generator of sequencial unique values</p>
+<dl class="method">
+<dt id="trumania.core.random_generators.SequencialGenerator.description">
+<code class="descname">description</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#SequencialGenerator.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.SequencialGenerator.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.SequencialGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#SequencialGenerator.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.SequencialGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.random_generators.SequencialGenerator.load_from">
+<em class="property">static </em><code class="descname">load_from</code><span class="sig-paren">(</span><em>input_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#SequencialGenerator.load_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.SequencialGenerator.load_from" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.random_generators.SequencialGenerator.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>output_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#SequencialGenerator.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.SequencialGenerator.save_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.random_generators.seed_provider">
+<code class="descclassname">trumania.core.random_generators.</code><code class="descname">seed_provider</code><span class="sig-paren">(</span><em>master_seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/random_generators.html#seed_provider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.random_generators.seed_provider" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>master_seed</strong> – master seed</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a generator of seeds, deterministically depending on the master one</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.relationship">
+<span id="trumania-core-relationship-module"></span><h2>trumania.core.relationship module<a class="headerlink" href="#module-trumania.core.relationship" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.relationship.Relations">
+<em class="property">class </em><code class="descclassname">trumania.core.relationship.</code><code class="descname">Relations</code><span class="sig-paren">(</span><em>to_ids</em>, <em>weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>This entity contains all the “to” sides of the relationships of a given
+“from”, together with the related weights.</p>
+<p>This data structure seems to be the most optimal since it corresponds to a cached
+group-by result, and those group-by are expensive in the select_one
+operation</p>
+<dl class="staticmethod">
+<dt id="trumania.core.relationship.Relations.from_tuples">
+<em class="property">static </em><code class="descname">from_tuples</code><span class="sig-paren">(</span><em>from_ids</em>, <em>to_ids</em>, <em>weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations.from_tuples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations.from_tuples" title="Permalink to this definition">¶</a></dt>
+<dd><p>from_ids, to_ids and weights must be 3 arrays of identical size,
+a relationship is built here for each “line” read across those 3
+arrays.</p>
+<p>This methods builds one instance of Relations for each unique from_id
+value, containing all the to_id’s it is related to.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relations.minus">
+<code class="descname">minus</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations.minus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations.minus" title="Permalink to this definition">¶</a></dt>
+<dd><p>removes from self _all_ relations to the to_ids mentioned in the
+provided other Relation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relations.pick_many">
+<code class="descname">pick_many</code><span class="sig-paren">(</span><em>random_state</em>, <em>amount</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations.pick_many"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations.pick_many" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quantities and req_indices should have the same size: the first
+one lists the ids of the index that requests some selections
+to be picked in the relationship, and the second provide
+the quantities that each request asked.</p>
+<p>The result will be in vertical format, with as many lines as the
+sum of the quantities.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relations.pick_one">
+<code class="descname">pick_one</code><span class="sig-paren">(</span><em>random_state</em>, <em>overridden_to_weights=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations.pick_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations.pick_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomly picks one of the to_ids of this Relation. By default this
+uses the weights encapsulated in this Relation, unless
+overridden_to_weights is specified.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relations.plus">
+<code class="descname">plus</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations.plus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations.plus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge function for 2 sets of relations all starting from the same “from”</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relations.remove_inplace">
+<code class="descname">remove_inplace</code><span class="sig-paren">(</span><em>removed_indices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relations.remove_inplace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relations.remove_inplace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship">
+<em class="property">class </em><code class="descclassname">trumania.core.relationship.</code><code class="descname">Relationship</code><span class="sig-paren">(</span><em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps">
+<em class="property">class </em><code class="descname">RelationshipOps</code><span class="sig-paren">(</span><em>relationship</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.Add">
+<em class="property">class </em><code class="descname">Add</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>item_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.Add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.Add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.Add.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.Add.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.Add.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.AddGrouped">
+<em class="property">class </em><code class="descname">AddGrouped</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>grouped_items_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.AddGrouped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.AddGrouped" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.AddGrouped.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.AddGrouped.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.AddGrouped.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.AddNeighbourhoodSize">
+<em class="property">class </em><code class="descname">AddNeighbourhoodSize</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>named_as</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.AddNeighbourhoodSize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.AddNeighbourhoodSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.AddNeighbourhoodSize.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.AddNeighbourhoodSize.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.AddNeighbourhoodSize.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.Remove">
+<em class="property">class </em><code class="descname">Remove</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>item_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.Remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.Remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.Remove.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.Remove.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.Remove.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.SelectAll">
+<em class="property">class </em><code class="descname">SelectAll</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>named_as</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.SelectAll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.SelectAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.Operation" title="trumania.core.operations.Operation"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.Operation</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.SelectAll.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.SelectAll.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.SelectAll.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.SelectMany">
+<em class="property">class </em><code class="descname">SelectMany</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>named_as</em>, <em>quantity_field</em>, <em>pop</em>, <em>discard_missing</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.SelectMany"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.SelectMany" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.SelectMany.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.SelectMany.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.SelectMany.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.SelectOne">
+<em class="property">class </em><code class="descname">SelectOne</code><span class="sig-paren">(</span><em>relationship</em>, <em>from_field</em>, <em>named_as</em>, <em>one_to_one</em>, <em>pop</em>, <em>discard_missing</em>, <em>weight</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.SelectOne"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.SelectOne" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.AddColumns" title="trumania.core.operations.AddColumns"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.AddColumns</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.SelectOne.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.SelectOne.build_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.SelectOne.build_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>from_field</em>, <em>item_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.add_grouped">
+<code class="descname">add_grouped</code><span class="sig-paren">(</span><em>from_field</em>, <em>grouped_items_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.add_grouped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.add_grouped" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is similar to add, execept that the “to” field should here
+contain lists of “to” values instead of single ones</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.get_neighbourhood_size">
+<code class="descname">get_neighbourhood_size</code><span class="sig-paren">(</span><em>from_field</em>, <em>named_as</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.get_neighbourhood_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.get_neighbourhood_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.remove">
+<code class="descname">remove</code><span class="sig-paren">(</span><em>from_field</em>, <em>item_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.remove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.select_all">
+<code class="descname">select_all</code><span class="sig-paren">(</span><em>from_field</em>, <em>named_as</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.select_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.select_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>This simply creates a new story_data field containing all the
+“to” values of the requested from, as a set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.select_many">
+<code class="descname">select_many</code><span class="sig-paren">(</span><em>from_field</em>, <em>named_as</em>, <em>quantity_field</em>, <em>pop=False</em>, <em>discard_missing=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.select_many"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.select_many" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.RelationshipOps.select_one">
+<code class="descname">select_one</code><span class="sig-paren">(</span><em>from_field</em>, <em>named_as</em>, <em>one_to_one=False</em>, <em>pop=False</em>, <em>discard_empty=False</em>, <em>weight=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.RelationshipOps.select_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.RelationshipOps.select_one" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>from_field</strong> – field corresponding to the “from” side of the
+relationship</li>
+<li><strong>named_as</strong> – field name assigned to the selected “to” side
+of the relationship</li>
+<li><strong>one_to_one</strong> – boolean indicating that any “to” value will be
+selected at most once</li>
+<li><strong>pop</strong> – if True, the selected relation is removed</li>
+<li><strong>discard_empty</strong> – if False, any non-existing “from” in the
+relationship yields a None in the resulting selection. If
+true, that row is removed from the story_data.</li>
+<li><strong>weight</strong> – weight to use for the “to” side of the
+relationship. Must be a Series whose index are the “to” values.
+Typical usage would be to plug an attribute of the “to”
+population here.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">this operation adds a single column corresponding to a
+random choice from a Relationship</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.add_grouped_relations">
+<code class="descname">add_grouped_relations</code><span class="sig-paren">(</span><em>from_ids</em>, <em>grouped_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.add_grouped_relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.add_grouped_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add “bulk” relationship, i.e. many “to” sides for each “from” side at
+once.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>from_ids</strong> – list of “from” sides of the relationships to add</li>
+<li><strong>grouped_ids</strong> – list of list of “to” sides of the relationships
+to add</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note: we assume all weights are 1 for this use (for now</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.add_relations">
+<code class="descname">add_relations</code><span class="sig-paren">(</span><em>from_ids</em>, <em>to_ids</em>, <em>weights=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.add_relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.add_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add relations to this Relationships from from_ids, to_ids, weights</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.get_neighbourhood_size">
+<code class="descname">get_neighbourhood_size</code><span class="sig-paren">(</span><em>from_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.get_neighbourhood_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.get_neighbourhood_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a series indexed by “from” containing the number of “tos” for
+each requested from.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.get_relations">
+<code class="descname">get_relations</code><span class="sig-paren">(</span><em>from_ids=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.get_relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.get_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>This returns, as a dataframe, the sub-set of the relationships whose
+“from” is part of specified “from_ids”.</p>
+<p>If no from_ids is provided, this just returns all the relations.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.relationship.Relationship.load_from">
+<em class="property">static </em><code class="descname">load_from</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.load_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.load_from" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.remove_relations">
+<code class="descname">remove_relations</code><span class="sig-paren">(</span><em>from_ids</em>, <em>to_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.remove_relations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.remove_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes all relations between those from_ids and to_ids pairs (not combinatory: if each list is
+10 elements, we removed 10 pairs).
+If the same relation was stored several times between two ids, this removes them all</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.save_to">
+<code class="descname">save_to</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.save_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.save_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves all the relationship as well as the current status of the seed
+as a CSV file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.select_all_horizontal">
+<code class="descname">select_all_horizontal</code><span class="sig-paren">(</span><em>from_ids</em>, <em>named_as='to'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.select_all_horizontal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.select_all_horizontal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all the “to” sides starting from each “from”,
+as an “horizontal” list, i.e. each “from” is on one row and the set of
+all “to” are all on that row, in one list.</p>
+<p>Any requested from_id that has no relationship is absent is the
+returned dataframe (=&gt; the corresponding rows are dropped in the result)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.select_many">
+<code class="descname">select_many</code><span class="sig-paren">(</span><em>from_ids</em>, <em>named_as</em>, <em>quantities</em>, <em>remove_selected=False</em>, <em>discard_empty=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.select_many"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.select_many" title="Permalink to this definition">¶</a></dt>
+<dd><p>The result is returned in vertical format and index by the values of the index of from_ids.
+Since we select several values, we return several lines per index value of from_id =&gt;
+during the subsequent join by the Operation, the number of produced rows increases.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.select_one">
+<code class="descname">select_one</code><span class="sig-paren">(</span><em>from_ids=None</em>, <em>named_as='to'</em>, <em>remove_selected=False</em>, <em>discard_empty=True</em>, <em>one_to_one=False</em>, <em>overridden_to_weights=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.select_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.select_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomly selects one “to” part for each specified id in from_ids. An
+id can be specified several times in that list, in which case we
+simply do a selection several times. The result is aligned with
+from_ids by index. i.e. the row in the return value that has the same
+pandas index than a rom in from_ids is the selection for that row.</p>
+<p>The selection in the resulting dataframe will by default be named
+“to”, unless this is overridden by “named_as”.</p>
+<p>If remove_selected is True, the selected relations are removed from
+the relationship. This is handy to model stocks or any container of
+things.</p>
+<p>If discard_empty is True, all specified from_ids will be present in
+the result, even if no relation is available for them or if some
+selection were dropped due to one-to-one config.</p>
+<p>If one_to_one is True, the selection is an injective function,
+i.e each to_ids will at most be picked once.</p>
+<p>overridden_to_weights is an optional dictionary of {“to”: weight}
+that can be used to override the default weights contained in this
+Relationship.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.relationship.Relationship.unique_tos">
+<code class="descname">unique_tos</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/relationship.html#Relationship.unique_tos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.relationship.Relationship.unique_tos" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the set of unique “to” parts throughout all relationships</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.story">
+<span id="trumania-core-story-module"></span><h2>trumania.core.story module<a class="headerlink" href="#module-trumania.core.story" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.core.story.Story">
+<em class="property">class </em><code class="descclassname">trumania.core.story.</code><code class="descname">Story</code><span class="sig-paren">(</span><em>name</em>, <em>initiating_population</em>, <em>member_id_field</em>, <em>activity_gen=&lt;trumania.core.random_generators.ConstantGenerator object&gt;</em>, <em>states=None</em>, <em>timer_gen=&lt;trumania.core.random_generators.ConstantDependentGenerator object&gt;</em>, <em>auto_reset_timer=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.story.Story.StoryOps">
+<em class="property">class </em><code class="descname">StoryOps</code><span class="sig-paren">(</span><em>story</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="class">
+<dt id="trumania.core.story.Story.StoryOps.ForceActNext">
+<em class="property">class </em><code class="descname">ForceActNext</code><span class="sig-paren">(</span><em>story</em>, <em>member_id_field</em>, <em>condition_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.ForceActNext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.ForceActNext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.story.Story.StoryOps.ForceActNext.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.ForceActNext.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.ForceActNext.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.story.Story.StoryOps.ResetTimers">
+<em class="property">class </em><code class="descname">ResetTimers</code><span class="sig-paren">(</span><em>story</em>, <em>member_id_field=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.ResetTimers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.ResetTimers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.story.Story.StoryOps.ResetTimers.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.ResetTimers.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.ResetTimers.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.core.story.Story.StoryOps.TransitToState">
+<em class="property">class </em><code class="descname">TransitToState</code><span class="sig-paren">(</span><em>story</em>, <em>member_id_field</em>, <em>state_field</em>, <em>state</em>, <em>condition_field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.TransitToState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.TransitToState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trumania.core.operations.SideEffectOnly" title="trumania.core.operations.SideEffectOnly"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.operations.SideEffectOnly</span></code></a></p>
+<dl class="method">
+<dt id="trumania.core.story.Story.StoryOps.TransitToState.side_effect">
+<code class="descname">side_effect</code><span class="sig-paren">(</span><em>story_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.TransitToState.side_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.TransitToState.side_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.StoryOps.force_act_next">
+<code class="descname">force_act_next</code><span class="sig-paren">(</span><em>member_id_field</em>, <em>condition_field=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.force_act_next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.force_act_next" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the timer of those members to 0, forcing them to act at the
+next clock tick</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.StoryOps.reset_timers">
+<code class="descname">reset_timers</code><span class="sig-paren">(</span><em>member_id_field=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.reset_timers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.reset_timers" title="Permalink to this definition">¶</a></dt>
+<dd><p>regenerates some random positive count value for all timers</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.StoryOps.transit_to_state">
+<code class="descname">transit_to_state</code><span class="sig-paren">(</span><em>member_id_field</em>, <em>state_field=None</em>, <em>state=None</em>, <em>condition_field=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.StoryOps.transit_to_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.StoryOps.transit_to_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>changes the state of those population member ids</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.active_inactive_ids">
+<code class="descname">active_inactive_ids</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.active_inactive_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.active_inactive_ids" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">2 sets of member ids: the one active at this turn and the</td>
+</tr>
+</tbody>
+</table>
+<p>others</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.append_operations">
+<code class="descname">append_operations</code><span class="sig-paren">(</span><em>*ops</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.append_operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.append_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.execute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.force_act_next">
+<code class="descname">force_act_next</code><span class="sig-paren">(</span><em>ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.force_act_next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.force_act_next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.get_param">
+<code class="descname">get_param</code><span class="sig-paren">(</span><em>param_name</em>, <em>ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.get_param"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.get_param" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>param_name</strong> – either “activity” or “”back_to_default_probability”“</li>
+<li><strong>ids</strong> – population member ids</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the activity level of each requested member id, depending its</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>current state</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.get_possible_states">
+<code class="descname">get_possible_states</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.get_possible_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.get_possible_states" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="trumania.core.story.Story.init_story_data">
+<em class="property">static </em><code class="descname">init_story_data</code><span class="sig-paren">(</span><em>member_id_field_name</em>, <em>active_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.init_story_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.init_story_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates the initial story_data dataframe containing just the id of
+the currently active members</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.reset_timers">
+<code class="descname">reset_timers</code><span class="sig-paren">(</span><em>ids=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.reset_timers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.reset_timers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the timers to some random positive number of ticks, related to
+the activity level of each population row.</p>
+<p>We limit to a set of ids and not all the members currently set to
+zero, since we could have zero timers as a side effect of other
+storys, in which case we want to trigger an execution at next clock
+tick instead of resetting the timer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ids</strong> – the subset of population member ids to impact</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.set_operations">
+<code class="descname">set_operations</code><span class="sig-paren">(</span><em>*ops</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.set_operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.set_operations" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ops</strong> – sequence of operations to be executed at each step</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.timer_tick">
+<code class="descname">timer_tick</code><span class="sig-paren">(</span><em>member_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.timer_tick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.timer_tick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="trumania.core.story.Story.transit_to_state">
+<code class="descname">transit_to_state</code><span class="sig-paren">(</span><em>ids</em>, <em>states</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/story.html#Story.transit_to_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.story.Story.transit_to_state" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ids</strong> – array of population member id to updates</li>
+<li><strong>states</strong> – array of states to assign to those member ids</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core.util_functions">
+<span id="trumania-core-util-functions-module"></span><h2>trumania.core.util_functions module<a class="headerlink" href="#module-trumania.core.util_functions" title="Permalink to this headline">¶</a></h2>
+<p>Collection of utility functions</p>
+<dl class="function">
+<dt id="trumania.core.util_functions.assign_random_proportions">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">assign_random_proportions</code><span class="sig-paren">(</span><em>name1</em>, <em>name2</em>, <em>group1</em>, <em>group2</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#assign_random_proportions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.assign_random_proportions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.build_ids">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">build_ids</code><span class="sig-paren">(</span><em>size</em>, <em>id_start=0</em>, <em>prefix='id_'</em>, <em>max_length=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#build_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.build_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>builds a sequencial list of string ids of specified size</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.cap_to_total">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">cap_to_total</code><span class="sig-paren">(</span><em>values</em>, <em>target_total</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#cap_to_total"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.cap_to_total" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>return a copy of values with the largest values possible s.t.:</dt>
+<dd><ul class="first last simple">
+<li>all return values are &lt;= the original ones</li>
+<li>their sum is == total</li>
+<li></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.df_concat">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">df_concat</code><span class="sig-paren">(</span><em>d1</em>, <em>d2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#df_concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.df_concat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.ensure_folder_exists">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">ensure_folder_exists</code><span class="sig-paren">(</span><em>folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#ensure_folder_exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.ensure_folder_exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.ensure_non_existing_dir">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">ensure_non_existing_dir</code><span class="sig-paren">(</span><em>folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#ensure_non_existing_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.ensure_non_existing_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>makes sure the specified directory does not exist, potentially deleting
+any file or folder it contains</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.is_sequence">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">is_sequence</code><span class="sig-paren">(</span><em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#is_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.is_sequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.latest_date_before">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">latest_date_before</code><span class="sig-paren">(</span><em>starting_date</em>, <em>upper_bound</em>, <em>time_step</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#latest_date_before"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.latest_date_before" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks for the latest result_date s.t</p>
+<blockquote>
+<div>result_date = starting_date + n * time_step     for any integer n
+result_date &lt;= upper_bound</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">pd.Timestamp</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.load_all_logs">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">load_all_logs</code><span class="sig-paren">(</span><em>folder</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#load_all_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.load_all_logs" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads all csv file contained in this folder and retun them as one
+dictionary where the key is the filename without the extension</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.log_dataframe_sample">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">log_dataframe_sample</code><span class="sig-paren">(</span><em>msg</em>, <em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#log_dataframe_sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.log_dataframe_sample" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.make_random_assign">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">make_random_assign</code><span class="sig-paren">(</span><em>set1</em>, <em>set2</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#make_random_assign"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.make_random_assign" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign randomly a member of set2 to each member of set1
+:return: a dataframe with as many rows as set1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.make_random_bipartite_data">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">make_random_bipartite_data</code><span class="sig-paren">(</span><em>group1</em>, <em>group2</em>, <em>p</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#make_random_bipartite_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.make_random_bipartite_data" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>group1</strong> (<em>list</em>) – Ids of first group</li>
+<li><strong>group2</strong> (<em>list</em>) – Ids of second group</li>
+<li><strong>p</strong> (<em>float</em>) – probability of existence of 1 edge</li>
+<li><strong>seed</strong> (<em>int</em>) – seed for random generator</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">list</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">all edges in the graph</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.merge_2_dicts">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">merge_2_dicts</code><span class="sig-paren">(</span><em>dict1</em>, <em>dict2</em>, <em>value_merge_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#merge_2_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.merge_2_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dict1</strong> – first dictionary to be merged</li>
+<li><strong>dict2</strong> – first dictionary to be merged</li>
+<li><strong>value_merge_func</strong> – specifies how to merge 2 values if present in</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>both dictionaries
+:type value_merge_func: function (value1, value) =&gt; value
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.merge_dicts">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">merge_dicts</code><span class="sig-paren">(</span><em>dicts</em>, <em>merge_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#merge_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.merge_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dicts</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – list of dictionnaries to be merged</li>
+<li><strong>merge_func</strong> (<em>function</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">one single dictionary containing all entries received</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.core.util_functions.setup_logging">
+<code class="descclassname">trumania.core.util_functions.</code><code class="descname">setup_logging</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/core/util_functions.html#setup_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.core.util_functions.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-trumania.core">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trumania.core" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">trumania 1.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, RIA.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>
