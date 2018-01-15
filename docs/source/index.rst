@@ -6,11 +6,12 @@
 Welcome to trumania's documentation!
 ====================================
 
+WIKI
+====
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-   includeme
+   wiki.md
 
 
 Indices and tables
