@@ -4,7 +4,7 @@
 
 Trumania is a scenario-based random dataset generator library in python 3. 
 
-See the [Trumania github page](http://realimpactanalytics.github.io/trumania/) contains 
+The [Trumania github page](http://realimpactanalytics.github.io/trumania/) contains 
 a detailed documentation of each of the features as well as a step-by-step explanation of 4 example scenarios.
 
 Those scenarios, and more, are present in the [tests/](tests/) folder in this repository.
