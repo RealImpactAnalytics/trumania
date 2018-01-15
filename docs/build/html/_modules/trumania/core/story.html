@@ -1,0 +1,432 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.story &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">trumania 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.story</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">trumania.core.operations</span> <span class="k">import</span> <span class="n">SideEffectOnly</span><span class="p">,</span> <span class="n">Chain</span>
+<span class="kn">from</span> <span class="nn">trumania.core.random_generators</span> <span class="k">import</span> <span class="n">ConstantGenerator</span><span class="p">,</span> <span class="n">ConstantDependentGenerator</span><span class="p">,</span> <span class="n">NumpyRandomGenerator</span>
+<span class="kn">from</span> <span class="nn">trumania.core.util_functions</span> <span class="k">import</span> <span class="n">merge_2_dicts</span>
+
+
+<div class="viewcode-block" id="Story"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story">[docs]</a><span class="k">class</span> <span class="nc">Story</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+                 <span class="n">initiating_population</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span>
+                 <span class="n">activity_gen</span><span class="o">=</span><span class="n">ConstantGenerator</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.</span><span class="p">),</span> <span class="n">states</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">timer_gen</span><span class="o">=</span><span class="n">ConstantDependentGenerator</span><span class="p">(</span><span class="n">value</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+                 <span class="n">auto_reset_timer</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param name: name of this story</span>
+
+<span class="sd">        :param initiating_population: population from which the operations of</span>
+<span class="sd">        this story are started</span>
+
+<span class="sd">        :param member_id_field: when building the story data, a field will be</span>
+<span class="sd">            automatically inserted containing the member ids, with this name</span>
+
+<span class="sd">        :param activity_gen: generator for the default activity levels of the</span>
+<span class="sd">            population members for this story. Default: same level for</span>
+<span class="sd">            everybody</span>
+
+<span class="sd">        :param states: dictionary of states providing activity level for</span>
+<span class="sd">            other states of the population + a probability level to transit</span>
+<span class="sd">            back to the default state after each execution (NOT after each clock</span>
+<span class="sd">            tick). Default: no supplementary states.</span>
+
+<span class="sd">        :param timer_gen: timer generator: this must be a generator able to</span>
+<span class="sd">            generate new timer values based on the activity level. Default:</span>
+<span class="sd">            no such generator, in which case the timer never triggers this</span>
+<span class="sd">            story.</span>
+
+<span class="sd">        :param auto_reset_timer: if True, we automatically re-schedule a new</span>
+<span class="sd">            execution for the same member id after at the end of the previous</span>
+<span class="sd">            ont, by resetting the timer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggering_population</span> <span class="o">=</span> <span class="n">initiating_population</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span> <span class="o">=</span> <span class="n">member_id_field</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">initiating_population</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_generator</span> <span class="o">=</span> <span class="n">timer_gen</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auto_reset_timer</span> <span class="o">=</span> <span class="n">auto_reset_timer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forced_to_act_next</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span>
+
+        <span class="c1"># activity and transition probability parameters, for each state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({(</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;activity&quot;</span><span class="p">):</span> <span class="mi">0</span><span class="p">},</span>
+                                   <span class="n">index</span><span class="o">=</span><span class="n">initiating_population</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+
+        <span class="n">default_state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;activity&quot;</span><span class="p">:</span> <span class="n">activity_gen</span><span class="p">,</span>
+            <span class="s2">&quot;back_to_default_probability&quot;</span><span class="p">:</span> <span class="n">ConstantGenerator</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">1.</span><span class="p">),</span>
+        <span class="p">}}</span>
+        <span class="k">for</span> <span class="n">state</span><span class="p">,</span> <span class="n">state_gens</span> <span class="ow">in</span> <span class="n">merge_2_dicts</span><span class="p">(</span><span class="n">default_state</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">activity_vals</span> <span class="o">=</span> <span class="n">state_gens</span><span class="p">[</span><span class="s2">&quot;activity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">probs_vals</span> <span class="o">=</span> <span class="n">state_gens</span><span class="p">[</span><span class="s2">&quot;back_to_default_probability&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+                <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s2">&quot;activity&quot;</span><span class="p">,</span> <span class="n">state</span><span class="p">)]</span> <span class="o">=</span> <span class="n">activity_vals</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s2">&quot;back_to_default_probability&quot;</span><span class="p">,</span> <span class="n">state</span><span class="p">)]</span> <span class="o">=</span> <span class="n">probs_vals</span>
+
+        <span class="c1"># current state and timer value for each population member id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;remaining&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                                  <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_reset_timer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_timers</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">StoryOps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># in case self.operations is not called, at least we have a basic</span>
+        <span class="c1"># selection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operation_chain</span> <span class="o">=</span> <span class="n">Chain</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Story.set_operations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.set_operations">[docs]</a>    <span class="k">def</span> <span class="nf">set_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ops</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ops: sequence of operations to be executed at each step</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">all_ops</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_MaybeBackToDefault</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operation_chain</span> <span class="o">=</span> <span class="n">Chain</span><span class="p">(</span><span class="o">*</span><span class="n">all_ops</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Story.append_operations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.append_operations">[docs]</a>    <span class="k">def</span> <span class="nf">append_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ops</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operation_chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">*</span><span class="n">ops</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Story.get_param"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.get_param">[docs]</a>    <span class="k">def</span> <span class="nf">get_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param param_name: either &quot;activity&quot; or &quot;&quot;back_to_default_probability&quot;&quot;</span>
+<span class="sd">        :param ids: population member ids</span>
+<span class="sd">        :return: the activity level of each requested member id, depending its</span>
+<span class="sd">        current state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_possible_states</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">][(</span><span class="n">param_name</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># pairs of (member id, state), to select the desired activity level</span>
+            <span class="n">param_idx</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">ids</span><span class="p">,</span> <span class="s2">&quot;state&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+            <span class="n">param_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">][</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="n">param_idx</span><span class="p">]</span>
+            <span class="n">param_values</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">param_values</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">droplevel</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">param_values</span></div>
+
+<div class="viewcode-block" id="Story.get_possible_states"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.get_possible_states">[docs]</a>    <span class="k">def</span> <span class="nf">get_possible_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;activity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Story.transit_to_state"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.transit_to_state">[docs]</a>    <span class="k">def</span> <span class="nf">transit_to_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ids: array of population member id to updates</span>
+<span class="sd">        :param states: array of states to assign to those member ids</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">,</span> <span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span></div>
+
+<div class="viewcode-block" id="Story.active_inactive_ids"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.active_inactive_ids">[docs]</a>    <span class="k">def</span> <span class="nf">active_inactive_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: 2 sets of member ids: the one active at this turn and the</span>
+<span class="sd">        others</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">active_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="p">[</span><span class="s2">&quot;remaining&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">active_idx</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">~</span><span class="n">active_idx</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Story.timer_tick"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.timer_tick">[docs]</a>    <span class="k">def</span> <span class="nf">timer_tick</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_ids</span><span class="p">):</span>
+
+        <span class="n">member_ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">member_ids</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forced_to_act_next</span><span class="p">)</span>
+        <span class="n">impacted_timers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">member_ids</span><span class="p">]</span>
+
+        <span class="c1"># not updating members that keep a negative counter: those are &quot;marked</span>
+        <span class="c1">#  inactive&quot; already</span>
+        <span class="n">positive_idx</span> <span class="o">=</span> <span class="n">impacted_timers</span><span class="p">[</span><span class="n">impacted_timers</span><span class="p">[</span><span class="s2">&quot;remaining&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">positive_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">positive_idx</span><span class="p">,</span> <span class="s2">&quot;remaining&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="Story.force_act_next"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.force_act_next">[docs]</a>    <span class="k">def</span> <span class="nf">force_act_next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">forced_to_act_next</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forced_to_act_next</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">,</span> <span class="s2">&quot;remaining&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="Story.reset_timers"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.reset_timers">[docs]</a>    <span class="k">def</span> <span class="nf">reset_timers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets the timers to some random positive number of ticks, related to</span>
+<span class="sd">        the activity level of each population row.</span>
+
+<span class="sd">        We limit to a set of ids and not all the members currently set to</span>
+<span class="sd">        zero, since we could have zero timers as a side effect of other</span>
+<span class="sd">        storys, in which case we want to trigger an execution at next clock</span>
+<span class="sd">        tick instead of resetting the timer.</span>
+
+<span class="sd">        :param ids: the subset of population member ids to impact</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+
+        <span class="c1"># The reset_timers *operation* is called on a member typically to</span>
+        <span class="c1"># re-generate some timer values because the activity level has</span>
+        <span class="c1"># changed (e.g. subscribers get &quot;bursty&quot; =&gt; their next story should</span>
+        <span class="c1"># now be earlier than originally timed).</span>
+        <span class="c1"># BUT: if some some other reason, some (typically other)</span>
+        <span class="c1"># population member have been forced to act at the next clock step,</span>
+        <span class="c1"># we don&#39;t want to cancel that by resetting their timers to some</span>
+        <span class="c1"># positive value.</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">ids</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forced_to_act_next</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="n">activity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="s2">&quot;activity&quot;</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+            <span class="n">new_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">observations</span><span class="o">=</span><span class="n">activity</span><span class="p">)</span>
+
+            <span class="c1"># replacing any generated timer with -1 for fully inactive members</span>
+            <span class="n">new_timer</span> <span class="o">=</span> <span class="n">new_timer</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cond</span><span class="o">=</span><span class="n">activity</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">other</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">,</span> <span class="s2">&quot;remaining&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_timer</span></div>
+
+<div class="viewcode-block" id="Story.init_story_data"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.init_story_data">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">init_story_data</span><span class="p">(</span><span class="n">member_id_field_name</span><span class="p">,</span> <span class="n">active_ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        creates the initial story_data dataframe containing just the id of</span>
+<span class="sd">        the currently active members</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">member_id_field_name</span><span class="p">:</span> <span class="n">active_ids</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">active_ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Story.execute"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Any previously forced storys will now execute =&gt; cancelling the flag.</span>
+        <span class="c1"># Note that some members might put back the flag to themselves during</span>
+        <span class="c1"># self.operation_chain(ids_df), which is ok and in which case their</span>
+        <span class="c1"># timer will not be ticked =&gt; they will re-execte at the next clock step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forced_to_act_next</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; executing </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">active_ids</span><span class="p">,</span> <span class="n">inactive_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_inactive_ids</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">active_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># skips execution altogether if no member has a timer at 0 right now</span>
+            <span class="n">all_logs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">all_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation_chain</span><span class="p">(</span>
+                <span class="n">Story</span><span class="o">.</span><span class="n">init_story_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span><span class="p">,</span> <span class="n">active_ids</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_reset_timer</span><span class="p">:</span>
+                <span class="c1"># re-scheduling those storys one more time</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reset_timers</span><span class="p">(</span><span class="n">active_ids</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># this should set the timer to -1 =&gt; will stay there ad vitam</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">timer_tick</span><span class="p">(</span><span class="n">active_ids</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">timer_tick</span><span class="p">(</span><span class="n">inactive_ids</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">all_logs</span></div>
+
+    <span class="k">class</span> <span class="nc">_MaybeBackToDefault</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This is an internal operation of story, that transits members</span>
+<span class="sd">        back to default with probability as declared in</span>
+<span class="sd">        back_to_default_probability</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">judge</span> <span class="o">=</span> <span class="n">NumpyRandomGenerator</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">story</span> <span class="o">=</span> <span class="n">story</span>
+
+        <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+            <span class="c1"># only transiting members that have ran during this clock tick</span>
+            <span class="n">active_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">timer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">story_data</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+
+            <span class="n">non_default_ids</span> <span class="o">=</span> <span class="n">active_timer</span><span class="p">[</span>
+                <span class="n">active_timer</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;default&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+
+            <span class="k">if</span> <span class="n">non_default_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="n">back_prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="s2">&quot;back_to_default_probability&quot;</span><span class="p">,</span>
+                                             <span class="n">non_default_ids</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">back_prob</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">cond</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">non_default_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">back_prob</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">cond</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="n">non_default_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">judge</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">back_prob</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">cond</span> <span class="o">=</span> <span class="n">back_prob</span> <span class="o">&gt;</span> <span class="n">baseline</span>
+
+            <span class="n">member_ids</span> <span class="o">=</span> <span class="n">back_prob</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">member_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">transit_to_state</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="n">member_ids</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="n">states</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Story.StoryOps"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps">[docs]</a>    <span class="k">class</span> <span class="nc">StoryOps</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Story.StoryOps.ForceActNext"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.ForceActNext">[docs]</a>        <span class="k">class</span> <span class="nc">ForceActNext</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span> <span class="n">condition_field</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">story</span> <span class="o">=</span> <span class="n">story</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_ids_field</span> <span class="o">=</span> <span class="n">member_id_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span> <span class="o">=</span> <span class="n">condition_field</span>
+
+<div class="viewcode-block" id="Story.StoryOps.ForceActNext.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.ForceActNext.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># active_ids_field should contain NA: which are all the</span>
+                    <span class="c1"># members _NOT_ being forced to trigger</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">filtered</span> <span class="o">=</span> <span class="n">story_data</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">condition</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span><span class="p">]</span>
+                        <span class="n">filtered</span> <span class="o">=</span> <span class="n">story_data</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+
+                    <span class="n">ids</span> <span class="o">=</span> <span class="n">filtered</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_ids_field</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">force_act_next</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span></div></div>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">story</span> <span class="o">=</span> <span class="n">story</span>
+
+<div class="viewcode-block" id="Story.StoryOps.force_act_next"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.force_act_next">[docs]</a>        <span class="k">def</span> <span class="nf">force_act_next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span> <span class="n">condition_field</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Sets the timer of those members to 0, forcing them to act at the</span>
+<span class="sd">            next clock tick</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ForceActNext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span>
+                                     <span class="n">condition_field</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Story.StoryOps.ResetTimers"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.ResetTimers">[docs]</a>        <span class="k">class</span> <span class="nc">ResetTimers</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story</span><span class="p">,</span> <span class="n">member_id_field</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">story</span> <span class="o">=</span> <span class="n">story</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span> <span class="o">=</span> <span class="n">member_id_field</span>
+
+<div class="viewcode-block" id="Story.StoryOps.ResetTimers.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.ResetTimers.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># no ids specified =&gt; resetting everybody</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">reset_timers</span><span class="p">(</span><span class="n">story_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ids</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">reset_timers</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Story.StoryOps.reset_timers"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.reset_timers">[docs]</a>        <span class="k">def</span> <span class="nf">reset_timers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_id_field</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            regenerates some random positive count value for all timers</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ResetTimers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Story.StoryOps.TransitToState"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.TransitToState">[docs]</a>        <span class="k">class</span> <span class="nc">TransitToState</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span> <span class="n">state_field</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span>
+                         <span class="n">condition_field</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">story</span> <span class="o">=</span> <span class="n">story</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state_field</span> <span class="o">=</span> <span class="n">state_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span> <span class="o">=</span> <span class="n">member_id_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span> <span class="o">=</span> <span class="n">condition_field</span>
+
+<div class="viewcode-block" id="Story.StoryOps.TransitToState.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.TransitToState.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">filtered</span> <span class="o">=</span> <span class="n">story_data</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">filtered</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span><span class="p">]]</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">member_ids</span> <span class="o">=</span> <span class="n">filtered</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">]</span> <span class="o">*</span> <span class="n">member_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">updated</span> <span class="o">=</span> <span class="n">filtered</span><span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_field</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                    <span class="n">member_ids</span> <span class="o">=</span> <span class="n">updated</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">member_id_field</span><span class="p">]</span>
+                    <span class="n">states</span> <span class="o">=</span> <span class="n">updated</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state_field</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="o">.</span><span class="n">transit_to_state</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="n">member_ids</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="n">states</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Story.StoryOps.transit_to_state"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.story.Story.StoryOps.transit_to_state">[docs]</a>        <span class="k">def</span> <span class="nf">transit_to_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span> <span class="n">state_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">condition_field</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            changes the state of those population member ids</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">state_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must provide exactly one of state_field or &quot;</span>
+                                 <span class="s2">&quot;state&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">TransitToState</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">story</span><span class="p">,</span> <span class="n">member_id_field</span><span class="p">,</span>
+                                       <span class="n">state_field</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">condition_field</span><span class="p">)</span></div></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">trumania 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, RIA.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>
