@@ -210,7 +210,7 @@ An example might help to clarify this: 
 
 When using the data-generator, keep in mind the following current caveats: 
 
-*   it is currently coded in python/pandas, and therefore runs on a single core in a single host. Since most of the logic is dataframe-oriented, re-coding everything (like 2000 lines of code) is Spark should be doable. 
+*   it is currently coded in python/pandas, and therefore runs on a single core in a single host. Since most of the logic is dataframe-oriented, re-coding everything (like 2000 lines of code) in Spark should be doable. 
 *   it can be hard to debug: since the code you write is executed to assemble stories that are themselves executed, stacktraces can sometimes appear cryptic are may require knowledge of the internals to understand what is going on. Also, it _is_ possible to run an story inside a debugger and watch intermediary states as the operations are executed, but placing breakpoint at the appropriate place can appear tricky at first. 
 *   it's (currently) not restartable: at the moment the DB persistence mechanism cannot be used after a circus has been started. This means you cannot generate one month of data, save the circus state, and come back later to add a couple of days. There exist a [ticket](https://realimpactanalytics.atlassian.net/browse/OASD-3001) for that feature. 
 *   it's a young project, lot's of effort has been put abstract away the API from the implementation and execution details, although more clean-up could be added. Once we start writing a lot of circuses of course, this clean-up will be harder.   
