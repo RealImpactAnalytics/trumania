@@ -1,0 +1,434 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.clock &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.clock</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="k">import</span> <span class="n">RandomState</span>
+
+<span class="kn">from</span> <span class="nn">trumania.core.operations</span> <span class="k">import</span> <span class="n">AddColumns</span>
+<span class="kn">from</span> <span class="nn">trumania.core.random_generators</span> <span class="k">import</span> <span class="n">DependentGenerator</span>
+<span class="kn">from</span> <span class="nn">trumania.core.util_functions</span> <span class="k">import</span> <span class="n">latest_date_before</span>
+
+
+<div class="viewcode-block" id="Clock"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock">[docs]</a><span class="k">class</span> <span class="nc">Clock</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Clock is the central object managing the evolution of time of the whole circus.</span>
+<span class="sd">    It&#39;s generating timestamps on demand, and provides information for TimeProfiler objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">step_duration</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a Clock object.</span>
+
+<span class="sd">        :type start: pd.Timestamp</span>
+<span class="sd">        :param start: instant of start of the generation</span>
+
+<span class="sd">        :type step_duration: pd.Timedelta</span>
+<span class="sd">        :param step_duration: duration of a clock step</span>
+
+<span class="sd">        :type seed: int</span>
+<span class="sd">        :param seed: seed for timestamp generator (if steps are more than 1 sec)</span>
+
+<span class="sd">        :return: a new Clock object, initialised</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_date</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step_duration</span> <span class="o">=</span> <span class="n">step_duration</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ClockOps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__increment_listeners</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Clock.register_increment_listener"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.register_increment_listener">[docs]</a>    <span class="k">def</span> <span class="nf">register_increment_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an object to be incremented at each step (such as a TimeProfiler)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__increment_listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Clock.increment"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.increment">[docs]</a>    <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Increments the clock by 1 step</span>
+
+<span class="sd">        :rtype: NoneType</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_date</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_duration</span>
+
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__increment_listeners</span><span class="p">:</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Clock.get_timestamp"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.get_timestamp">[docs]</a>    <span class="k">def</span> <span class="nf">get_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_format</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns timestamps formatted as string</span>
+
+<span class="sd">        :type size: int</span>
+<span class="sd">        :param size: number of timestamps to generate, default 1</span>
+
+<span class="sd">        :type random: boolean</span>
+<span class="sd">        :param random: if True, the timestamps are randomly generated in [</span>
+<span class="sd">        self.current_date, self.current_date+self.step_duration]</span>
+
+<span class="sd">        :type log_format: string</span>
+<span class="sd">        :param log_format: string format of the generated timestamps</span>
+
+<span class="sd">        :rtype: Pandas Series</span>
+<span class="sd">        :return: random timestamps in the form of strings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">log_format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log_format</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span>
+
+        <span class="k">def</span> <span class="nf">make_ts</span><span class="p">(</span><span class="n">delta_secs</span><span class="p">):</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_date</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">delta_secs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">log_format</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">random</span><span class="p">:</span>
+            <span class="n">step_secs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_duration</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">step_secs</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">make_ts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">current_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">log_format</span><span class="p">)]</span> <span class="o">*</span> <span class="n">size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Clock.n_iterations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.n_iterations">[docs]</a>    <span class="k">def</span> <span class="nf">n_iterations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :type duration: pd.Timedelta</span>
+
+<span class="sd">        :return: the smallest number of iteration of this clock s.t. the</span>
+<span class="sd">        corresponding duration is &gt;= duration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">step_secs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_duration</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">duration</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="n">step_secs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Clock.ClockOps"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.ClockOps">[docs]</a>    <span class="k">class</span> <span class="nc">ClockOps</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="n">clock</span>
+
+<div class="viewcode-block" id="Clock.ClockOps.Timestamp"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.ClockOps.Timestamp">[docs]</a>        <span class="k">class</span> <span class="nc">Timestamp</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">random</span><span class="p">,</span> <span class="n">log_format</span><span class="p">):</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="n">clock</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">random</span> <span class="o">=</span> <span class="n">random</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_format</span> <span class="o">=</span> <span class="n">log_format</span>
+
+<div class="viewcode-block" id="Clock.ClockOps.Timestamp.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.ClockOps.Timestamp.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">get_timestamp</span><span class="p">(</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">random</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="p">,</span>
+                    <span class="n">log_format</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_format</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">:</span> <span class="n">values</span><span class="p">},</span>
+                                  <span class="n">index</span><span class="o">=</span><span class="n">story_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">df</span></div></div>
+
+<div class="viewcode-block" id="Clock.ClockOps.timestamp"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.Clock.ClockOps.timestamp">[docs]</a>        <span class="k">def</span> <span class="nf">timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_format</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Generates a random timestamp within the current time slice</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">random</span><span class="p">,</span> <span class="n">log_format</span><span class="p">)</span></div></div></div>
+
+
+<div class="viewcode-block" id="CyclicTimerGenerator"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerGenerator">[docs]</a><span class="k">class</span> <span class="nc">CyclicTimerGenerator</span><span class="p">(</span><span class="n">DependentGenerator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A TimeProfiler contains an activity profile over a defined time range.</span>
+<span class="sd">    It&#39;s mostly a super class, normally only its child classes should be used.</span>
+
+<span class="sd">    The goal of a TimeProfiler is to keep a track of the expected level of activity of users over a cyclic time range</span>
+<span class="sd">    It will store a vector with probabilities of activity per time step, as well as a cumulative sum of the</span>
+<span class="sd">    probabilities starting with the current time step.</span>
+
+<span class="sd">    This allows to quickly produce random waiting times until the next event for the users</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This should not be used, only child classes</span>
+
+<span class="sd">        :type clock: Clock</span>
+<span class="sd">        :param clock: the master clock driving this simulator</span>
+
+<span class="sd">        :type seed: int</span>
+<span class="sd">        :param seed: seed for random number generator, default None</span>
+<span class="sd">        :return: A new TimeProfiler is created</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">DependentGenerator</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="n">clock</span>
+
+        <span class="c1"># &quot;macro&quot; time shift: we shift the whole profile n times in the future</span>
+        <span class="c1"># or the past until it overlaps with the current clock date</span>
+        <span class="n">init_date</span> <span class="o">=</span> <span class="n">latest_date_before</span><span class="p">(</span>
+            <span class="n">starting_date</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">start_date</span><span class="p">,</span>
+            <span class="n">upper_bound</span><span class="o">=</span><span class="n">clock</span><span class="o">.</span><span class="n">current_date</span><span class="p">,</span>
+            <span class="n">time_step</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profile_time_steps</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">profile</span><span class="p">))</span>
+
+        <span class="c1"># Un-scaled weight profile. We artificially adds a nan to force the</span>
+        <span class="c1"># up-sclaling to multiply the last element</span>
+        <span class="n">profile_idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">init_date</span><span class="p">,</span>
+                                    <span class="n">freq</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profile_time_steps</span><span class="p">,</span>
+                                    <span class="n">periods</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">profile_ser</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profile</span> <span class="o">+</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">],</span>
+                                <span class="n">index</span><span class="o">=</span><span class="n">profile_idx</span><span class="p">)</span>
+
+        <span class="c1"># scaled weight profile, s.t. one clock step == one profile value</span>
+        <span class="n">profile_ser</span> <span class="o">=</span> <span class="n">profile_ser</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">rule</span><span class="o">=</span><span class="n">clock</span><span class="o">.</span><span class="n">step_duration</span><span class="p">)</span><span class="o">.</span><span class="n">pad</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_time_bin</span> <span class="o">=</span> <span class="n">profile_ser</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">profile_cdf</span> <span class="o">=</span> <span class="p">(</span><span class="n">profile_ser</span> <span class="o">/</span> <span class="n">profile_ser</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;cdf&quot;</span><span class="p">:</span> <span class="n">profile_cdf</span><span class="p">,</span>
+
+                                     <span class="c1"># for debugging</span>
+                                     <span class="s2">&quot;timeframe&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">profile_cdf</span><span class="p">))})</span>
+
+        <span class="c1"># &quot;micro&quot; time shift,: we step forward along the profile until it is</span>
+        <span class="c1"># align with the current date</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">clock</span><span class="o">.</span><span class="n">current_date</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span>
+
+        <span class="c1"># makes sure we&#39;ll get notified when the clock goes forward</span>
+        <span class="n">clock</span><span class="o">.</span><span class="n">register_increment_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CyclicTimerGenerator.increment"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerGenerator.increment">[docs]</a>    <span class="k">def</span> <span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Increment the time generator by 1 step.</span>
+
+<span class="sd">        This has as effect to move the cdf of one step to the left, decrease</span>
+<span class="sd">        all values by the value of the original first entry, and placing the</span>
+<span class="sd">        previous first entry at the end of the cdf, with value 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s2">&quot;cdf&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s2">&quot;cdf&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;cdf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="CyclicTimerGenerator.generate"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate random waiting times, based on some observed activity</span>
+<span class="sd">        levels. The higher the level of activity, the shorter the waiting</span>
+<span class="sd">        times will be</span>
+
+<span class="sd">        :type observations: Pandas Series</span>
+<span class="sd">        :param observations: contains an array of floats</span>
+<span class="sd">        :return: Pandas Series</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">activities</span> <span class="o">=</span> <span class="n">observations</span>
+
+        <span class="c1"># activities less often than once per cycle length</span>
+        <span class="n">low_activities</span> <span class="o">=</span> <span class="n">activities</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">activities</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">low_activities</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="n">draw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">low_activities</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+            <span class="c1"># A uniform [0, 2/activity] yields an expected freqs == 1/activity</span>
+            <span class="c1"># == average period between story.</span>
+            <span class="c1"># =&gt; n_cycles is the number of full timer cycles from now until</span>
+            <span class="c1"># next story. It&#39;s typically not an integer and possibly be &gt; 1</span>
+            <span class="c1"># since we have on average less han 1 activity per cycle of this</span>
+            <span class="c1"># timer.</span>
+            <span class="n">n_cycles</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">draw</span> <span class="o">/</span> <span class="n">low_activities</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="n">timer_slots</span> <span class="o">=</span> <span class="n">n_cycles</span> <span class="o">%</span> <span class="mi">1</span>
+            <span class="n">n_cycles_int</span> <span class="o">=</span> <span class="n">n_cycles</span> <span class="o">-</span> <span class="n">timer_slots</span>
+
+            <span class="n">timers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s2">&quot;cdf&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">timer_slots</span><span class="p">)</span> <span class="o">+</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">n_time_bin</span> <span class="o">*</span> <span class="n">n_cycles_int</span>
+
+            <span class="n">low_activity_timer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">timers</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">low_activities</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">low_activity_timer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span>
+
+        <span class="n">high_activities</span> <span class="o">=</span> <span class="n">activities</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">activities</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">high_activities</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="c1"># A beta(1, activity-1) will yield expected frequencies of</span>
+            <span class="c1"># 1/(1+activity-1) == 1/activity == average period between story.</span>
+            <span class="c1"># This just stops to work for activities &lt; 1, or even close to one</span>
+            <span class="c1"># =&gt; we use the uniform mechanism above for activities &lt;= 2 and</span>
+            <span class="c1"># rely on betas here for expected frequencies of 2 per cycle or</span>
+            <span class="c1"># higher</span>
+            <span class="n">timer_slots</span> <span class="o">=</span> <span class="n">high_activities</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">activity</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+            <span class="n">timers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s2">&quot;cdf&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">timer_slots</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+            <span class="n">high_activity_timer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">timers</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">high_activities</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">high_activity_timer</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span>
+
+        <span class="n">all_timers</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">low_activity_timer</span><span class="p">,</span> <span class="n">high_activity_timer</span><span class="p">])</span>
+
+        <span class="c1"># Not sure about that one, there seem to be a bias somewhere that</span>
+        <span class="c1"># systematically generates too large timer. Maybe it&#39;s a rounding</span>
+        <span class="c1"># effect of searchsorted() or so. Or a bug elsewhere ?</span>
+        <span class="n">all_timers</span> <span class="o">=</span> <span class="n">all_timers</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># makes sure all_timers is in the same order and with the same index</span>
+        <span class="c1"># as input observations, even in case of duplicate index values</span>
+        <span class="n">all_timers</span> <span class="o">=</span> <span class="n">all_timers</span><span class="o">.</span><span class="n">reindex_like</span><span class="p">(</span><span class="n">observations</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">all_timers</span></div>
+
+<div class="viewcode-block" id="CyclicTimerGenerator.activity"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerGenerator.activity">[docs]</a>    <span class="k">def</span> <span class="nf">activity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">per</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param n: number of stories</span>
+<span class="sd">        :param per: time period for that number of stories</span>
+<span class="sd">        :type per: pd.Timedelta</span>
+<span class="sd">        :return: the activity level corresponding to the specified number of n</span>
+<span class="sd">        executions per time period</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">duration</span><span class="p">()</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="n">per</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+        <span class="n">activity</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">scale</span>
+
+        <span class="n">requested_period</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">per</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">requested_period</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">step_duration</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Warning: Creating activity level for </span><span class="si">{}</span><span class="s2"> stories per &quot;</span>
+                <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> =&gt;  activity is </span><span class="si">{}</span><span class="s2"> but period is </span><span class="si">{}</span><span class="s2">, which is &quot;</span>
+                <span class="s2">&quot;shorter  than the clock period (</span><span class="si">{}</span><span class="s2">). This clock &quot;</span>
+                <span class="s2">&quot;cannot keep up with such rate and less events will be&quot;</span>
+                <span class="s2">&quot; produced&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">per</span><span class="p">,</span> <span class="n">activity</span><span class="p">,</span> <span class="n">requested_period</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">step_duration</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">activity</span></div></div>
+
+
+<div class="viewcode-block" id="CyclicTimerProfile"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerProfile">[docs]</a><span class="k">class</span> <span class="nc">CyclicTimerProfile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Static parameters of the Timer profile. Separated from the timer gen</span>
+<span class="sd">    itself to facilitate persistence.</span>
+
+<span class="sd">    :type profile: python array</span>
+<span class="sd">    :param profile: Weight of each period</span>
+
+<span class="sd">    :type profile_time_steps: string</span>
+<span class="sd">    :param profile_time_steps: duration of the time-steps in the profile</span>
+<span class="sd">    (e.g. &quot;15min&quot;)</span>
+
+<span class="sd">    :type start_date: pd.Timestamp</span>
+<span class="sd">    :param start_date: date of the origin of the specified profile =&gt;</span>
+<span class="sd">    this is used to align with the values of the clock</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">profile_time_steps</span><span class="p">,</span> <span class="n">start_date</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">=</span> <span class="n">start_date</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile_time_steps</span> <span class="o">=</span> <span class="n">profile_time_steps</span>
+
+<div class="viewcode-block" id="CyclicTimerProfile.save_to"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerProfile.save_to">[docs]</a>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving timer generator to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+
+        <span class="n">saved_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;profile&quot;</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">},</span>
+                                <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">saved_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">reorder_levels</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="s2">&quot;start_date&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="s2">&quot;profile_time_steps&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_time_steps</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CyclicTimerProfile.load_from"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerProfile.load_from">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_from</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="n">saved_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">))]</span>\
+            <span class="o">.</span><span class="n">unstack</span><span class="p">()</span>\
+            <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="n">profile_time_steps</span> <span class="o">=</span> <span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;profile_time_steps&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">start_date</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;start_date&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">CyclicTimerProfile</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">profile_time_steps</span><span class="p">,</span> <span class="n">start_date</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CyclicTimerProfile.duration"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.clock.CyclicTimerProfile.duration">[docs]</a>    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the total duration corresponding to this time profile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span> <span class="o">*</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_time_steps</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

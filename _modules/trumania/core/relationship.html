@@ -1,0 +1,776 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.relationship &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.relationship</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="k">import</span> <span class="n">RandomState</span>
+<span class="kn">from</span> <span class="nn">trumania.core</span> <span class="k">import</span> <span class="n">util_functions</span> <span class="k">as</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">trumania.core.operations</span> <span class="k">import</span> <span class="n">AddColumns</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">SideEffectOnly</span>
+
+
+<span class="c1"># There are a lot of somewhat ugly optimizations here like in-place mutations,</span>
+<span class="c1"># caching, or usage of numpy instead of a more readable pandas alternative. The</span>
+<span class="c1"># reason is the methods of this filetend to be called a large amount of time</span>
+<span class="c1"># in inner loop of the simulation, optimizing them make the whole simulation</span>
+<span class="c1"># faster.</span>
+
+
+<div class="viewcode-block" id="Relations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations">[docs]</a><span class="k">class</span> <span class="nc">Relations</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     This entity contains all the &quot;to&quot; sides of the relationships of a given</span>
+<span class="sd">     &quot;from&quot;, together with the related weights.</span>
+
+<span class="sd">     This data structure seems to be the most optimal since it corresponds to a cached</span>
+<span class="sd">     group-by result, and those group-by are expensive in the select_one</span>
+<span class="sd">     operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_ids</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">to_ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_normed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;&quot;to_ids: </span><span class="si">{}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">weights:</span><span class="si">{}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">weights_normed:</span><span class="si">{}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_normed</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Relations.from_tuples"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations.from_tuples">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_tuples</span><span class="p">(</span><span class="n">from_ids</span><span class="p">,</span> <span class="n">to_ids</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">         from_ids, to_ids and weights must be 3 arrays of identical size,</span>
+<span class="sd">         a relationship is built here for each &quot;line&quot; read across those 3</span>
+<span class="sd">         arrays.</span>
+
+<span class="sd">         This methods builds one instance of Relations for each unique from_id</span>
+<span class="sd">         value, containing all the to_id&#39;s it is related to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">from_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">from_ids</span><span class="p">)</span>
+        <span class="n">to_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">to_ids</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">from_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="n">order</span> <span class="o">=</span> <span class="n">from_ids</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="n">ordered</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">from_ids</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="n">to_ids</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="n">weights</span><span class="p">[</span><span class="n">order</span><span class="p">])</span>
+
+        <span class="k">def</span> <span class="nf">_relations</span><span class="p">():</span>
+            <span class="c1"># itertools.groupby is much faster than pandas</span>
+            <span class="k">for</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">tuples</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">ordered</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">to_ids</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">tuples</span><span class="p">))[</span><span class="mi">1</span><span class="p">:</span> <span class="mi">3</span><span class="p">]</span>
+                <span class="k">yield</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">Relations</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">to_ids</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">from_id</span><span class="p">:</span> <span class="n">relz</span> <span class="k">for</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">relz</span> <span class="ow">in</span> <span class="n">_relations</span><span class="p">()}</span></div>
+
+<div class="viewcode-block" id="Relations.plus"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations.plus">[docs]</a>    <span class="k">def</span> <span class="nf">plus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Merge function for 2 sets of relations all starting from the same &quot;from&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Relations</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">to_ids</span><span class="p">]),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">weights</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="Relations.minus"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations.minus">[docs]</a>    <span class="k">def</span> <span class="nf">minus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        removes from self _all_ relations to the to_ids mentioned in the</span>
+<span class="sd">        provided other Relation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">removed_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">idx</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">to_ids</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">Relations</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">,</span> <span class="n">removed_indices</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">removed_indices</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Relations.pick_one"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations.pick_one">[docs]</a>    <span class="k">def</span> <span class="nf">pick_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span> <span class="n">overridden_to_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Randomly picks one of the to_ids of this Relation. By default this</span>
+<span class="sd">        uses the weights encapsulated in this Relation, unless</span>
+<span class="sd">        overridden_to_weights is specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">overridden_to_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">proba</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_normed</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">proba</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">overridden_to_weights</span><span class="p">[</span><span class="n">to</span><span class="p">]</span> <span class="k">for</span> <span class="n">to</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">proba</span> <span class="o">=</span> <span class="n">proba</span> <span class="o">/</span> <span class="n">proba</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">a</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">proba</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># we do not remove values here, even if &quot;pop=true&quot;, since some</span>
+        <span class="c1"># picked selections might be discarded later in case of one-to-one</span>
+        <span class="k">return</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Relations.pick_many"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations.pick_many">[docs]</a>    <span class="k">def</span> <span class="nf">pick_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quantities and req_indices should have the same size: the first</span>
+<span class="sd">        one lists the ids of the index that requests some selections</span>
+<span class="sd">        to be picked in the relationship, and the second provide</span>
+<span class="sd">        the quantities that each request asked.</span>
+
+<span class="sd">        The result will be in vertical format, with as many lines as the</span>
+<span class="sd">        sum of the quantities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">amount</span><span class="p">)</span>
+
+        <span class="c1"># pick enough random index of &quot;to_ids&quot;</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">a</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="n">sample_size</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Relations.remove_inplace"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relations.remove_inplace">[docs]</a>    <span class="k">def</span> <span class="nf">remove_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">removed_indices</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_ids</span><span class="p">,</span> <span class="n">removed_indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">removed_indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_normed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights_normed</span><span class="p">,</span> <span class="n">removed_indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights_normed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Relationship"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship">[docs]</a><span class="k">class</span> <span class="nc">Relationship</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RelationshipOps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Relationship.add_relations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.add_relations">[docs]</a>    <span class="k">def</span> <span class="nf">add_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="p">,</span> <span class="n">to_ids</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add relations to this Relationships from from_ids, to_ids, weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">merge_2_dicts</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">,</span>
+            <span class="n">Relations</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">from_ids</span><span class="p">,</span> <span class="n">to_ids</span><span class="p">,</span> <span class="n">weights</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">:</span> <span class="n">r1</span><span class="o">.</span><span class="n">plus</span><span class="p">(</span><span class="n">r2</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Relationship.add_grouped_relations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.add_grouped_relations">[docs]</a>    <span class="k">def</span> <span class="nf">add_grouped_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="p">,</span> <span class="n">grouped_ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add &quot;bulk&quot; relationship, i.e. many &quot;to&quot; sides for each &quot;from&quot; side at</span>
+<span class="sd">        once.</span>
+
+<span class="sd">        :param from_ids: list of &quot;from&quot; sides of the relationships to add</span>
+<span class="sd">        :param grouped_ids: list of list of &quot;to&quot; sides of the relationships</span>
+<span class="sd">            to add</span>
+
+<span class="sd">        Note: we assume all weights are 1 for this use (for now</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">one_from</span><span class="p">,</span> <span class="n">many_tos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">from_ids</span><span class="p">,</span> <span class="n">grouped_ids</span><span class="p">):</span>
+            <span class="n">rels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">one_from</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">:</span> <span class="n">many_tos</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_relations</span><span class="p">(</span><span class="n">from_ids</span><span class="o">=</span><span class="n">rels</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">],</span> <span class="n">to_ids</span><span class="o">=</span><span class="n">rels</span><span class="p">[</span><span class="s2">&quot;to&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Relationship.remove_relations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.remove_relations">[docs]</a>    <span class="k">def</span> <span class="nf">remove_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="p">,</span> <span class="n">to_ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes all relations between those from_ids and to_ids pairs (not combinatory: if each list is</span>
+<span class="sd">        10 elements, we removed 10 pairs).</span>
+<span class="sd">        If the same relation was stored several times between two ids, this removes them all</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">merge_2_dicts</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">,</span>
+            <span class="n">Relations</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">from_ids</span><span class="p">,</span> <span class="n">to_ids</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">:</span> <span class="n">r1</span><span class="o">.</span><span class="n">minus</span><span class="p">(</span><span class="n">r2</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Relationship.get_relations"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.get_relations">[docs]</a>    <span class="k">def</span> <span class="nf">get_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This returns, as a dataframe, the sub-set of the relationships whose</span>
+<span class="sd">        &quot;from&quot; is part of specified &quot;from_ids&quot;.</span>
+
+<span class="sd">        If no from_ids is provided, this just returns all the relations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">_from_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">if</span> <span class="n">from_ids</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">from_ids</span>
+
+        <span class="k">def</span> <span class="nf">_rel_arrays</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">_from_ids</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">gid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">relations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">gid</span><span class="p">]</span>
+                    <span class="k">yield</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gid</span><span class="p">]</span> <span class="o">*</span> <span class="n">relations</span><span class="o">.</span><span class="n">to_ids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                                    <span class="n">relations</span><span class="o">.</span><span class="n">to_ids</span><span class="p">,</span>
+                                    <span class="n">relations</span><span class="o">.</span><span class="n">weights</span><span class="p">])</span>
+
+        <span class="n">rel_arrays</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_rel_arrays</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rel_arrays</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">rel_arrays</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                              <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">])</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="Relationship.get_neighbourhood_size"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.get_neighbourhood_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_neighbourhood_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        return a series indexed by &quot;from&quot; containing the number of &quot;tos&quot; for</span>
+<span class="sd">        each requested from.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="n">from_id</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="n">from_id</span><span class="p">:</span> <span class="n">size</span><span class="p">(</span><span class="n">from_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="n">from_ids</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="Relationship.unique_tos"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.unique_tos">[docs]</a>    <span class="k">def</span> <span class="nf">unique_tos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the set of unique &quot;to&quot; parts throughout all relationships</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">to</span> <span class="k">for</span> <span class="n">relations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">to</span> <span class="ow">in</span>
+                <span class="n">relations</span><span class="o">.</span><span class="n">to_ids</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="Relationship.select_one"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.select_one">[docs]</a>    <span class="k">def</span> <span class="nf">select_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">named_as</span><span class="o">=</span><span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="n">remove_selected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">discard_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">one_to_one</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">overridden_to_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Randomly selects one &quot;to&quot; part for each specified id in from_ids. An</span>
+<span class="sd">        id can be specified several times in that list, in which case we</span>
+<span class="sd">        simply do a selection several times. The result is aligned with</span>
+<span class="sd">        from_ids by index. i.e. the row in the return value that has the same</span>
+<span class="sd">        pandas index than a rom in from_ids is the selection for that row.</span>
+
+<span class="sd">        The selection in the resulting dataframe will by default be named</span>
+<span class="sd">        &quot;to&quot;, unless this is overridden by &quot;named_as&quot;.</span>
+
+<span class="sd">        If remove_selected is True, the selected relations are removed from</span>
+<span class="sd">        the relationship. This is handy to model stocks or any container of</span>
+<span class="sd">        things.</span>
+
+<span class="sd">        If discard_empty is True, all specified from_ids will be present in</span>
+<span class="sd">        the result, even if no relation is available for them or if some</span>
+<span class="sd">        selection were dropped due to one-to-one config.</span>
+
+<span class="sd">        If one_to_one is True, the selection is an injective function,</span>
+<span class="sd">        i.e each to_ids will at most be picked once.</span>
+
+<span class="sd">        overridden_to_weights is an optional dictionary of {&quot;to&quot;: weight}</span>
+<span class="sd">        that can be used to override the default weights contained in this</span>
+<span class="sd">        Relationship.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">overridden_to_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">missing_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_tos</span><span class="p">()</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="n">overridden_to_weights</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> \
+                <span class="s2">&quot;overridden_to_weights is missing those &#39;to&#39; keys: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">missing_keys</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">from_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_from_ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">from_ids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="n">_from_ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">from_ids</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_from_ids</span> <span class="o">=</span> <span class="n">from_ids</span>
+
+        <span class="k">def</span> <span class="nf">_results</span><span class="p">():</span>
+            <span class="c1"># req_index is the technical index of the table built by the Story,</span>
+            <span class="c1"># =&gt; must be respect to join correctly the result of the select_one</span>
+            <span class="k">for</span> <span class="n">req_index</span><span class="p">,</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">_from_ids</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">_from_ids</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">:</span>
+                    <span class="n">idx</span><span class="p">,</span> <span class="n">picked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">]</span><span class="o">.</span><span class="n">pick_one</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                                                                 <span class="n">overridden_to_weights</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">picked</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">discard_empty</span><span class="p">:</span>
+                            <span class="k">continue</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">yield</span> <span class="n">req_index</span><span class="p">,</span> <span class="n">from_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">req_index</span><span class="p">,</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">picked</span>
+
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">discard_empty</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">req_index</span><span class="p">,</span> <span class="n">from_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">_results</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">named_as</span><span class="p">])</span>
+
+        <span class="n">request_index</span><span class="p">,</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">rel_idx</span><span class="p">,</span> <span class="n">chosen_tos</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">named_as</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">chosen_tos</span><span class="p">),</span>
+                               <span class="s2">&quot;idx&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">rel_idx</span><span class="p">),</span>
+                               <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">from_id</span><span class="p">},</span>
+                              <span class="n">index</span><span class="o">=</span><span class="n">request_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">one_to_one</span> <span class="ow">and</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># not de-duplicating the blank results</span>
+            <span class="n">blank_idx</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">named_as</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
+            <span class="n">blanks</span><span class="p">,</span> <span class="n">present</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">blank_idx</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="o">~</span><span class="n">blank_idx</span><span class="p">]</span>
+
+            <span class="n">present</span> <span class="o">=</span> <span class="n">present</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">present</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+            <span class="n">present</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">named_as</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="s2">&quot;first&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">present</span><span class="p">,</span> <span class="n">blanks</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">remove_selected</span><span class="p">:</span>
+
+            <span class="c1"># we have to remove all the relations of each from in one go since</span>
+            <span class="c1"># no injective selection might have the same index several times</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">][[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;idx&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;from&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
+                <span class="n">removed_idx</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">from_id</span><span class="p">)[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">remove_inplace</span><span class="p">(</span><span class="n">removed_idx</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
+
+        <span class="n">output</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;idx&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="Relationship.select_all_horizontal"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.select_all_horizontal">[docs]</a>    <span class="k">def</span> <span class="nf">select_all_horizontal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="p">,</span> <span class="n">named_as</span><span class="o">=</span><span class="s2">&quot;to&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return all the &quot;to&quot; sides starting from each &quot;from&quot;,</span>
+<span class="sd">        as an &quot;horizontal&quot; list, i.e. each &quot;from&quot; is on one row and the set of</span>
+<span class="sd">        all &quot;to&quot; are all on that row, in one list.</span>
+
+<span class="sd">        Any requested from_id that has no relationship is absent is the</span>
+<span class="sd">        returned dataframe (=&gt; the corresponding rows are dropped in the result)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_relations</span><span class="p">(</span><span class="n">from_ids</span><span class="p">)</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                          <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">named_as</span><span class="p">])</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">named_as</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">named_as</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">s</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="Relationship.select_many"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.select_many">[docs]</a>    <span class="k">def</span> <span class="nf">select_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_ids</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">quantities</span><span class="p">,</span> <span class="n">remove_selected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">discard_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        The result is returned in vertical format and index by the values of the index of from_ids.</span>
+<span class="sd">        Since we select several values, we return several lines per index value of from_id =&gt;</span>
+<span class="sd">        during the subsequent join by the Operation, the number of produced rows increases.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">req</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">from_ids</span><span class="p">,</span> <span class="s2">&quot;qties&quot;</span><span class="p">:</span> <span class="n">quantities</span><span class="p">})</span>
+        <span class="n">req</span><span class="p">[</span><span class="s2">&quot;qties&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">req</span><span class="p">[</span><span class="s2">&quot;qties&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+
+        <span class="c1"># gathers all requests to the same &quot;from&quot; together, keeping track of</span>
+        <span class="c1"># the &quot;request index&quot; in the original from_ids so we can merge it later</span>
+        <span class="k">def</span> <span class="nf">gather</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+
+            <span class="c1"># shuffles that set of request s.t. in case of capping not the same</span>
+            <span class="c1"># from_id get &quot;capped&quot; all time</span>
+            <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="s2">&quot;quantities&quot;</span><span class="p">:</span> <span class="n">df2</span><span class="p">[</span><span class="s2">&quot;qties&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                              <span class="s2">&quot;req_index&quot;</span><span class="p">:</span> <span class="n">df2</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()})</span>
+
+        <span class="c1"># the same &quot;from&quot; can be requested several times</span>
+        <span class="n">all_reqs</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">gather</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_all_picks_results</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">all_reqs</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+
+                <span class="n">from_id</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span>
+
+                <span class="k">if</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">:</span>
+
+                    <span class="n">relations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
+                    <span class="n">quantities</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">cap_to_total</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;quantities&quot;</span><span class="p">],</span>
+                                                    <span class="nb">len</span><span class="p">(</span><span class="n">relations</span><span class="p">))</span>
+
+                    <span class="c1"># rel_idx is the index of the picked values within the grouped values (i.e. for one from_id)</span>
+                    <span class="n">rel_idx</span><span class="p">,</span> <span class="n">rel_tos</span> <span class="o">=</span> <span class="n">relations</span><span class="o">.</span><span class="n">pick_many</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                                                           <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">quantities</span><span class="p">))</span>
+
+                    <span class="c1"># prepares the indices of the resulting vertical format, as a sequence</span>
+                    <span class="c1"># of index interval where to inject the picked values</span>
+                    <span class="n">to_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">quantities</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    <span class="n">from_idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">to_idx</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">idx_intervals</span> <span class="o">=</span> <span class="p">[(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span> <span class="k">for</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">from_idx</span><span class="p">,</span> <span class="n">to_idx</span><span class="p">)]</span>
+
+                    <span class="k">def</span> <span class="nf">_one_pick_result</span><span class="p">():</span>
+                        <span class="k">for</span> <span class="p">((</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">),</span> <span class="n">req_index</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                                <span class="n">idx_intervals</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;req_index&quot;</span><span class="p">]):</span>
+                            <span class="n">size</span> <span class="o">=</span> <span class="n">upper_bound</span> <span class="o">-</span> <span class="n">lower_bound</span>
+
+                            <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="k">continue</span>
+
+                            <span class="k">yield</span> <span class="p">[</span>
+                                <span class="n">req_index</span><span class="p">,</span>
+                                <span class="n">from_id</span><span class="p">,</span>
+                                <span class="n">rel_tos</span><span class="p">[</span><span class="n">lower_bound</span><span class="p">:</span><span class="n">upper_bound</span><span class="p">],</span>
+                                <span class="n">rel_idx</span><span class="p">[</span><span class="n">lower_bound</span><span class="p">:</span><span class="n">upper_bound</span><span class="p">],</span>
+                            <span class="p">]</span>
+
+                    <span class="k">yield</span> <span class="nb">list</span><span class="p">(</span><span class="n">_one_pick_result</span><span class="p">())</span>
+
+        <span class="n">all_picks_results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_all_picks_results</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_picks_results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">l1</span> <span class="o">+</span> <span class="n">l2</span><span class="p">,</span> <span class="n">all_picks_results</span><span class="p">),</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;req_idx&quot;</span><span class="p">,</span> <span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="s2">&quot;rel_idx&quot;</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">remove_selected</span><span class="p">:</span>
+
+                <span class="c1"># remove all the relations of each from in one go since</span>
+                <span class="c1"># no injective selection might have the same index several times</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;rel_idx&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">][</span>
+                    <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;rel_idx&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;from&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">from_id</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+                    <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
+                    <span class="n">removed_idx</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">from_id</span><span class="p">)[</span><span class="s2">&quot;rel_idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">group</span><span class="o">.</span><span class="n">remove_inplace</span><span class="p">(</span><span class="n">removed_idx</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped</span><span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;req_idx&quot;</span><span class="p">,</span> <span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="s2">&quot;rel_idx&quot;</span><span class="p">])</span>
+
+        <span class="n">output</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;req_idx&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;rel_idx&quot;</span><span class="p">,</span> <span class="s2">&quot;from&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># &quot;discard_empty&quot; option: return empty result (instead of nothing) for</span>
+        <span class="c1"># any non existing (i.e. empty) &quot;from&quot; relation</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">discard_empty</span> <span class="ow">and</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">from_ids</span><span class="p">):</span>
+            <span class="n">missing_index</span> <span class="o">=</span> <span class="n">from_ids</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="n">missing_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">named_as</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([[]</span> <span class="o">*</span> <span class="n">missing_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                                     <span class="n">index</span><span class="o">=</span><span class="n">missing_index</span><span class="p">)})</span>
+
+            <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">output</span><span class="p">,</span> <span class="n">missing_values</span><span class="p">],</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">output</span></div>
+
+    <span class="c1">######################</span>
+    <span class="c1"># IO                 #</span>
+    <span class="c1">######################</span>
+
+<div class="viewcode-block" id="Relationship.save_to"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.save_to">[docs]</a>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves all the relationship as well as the current status of the seed</span>
+<span class="sd">        as a CSV file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving relationship to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+
+        <span class="c1"># creating a vertical dataframe to store the inner table</span>
+        <span class="n">saved_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_relations</span><span class="p">()</span><span class="o">.</span><span class="n">stack</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+
+        <span class="c1"># we also want to save the seed =&gt; added an index level to separate</span>
+        <span class="c1"># self._table from self.seed in the end result</span>
+        <span class="n">saved_df</span><span class="p">[</span><span class="s2">&quot;param&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;relations&quot;</span>
+        <span class="n">saved_df</span> <span class="o">=</span> <span class="n">saved_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;param&quot;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">saved_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">reorder_levels</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># then finally added the seed</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="s2">&quot;seed&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span>
+        <span class="n">saved_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.load_from"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.load_from">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_from</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading relationship from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+
+        <span class="n">saved_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;seed&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">_all</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">relations</span> <span class="o">=</span> <span class="n">saved_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="s2">&quot;relations&quot;</span><span class="p">,</span> <span class="n">_all</span><span class="p">,</span> <span class="n">_all</span><span class="p">)]</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
+        <span class="n">relations</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">relations</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">droplevel</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">relations</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">relations</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">droplevel</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">relationship</span> <span class="o">=</span> <span class="n">Relationship</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">relationship</span><span class="o">.</span><span class="n">add_relations</span><span class="p">(</span>
+            <span class="n">from_ids</span><span class="o">=</span><span class="n">relations</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">to_ids</span><span class="o">=</span><span class="n">relations</span><span class="p">[</span><span class="s2">&quot;to&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">relations</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">relationship</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps">[docs]</a>    <span class="k">class</span> <span class="nc">RelationshipOps</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.AddNeighbourhoodSize"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.AddNeighbourhoodSize">[docs]</a>        <span class="k">class</span> <span class="nc">AddNeighbourhoodSize</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">):</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.AddNeighbourhoodSize.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.AddNeighbourhoodSize.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+                <span class="n">requested_froms</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">]</span>
+                <span class="n">sizes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">get_neighbourhood_size</span><span class="p">(</span>
+                    <span class="n">from_ids</span><span class="o">=</span><span class="n">requested_froms</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">:</span> <span class="n">requested_froms</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">sizes</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)})</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.get_neighbourhood_size"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.get_neighbourhood_size">[docs]</a>        <span class="k">def</span> <span class="nf">get_neighbourhood_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">AddNeighbourhoodSize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span>
+                                             <span class="n">named_as</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.SelectOne"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.SelectOne">[docs]</a>        <span class="k">class</span> <span class="nc">SelectOne</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span>
+                         <span class="n">one_to_one</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">discard_missing</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
+
+                <span class="c1"># inner join instead of default left to allow dropping rows</span>
+                <span class="c1"># in case of duplicates and one-to-one</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">join_kind</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">one_to_one</span> <span class="o">=</span> <span class="n">one_to_one</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pop</span> <span class="o">=</span> <span class="n">pop</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">discard_missing</span> <span class="o">=</span> <span class="n">discard_missing</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">weight</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.SelectOne.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.SelectOne.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">select_one</span><span class="p">(</span>
+                    <span class="n">from_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">],</span>
+                    <span class="n">named_as</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">,</span>
+                    <span class="n">remove_selected</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">,</span>
+                    <span class="n">one_to_one</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">one_to_one</span><span class="p">,</span>
+                    <span class="n">discard_empty</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">discard_missing</span><span class="p">,</span>
+                    <span class="n">overridden_to_weights</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+
+                <span class="n">selected</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">selected</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.select_one"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.select_one">[docs]</a>        <span class="k">def</span> <span class="nf">select_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">one_to_one</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">pop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">discard_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            :param from_field: field corresponding to the &quot;from&quot; side of the</span>
+<span class="sd">                relationship</span>
+
+<span class="sd">            :param named_as: field name assigned to the selected &quot;to&quot; side</span>
+<span class="sd">                of the relationship</span>
+
+<span class="sd">            :param one_to_one: boolean indicating that any &quot;to&quot; value will be</span>
+<span class="sd">                selected at most once</span>
+
+<span class="sd">            :param pop: if True, the selected relation is removed</span>
+
+<span class="sd">            :param discard_empty: if False, any non-existing &quot;from&quot; in the</span>
+<span class="sd">                relationship yields a None in the resulting selection. If</span>
+<span class="sd">                true, that row is removed from the story_data.</span>
+
+<span class="sd">            :param weight: weight to use for the &quot;to&quot; side of the</span>
+<span class="sd">                relationship. Must be a Series whose index are the &quot;to&quot; values.</span>
+<span class="sd">                Typical usage would be to plug an attribute of the &quot;to&quot;</span>
+<span class="sd">                population here.</span>
+
+<span class="sd">            :return: this operation adds a single column corresponding to a</span>
+<span class="sd">                random choice from a Relationship</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SelectOne</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span>
+                                  <span class="n">one_to_one</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">discard_empty</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.SelectAll"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.SelectAll">[docs]</a>        <span class="k">class</span> <span class="nc">SelectAll</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.SelectAll.transform"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.SelectAll.transform">[docs]</a>            <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+                <span class="n">from_ids</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">select_all_horizontal</span><span class="p">(</span>
+                    <span class="n">from_ids</span><span class="o">=</span><span class="n">from_ids</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">named_as</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">)</span>
+
+                <span class="n">selected</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">story_data</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
+                                <span class="n">left_on</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.select_all"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.select_all">[docs]</a>        <span class="k">def</span> <span class="nf">select_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            This simply creates a new story_data field containing all the</span>
+<span class="sd">            &quot;to&quot; values of the requested from, as a set.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SelectAll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.SelectMany"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.SelectMany">[docs]</a>        <span class="k">class</span> <span class="nc">SelectMany</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span>
+                         <span class="n">quantity_field</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">discard_missing</span><span class="p">):</span>
+
+                <span class="c1"># inner join instead of default left to allow dropping rows</span>
+                <span class="c1"># in case of duplicates and one-to-one</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">join_kind</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">discard_missing</span> <span class="o">=</span> <span class="n">discard_missing</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quantity_field</span> <span class="o">=</span> <span class="n">quantity_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pop</span> <span class="o">=</span> <span class="n">pop</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.SelectMany.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.SelectMany.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">select_many</span><span class="p">(</span>
+                    <span class="n">from_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">],</span>
+                    <span class="n">named_as</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">,</span>
+                    <span class="n">quantities</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quantity_field</span><span class="p">],</span>
+                    <span class="n">remove_selected</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">,</span>
+                    <span class="n">discard_empty</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">discard_missing</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">selected</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.select_many"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.select_many">[docs]</a>        <span class="k">def</span> <span class="nf">select_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">quantity_field</span><span class="p">,</span> <span class="n">pop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">discard_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SelectMany</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span>
+                                   <span class="n">quantity_field</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">discard_missing</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.Add"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.Add">[docs]</a>        <span class="k">class</span> <span class="nc">Add</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">item_field</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">item_field</span> <span class="o">=</span> <span class="n">item_field</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.Add.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.Add.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">add_relations</span><span class="p">(</span>
+                        <span class="n">from_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">],</span>
+                        <span class="n">to_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item_field</span><span class="p">])</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.add"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.add">[docs]</a>        <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">item_field</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">item_field</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.AddGrouped"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.AddGrouped">[docs]</a>        <span class="k">class</span> <span class="nc">AddGrouped</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">grouped_items_field</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grouped_items_field</span> <span class="o">=</span> <span class="n">grouped_items_field</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.AddGrouped.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.AddGrouped.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">add_grouped_relations</span><span class="p">(</span>
+                        <span class="n">from_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">],</span>
+                        <span class="n">grouped_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped_items_field</span><span class="p">])</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.add_grouped"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.add_grouped">[docs]</a>        <span class="k">def</span> <span class="nf">add_grouped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">grouped_items_field</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            this is similar to add, execept that the &quot;to&quot; field should here</span>
+<span class="sd">            contain lists of &quot;to&quot; values instead of single ones</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">AddGrouped</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span>
+                                   <span class="n">grouped_items_field</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.Remove"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.Remove">[docs]</a>        <span class="k">class</span> <span class="nc">Remove</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">item_field</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span> <span class="o">=</span> <span class="n">relationship</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">from_field</span> <span class="o">=</span> <span class="n">from_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">item_field</span> <span class="o">=</span> <span class="n">item_field</span>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.Remove.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.Remove.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
+                        <span class="n">from_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">from_field</span><span class="p">],</span>
+                        <span class="n">to_ids</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item_field</span><span class="p">])</span></div></div>
+
+<div class="viewcode-block" id="Relationship.RelationshipOps.remove"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.relationship.Relationship.RelationshipOps.remove">[docs]</a>        <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">item_field</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationship</span><span class="p">,</span> <span class="n">from_field</span><span class="p">,</span> <span class="n">item_field</span><span class="p">)</span></div></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

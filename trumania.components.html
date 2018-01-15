@@ -1,0 +1,186 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.components package &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="trumania-components-package">
+<h1>trumania.components package<a class="headerlink" href="#trumania-components-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trumania.components.db">
+<span id="trumania-components-db-module"></span><h2>trumania.components.db module<a class="headerlink" href="#module-trumania.components.db" title="Permalink to this headline">¶</a></h2>
+<p>This is just the provider of the IO methods save and retrieve various
+simulation components to/from persistence.</p>
+<p>A namespace defines a place where to put objects that belong together
+(typically, from the same scenario or component, e.g. “Uganda”).</p>
+<dl class="function">
+<dt id="trumania.components.db.create_namespace">
+<code class="descclassname">trumania.components.db.</code><code class="descname">create_namespace</code><span class="sig-paren">(</span><em>namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#create_namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.create_namespace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.csv_item_path">
+<code class="descclassname">trumania.components.db.</code><code class="descname">csv_item_path</code><span class="sig-paren">(</span><em>folder</em>, <em>item_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#csv_item_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.csv_item_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.is_namespace_existing">
+<code class="descclassname">trumania.components.db.</code><code class="descname">is_namespace_existing</code><span class="sig-paren">(</span><em>namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#is_namespace_existing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.is_namespace_existing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.json_item_path">
+<code class="descclassname">trumania.components.db.</code><code class="descname">json_item_path</code><span class="sig-paren">(</span><em>folder</em>, <em>item_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#json_item_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.json_item_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.list_generators">
+<code class="descclassname">trumania.components.db.</code><code class="descname">list_generators</code><span class="sig-paren">(</span><em>namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#list_generators"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.list_generators" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.list_populations">
+<code class="descclassname">trumania.components.db.</code><code class="descname">list_populations</code><span class="sig-paren">(</span><em>namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#list_populations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.list_populations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.load_empirical_discrete_generator">
+<code class="descclassname">trumania.components.db.</code><code class="descname">load_empirical_discrete_generator</code><span class="sig-paren">(</span><em>namespace</em>, <em>gen_id</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#load_empirical_discrete_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.load_empirical_discrete_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.load_generator">
+<code class="descclassname">trumania.components.db.</code><code class="descname">load_generator</code><span class="sig-paren">(</span><em>namespace</em>, <em>gen_type</em>, <em>gen_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#load_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.load_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.load_population">
+<code class="descclassname">trumania.components.db.</code><code class="descname">load_population</code><span class="sig-paren">(</span><em>namespace</em>, <em>population_id</em>, <em>circus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#load_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.load_population" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.load_timer_gen_config">
+<code class="descclassname">trumania.components.db.</code><code class="descname">load_timer_gen_config</code><span class="sig-paren">(</span><em>namespace</em>, <em>timer_gen_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#load_timer_gen_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.load_timer_gen_config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.namespace_folder">
+<code class="descclassname">trumania.components.db.</code><code class="descname">namespace_folder</code><span class="sig-paren">(</span><em>namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#namespace_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.namespace_folder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.population_folder">
+<code class="descclassname">trumania.components.db.</code><code class="descname">population_folder</code><span class="sig-paren">(</span><em>namespace</em>, <em>population_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#population_folder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.population_folder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.remove_namespace">
+<code class="descclassname">trumania.components.db.</code><code class="descname">remove_namespace</code><span class="sig-paren">(</span><em>namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#remove_namespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.remove_namespace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.save_empirical_discrete_generator">
+<code class="descclassname">trumania.components.db.</code><code class="descname">save_empirical_discrete_generator</code><span class="sig-paren">(</span><em>distribution</em>, <em>values</em>, <em>namespace</em>, <em>gen_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#save_empirical_discrete_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.save_empirical_discrete_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.save_generator">
+<code class="descclassname">trumania.components.db.</code><code class="descname">save_generator</code><span class="sig-paren">(</span><em>generator</em>, <em>namespace</em>, <em>gen_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#save_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.save_generator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.save_population">
+<code class="descclassname">trumania.components.db.</code><code class="descname">save_population</code><span class="sig-paren">(</span><em>population</em>, <em>namespace</em>, <em>population_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#save_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.save_population" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.db.save_timer_gen">
+<code class="descclassname">trumania.components.db.</code><code class="descname">save_timer_gen</code><span class="sig-paren">(</span><em>timer_gen</em>, <em>namespace</em>, <em>timer_gen_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/db.html#save_timer_gen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.db.save_timer_gen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-trumania.components">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trumania.components" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/trumania.components.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

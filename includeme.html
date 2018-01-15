@@ -1,0 +1,128 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>&lt;no title&gt; &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to trumania’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p># Trumania</p>
+<p>## Documentation and tutorial</p>
+<p>Trumania is a scenario-based random dataset generator library in python 3.</p>
+<p>See the [wiki](<a class="reference external" href="https://github.com/RealImpactAnalytics/trumania/wiki">https://github.com/RealImpactAnalytics/trumania/wiki</a>) in this
+repo for a detailed documentation of each of the features. The wiki also
+contains a step-by-step explanation of 4 example scenarios.</p>
+<p>There are some example scenario in the [tests/](tests/) folder of this repository.</p>
+<p>You can also join the Trumania slack channel: [trumania.slack.com](<a class="reference external" href="https://trumania.slack.com">https://trumania.slack.com</a>)</p>
+<p>## How to install</p>
+<p>Trumania is not packaged in any special way, the way it is used at the moment is simply to clone the code and install the required dependencies. This section describes how to do that.</p>
+<p>Make sure you have python 3 and pip installed. Then make sure pipenv is installed:</p>
+<p><code class="docutils literal"><span class="pre">`sh</span>
+<span class="pre">#</span> <span class="pre">make</span> <span class="pre">sure</span> <span class="pre">you're</span> <span class="pre">using</span> <span class="pre">pip</span> <span class="pre">from</span> <span class="pre">a</span> <span class="pre">python</span> <span class="pre">3</span> <span class="pre">installation</span>
+<span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">--user</span> <span class="pre">pipenv</span>
+<span class="pre">`</span></code></p>
+<p>then install all python dependencies for this project:</p>
+<p><code class="docutils literal"><span class="pre">`sh</span>
+<span class="pre">pipenv</span> <span class="pre">install</span> <span class="pre">--three</span>
+<span class="pre">`</span></code></p>
+<p>The steps below mention to prefix the commands with <cite>pipenv run</cite> whenever necessary in order to have access to those python dependencies. Alternatively, you can enter the corresponding virtualenv once with <cite>pipenv shell</cite>, in which case that prefix is no longer necessary. See [<a class="reference external" href="https://docs.pipenv.org](https://docs.pipenv.org">https://docs.pipenv.org](https://docs.pipenv.org</a>) for more details about how to use pipenv to handle python dependencies.</p>
+<p>## Where and how to create a scenario</p>
+<p>To create a scenario, simply create another python project that depends on trumania:</p>
+<p><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>sh
+mkdir -p /path/to/your/project
+cd /path/to/your/project</p>
+<p># then simply add a dependency towards the location where you downloaded trumania:
+pipenv install -e /path/to/trumania/
+<a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+<p>You can then create your scenario in python, let’s call it <cite>burbanks_and_friends_talking.py</cite>.  In order to execute it, simply launch it from pipenv:</p>
+<p><code class="docutils literal"><span class="pre">`sh</span>
+<span class="pre">pipenv</span> <span class="pre">run</span> <span class="pre">python</span> <span class="pre">burbanks_and_friends_talking.py</span>
+<span class="pre">`</span></code></p>
+<p>## Contributing</p>
+<p>This section provides a few pointers on how to handle the trumania codebase.</p>
+<p>### Running Trumania unit tests locally</p>
+<p><code class="docutils literal"><span class="pre">`sh</span>
+<span class="pre">#</span> <span class="pre">make</span> <span class="pre">sure</span> <span class="pre">you</span> <span class="pre">are</span> <span class="pre">not</span> <span class="pre">inside</span> <span class="pre">another</span> <span class="pre">pipenv</span> <span class="pre">shell</span> <span class="pre">when</span> <span class="pre">running</span> <span class="pre">this</span>
+<span class="pre">pipenv</span> <span class="pre">run</span> <span class="pre">py.test</span> <span class="pre">-s</span> <span class="pre">-v</span>
+<span class="pre">`</span></code></p>
+<p>### Python linting
+Run <cite>pipenv run flake8</cite>. If nothing is returned, the correct styling has been applied.</p>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to trumania’s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/includeme.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

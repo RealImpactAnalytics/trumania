@@ -1,0 +1,478 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.population &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.population</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+
+<span class="kn">from</span> <span class="nn">trumania.core.operations</span> <span class="k">import</span> <span class="n">AddColumns</span><span class="p">,</span> <span class="n">SideEffectOnly</span>
+<span class="kn">from</span> <span class="nn">trumania.core.relationship</span> <span class="k">import</span> <span class="n">Relationship</span>
+<span class="kn">from</span> <span class="nn">trumania.core.attribute</span> <span class="k">import</span> <span class="n">Attribute</span>
+<span class="kn">from</span> <span class="nn">trumania.core.util_functions</span> <span class="k">import</span> <span class="n">make_random_assign</span><span class="p">,</span> <span class="n">ensure_non_existing_dir</span><span class="p">,</span> <span class="n">is_sequence</span>
+<span class="kn">from</span> <span class="nn">trumania.core</span> <span class="k">import</span> <span class="n">random_generators</span>
+
+
+<div class="viewcode-block" id="Population"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population">[docs]</a><span class="k">class</span> <span class="nc">Population</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circus</span><span class="p">,</span> <span class="n">ids_gen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ids_gen: generator for the ids of the members of this population</span>
+<span class="sd">        :param size: number of ids to generate (only relevant if is ids_gen</span>
+<span class="sd">        is specified</span>
+<span class="sd">        :param ids: if neither ids_gen nore size is specified, we can</span>
+<span class="sd">          also specify the ids explicitly</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">circus</span> <span class="o">=</span> <span class="n">circus</span>
+
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ids_gen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot specify ids_gen nor size if ids is &quot;</span>
+                                 <span class="s2">&quot;provided&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">([])</span>
+
+            <span class="k">elif</span> <span class="n">ids_gen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">ids_gen</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must specify ids_gen and size if ids is not &quot;</span>
+                                 <span class="s2">&quot;provided&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PopulationOps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Population.create_relationship"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.create_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">create_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        creates an empty relationship from the members of this population</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot create a second relationship with &quot;</span>
+                             <span class="s2">&quot;existing name </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Relationship</span><span class="p">(</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">seed</span> <span class="k">if</span> <span class="n">seed</span> <span class="k">else</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circus</span><span class="o">.</span><span class="n">seeder</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Population.create_stock_relationship"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.create_stock_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">create_stock_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">item_id_gen</span><span class="p">,</span> <span class="n">n_items_per_member</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a relationship aimed at maintaining a stock, from a generator</span>
+<span class="sd">        that create stock item ids.</span>
+
+<span class="sd">        The relationship does not point to another population, but to items</span>
+<span class="sd">        whose id is generated with the provided generator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;generating initial </span><span class="si">{}</span><span class="s2"> stock&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">rel_to_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_relationship</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="n">assigned_items</span> <span class="o">=</span> <span class="n">make_random_assign</span><span class="p">(</span>
+            <span class="n">set1</span><span class="o">=</span><span class="n">item_id_gen</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n_items_per_member</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">),</span>
+            <span class="n">set2</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circus</span><span class="o">.</span><span class="n">seeder</span><span class="p">))</span>
+
+        <span class="n">rel_to_items</span><span class="o">.</span><span class="n">add_relations</span><span class="p">(</span>
+            <span class="n">from_ids</span><span class="o">=</span><span class="n">assigned_items</span><span class="p">[</span><span class="s2">&quot;chosen_from_set2&quot;</span><span class="p">],</span>
+            <span class="n">to_ids</span><span class="o">=</span><span class="n">assigned_items</span><span class="p">[</span><span class="s2">&quot;set1&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Population.create_stock_relationship_grp"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.create_stock_relationship_grp">[docs]</a>    <span class="k">def</span> <span class="nf">create_stock_relationship_grp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">stock_bulk_gen</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This creates exactly the same kind of relationship as</span>
+<span class="sd">        create_stock_relationship, but using a generator of list of stock</span>
+<span class="sd">        items instead of a generators of items.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">stock_rel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_relationship</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">stock_rel</span><span class="o">.</span><span class="n">add_grouped_relations</span><span class="p">(</span>
+            <span class="n">from_ids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">grouped_ids</span><span class="o">=</span><span class="n">stock_bulk_gen</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Population.get_relationship"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.get_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">get_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> not found among relationships of population :&quot;</span>
+                           <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Population.create_attribute"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.create_attribute">[docs]</a>    <span class="k">def</span> <span class="nf">create_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Attribute</span><span class="p">(</span><span class="n">population</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Population.get_attribute"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.get_attribute">[docs]</a>    <span class="k">def</span> <span class="nf">get_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">attribute_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> not found among attributes of population :</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">attribute_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">attribute_name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Population.get_attribute_values"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.get_attribute_values">[docs]</a>    <span class="k">def</span> <span class="nf">get_attribute_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the values of this attribute, as a Series</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute</span><span class="p">(</span><span class="n">attribute_name</span><span class="p">)</span><span class="o">.</span><span class="n">get_values</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Population.attribute_names"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.attribute_names">[docs]</a>    <span class="k">def</span> <span class="nf">attribute_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Population.relationship_names"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.relationship_names">[docs]</a>    <span class="k">def</span> <span class="nf">relationship_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Population.update"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds or updates members with the provided attribute ids and values</span>
+
+<span class="sd">         :param attribute_df: must be a dataframe whose index contain the id</span>
+<span class="sd">         of the inserted members. There must be as many</span>
+<span class="sd">         columns as there are attributes currently defined in this population.</span>
+
+<span class="sd">        If the members for the specified ids already exist, their values are</span>
+<span class="sd">        updated, otherwise the members are created.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_names</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">attribute_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+            <span class="c1"># TODO: in case of update only, we could accept that.</span>
+            <span class="c1"># ALso, for insert, we could also accept and just insert NA&#39;s</span>
+            <span class="c1"># This method is currently just aimed at adding &quot;full&quot; members</span>
+            <span class="c1"># though...</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;must provide values for all attributes:</span>
+<span class="s2">                    - population attributes: </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">                    - provided attributes: </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_names</span><span class="p">(),</span> <span class="n">attribute_df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+
+        <span class="n">values_dedup</span> <span class="o">=</span> <span class="n">attribute_df</span><span class="p">[</span><span class="o">~</span><span class="n">attribute_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="s2">&quot;last&quot;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">attribute_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">values_dedup</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;inserted members contain duplicate ids =&gt; some will &quot;</span>
+                         <span class="s2">&quot;be discarded so that all members ids are unique&quot;</span><span class="p">)</span>
+
+        <span class="n">new_ids</span> <span class="o">=</span> <span class="n">values_dedup</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">|</span> <span class="n">new_ids</span>
+
+        <span class="k">for</span> <span class="n">att_name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">values_dedup</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute</span><span class="p">(</span><span class="n">att_name</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Population.to_dataframe"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: all the attributes of this population as one single dataframe</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribute_names</span><span class="p">():</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute_values</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="Population.description"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">        :return a dictionary description of this population</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="s2">&quot;attributes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribute_names</span><span class="p">(),</span>
+            <span class="s2">&quot;relationships&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationship_names</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+    <span class="c1">#######</span>
+    <span class="c1"># IO</span>
+
+<div class="viewcode-block" id="Population.save_to"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.save_to">[docs]</a>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_folder</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves this population and all its attribute and relationships to the</span>
+<span class="sd">        specified folder.</span>
+
+<span class="sd">        If the folder already exists, it is deleted first</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving population to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_folder</span><span class="p">))</span>
+
+        <span class="n">ensure_non_existing_dir</span><span class="p">(</span><span class="n">target_folder</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">target_folder</span><span class="p">)</span>
+
+        <span class="n">ids_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_folder</span><span class="p">,</span> <span class="s2">&quot;ids.csv&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="o">.</span><span class="n">to_series</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">ids_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">attribute_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_folder</span><span class="p">,</span> <span class="s2">&quot;attributes&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">attribute_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attribute_dir</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)</span>
+                <span class="n">attr</span><span class="o">.</span><span class="n">save_to</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">relationships_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_folder</span><span class="p">,</span> <span class="s2">&quot;relationships&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">relationships_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relationships</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">relationships_dir</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)</span>
+                <span class="n">rel</span><span class="o">.</span><span class="n">save_to</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Population.load_from"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.load_from">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_from</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">circus</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reads all persistent data of this population and loads it</span>
+
+<span class="sd">        :param folder: folder containing all CSV files of this population</span>
+<span class="sd">        :param circus: parent circus containing this population</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ids_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s2">&quot;ids.csv&quot;</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">ids_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[])</span><span class="o">.</span><span class="n">index</span>
+
+        <span class="n">attribute_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s2">&quot;attributes&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">attribute_dir</span><span class="p">):</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]:</span>
+                    <span class="n">Attribute</span><span class="o">.</span><span class="n">load_from</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attribute_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">attribute_dir</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">relationships_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s2">&quot;relationships&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">relationships_dir</span><span class="p">):</span>
+            <span class="n">relationships</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]:</span>
+                <span class="n">Relationship</span><span class="o">.</span><span class="n">load_from</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">relationships_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">relationships_dir</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">relationships</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">population</span> <span class="o">=</span> <span class="n">Population</span><span class="p">(</span><span class="n">circus</span><span class="o">=</span><span class="n">circus</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">attributes</span> <span class="o">=</span> <span class="n">attributes</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">relationships</span> <span class="o">=</span> <span class="n">relationships</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="n">ids</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">population</span></div>
+
+<div class="viewcode-block" id="Population.PopulationOps"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps">[docs]</a>    <span class="k">class</span> <span class="nc">PopulationOps</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="n">population</span>
+
+<div class="viewcode-block" id="Population.PopulationOps.Lookup"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.Lookup">[docs]</a>        <span class="k">class</span> <span class="nc">Lookup</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">id_field</span><span class="p">,</span> <span class="n">select_dict</span><span class="p">):</span>
+                <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="n">population</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">id_field</span> <span class="o">=</span> <span class="n">id_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">select_dict</span> <span class="o">=</span> <span class="n">select_dict</span>
+
+<div class="viewcode-block" id="Population.PopulationOps.Lookup.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.Lookup.build_output">[docs]</a>            <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">story_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">select_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="k">elif</span> <span class="n">is_sequence</span><span class="p">(</span><span class="n">story_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">]):</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_by_sequences</span><span class="p">(</span><span class="n">story_data</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_by_scalars</span><span class="p">(</span><span class="n">story_data</span><span class="p">)</span></div>
+
+            <span class="k">def</span> <span class="nf">_lookup_by_scalars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                looking up, after we know the ids are not sequences of ids</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+
+                <span class="n">output</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">]]</span>
+                <span class="n">members_ids</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+                <span class="k">for</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">named_as</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">get_attribute_values</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span>
+                                                             <span class="n">members_ids</span><span class="p">))</span>
+
+                    <span class="n">vals</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">named_as</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">output</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">vals</span><span class="p">,</span>
+                                      <span class="n">left_on</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">,</span>
+                                      <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="c1"># self.id_field is already in the parent result, we only</span>
+                <span class="c1"># want to return the new columns from here</span>
+                <span class="n">output</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">output</span>
+
+            <span class="k">def</span> <span class="nf">_lookup_by_sequences</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+                <span class="c1"># pd.Series containing seq of ids to lookup</span>
+                <span class="n">id_lists</span> <span class="o">=</span> <span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">]</span>
+
+                <span class="c1"># unique member ids of the attribute to look up</span>
+                <span class="n">member_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+                    <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">l1</span> <span class="o">+</span> <span class="n">l2</span><span class="p">,</span> <span class="n">id_lists</span><span class="p">))</span>
+
+                <span class="n">output</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">story_data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">named_as</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">get_attribute_values</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="n">member_ids</span><span class="p">)</span>
+
+                    <span class="k">def</span> <span class="nf">attributes_of_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+                        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                        :param ids:</span>
+<span class="sd">                        :return: list of attribute values for those member ids</span>
+<span class="sd">                        &quot;&quot;&quot;</span>
+                        <span class="k">return</span> <span class="n">vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+                    <span class="n">output</span><span class="p">[</span><span class="n">named_as</span><span class="p">]</span> <span class="o">=</span> <span class="n">id_lists</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">attributes_of_ids</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="Population.PopulationOps.lookup"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.lookup">[docs]</a>        <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_field</span><span class="p">,</span> <span class="n">select</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Looks up some attribute values by joining on the specified field</span>
+<span class="sd">            of the current data</span>
+
+<span class="sd">            :param id_field: field name in the story_data.</span>
+<span class="sd">              If the that column contains lists, then it&#39;s assumed to contain</span>
+<span class="sd">              only list and it&#39;s flatten to obtain the list of id to lookup</span>
+<span class="sd">              in the attribute. Must be a list of &quot;scalar&quot; values or list of</span>
+<span class="sd">              list, not a mix of both.</span>
+
+<span class="sd">            :param select: dictionary of (attribute_name -&gt; given_name)</span>
+<span class="sd">            specifying which attribute to look up and which name to give to</span>
+<span class="sd">            the resulting column</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Lookup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="p">,</span> <span class="n">id_field</span><span class="p">,</span> <span class="n">select</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Population.PopulationOps.Update"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.Update">[docs]</a>        <span class="k">class</span> <span class="nc">Update</span><span class="p">(</span><span class="n">SideEffectOnly</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">id_field</span><span class="p">,</span> <span class="n">copy_attributes_from_fields</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="n">population</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">id_field</span> <span class="o">=</span> <span class="n">id_field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">copy_attribute_from_fields</span> <span class="o">=</span> <span class="n">copy_attributes_from_fields</span>
+
+<div class="viewcode-block" id="Population.PopulationOps.Update.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.Update.side_effect">[docs]</a>            <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+                <span class="n">update_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">attribute</span><span class="p">:</span> <span class="n">story_data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                     <span class="k">for</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy_attribute_from_fields</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+                    <span class="n">index</span><span class="o">=</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_field</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update_df</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Population.PopulationOps.update"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.update">[docs]</a>        <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_field</span><span class="p">,</span> <span class="n">copy_attributes_from_fields</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">            Adds or update members and their attributes.</span>
+
+<span class="sd">            Note that the index of story_data, i.e. the ids of the _triggering_</span>
+<span class="sd">            members, is irrelevant during this operation.</span>
+
+<span class="sd">            :param id_field: ids of the updated or created members</span>
+<span class="sd">            :param copy_attributes_from_fields: dictionary of</span>
+<span class="sd">                (attribute name -&gt; story data field name)</span>
+<span class="sd">             that describes which column in the population dataframe to use</span>
+<span class="sd">               to update which attribute.</span>
+<span class="sd">            :return:</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="p">,</span> <span class="n">id_field</span><span class="p">,</span>
+                               <span class="n">copy_attributes_from_fields</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Population.PopulationOps.select_one"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.population.Population.PopulationOps.select_one">[docs]</a>        <span class="k">def</span> <span class="nf">select_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">named_as</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">            Appends a field column to the story_data containing member ids</span>
+<span class="sd">            taken at random among the ids of this population.</span>
+
+<span class="sd">            This is similar to relationship_select_one(), except that no</span>
+<span class="sd">            particular relation is required, we just sample one id randomly</span>
+
+<span class="sd">            :param named_as: the name of the field added to the story_data</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="n">gen</span> <span class="o">=</span> <span class="n">random_generators</span><span class="o">.</span><span class="n">NumpyRandomGenerator</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;choice&quot;</span><span class="p">,</span>
+                <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">ids</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">circus</span><span class="o">.</span><span class="n">seeder</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">gen</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">named_as</span><span class="o">=</span><span class="n">named_as</span><span class="p">)</span></div></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

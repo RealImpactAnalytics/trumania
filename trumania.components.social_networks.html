@@ -1,0 +1,134 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.components.social_networks package &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="trumania-components-social-networks-package">
+<h1>trumania.components.social_networks package<a class="headerlink" href="#trumania-components-social-networks-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trumania.components.social_networks.erdos_renyi">
+<span id="trumania-components-social-networks-erdos-renyi-module"></span><h2>trumania.components.social_networks.erdos_renyi module<a class="headerlink" href="#module-trumania.components.social_networks.erdos_renyi" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.components.social_networks.erdos_renyi.WithErdosRenyi">
+<em class="property">class </em><code class="descclassname">trumania.components.social_networks.erdos_renyi.</code><code class="descname">WithErdosRenyi</code><span class="sig-paren">(</span><em>name</em>, <em>master_seed</em>, <em>**clock_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/social_networks/erdos_renyi.html#WithErdosRenyi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.social_networks.erdos_renyi.WithErdosRenyi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trumania.core.html#trumania.core.circus.Circus" title="trumania.core.circus.Circus"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.circus.Circus</span></code></a></p>
+<p>Circus mix-in that provides method to build ER random graph</p>
+<dl class="method">
+<dt id="trumania.components.social_networks.erdos_renyi.WithErdosRenyi.add_er_social_network_relationship">
+<code class="descname">add_er_social_network_relationship</code><span class="sig-paren">(</span><em>population</em>, <em>relationship_name</em>, <em>average_degree</em>, <em>n_subscribers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/social_networks/erdos_renyi.html#WithErdosRenyi.add_er_social_network_relationship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.social_networks.erdos_renyi.WithErdosRenyi.add_er_social_network_relationship" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds to this population a relationship from and to its members based an ER random graph</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="trumania.components.social_networks.erdos_renyi.create_er_social_network">
+<code class="descclassname">trumania.components.social_networks.erdos_renyi.</code><code class="descname">create_er_social_network</code><span class="sig-paren">(</span><em>customer_ids</em>, <em>p</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/social_networks/erdos_renyi.html#create_er_social_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.social_networks.erdos_renyi.create_er_social_network" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>customer_ids</strong> (<em>list</em>) – list of IDs as defined in the data</li>
+<li><strong>p</strong> (<em>float</em>) – probability of existence of 1 edge</li>
+<li><strong>seed</strong> (<em>int</em>) – seed for random generator</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Pandas DataFrame, with two columns (A and B)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">all edges in the graph</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.components.social_networks">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trumania.components.social_networks" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/trumania.components.social_networks.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

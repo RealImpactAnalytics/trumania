@@ -1,0 +1,142 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.components.social_networks.erdos_renyi &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.components.social_networks.erdos_renyi</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">trumania.core.random_generators</span> <span class="k">as</span> <span class="nn">rg</span>
+<span class="kn">from</span> <span class="nn">trumania.core.circus</span> <span class="k">import</span> <span class="n">Circus</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<div class="viewcode-block" id="WithErdosRenyi"><a class="viewcode-back" href="../../../../trumania.components.social_networks.html#trumania.components.social_networks.erdos_renyi.WithErdosRenyi">[docs]</a><span class="k">class</span> <span class="nc">WithErdosRenyi</span><span class="p">(</span><span class="n">Circus</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Circus mix-in that provides method to build ER random graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WithErdosRenyi.add_er_social_network_relationship"><a class="viewcode-back" href="../../../../trumania.components.social_networks.html#trumania.components.social_networks.erdos_renyi.WithErdosRenyi.add_er_social_network_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">add_er_social_network_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">relationship_name</span><span class="p">,</span>
+                                           <span class="n">average_degree</span><span class="p">,</span> <span class="n">n_subscribers</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds to this population a relationship from and to its members based an ER random graph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating the social network &quot;</span><span class="p">)</span>
+
+        <span class="c1"># create a random A to B symmetric relationship</span>
+        <span class="n">network_weight_gen</span> <span class="o">=</span> <span class="n">rg</span><span class="o">.</span><span class="n">ParetoGenerator</span><span class="p">(</span><span class="n">xmin</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seeder</span><span class="p">))</span>
+
+        <span class="n">social_network_values</span> <span class="o">=</span> <span class="n">create_er_social_network</span><span class="p">(</span>
+            <span class="n">customer_ids</span><span class="o">=</span><span class="n">population</span><span class="o">.</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">average_degree</span> <span class="o">/</span> <span class="n">n_subscribers</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seeder</span><span class="p">))</span>
+
+        <span class="n">social_network</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">create_relationship</span><span class="p">(</span><span class="n">relationship_name</span><span class="p">)</span>
+        <span class="n">social_network</span><span class="o">.</span><span class="n">add_relations</span><span class="p">(</span>
+            <span class="n">from_ids</span><span class="o">=</span><span class="n">social_network_values</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">to_ids</span><span class="o">=</span><span class="n">social_network_values</span><span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">network_weight_gen</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">social_network_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="n">social_network</span><span class="o">.</span><span class="n">add_relations</span><span class="p">(</span>
+            <span class="n">from_ids</span><span class="o">=</span><span class="n">social_network_values</span><span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">to_ids</span><span class="o">=</span><span class="n">social_network_values</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">network_weight_gen</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">social_network_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span></div></div>
+
+
+<div class="viewcode-block" id="create_er_social_network"><a class="viewcode-back" href="../../../../trumania.components.social_networks.html#trumania.components.social_networks.erdos_renyi.create_er_social_network">[docs]</a><span class="k">def</span> <span class="nf">create_er_social_network</span><span class="p">(</span><span class="n">customer_ids</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :type customer_ids: list</span>
+<span class="sd">    :param customer_ids: list of IDs as defined in the data</span>
+<span class="sd">    :type p: float</span>
+<span class="sd">    :param p: probability of existence of 1 edge</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param seed: seed for random generator</span>
+<span class="sd">    :rtype: Pandas DataFrame, with two columns (A and B)</span>
+<span class="sd">    :return: all edges in the graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([(</span><span class="n">customer_ids</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">customer_ids</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                                      <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">fast_gnp_random_graph</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">customer_ids</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">edges</span><span class="p">()],</span>
+                                     <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">])</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

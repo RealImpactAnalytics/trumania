@@ -1,0 +1,452 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.core.operations &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for trumania.core.operations</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">trumania.core.util_functions</span> <span class="k">import</span> <span class="n">merge_dicts</span><span class="p">,</span> <span class="n">df_concat</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+
+
+<div class="viewcode-block" id="Operation"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Operation">[docs]</a><span class="k">class</span> <span class="nc">Operation</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Operation is able to produce transform input into an output +</span>
+<span class="sd">        produce logs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Operation.transform"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Operation.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param story_data: dataframe as produced by the previous operation</span>
+<span class="sd">        :return: a dataframe that replaces the previous one in the pipeline</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">story_data</span></div>
+
+<div class="viewcode-block" id="Operation.emit_logs"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Operation.emit_logs">[docs]</a>    <span class="k">def</span> <span class="nf">emit_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method is used to produces logs (e.g. CDRs, mobility, topus...)</span>
+
+<span class="sd">        :param story_data: output of this operation, as produced by transform()</span>
+<span class="sd">        :return: emitted logs, as a dictionary of {&quot;log_id&quot;: some_data_frame}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">story_data</span><span class="p">)</span>
+        <span class="n">logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emit_logs</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">logs</span></div>
+
+
+<div class="viewcode-block" id="Chain"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Chain">[docs]</a><span class="k">class</span> <span class="nc">Chain</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A chain is a list of operation to be executed sequencially</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">operations</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Chain.append"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Chain.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">operations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        adds operations to be executed at the end of this chain</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operations</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_execute_operation</span><span class="p">(</span><span class="n">story_data__prev_logs</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        executes this operation and merges its logs with the previous one</span>
+<span class="sd">        :param operation: the operation to call</span>
+<span class="sd">        :return: the merged story data and logs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="p">(</span><span class="n">story_data</span><span class="p">,</span> <span class="n">prev_logs</span><span class="p">)</span> <span class="o">=</span> <span class="n">story_data__prev_logs</span>
+
+        <span class="n">output</span><span class="p">,</span> <span class="n">supp_logs</span> <span class="o">=</span> <span class="n">operation</span><span class="p">(</span><span class="n">story_data</span><span class="p">)</span>
+        <span class="c1"># merging the logs of each operation of this story.</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">merge_dicts</span><span class="p">([</span><span class="n">prev_logs</span><span class="p">,</span> <span class="n">supp_logs</span><span class="p">],</span> <span class="n">df_concat</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="p">[(</span><span class="n">story_data</span><span class="p">,</span> <span class="p">{})]</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execute_operation</span><span class="p">,</span> <span class="n">init</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FieldLogger"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.FieldLogger">[docs]</a><span class="k">class</span> <span class="nc">FieldLogger</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Log creator that simply select a set of columns and create a logged</span>
+<span class="sd">    dataframe from it</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_id</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exploded_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param log_id: the id of the logs in the dictionary of logs returned</span>
+<span class="sd">        by the Circus, at the end of the simulation</span>
+<span class="sd">        :param cols: sub-sets of fields from the story data that will be</span>
+<span class="sd">        selected in order to build the logs</span>
+<span class="sd">        :param exploded_cols: name of one or several columns containing list of</span>
+<span class="sd">        values. If provided, we explode the story_data dataframe and log one per value</span>
+<span class="sd">        in that list (which is more that one line per row in story_data).</span>
+<span class="sd">        In each row, all lists must have the same length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_id</span> <span class="o">=</span> <span class="n">log_id</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">exploded_cols</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">exploded_cols</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">exploded_cols</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">exploded_cols</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cols</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span>
+
+<div class="viewcode-block" id="FieldLogger.emit_logs"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.FieldLogger.emit_logs">[docs]</a>    <span class="k">def</span> <span class="nf">emit_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+
+        <span class="c1"># explode lists, cf constructor documentation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">explo</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+                <span class="n">explosion_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                <span class="n">df2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">explosion_len</span><span class="p">)])</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exploded_cols</span><span class="p">:</span>
+                    <span class="n">df2</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
+
+                <span class="k">return</span> <span class="n">df2</span>
+
+            <span class="n">logged_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">explo</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">story_data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">())</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logged_data</span> <span class="o">=</span> <span class="n">story_data</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">log_id</span><span class="p">:</span> <span class="n">logged_data</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">log_id</span><span class="p">:</span> <span class="n">logged_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]}</span></div></div>
+
+
+<div class="viewcode-block" id="SideEffectOnly"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.SideEffectOnly">[docs]</a><span class="k">class</span> <span class="nc">SideEffectOnly</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Operation that does not produce logs nor supplementary columns: just have</span>
+<span class="sd">    side effect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+
+<div class="viewcode-block" id="SideEffectOnly.transform"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.SideEffectOnly.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side_effect</span><span class="p">(</span><span class="n">story_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">story_data</span></div>
+
+<div class="viewcode-block" id="SideEffectOnly.side_effect"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.SideEffectOnly.side_effect">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">side_effect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param story_data:</span>
+<span class="sd">        :return: nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="AddColumns"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.AddColumns">[docs]</a><span class="k">class</span> <span class="nc">AddColumns</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Very typical case of an operation that appends (i.e. joins) columns to</span>
+<span class="sd">    the previous result</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">join_kind</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">join_kind</span> <span class="o">=</span> <span class="n">join_kind</span>
+
+<div class="viewcode-block" id="AddColumns.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.AddColumns.build_output">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Produces a dataframe with one or several columns and an index aligned</span>
+<span class="sd">        with the one of input. The columns of this will be merge with input.</span>
+
+<span class="sd">        :param story_data: current dataframe</span>
+<span class="sd">        :return: the column(s) to append to it, as a dataframe</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="AddColumns.transform"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.AddColumns.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_output</span><span class="p">(</span><span class="n">story_data</span><span class="p">)</span>
+<span class="c1">#        logging.info(&quot;  adding column(s) {}&quot;.format(output.columns.tolist()))</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">story_data</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">output</span><span class="p">,</span>
+                        <span class="n">left_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">how</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">join_kind</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DropRow"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.DropRow">[docs]</a><span class="k">class</span> <span class="nc">DropRow</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Discards any row in the story data where the condition field is false.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition_field</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span> <span class="o">=</span> <span class="n">condition_field</span>
+
+<div class="viewcode-block" id="DropRow.transform"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.DropRow.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">story_data</span><span class="p">[</span><span class="o">~</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">condition_field</span><span class="p">]]</span></div></div>
+
+
+<div class="viewcode-block" id="Apply"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Apply">[docs]</a><span class="k">class</span> <span class="nc">Apply</span><span class="p">(</span><span class="n">AddColumns</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Custom operation adding one single column computed from a user-provided</span>
+<span class="sd">        function.</span>
+
+<span class="sd">        The length of the source_fields must match the number columns</span>
+<span class="sd">        in the dataframe expected by the user f function</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_fields</span><span class="p">,</span> <span class="n">named_as</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">f_args</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param source_fields: input field from the story data</span>
+<span class="sd">        :param named_as: name of the resulting fields added to the story data</span>
+<span class="sd">        :param f: transforming function</span>
+<span class="sd">        :param f_args: &quot;dataframe&quot; or &quot;columns&quot;, depending on the signature</span>
+<span class="sd">            of f:</span>
+
+<span class="sd">            - &quot;dataframe&quot;: input and output of the function is a dataframe</span>
+<span class="sd">             as many columns as there are values in &quot;named_as&quot;</span>
+
+<span class="sd">            - &quot;columns&quot; input of f is a list of columns and output is 1</span>
+<span class="sd">             column (like many numpy built-it function). In that case,</span>
+<span class="sd">             &quot;named_as&quot; can obviously only contain one name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">AddColumns</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">source_fields</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">source_fields</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source_fields</span> <span class="o">=</span> <span class="n">source_fields</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">named_as</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="p">[</span><span class="n">named_as</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span> <span class="o">=</span> <span class="n">named_as</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="k">if</span> <span class="n">f_args</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;dataframe&quot;</span><span class="p">,</span> <span class="s2">&quot;series&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unrecognized f input type: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f_args</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">f_args</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
+                <span class="s2">&quot;&#39;series&#39; functions can only return 1 column&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">f_input</span> <span class="o">=</span> <span class="n">f_args</span>
+
+<div class="viewcode-block" id="Apply.build_output"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.Apply.build_output">[docs]</a>    <span class="k">def</span> <span class="nf">build_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">story_data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_input</span> <span class="o">==</span> <span class="s2">&quot;dataframe&quot;</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">story_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">source_fields</span><span class="p">])</span>
+            <span class="n">renamed</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">)))</span>
+
+            <span class="k">return</span> <span class="n">renamed</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">story_data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_fields</span><span class="p">]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">named_as</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">)})</span>
+            <span class="k">return</span> <span class="n">result</span></div></div>
+
+
+<span class="c1">#####################</span>
+<span class="c1"># Collection of functions directly usable in Apply</span>
+
+<div class="viewcode-block" id="copy_if"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.copy_if">[docs]</a><span class="k">def</span> <span class="nf">copy_if</span><span class="p">(</span><span class="n">story_data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copies values from the source to the &quot;named_as&quot; if the condition is True,</span>
+<span class="sd">    otherwise inserts NA</span>
+
+<span class="sd">    usage:</span>
+
+<span class="sd">        Apply(source_fields=[&quot;some_source_field&quot;, &quot;some_condition_field&quot;],</span>
+<span class="sd">              named_as=&quot;some_result_field&quot;,</span>
+<span class="sd">              f=copy_if)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">condition_field</span><span class="p">,</span> <span class="n">source_field</span> <span class="o">=</span> <span class="n">story_data</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">copied</span> <span class="o">=</span> <span class="n">story_data</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">story_data</span><span class="p">[</span><span class="n">condition_field</span><span class="p">])[[</span><span class="n">source_field</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">copied</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">source_field</span><span class="p">:</span> <span class="s2">&quot;result&quot;</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="bound_value"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.bound_value">[docs]</a><span class="k">def</span> <span class="nf">bound_value</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    builds a function that limits the range of a value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="n">limited</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="n">lb</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ub</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">limited</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">limited</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">limited</span>
+
+    <span class="k">return</span> <span class="n">_f</span></div>
+
+
+<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">factor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_f_vect</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="o">*</span> <span class="n">factor</span>
+
+    <span class="k">return</span> <span class="n">_f_vect</span></div>
+
+
+<div class="viewcode-block" id="logistic"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.logistic">[docs]</a><span class="k">def</span> <span class="nf">logistic</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Returns a function, usable in an Apply operation, that transforms the</span>
+<span class="sd">    specified field with a sigmoid with the provided parameters</span>
+
+<span class="sd">    :param k: the steepness of the curve</span>
+<span class="sd">    :param x0: the x-value of the sigmoid&#39;s midpoint (default: 0)</span>
+<span class="sd">    :param L: maximum value of the logistic (default: 1)</span>
+
+<span class="sd">    same parameter naming conventions as in:</span>
+<span class="sd">    https://en.wikipedia.org/wiki/Logistic_function</span>
+
+<span class="sd">    usage:</span>
+<span class="sd">        Apply(source_fields=[&quot;some_source_field&quot;],</span>
+<span class="sd">              named_as=&quot;some_result_field&quot;,</span>
+<span class="sd">              f=sigmoid(k=-0.01, x0=1000)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_logistic</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">the_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="o">-</span><span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x0</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">L</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">the_exp</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">_logistic</span></div>
+
+
+<div class="viewcode-block" id="bounded_sigmoid"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.bounded_sigmoid">[docs]</a><span class="k">def</span> <span class="nf">bounded_sigmoid</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">incrementing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Builds a S-shape curve that have y values evolving between 0 and 1 over</span>
+<span class="sd">    the x domain [x_min, x_max]</span>
+
+<span class="sd">    This is preferable to the logistic function for cases where we want to</span>
+<span class="sd">    make sure that the curve actually reaches 0 and 1 at some point (e.g.</span>
+<span class="sd">    probability of triggering an &quot;restock&quot; story must be 1 if stock is as</span>
+<span class="sd">    low as 1).</span>
+
+<span class="sd">    See /tests/notebooks/bounded_sigmoid.ipynb for examples</span>
+
+<span class="sd">    :param x_min: lower bound of the x domain</span>
+<span class="sd">    :param x_max: lower bound of the x domain</span>
+<span class="sd">    :param incrementing: if True, evolve from 0 to 1, or from 1 to 0 otherwise</span>
+<span class="sd">    :param shape: strictly positive number controlling the shape of the</span>
+<span class="sd">                  resulting function</span>
+<span class="sd">                  * 1 correspond to linear transition</span>
+<span class="sd">                  * higher values yield a more and more sharper, i.e. more</span>
+<span class="sd">                    vertical S shape, converging towards a step function</span>
+<span class="sd">                    transiting at (x_max-x_min)/2 for very large values of S (</span>
+<span class="sd">                    e.g. 10000)</span>
+<span class="sd">                  * values in ]0,1[ yield vertically shaped sigmoids, sharply</span>
+<span class="sd">                    rising/falling at the boundary of the x domain and</span>
+<span class="sd">                    transiting more smoothly in the middle of it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">bounded</span> <span class="o">=</span> <span class="n">bound_value</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">x_min</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">x_max</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="c1"># values outside the sigmoid are just the repetition of what&#39;s</span>
+        <span class="c1"># happening at the boundaries</span>
+        <span class="n">x_b</span> <span class="o">=</span> <span class="n">bounded</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">incrementing</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">cdf</span><span class="p">((</span><span class="n">x_b</span> <span class="o">-</span> <span class="n">x_min</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x_max</span> <span class="o">-</span> <span class="n">x_min</span><span class="p">),</span>
+                                  <span class="n">a</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span>
+                                  <span class="n">b</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">sf</span><span class="p">((</span><span class="n">x_b</span> <span class="o">-</span> <span class="n">x_min</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x_max</span> <span class="o">-</span> <span class="n">x_min</span><span class="p">),</span>
+                                 <span class="n">a</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span>
+                                 <span class="n">b</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">frompyfunc</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="identity"><a class="viewcode-back" href="../../../trumania.core.html#trumania.core.operations.identity">[docs]</a><span class="k">def</span> <span class="nf">identity</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

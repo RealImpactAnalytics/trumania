@@ -1,0 +1,124 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>trumania.components.time_patterns package &#8212; trumania 1.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="trumania-components-time-patterns-package">
+<h1>trumania.components.time_patterns package<a class="headerlink" href="#trumania-components-time-patterns-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trumania.components.time_patterns.profilers">
+<span id="trumania-components-time-patterns-profilers-module"></span><h2>trumania.components.time_patterns.profilers module<a class="headerlink" href="#module-trumania.components.time_patterns.profilers" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="trumania.components.time_patterns.profilers.DefaultDailyTimerGenerator">
+<em class="property">class </em><code class="descclassname">trumania.components.time_patterns.profilers.</code><code class="descname">DefaultDailyTimerGenerator</code><span class="sig-paren">(</span><em>clock</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/time_patterns/profilers.html#DefaultDailyTimerGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.time_patterns.profilers.DefaultDailyTimerGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trumania.core.html#trumania.core.clock.CyclicTimerGenerator" title="trumania.core.clock.CyclicTimerGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.clock.CyclicTimerGenerator</span></code></a></p>
+<p>Basic CyclicTimerGenerator with a one dat period with hourly weights
+vaguely inspired from</p>
+<p><a class="reference external" href="https://github.com/RealImpactAnalytics/lab-home-work-detection/blob/3bacb58a53f69824102437a27218149f75d322e2/pub/chimayblue/01%20basic%20exploration.ipynb">https://github.com/RealImpactAnalytics/lab-home-work-detection/blob/3bacb58a53f69824102437a27218149f75d322e2/pub/chimayblue/01%20basic%20exploration.ipynb</a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.components.time_patterns.profilers.HighWeekDaysTimerGenerator">
+<em class="property">class </em><code class="descclassname">trumania.components.time_patterns.profilers.</code><code class="descname">HighWeekDaysTimerGenerator</code><span class="sig-paren">(</span><em>clock</em>, <em>seed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/time_patterns/profilers.html#HighWeekDaysTimerGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.time_patterns.profilers.HighWeekDaysTimerGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trumania.core.html#trumania.core.clock.CyclicTimerGenerator" title="trumania.core.clock.CyclicTimerGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.clock.CyclicTimerGenerator</span></code></a></p>
+<p>Basic CyclicTimerGenerator with a one week period that allocates higher
+probabilities to week-day vs week-ends</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="trumania.components.time_patterns.profilers.WorkHoursTimerGenerator">
+<em class="property">class </em><code class="descclassname">trumania.components.time_patterns.profilers.</code><code class="descname">WorkHoursTimerGenerator</code><span class="sig-paren">(</span><em>clock</em>, <em>seed</em>, <em>start_hour=9</em>, <em>end_hour=17</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trumania/components/time_patterns/profilers.html#WorkHoursTimerGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trumania.components.time_patterns.profilers.WorkHoursTimerGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trumania.core.html#trumania.core.clock.CyclicTimerGenerator" title="trumania.core.clock.CyclicTimerGenerator"><code class="xref py py-class docutils literal"><span class="pre">trumania.core.clock.CyclicTimerGenerator</span></code></a></p>
+<p>Basic CyclicTimerGenerator with a one week period that allocates uniform
+probabilities to work hours.</p>
+<p>Work hours happen during week days (Monday to Friday),
+and between start_hour and end_hour, both included</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trumania.components.time_patterns">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trumania.components.time_patterns" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, RIA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/trumania.components.time_patterns.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
