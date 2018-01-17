@@ -15,13 +15,19 @@ You can also join the Trumania slack channel: [trumania.slack.com](https://truma
 
 Trumania is not packaged in any special way, the way it is used at the moment is simply to clone the code and install the required dependencies. This section describes how to do that.
 
-Make sure you have python 3 and pip installed. Then make sure pipenv is installed:
+Pre-requisites: 
+
+- Trumania only works with python 3. 
+- If you installed python 3 with homebrew, then the executable is called `python3` and pip install called `pip3`. See [homebrew python documentation](https://docs.brew.sh/Homebrew-and-Python.html) for details
+- If you installed python 3 with Conda, make sure you understand how environments work since they might end up conflicting with pipenv environemnts. See [this ticket](https://github.com/pypa/pipenv/issues/699) for a discussion
+- In anycase, in order to specify the exact path of the python to be used, you can always specify `--python /path/to/python` among the `pipenv` arguments. 
+
+That being said, start by installing `pipenv` if necessary: 
 
 ```sh
-# make sure you're using pip from a python 3 installation 
+# this could be called "pip", depending on the environment, and must be linked to python 3
 pip3 install --user pipenv
 ```
-
 
 then install all python dependencies for this project: 
 
@@ -40,7 +46,7 @@ To create a scenario, simply create another python project that depends on truma
 mkdir -p /path/to/your/project
 cd /path/to/your/project
 
-# then simply add a dependency towards the location where you downloaded trumania:
+# make sure /path/to/trumania/ is the absolute path where trumania is stored
 pipenv install -e /path/to/trumania/
 ```
 
@@ -55,7 +61,6 @@ pipenv run python burbanks_and_friends_talking.py
 This section provides a few pointers on how to handle the trumania codebase.
 
 ### Running Trumania unit tests locally
-
 
 ```sh
 # make sure you are not inside another pipenv shell when running this
