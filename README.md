@@ -19,7 +19,7 @@ Pre-requisites:
 
 - Trumania only works with python 3. 
 - If you installed python 3 with homebrew, then the executable is called `python3` and pip is called `pip3`. See [homebrew python documentation](https://docs.brew.sh/Homebrew-and-Python.html) for details
-- If you installed python 3 with Conda, make sure you understand how environments work since they might end up conflicting with pipenv environemnts. See [this ticket](https://github.com/pypa/pipenv/issues/699) for a discussion
+- If you installed python 3 with Conda, make sure you understand how environments work since they might end up conflicting with pipenv environments. See [this ticket](https://github.com/pypa/pipenv/issues/699) for a discussion
 - In anycase, in order to specify the exact path of the python to be used, you can always specify `--python /path/to/python` among the `pipenv` arguments. 
 
 That being said, start by installing `pipenv` if necessary: 
