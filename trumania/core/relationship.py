@@ -11,15 +11,15 @@ from trumania.core.operations import AddColumns, Operation, SideEffectOnly
 
 # There are a lot of somewhat ugly optimizations here like in-place mutations,
 # caching, or usage of numpy instead of a more readable pandas alternative. The
-# reason is the methods of this filetend to be called a large amount of time
+# reason is the methods of this file tend to be called a large amount of time
 # in inner loop of the simulation, optimizing them make the whole simulation
 # faster.
 
 
-class Relations(object):
+class OutgoingRelationships(object):
     """
-     This entity contains all the "to" sides of the relationships of a given
-     "from", together with the related weights.
+     For a given "from", this entity contains all the "to" sides of the
+     relationship with the related weights.
 
      This data structure seems to be the most optimal since it corresponds to a cached
      group-by result, and those group-by are expensive in the select_one
@@ -45,8 +45,10 @@ class Relations(object):
          a relationship is built here for each "line" read across those 3
          arrays.
 
-         This methods builds one instance of Relations for each unique from_id
+         This methods builds one instance of OutgoingRelationships for each unique from_id
          value, containing all the to_id's it is related to.
+
+         :returns Dictionary { id1 -> OutgoingRelationships1, id2 -> OutgoingRelationships2, ... }
         """
 
         from_ids = np.array(from_ids)
@@ -60,11 +62,12 @@ class Relations(object):
         order = from_ids.argsort()
         ordered = zip(from_ids[order], to_ids[order], weights[order])
 
+        # Find for every unique id in from_ids their matching "to" relations
         def _relations():
             # itertools.groupby is much faster than pandas
             for from_id, tuples in itertools.groupby(ordered, lambda t: t[0]):
-                to_ids, weights = list(zip(*tuples))[1: 3]
-                yield from_id, Relations(list(to_ids), list(weights))
+                to_ids, weights = list(zip(*tuples))[1:3]
+                yield from_id, OutgoingRelationships(list(to_ids), list(weights))
 
         return {from_id: relz for from_id, relz in _relations()}
 
@@ -72,7 +75,7 @@ class Relations(object):
         """
         Merge function for 2 sets of relations all starting from the same "from"
         """
-        return Relations(
+        return OutgoingRelationships(
             np.hstack([self.to_ids, other.to_ids]),
             np.hstack([self.weights, other.weights]))
 
@@ -83,7 +86,7 @@ class Relations(object):
         """
         removed_indices = np.argwhere(
             [idx in other.to_ids for idx in self.to_ids])
-        return Relations(
+        return OutgoingRelationships(
             np.delete(self.to_ids, removed_indices),
             np.delete(self.weights, removed_indices))
 
@@ -157,7 +160,7 @@ class Relationship(object):
 
         self.grouped = utils.merge_2_dicts(
             self.grouped,
-            Relations.from_tuples(from_ids, to_ids, weights),
+            OutgoingRelationships.from_tuples(from_ids, to_ids, weights),
             lambda r1, r2: r1.plus(r2))
 
     def add_grouped_relations(self, from_ids, grouped_ids):
@@ -185,7 +188,7 @@ class Relationship(object):
 
         self.grouped = utils.merge_2_dicts(
             self.grouped,
-            Relations.from_tuples(from_ids, to_ids, weights=0),
+            OutgoingRelationships.from_tuples(from_ids, to_ids, weights=0),
             lambda r1, r2: r1.minus(r2))
 
     def get_relations(self, from_ids=None):
