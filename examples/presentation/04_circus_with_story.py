@@ -69,22 +69,19 @@ hello_world.set_operations(
                 select={"NAME": "RECEIVER_NAME"}),
 
     # specifying which fields to put in the log
-    FieldLogger(log_id="hello",
-                
-                )
+    FieldLogger(log_id="hello",    
+                cols=["TIME", "PERSON_ID", "OTHER_PERSON", "MESSAGE"])
 
 )
 
-# the_circus.run(
-#     duration=pd.Timedelta("48h"),
-#     log_output_folder="output/example4",
-#     delete_existing_logs=True
-# )
+the_circus.run(
+    duration=pd.Timedelta("48h"),
+    log_output_folder="output/example4",
+    delete_existing_logs=True
+)
 
 with open("output/example4/hello.csv") as log:
     logging.info("some produced logs: \n\n" + "".join(log.readlines(1000)[:10]))
 
     from tabulate import tabulate
     logging.info(tabulate(log.readlines(1000)[:10]))
-
-
