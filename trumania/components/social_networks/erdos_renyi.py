@@ -12,8 +12,7 @@ class WithErdosRenyi(Circus):
         Circus mix-in that provides method to build ER random graph
     """
 
-    def add_er_social_network_relationship(self, population, relationship_name,
-                                           average_degree, n_subscribers):
+    def add_er_social_network_relationship(self, population, relationship_name, average_degree):
         """
         Adds to this population a relationship from and to its members based an ER random graph
         """
@@ -24,7 +23,7 @@ class WithErdosRenyi(Circus):
 
         social_network_values = create_er_social_network(
             customer_ids=population.ids,
-            p=average_degree / n_subscribers,
+            p=average_degree / len(population.ids),
             seed=next(self.seeder))
 
         social_network = population.create_relationship(relationship_name)

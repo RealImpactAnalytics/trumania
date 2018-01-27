@@ -35,9 +35,7 @@ person.create_attribute(
 example.run(
     duration=pd.Timedelta("48h"),
     log_output_folder="output/example2",
-    delete_existing_logs=True
-)
-
+    delete_existing_logs=True)
 
 logging.info("10 first persons: \n" + tabulate(person.to_dataframe().head(10),
              headers='keys', tablefmt='psql'))

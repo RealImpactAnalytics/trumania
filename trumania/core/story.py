@@ -161,7 +161,7 @@ class Story(object):
         # re-generate some timer values because the activity level has
         # changed (e.g. subscribers get "bursty" => their next story should
         # now be earlier than originally timed).
-        # BUT: if some some other reason, some (typically other)
+        # BUT: if for some other reason, some (typically other)
         # population member have been forced to act at the next clock step,
         # we don't want to cancel that by resetting their timers to some
         # positive value.

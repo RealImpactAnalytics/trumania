@@ -125,8 +125,7 @@ class CdrScenario(WithErdosRenyi, WithRandomGeo, WithUganda, Circus):
         self.add_er_social_network_relationship(
             subs,
             relationship_name="FRIENDS",
-            average_degree=params["average_degree"],
-            n_subscribers=params["n_subscribers"])
+            average_degree=params["average_degree"])
 
         self.add_topups(sims, recharge_gen)
         self.add_communications(subs, sims, cells)
