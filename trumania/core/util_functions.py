@@ -108,8 +108,8 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
     values_merged = dict()
 
     for key_to_merge in keys_to_merge:
-        old_value1 = dict1.pop(key_to_merge)
-        old_value2 = dict2.pop(key_to_merge)
+        old_value1 = dict1[key_to_merge]
+        old_value2 = dict2[key_to_merge]
 
         new_value = value_merge_func(old_value1, old_value2)
 
