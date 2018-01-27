@@ -16,7 +16,7 @@ from trumania.core.operations import AddColumns, Operation, SideEffectOnly
 # faster.
 
 
-class OutgoingRelationships(object):
+class OutgoingRelations(object):
     """
      For a given "from", this entity contains all the "to" sides of the
      relationship with the related weights.
@@ -45,10 +45,10 @@ class OutgoingRelationships(object):
          a relationship is built here for each "line" read across those 3
          arrays.
 
-         This methods builds one instance of OutgoingRelationships for each unique from_id
+         This methods builds one instance of OutgoingRelations for each unique from_id
          value, containing all the to_id's it is related to.
 
-         :returns Dictionary { id1 -> OutgoingRelationships1, id2 -> OutgoingRelationships2, ... }
+         :returns Dictionary { id1 -> OutgoingRelations1, id2 -> OutgoingRelations2, ... }
         """
 
         from_ids = np.array(from_ids)
@@ -67,7 +67,7 @@ class OutgoingRelationships(object):
             # itertools.groupby is much faster than pandas
             for from_id, tuples in itertools.groupby(ordered, lambda t: t[0]):
                 to_ids, weights = list(zip(*tuples))[1:3]
-                yield from_id, OutgoingRelationships(list(to_ids), list(weights))
+                yield from_id, OutgoingRelations(list(to_ids), list(weights))
 
         return {from_id: relz for from_id, relz in _relations()}
 
@@ -75,7 +75,7 @@ class OutgoingRelationships(object):
         """
         Merge function for 2 sets of relations all starting from the same "from"
         """
-        return OutgoingRelationships(
+        return OutgoingRelations(
             np.hstack([self.to_ids, other.to_ids]),
             np.hstack([self.weights, other.weights]))
 
@@ -86,7 +86,7 @@ class OutgoingRelationships(object):
         """
         removed_indices = np.argwhere(
             [idx in other.to_ids for idx in self.to_ids])
-        return OutgoingRelationships(
+        return OutgoingRelations(
             np.delete(self.to_ids, removed_indices),
             np.delete(self.weights, removed_indices))
 
@@ -160,7 +160,7 @@ class Relationship(object):
 
         self.grouped = utils.merge_2_dicts(
             self.grouped,
-            OutgoingRelationships.from_tuples(from_ids, to_ids, weights),
+            OutgoingRelations.from_tuples(from_ids, to_ids, weights),
             lambda r1, r2: r1.plus(r2))
 
     def add_grouped_relations(self, from_ids, grouped_ids):
@@ -188,7 +188,7 @@ class Relationship(object):
 
         self.grouped = utils.merge_2_dicts(
             self.grouped,
-            OutgoingRelationships.from_tuples(from_ids, to_ids, weights=0),
+            OutgoingRelations.from_tuples(from_ids, to_ids, weights=0),
             lambda r1, r2: r1.minus(r2))
 
     def get_relations(self, from_ids=None):
