@@ -373,21 +373,33 @@ class Population(object):
             return self.Update(self.population, id_field,
                                copy_attributes_from_fields)
 
-        def select_one(self, named_as):
+        def select_one(self, named_as, weight_attribute_name=None):
             """
 
             Appends a field column to the story_data containing member ids
             taken at random among the ids of this population.
 
             This is similar to relationship_select_one(), except that no
-            particular relation is required, we just sample one id randomly
+            particular relation is required.
+
+            It will select one randomly by default, but a weight attribute
+            name can be provided as well to give a weight to your selection.
 
             :param named_as: the name of the field added to the story_data
+            :param weight_attribute_name: the attribute name which contains
+            the weights you want to use for the selection
             """
+
+            p = None
+
+            if weight_attribute_name:
+                attributes = self.population.get_attribute(weight_attribute_name)
+                p = attributes / attributes.sum()
 
             gen = random_generators.NumpyRandomGenerator(
                 method="choice",
                 a=self.population.ids,
+                p=p,
                 seed=next(self.population.circus.seeder))
 
             return gen.ops.generate(named_as=named_as)
