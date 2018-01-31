@@ -380,9 +380,14 @@ class Population(object):
             taken at random among the ids of this population.
 
             This is similar to relationship_select_one(), except that no
-            particular relation is required, we just sample one id randomly
+            particular relation is required.
+
+            It will select one randomly by default, but a weight attribute
+            name can be provided as well to give a weight to your selection.
 
             :param named_as: the name of the field added to the story_data
+            :param weight_attribute_name: the attribute name which contains
+            the weights you want to use for the selection
             """
 
             p = None
