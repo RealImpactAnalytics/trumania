@@ -393,7 +393,7 @@ class Population(object):
             p = None
 
             if weight_attribute_name:
-                attributes = self.population.get_attribute(weight_attribute_name)
+                attributes = self.population.get_attribute(weight_attribute_name).get_values()
                 p = attributes / attributes.sum()
 
             gen = random_generators.NumpyRandomGenerator(
