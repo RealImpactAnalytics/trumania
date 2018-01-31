@@ -373,7 +373,7 @@ class Population(object):
             return self.Update(self.population, id_field,
                                copy_attributes_from_fields)
 
-        def select_one(self, named_as):
+        def select_one(self, named_as, weight_attribute_name=None):
             """
 
             Appends a field column to the story_data containing member ids
@@ -385,9 +385,16 @@ class Population(object):
             :param named_as: the name of the field added to the story_data
             """
 
+            p = None
+
+            if weight_attribute_name:
+                attributes = self.population.get_attribute(weight_attribute_name)
+                p = attributes / attributes.sum()
+
             gen = random_generators.NumpyRandomGenerator(
                 method="choice",
                 a=self.population.ids,
+                p=p,
                 seed=next(self.population.circus.seeder))
 
             return gen.ops.generate(named_as=named_as)
