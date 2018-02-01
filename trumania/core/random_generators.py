@@ -150,6 +150,16 @@ class ConstantGenerator(Generator):
         return [self.value] * size
 
 
+class FixedValuesGenerator(Generator):
+    def __init__(self, values):
+        Generator.__init__(self)
+        self.values = values
+
+    def generate(self, size):
+        assert len(self.values) == size
+        return self.values
+
+
 class NumpyRandomGenerator(Generator):
     """
         Generator wrapping any numpy.Random method.
