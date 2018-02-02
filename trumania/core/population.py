@@ -394,6 +394,15 @@ class Population(object):
 
             if weight_attribute_name:
                 attributes = self.population.get_attribute(weight_attribute_name).get_values()
+
+                if np.any(attributes < 0):
+                    raise ValueError(
+                        "weight_attribute_name contain negative values: cannot use that as weight")
+
+                normalization_factor = attributes.sum()
+                if normalization_factor == 0:
+                    raise ValueError("weight_attribute_name in population select.one sum up to zero: cannot use that as weight")
+                
                 p = attributes / attributes.sum()
 
             gen = random_generators.NumpyRandomGenerator(
