@@ -125,7 +125,8 @@ class Story(object):
 
     def timer_tick(self, member_ids):
 
-        member_ids = pd.Index(member_ids).difference(self.forced_to_act_next)
+        if self.forced_to_act_next.shape[0] > 0:
+            member_ids = pd.Index(member_ids).difference(self.forced_to_act_next)
         impacted_timers = self.timer.loc[member_ids]
 
         # not updating members that keep a negative counter: those are "marked
