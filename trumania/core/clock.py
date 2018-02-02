@@ -213,7 +213,7 @@ class CyclicTimerGenerator(DependentGenerator):
         activities = observations
 
         # activities less often than once per cycle length
-        low_activities = activities.where(activities <= 2).dropna()
+        low_activities = activities.where((activities <= 2) & (activities > 0)).dropna()
         if low_activities.shape[0] > 0:
 
             draw = self._state.uniform(size=low_activities.shape[0])
