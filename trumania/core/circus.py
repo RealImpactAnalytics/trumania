@@ -134,6 +134,8 @@ class Circus(object):
             os.makedirs(log_output_folder)
 
         if logs.shape[0] > 0:
+            logging.info("appending {} rows to {}".format(logs.shape[0], output_file))
+
             if not os.path.exists(output_file):
                 # If these are this first persisted logs, we create the file
                 # and include the field names as column header.
