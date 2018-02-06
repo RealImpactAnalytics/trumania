@@ -42,6 +42,13 @@ class Population(object):
                                  "provided")
 
             self.size = size
+
+        # result of operations are joined by population member id
+        # => we need each id to be unique
+        if self.ids.has_duplicates:
+            raise ValueError("Population id may be not have duplicates, "
+                             "check the init values or id generator")
+
         self.attributes = {}
         self.relationships = {}
 
