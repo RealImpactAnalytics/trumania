@@ -1,6 +1,7 @@
 import path
 import pandas as pd
 import os
+import pytest
 
 from trumania.core.random_generators import SequencialGenerator
 from trumania.core.population import Population
@@ -37,6 +38,14 @@ story_data = pd.DataFrame({
 def test_resulting_size_should_be_as_expected():
     assert dummy_population.size == 10
     assert len(dummy_population.ids) == 10
+
+
+def test_population_constructor_should_refuse_duplicated_ids():
+    with pytest.raises(ValueError):
+        Population(circus=None,
+                   size=10,
+                   # these ids have duplicated values, that is not good
+                   ids=[1,2,3,4,5,6,7,8,9,9])
 
 
 def test_transforming_population_to_dataframe_should_provide_all_data():

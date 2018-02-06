@@ -141,7 +141,8 @@ def build_uganda_populations(circus):
     cells.create_attribute(name="HEALTH", init_gen=healthy_level_gen)
 
     city_gen = FakerGenerator(method="city", seed=next(seeder))
-    cities = circus.create_population(name="cities", size=200, ids_gen=city_gen)
+    cities_values = pd.unique(city_gen.generate(500))[:200]
+    cities = circus.create_population(name="cities", ids=cities_values)
 
     cell_city_rel = cities.create_relationship("CELLS")
 
