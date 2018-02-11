@@ -99,7 +99,7 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
 
     keys_to_merge = dict1_set.intersection(dict2_set)
 
-    if len(keys_to_merge) == 0 and value_merge_func is None:
+    if len(keys_to_merge) != 0 and value_merge_func is None:
         raise ValueError(
             "Conflict in merged dictionaries: merge function not "
             "provided but keys {} exists in both dictionaries".format(
