@@ -89,6 +89,14 @@ class Generator(object):
         """
         return self.map(f_vect=dependent_generator.generate)
 
+    def to_json(self):
+        """
+        utilises the .description() method to obtain a buffer, and then serializes this buffer to JSON
+        :return: JSON-encoded string representing the serialized version of this generator
+        """
+        buffer = self.description()
+        return json.dumps(buffer, indent=4, sort_keys=True, skipkeys=True)
+
     def save_to(self, output_file):
         raise NotImplemented("must be implemented in sub-class")
 
@@ -186,25 +194,27 @@ class NumpyRandomGenerator(Generator):
         return self.numpy_method(**all_params)
 
     def description(self):
-        return {
+        return merge_2_dicts({
             "type": "NumpyRandomGenerator",
-            "method": self.method,
-            "numpy_parameters": self.numpy_parameters
-        }
+            "method": self.method
+        }, self.numpy_parameters, value_merge_func=lambda x, y: y)
 
-    def save_to(self, output_file):
-
-        logging.info("saving generator to {}".format(output_file))
-
+    def get_buffer(self):
         # saving the numpy RandomState instance, converting the numpy array
         # to enable json serialization
         np_state = self.state.get_state()
-        state = {
+        return {
             "method": self.method,
             "numpy_parameters": self.numpy_parameters,
             "numpy_state": (np_state[0], np_state[1].tolist(), np_state[2],
                             np_state[3], np_state[4])
         }
+
+    def save_to(self, output_file):
+        logging.info("saving generator to {}".format(output_file))
+
+        state = self.get_buffer()
+
         with open(output_file, "w") as outf:
             json.dump(state, outf, indent=4)
 
@@ -336,6 +346,16 @@ class FakerGenerator(Generator):
 
     def generate(self, size):
         return [self.method(**self.fakerKwargs) for _ in range(size)]
+
+    def description(self):
+        """
+        note that value_merge_func passed here might not be optimal
+        :return: serializable dict representing this generator, method and it's arguments
+        """
+        return merge_2_dicts({
+            "type": "FakerGenerator",
+            "method": self.method.__name__
+        }, self.fakerKwargs, value_merge_func=lambda x, y: y)
 
 
 class MSISDNGenerator(Generator):
