@@ -19,7 +19,7 @@ Trumania is not packaged in any special way, the way it is used at the moment is
 
 Pre-requisites: 
 
-- Trumania only works with python 3. 
+- Trumania only works with python 3.6 (TODO: allow 3.7: the current issue is a dependency on pandas 0.22)
 - If you installed python 3 with homebrew, then the executable is called `python3` and pip is called `pip3`. See [homebrew python documentation](https://docs.brew.sh/Homebrew-and-Python.html) for details
 - If you installed python 3 with Conda, make sure you understand how environments work since they might end up conflicting with pipenv environments. See [this ticket](https://github.com/pypa/pipenv/issues/699) for a discussion
 - In anycase, in order to specify the exact path of the python to be used, you can always specify `--python /path/to/python` among the `pipenv` arguments. 
@@ -34,7 +34,7 @@ pip3 install --user pipenv
 then install all python dependencies for this project: 
 
 ```sh
-pipenv install --three
+pipenv install --three --python /Library/Frameworks/Python.framework/Versions/3.6/bin
 ```
 
 The steps below mention to prefix the commands with `pipenv run` whenever necessary in order to have access to those python dependencies. Alternatively, you can enter the corresponding virtualenv once with `pipenv shell`, in which case that prefix is no longer necessary. See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies. 
