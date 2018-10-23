@@ -34,7 +34,7 @@ pip3 install --user pipenv
 then install all python dependencies for this project: 
 
 ```sh
-pipenv install --three --python /Library/Frameworks/Python.framework/Versions/3.6/bin
+pipenv install --three --python /Library/Frameworks/Python.framework/Versions/3.6/bin/python3.6
 ```
 
 The steps below mention to prefix the commands with `pipenv run` whenever necessary in order to have access to those python dependencies. Alternatively, you can enter the corresponding virtualenv once with `pipenv shell`, in which case that prefix is no longer necessary. See [https://docs.pipenv.org](https://docs.pipenv.org) for more details about how to use pipenv to handle python dependencies. 
