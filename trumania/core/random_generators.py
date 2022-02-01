@@ -329,7 +329,7 @@ class FakerGenerator(Generator):
     def __init__(self, seed, method, **fakerKwargs):
         Generator.__init__(self)
         fake = Faker()
-        fake.seed(seed)
+        Faker.seed(seed)
 
         self.method = getattr(fake, method)
         self.fakerKwargs = fakerKwargs

@@ -1,4 +1,6 @@
 import os
+import tempfile
+
 import path
 import functools
 from itertools import islice
@@ -120,7 +122,7 @@ def test_faker_generator_should_delegate_to_faker_correct():
 
 def test_sequencial_generator_read_from_disk_should_continue_sequence():
 
-    with path.tempdir() as p:
+    with tempfile.TemporaryDirectory() as p:
 
         tested = SequencialGenerator(start=10, prefix="o_", max_length=2)
 
@@ -146,7 +148,7 @@ def test_sequencial_generator_read_from_disk_should_continue_sequence():
 
 def numpy_generators_read_from_disk_should_generate_same_sequence_as_original():
 
-    with path.tempdir() as p:
+    with tempfile.TemporaryDirectory() as p:
 
         # making sure we're not using the default seed
         tested = NumpyRandomGenerator(method="normal", loc=10, scale=4,

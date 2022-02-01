@@ -1,3 +1,5 @@
+import tempfile
+
 import path
 import pandas as pd
 import os
@@ -123,7 +125,7 @@ def test_adding_several_times_to_the_same_from_should_pile_up():
 
 def test_io_round_trip():
 
-    with path.tempdir() as root_dir:
+    with tempfile.TemporaryDirectory() as root_dir:
 
         population = Population(circus=tc, size=5,
                                 ids_gen=SequencialGenerator(prefix="abc", max_length=1))

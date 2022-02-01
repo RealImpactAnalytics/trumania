@@ -99,7 +99,7 @@ class Story(object):
             return self.params.loc[ids][(param_name, "default")]
         else:
             # pairs of (member id, state), to select the desired activity level
-            param_idx = zip(ids, self.timer.ix[ids, "state"].tolist())
+            param_idx = zip(ids, self.timer.loc[ids, "state"].tolist())
             param_values = self.params.loc[ids][param_name].stack()[param_idx]
             param_values.index = param_values.index.droplevel(level=1)
             return param_values
