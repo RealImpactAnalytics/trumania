@@ -446,7 +446,7 @@ class Relationship(object):
         if not discard_empty and output.shape[0] != len(from_ids):
             missing_index = from_ids.index.difference(output.index)
             missing_values = pd.DataFrame(
-                {named_as: pd.Series([[] * missing_index.shape[0]],
+                {named_as: pd.Series([[] for j in range(missing_index.shape[0])],
                                      index=missing_index)})
 
             output = pd.concat([output, missing_values], copy=False)
@@ -486,7 +486,7 @@ class Relationship(object):
 
         _all = slice(None)
         relations = saved_df.loc[("relations", _all, _all)].unstack()
-        relations.index = relations.index.droplevel(0)
+        #relations.index = relations.index.droplevel(0)
         relations.columns = relations.columns.droplevel(0)
 
         relationship = Relationship(seed)
@@ -596,8 +596,12 @@ class Relationship(object):
                     named_as=self.named_as)
 
                 selected.set_index("from", drop=True, inplace=True)
-                return pd.merge(left=story_data, right=selected,
-                                left_on=self.from_field, right_index=True)
+                if story_data.index.name == self.from_field:
+                    return pd.merge(left=story_data, right=selected,
+                                    left_index=True, right_index=True)
+                else:
+                    return pd.merge(left=story_data, right=selected,
+                                    left_on=self.from_field, right_index=True)
 
         def select_all(self, from_field, named_as):
             """

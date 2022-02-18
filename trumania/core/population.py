@@ -257,8 +257,8 @@ class Population(object):
         population = Population(circus=circus, size=0)
         population.attributes = attributes
         population.relationships = relationships
-        population.ids = ids
-        population.size = len(ids)
+        population.ids = ids[1:]
+        population.size = len(population.ids)
 
         return population
 

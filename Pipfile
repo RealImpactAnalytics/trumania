@@ -9,8 +9,8 @@ flake8 = "*"
 
 [packages]
 networkx = "*"
-pandas = "==0.22.0"
-numpy = "*"
+pandas = "==1.4.0"
+numpy = "==1.22.0"
 scipy = "*"
 pytest = "*"
 pytest-metadata = "*"
@@ -23,4 +23,4 @@ tabulate = "*"
 trumania = {editable = true, path = "."}
 
 [requires]
-python_version = "3.6.7"
+python_version = "3.9.10"

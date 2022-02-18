@@ -1,3 +1,5 @@
+import tempfile
+
 import path
 import pandas as pd
 import logging
@@ -64,7 +66,7 @@ def test_1000_populations_with_activity_12perday_should_yield_24k_logs_in_2days(
     typically generate timers smaller than the length of the cycle
     """
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         run_test_scenario_1(clock_step="15 min",
@@ -87,7 +89,7 @@ def test_1000_populations_with_activity_12perday_should_yield_60k_logs_in_5days(
     errors", and longer total simulation duration
     """
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         # note that we cannot have clock_step > 2h since that
@@ -114,7 +116,7 @@ def test_1000_populations_with_low_activity():
 
     """
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         run_test_scenario_1(clock_step="1 h",
@@ -140,7 +142,7 @@ def test_1000_populations_with_low_activity2():
 
     """
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         run_test_scenario_1(clock_step="3 h",
@@ -164,7 +166,7 @@ def test_1000_populations_with_activity_one_per_cycle():
     day, and achieve the expected total amount of logs
     """
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         run_test_scenario_1(clock_step="15 min",
@@ -184,7 +186,7 @@ def test_1000_populations_with_activity_one_per_cycle():
 
 def test_populations_during_default_daily():
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         circus = Circus(name="tested_circus",
@@ -231,7 +233,7 @@ def test_populations_during_default_daily():
 
 def test_populations_during_working_hours():
 
-    with path.tempdir() as log_parent_folder:
+    with tempfile.TemporaryDirectory() as log_parent_folder:
         log_folder = os.path.join(log_parent_folder, "logs")
 
         circus = Circus(name="tested_circus",

@@ -1,3 +1,5 @@
+import tempfile
+
 import path
 import pandas as pd
 import os
@@ -277,7 +279,7 @@ def test_creating_an_empty_population_and_adding_attributes_later_should_be_poss
 
 def test_io_round_trip():
 
-    with path.tempdir() as p:
+    with tempfile.TemporaryDirectory() as p:
 
         population_path = os.path.join(p, "test_location")
         dummy_population.save_to(population_path)
