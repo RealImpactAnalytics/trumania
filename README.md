@@ -21,9 +21,19 @@ Pre-requisites:
 
 - If you installed python 3 with homebrew, then the executable is called `python3` and pip is called `pip3`. See [homebrew python documentation](https://docs.brew.sh/Homebrew-and-Python.html) for details
 - If you installed python 3 with Conda, make sure you understand how environments work since they might end up conflicting with pipenv environments. See [this ticket](https://github.com/pypa/pipenv/issues/699) for a discussion
-- In anycase, in order to specify the exact path of the python to be used, you can always specify `--python /path/to/python` among the `pipenv` arguments. 
+- In anycase, in order to specify the exact path of the python to be used, you can always specify `--python /path/to/python` among the `pipenv` arguments.
 
-That being said, start by installing `pipenv` if necessary: 
+### pip based installation
+
+If you have `git` installed and configured, you can simply execute:
+
+```sh
+pip3 install git+https://github.com/RealImpactAnalytics/trumania.git
+```
+
+### pipenv based installation
+
+Start by installing `pipenv` if necessary: 
 
 ```sh
 # this could be called "pip", depending on the environment, and must be linked to python 3

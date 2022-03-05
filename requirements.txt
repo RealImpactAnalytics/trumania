@@ -1,0 +1,10 @@
+pandas==1.4.0
+numpy==1.22.0
+networkx
+scipy
+pytest
+pytest-metadata
+faker
+pymongo
+bson
+tabulate
