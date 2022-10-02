@@ -89,23 +89,33 @@ def merge_2_dicts(dict1, dict2, value_merge_func=None):
     if dict1 is None:
         return dict2
 
-    def merged_value(key):
-        if key not in dict1:
-            return dict2[key]
-        elif key not in dict2:
-            return dict1[key]
-        else:
-            if value_merge_func is None:
-                raise ValueError(
-                    "Conflict in merged dictionaries: merge function not "
-                    "provided but key {} exists in both dictionaries".format(
-                        key))
+    if dict1 == dict2:
+        for k, v in dict1.items():
+            dict1[k] = value_merge_func(v, v)
+        return dict1
 
-            return value_merge_func(dict1[key], dict2[key])
+    dict1_set = set(dict1)
+    dict2_set = set(dict2)
 
-    keys = set(dict1.keys()) | set(dict2.keys())
+    keys_to_merge = dict1_set.intersection(dict2_set)
 
-    return {key: merged_value(key) for key in keys}
+    if len(keys_to_merge) != 0 and value_merge_func is None:
+        raise ValueError(
+            "Conflict in merged dictionaries: merge function not "
+            "provided but keys {} exists in both dictionaries".format(
+                keys_to_merge))
+
+    values_merged = dict()
+
+    for key_to_merge in keys_to_merge:
+        old_value1 = dict1[key_to_merge]
+        old_value2 = dict2[key_to_merge]
+
+        new_value = value_merge_func(old_value1, old_value2)
+
+        values_merged[key_to_merge] = new_value
+
+    return {**dict1, **dict2, **values_merged}
 
 
 def df_concat(d1, d2):
